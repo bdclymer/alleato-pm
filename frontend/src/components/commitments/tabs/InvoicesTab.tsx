@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
-import { FileText, Paperclip, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { FileText, Paperclip } from "lucide-react";
 
 import {
   UnifiedTablePage,
@@ -12,7 +10,6 @@ import {
   type TableColumn,
   type ViewMode,
 } from "@/components/tables/unified";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ds/text";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
@@ -83,41 +80,12 @@ export const InvoicesTab = memo(function InvoicesTab({
   projectId,
   commitmentType,
 }: InvoicesTabProps) {
-  const router = useRouter();
   const [invoices, setInvoices] = useState<EnrichedInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [currentView, setCurrentView] = useState<ViewMode>("table");
-
-  const createRetainageReleaseInvoice = async () => {
-    setIsCreating(true);
-    try {
-      const filterKey = commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
-      const response = await apiFetch<{ data?: { id?: number } }>(`/api/projects/${projectId}/invoicing/subcontractor/invoices`, {
-        method: "POST",
-        body: JSON.stringify({ [filterKey]: commitmentId, is_retainage_release: true }),
-      });
-      toast.success("Retainage release invoice created");
-      setRefreshKey((k) => k + 1);
-      if (response.data?.id) {
-        router.push(`/${projectId}/commitments/${commitmentId}/invoices/${response.data.id}`);
-      }
-    } catch (err) {
-      toast.error("Failed to create retainage release invoice");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const goToCreateInvoice = () => {
-    router.push(
-      `/${projectId}/invoicing/subcontractor/new?commitmentType=${encodeURIComponent(commitmentType)}&commitmentId=${encodeURIComponent(commitmentId)}`,
-    );
-  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -154,7 +122,7 @@ export const InvoicesTab = memo(function InvoicesTab({
 
     void load();
     return () => controller.abort();
-  }, [commitmentId, commitmentType, projectId, refreshKey]);
+  }, [commitmentId, commitmentType, projectId]);
 
   const statusOptions = useMemo(() => {
     const seen = new Map<string, string>();
@@ -448,26 +416,6 @@ export const InvoicesTab = memo(function InvoicesTab({
 
   const isFiltered = Boolean(searchQuery) || Boolean(statusFilter);
 
-  const headerActions = (
-    <div className="flex items-center gap-2">
-      {invoices.length > 0 && (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={createRetainageReleaseInvoice}
-          disabled={isCreating}
-        >
-          <Plus className="h-4 w-4" />
-          {isCreating ? "Creating…" : "Retainage Release"}
-        </Button>
-      )}
-      <Button size="sm" onClick={goToCreateInvoice}>
-        <Plus className="h-4 w-4" />
-        Create Invoice
-      </Button>
-    </div>
-  );
-
   if (error) {
     return <Text tone="destructive">{error}</Text>;
   }
@@ -478,7 +426,6 @@ export const InvoicesTab = memo(function InvoicesTab({
         title: "Invoices",
         description: "Pay applications submitted against this contract.",
         variant: "compact",
-        actions: headerActions,
       }}
       toolbar={{
         totalItems: invoices.length,
@@ -535,15 +482,9 @@ export const InvoicesTab = memo(function InvoicesTab({
         icon: <FileText className="h-8 w-8" />,
         title: "No invoices yet",
         description:
-          "Invoices submitted against this contract will appear here.",
+          "Invoices submitted against this contract will appear here. Use the Create menu above to add one.",
         filteredDescription: "No invoices match the current search or filters.",
         isFiltered,
-        action: (
-          <Button size="sm" variant="outline" onClick={goToCreateInvoice}>
-            <Plus className="h-4 w-4" />
-            Create Invoice
-          </Button>
-        ),
       }}
       features={{
         enableViews: false,

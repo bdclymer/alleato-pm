@@ -10,6 +10,7 @@ import type {
   ChangeEventFormData,
   ChangeEventLineItem,
   CommitmentSovLineItem,
+  VendorOption,
 } from "./types";
 import { createEmptyLineItem, isMatchCostRevenueSource } from "./types";
 import { changeEventFormSchema, buildChangeEventDefaults } from "./change-event-schema";
@@ -149,6 +150,37 @@ export function useChangeEventFormData({
         });
     });
   }, [initialLineItems, projectId]);
+
+  // On mount (edit mode): ensure every saved line item's vendor appears in the
+  // vendor dropdown. The vendor list is derived from active commitments that
+  // have a company_name; a saved vendor whose commitment is inactive/voided or
+  // whose company_name is null in the view would otherwise be absent, so the
+  // Vendor combobox would render an empty "Select vendor..." placeholder on
+  // edit even though vendor_id is stored — the exact edit-form-blank symptom
+  // the FK gate targets. Inject each saved vendor using the name carried on the
+  // line item (companies.name), falling back to the matching contract's vendor
+  // name. Runs once contracts are available; setVendors dedupes by id.
+  React.useEffect(() => {
+    if (!initialLineItems || initialLineItems.length === 0) return;
+    const savedVendors = new Map<string, string>();
+    for (const item of initialLineItems) {
+      const vendorId = item.vendor ? String(item.vendor) : "";
+      if (!vendorId || savedVendors.has(vendorId)) continue;
+      const fromContract = contracts.find(
+        (c) => String(c.vendorId ?? "") === vendorId,
+      )?.vendorName;
+      savedVendors.set(vendorId, item.vendorName || fromContract || "Saved vendor");
+    }
+    if (savedVendors.size === 0) return;
+    setVendors((prev) => {
+      const existing = new Set(prev.map((v) => v.id));
+      const additions: VendorOption[] = [];
+      savedVendors.forEach((vendorName, id) => {
+        if (!existing.has(id)) additions.push({ id, vendor_name: vendorName });
+      });
+      return additions.length ? [...prev, ...additions] : prev;
+    });
+  }, [initialLineItems, contracts, setVendors]);
 
   // Re-resolve budget codes for committed line items that are still missing one.
   // Handles two failure modes:

@@ -1,5 +1,14 @@
 # Handoff — AIA G702 Line 5 & Line 9 correctness fixes (invoice financials)
 
+> **STATUS (2026-07-09): IMPLEMENTED** on branch `feat/g702-correctness-line5-line9`
+> (stacked on the Card 1 module PR). Both fixes landed via one shared core `g702Rollup`:
+> Line 5 is now cumulative (a proven no-op on all current subcontractor data — every real
+> invoice has zero carried-forward retainage), and the prime side adopts the module with the
+> corrected Line 9 (`payment-application-summary.ts` retired). Verification note: production
+> exposure is near-zero (subcontractor multi-period retainage = 1 test invoice; prime payment
+> applications = 3 rows), so before/after proof is via unit tests + a preview screenshot of a
+> test record rather than a real invoice. The sections below are retained as the rationale.
+
 **Created:** 2026-07-09
 **Source:** Card 1 deepening (`/improve-codebase-architecture`). Surfaced while unifying the
 subcontractor + prime payment math into `frontend/src/lib/invoicing/payment-application.ts`.

@@ -77,12 +77,14 @@ described in `CLAUDE.md` so that what blocks a commit also blocks a PR.
   or when an issue is assigned to `anthropic-claude-code`.
 - **Secrets:** `CLAUDE_CODE_OAUTH_TOKEN`.
 
-### `pr-review-comprehensive.yml` — PR Review with Progress Tracking
-- **Triggers:** `pull_request` (opened, synchronize, ready_for_review, reopened).
-- Claude performs a structured review (quality, security, performance, testing, docs)
-  with `track_progress: true` so it posts a live checklist comment and inline comments.
-- **Cost note:** runs on **every** PR push (`synchronize`). If Action minutes become a
-  concern, narrow the trigger to `opened`/`ready_for_review`.
+### `pr-review-comprehensive.yml` — PR Review (Claude)
+- **Triggers:** `pull_request` (opened, ready_for_review). Reviews **once** when a PR
+  becomes reviewable — NOT on every push. Drafts are skipped; to force a fresh review
+  after changes, comment `@claude review` (handled by `claude.yml`).
+- Claude is the **single** automated PR reviewer (CodeRabbit disabled via `.coderabbit.yaml`,
+  Codex via its cloud settings). `track_progress: true` (posts a live progress checklist
+  comment that updates in place) with a concise, high-signal prompt (actionable findings
+  only — no praise / N/A recitation). One checklist per PR, since it runs once (not per push).
 - **Secrets:** `CLAUDE_CODE_OAUTH_TOKEN`.
 
 ### `issue-handler.yml` — Issue Handler

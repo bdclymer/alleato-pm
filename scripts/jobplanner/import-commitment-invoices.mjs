@@ -20,7 +20,8 @@
  * contract, the invoices are mis-linked — skip billed (still link invoices) and flag.
  *
  * Excludes project_code 24109 (Goodwill Bloomington) — a separate session is re-attributing
- * its mis-linked invoices. Credits/adjustments and bills with no commitment match are skipped.
+ * its mis-linked invoices. Credits/adjustments (document_type contains "credit"/"debit") and
+ * bills with no commitment match are skipped.
  *
  * Usage:
  *   node scripts/jobplanner/import-commitment-invoices.mjs            # dry run
@@ -43,6 +44,7 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const APPLY = process.argv.includes("--apply");
 const EXCLUDE_PROJECT_CODES = new Set(["24109"]); // Goodwill Bloomington — concurrent re-attribution
+const PAGE_SIZE = 1000;
 const OUT_DIR = path.join(repoRoot, "docs/ops/evidence/2026-07-08-commitment-invoices-from-acumatica");
 const SUPABASE_URL = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SERVICE_KEY?.trim();
@@ -53,6 +55,20 @@ const codePart = (bc) => String(bc || "").split(".")[0].trim();
 const round2 = (n) => Math.round(n * 100) / 100;
 const mapStatus = (s) => { const t = String(s || "").toLowerCase(); if (t === "closed") return "paid"; if (t === "open") return "approved"; if (t.includes("hold")) return "pending"; return "pending"; };
 const extractNum = (txt) => { const m = String(txt || "").match(/(\d{4})-(\d{4})/); return m ? `${m[1]}-${m[2]}` : null; };
+const isCreditDocType = (t) => { const s = String(t || "").toLowerCase(); return s.includes("credit") || s.includes("debit"); };
+
+// PostgREST/Supabase caps unpaginated selects at a default row limit — page through in full so
+// growing Acumatica tables can never silently truncate this scan on a future re-run.
+async function pagedSelect(buildQuery, pageSize = PAGE_SIZE) {
+  const rows = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data ?? []));
+    if (!data || data.length < pageSize) break;
+  }
+  return rows;
+}
 
 async function main() {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
@@ -60,8 +76,8 @@ async function main() {
   // active commitments by project -> map "{jp}-{seq}" -> {id, table, contract_number}
   const commitByProjKey = new Map(); // projectId -> Map(key -> commit)
   for (const [table, kind] of [["subcontracts", "subcontract"], ["purchase_orders", "purchase_order"]]) {
-    const { data } = await sb.from(table).select("id, project_id, contract_number").is("deleted_at", null);
-    for (const c of data ?? []) {
+    const data = await pagedSelect(() => sb.from(table).select("id, project_id, contract_number").is("deleted_at", null));
+    for (const c of data) {
       const key = extractNum(c.contract_number);
       if (!key) continue;
       if (!commitByProjKey.has(c.project_id)) commitByProjKey.set(c.project_id, new Map());
@@ -70,13 +86,14 @@ async function main() {
   }
 
   // ---- PASS 1 (read-only): match bills to commitments, accumulate per commitment ----
-  const { data: bills } = await sb.from("acumatica_ap_bills").select("id, project_id, project_code, reference_nbr, document_type, date, status, description, vendor_ref");
-  const stats = { billsScanned: 0, matched: 0, unmatched: 0, invoicesCreated: 0, invoicesLinked: 0, lineItemsCreated: 0 };
+  const bills = await pagedSelect(() => sb.from("acumatica_ap_bills").select("id, project_id, project_code, reference_nbr, document_type, date, status, description, vendor_ref"));
+  const stats = { billsScanned: 0, matched: 0, unmatched: 0, creditsSkipped: 0, invoicesCreated: 0, invoicesLinked: 0, lineItemsCreated: 0 };
   const byCommit = new Map(); // commitId -> {commit, projectId, byCode:Map, total, bills:[]}
   const flagged = [];
 
-  for (const b of bills ?? []) {
+  for (const b of bills) {
     if (!b.project_id || EXCLUDE_PROJECT_CODES.has(String(b.project_code))) continue;
+    if (isCreditDocType(b.document_type)) { stats.creditsSkipped++; continue; }
     stats.billsScanned++;
     const projMap = commitByProjKey.get(b.project_id);
     const key = projMap ? extractNum(`${b.description || ""} ${b.vendor_ref || ""}`) : null;
@@ -114,25 +131,43 @@ async function main() {
     const linkCol = kind === "subcontract" ? "subcontract_id" : "purchase_order_id";
 
     for (const b of acc.bills) {
-      // idempotency: an invoice may already exist keyed on the bill id OR the (globally
-      // unique) acumatica_ref_nbr. Match either so a re-run links instead of colliding.
-      const { data: existingRows } = await sb.from("subcontractor_invoices").select("id, subcontract_id, purchase_order_id, acumatica_ap_bill_id").or(`acumatica_ap_bill_id.eq.${b.id},acumatica_ref_nbr.eq.${b.reference_nbr}`).limit(1);
-      const existingInv = existingRows?.[0] ?? null;
+      const docType = b.document_type ?? "Bill";
+      // idempotency: an invoice may already exist keyed on the bill id, or on the
+      // (doc_type, ref_nbr) pair — ref_nbr alone is NOT globally unique across doc types
+      // (mirrors the acumatica_doc_type|ref_nbr keying used in acumatica_sync.py). Two
+      // explicit .eq() lookups instead of one interpolated .or() string, since a ref_nbr
+      // containing "," or "()" would otherwise break/mismatch the PostgREST filter.
+      const invoiceCols = "id, subcontract_id, purchase_order_id, acumatica_ap_bill_id, period_end";
+      const { data: byId } = await sb.from("subcontractor_invoices").select(invoiceCols).eq("acumatica_ap_bill_id", b.id).limit(1);
+      let existingInv = byId?.[0] ?? null;
+      if (!existingInv) {
+        const { data: byRef } = await sb.from("subcontractor_invoices").select(invoiceCols).eq("acumatica_ref_nbr", b.reference_nbr).eq("acumatica_doc_type", docType).limit(1);
+        existingInv = byRef?.[0] ?? null;
+      }
       let invoiceId = existingInv?.id ?? null;
       if (APPLY) {
         if (invoiceId) {
           const upd = {};
           if (!existingInv[linkCol]) upd[linkCol] = acc.commit.id;
           if (!existingInv.acumatica_ap_bill_id) upd.acumatica_ap_bill_id = b.id;
+          if (!existingInv.period_end) upd.period_end = b.date;
           if (Object.keys(upd).length) { upd.project_id = b.project_id; const { error } = await sb.from("subcontractor_invoices").update(upd).eq("id", invoiceId); if (error) throw new Error(`link ${b.reference_nbr}: ${error.message}`); stats.invoicesLinked++; }
         } else {
-          const { data: ins, error } = await sb.from("subcontractor_invoices").insert({ project_id: b.project_id, [linkCol]: acc.commit.id, invoice_number: b.reference_nbr, status: mapStatus(b.status), billing_date: b.date, notes: b.description ?? null, acumatica_ap_bill_id: b.id, acumatica_ref_nbr: b.reference_nbr, acumatica_doc_type: b.document_type ?? "Bill" }).select("id").single();
+          const { data: ins, error } = await sb.from("subcontractor_invoices").insert({ project_id: b.project_id, [linkCol]: acc.commit.id, invoice_number: b.reference_nbr, status: mapStatus(b.status), billing_date: b.date, period_end: b.date, notes: b.description ?? null, acumatica_ap_bill_id: b.id, acumatica_ref_nbr: b.reference_nbr, acumatica_doc_type: docType }).select("id").single();
           if (error) throw new Error(`create ${b.reference_nbr}: ${error.message}`);
           invoiceId = ins.id; stats.invoicesCreated++;
         }
         const { count: liCount } = await sb.from("subcontractor_invoice_line_items").select("id", { count: "exact", head: true }).eq("invoice_id", invoiceId);
         if ((liCount ?? 0) === 0 && b.blines.length) {
-          const rows = b.blines.map((l, i) => ({ invoice_id: invoiceId, budget_code: dash(l.cost_code), description: l.transaction_description || l.description || null, work_completed_period: Number(l.amount ?? l.extended_cost ?? 0), scheduled_value: Number(l.amount ?? l.extended_cost ?? 0), sort_order: i + 1 }));
+          // scheduled_value mirrors the manual-invoice seeding pattern (route.ts): the SOV
+          // line's full contract amount, not the amount billed this period — otherwise the
+          // invoice detail grid shows a partial bill as if it were the whole schedule value.
+          const rows = b.blines.map((l, i) => {
+            const code = dash(l.cost_code);
+            const sovMatches = sovRows.filter((r) => codePart(r.budget_code) === code);
+            const scheduled = sovMatches.length ? sovMatches.reduce((a, r) => a + sovAmt(r), 0) : Number(l.amount ?? l.extended_cost ?? 0);
+            return { invoice_id: invoiceId, budget_code: code, description: l.transaction_description || l.description || null, work_completed_period: Number(l.amount ?? l.extended_cost ?? 0), scheduled_value: scheduled, sort_order: i + 1 };
+          });
           const { error } = await sb.from("subcontractor_invoice_line_items").insert(rows);
           if (error) throw new Error(`lines ${b.reference_nbr}: ${error.message}`);
           stats.lineItemsCreated += rows.length;

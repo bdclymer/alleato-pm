@@ -50,30 +50,36 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(commitmentsError);
     }
 
-    if (!commitments || commitments.length === 0) {
-      return NextResponse.json({
-        data: [],
-        meta: { total_count: 0, total_amount: 0 },
-      });
-    }
-
-    const commitmentIds = commitments
+    const commitmentIds = (commitments ?? [])
       .map((c) => c.id)
       .filter(Boolean) as string[];
+
+    // A CO belongs to this project if EITHER (a) it hangs off one of the
+    // project's commitments, OR (b) it is stamped directly with project_id.
+    // Case (b) covers Acumatica project-level change orders whose commitment
+    // header was never synced (contract_id points at a deleted "ghost"
+    // commitment) — see scripts/jobplanner/backfill-cco-project-id.mjs
+    // (2026-07-09). Without the project_id branch these rows are invisible in
+    // the UI even though the data is correct. PostgREST returns each row once,
+    // so overlapping matches are not double-counted.
+    const orFilters = [`project_id.eq.${Number(projectId)}`];
+    if (commitmentIds.length > 0) {
+      orFilters.push(`contract_id.in.(${commitmentIds.join(",")})`);
+    }
 
     const { data: changeOrders, error: coError } = await supabase
       .from("contract_change_orders")
       .select(
         "id, change_order_number, description, status, amount, requested_date, approved_date, contract_id",
       )
-      .in("contract_id", commitmentIds)
+      .or(orFilters.join(","))
       .order("requested_date", { ascending: false });
 
     if (coError) {
       return apiErrorResponse(coError);
     }
 
-    const commitmentRows = commitments.map((commitment) => ({
+    const commitmentRows = (commitments ?? []).map((commitment) => ({
       id: commitment.id,
       contract_number: commitment.contract_number ?? null,
     }));

@@ -80,7 +80,7 @@ function Pin({
       </Button>
       {open ? (
         <div
-          className="w-80 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+          className="w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-lg border border-border bg-card shadow-lg"
           style={{ position: "absolute", left: 8, top: 4 }}
           onClick={(event) => event.stopPropagation()}
         >
@@ -168,7 +168,7 @@ function OverlayInner() {
           style={{ position: "absolute", left: draft.x, top: draft.y, zIndex: Z + 1 }}
         >
           <div
-            className="w-80 -translate-y-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
+            className="w-[min(20rem,calc(100vw-1rem))] -translate-y-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between px-3 pt-2 text-xs font-medium text-muted-foreground">

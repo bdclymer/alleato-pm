@@ -1,0 +1,453 @@
+{
+  "generatedAt": "2026-07-09T06:29:05.995Z",
+  "jpProjectId": 5092,
+  "appProjectId": 25125,
+  "mode": "APPLIED",
+  "counts": {
+    "changeRequests": 19,
+    "adopt": 18,
+    "create": 0,
+    "flag": 1,
+    "existingChangeEvents": 19,
+    "appOnly": 1,
+    "jpCcos": 30,
+    "ccoWithExecutedTwin": 26,
+    "jpPccos": 7,
+    "pccoWithExecutedTwin": 1
+  },
+  "writes": {
+    "ceAdopted": 18,
+    "ceCreated": 0,
+    "ceLines": 0,
+    "primePcos": 0,
+    "commitPcos": 0,
+    "pcoLines": 0,
+    "ceLinks": 0,
+    "skippedFlags": 1,
+    "warnings": []
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1717,
+      "number": "CR-5092-0001",
+      "title": "Temp Wall during Vestibule Construction",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 1550,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1717 already linked to CE-5092-0001",
+      "matchedExisting": {
+        "id": "8dd74ed3-04a8-4cf0-9e4b-b6d4166ef53a",
+        "number": "CE-5092-0001",
+        "cost": 1550,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1749,
+      "number": "CR-5092-0002",
+      "title": "Shovel Snow Off Roof for HVAC Curb Install",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 395,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1749 already linked to CE-5092-0002",
+      "matchedExisting": {
+        "id": "256b0a2c-18db-4253-8b8a-45dd326633d1",
+        "number": "CE-5092-0002",
+        "cost": 395,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1927,
+      "number": "CR-5092-0008",
+      "title": "Additional Soffit Work",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 5360,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1927 already linked to CE-5092-0008",
+      "matchedExisting": {
+        "id": "654410d9-bf02-40b2-87f7-2d14ac602a99",
+        "number": "CE-5092-0008",
+        "cost": 5360,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2529,
+      "number": "CR-5092-0016",
+      "title": "Replace broken glass at the entrance vestibule",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 800,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2529 already linked to CE-5092-0016",
+      "matchedExisting": {
+        "id": "6a08d899-172c-4832-82eb-3bcd6cfd5fe4",
+        "number": "CE-5092-0016",
+        "cost": 800,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2257,
+      "number": "CR-5092-0014",
+      "title": "Repaint Areas that Needed Drywall Touch Up",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 625,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2257 already linked to CE-5092-0014",
+      "matchedExisting": {
+        "id": "07bd4767-032b-4db3-be3f-bd13e1770d62",
+        "number": "CE-5092-0014",
+        "cost": 625,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1896,
+      "number": "CR-5092-0003",
+      "title": "Order bathroom sinks",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 1572.9,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1896 already linked to CE-5092-0003",
+      "matchedExisting": {
+        "id": "6571592b-9d8a-4791-8b4a-369755c73e35",
+        "number": "CE-5092-0003",
+        "cost": 1572.9,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2263,
+      "number": "CR-5092-0015",
+      "title": "Repair Damaged CMU",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 0,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 1
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2263 already linked to CE-5092-0015",
+      "matchedExisting": {
+        "id": "0ee06e6c-23ad-42dd-bd8d-7407862f0bf1",
+        "number": "CE-5092-0015",
+        "cost": 0,
+        "lineCount": 2
+      }
+    },
+    {
+      "jpChangeRequestId": 1915,
+      "number": "CR-5092-0006",
+      "title": "Detex Alarm for Exterior Door 131",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 1191.54,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1915 already linked to CE-5092-0006",
+      "matchedExisting": {
+        "id": "1f6e73c0-d5fc-492e-a7e2-322a7a49774a",
+        "number": "CE-5092-0006",
+        "cost": 1191.54,
+        "lineCount": 2
+      }
+    },
+    {
+      "jpChangeRequestId": 1914,
+      "number": "CR-5092-0005",
+      "title": "Temp Dry In Window Openings, Tooth in CMU at South Door",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 2695.49,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1914 already linked to CE-5092-0005",
+      "matchedExisting": {
+        "id": "461a98e9-cff5-4016-939c-b603aa9de6a3",
+        "number": "CE-5092-0005",
+        "cost": 2695.49,
+        "lineCount": 3
+      }
+    },
+    {
+      "jpChangeRequestId": 1910,
+      "number": "CR-5092-0004",
+      "title": "Laundry Room & Reception Desk Deduct",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": -3054.3,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1910 already linked to CE-5092-0004",
+      "matchedExisting": {
+        "id": "0d9d5839-104b-48ad-9800-354e430fcbd1",
+        "number": "CE-5092-0004",
+        "cost": -3054.3,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1969,
+      "number": "CR-5092-0009",
+      "title": "Added Framing & EIFS West of Entrance Vestibule",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 66221,
+      "lineItems": 6,
+      "fork": {
+        "prime": 6,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1969 already linked to CE-5092-0009",
+      "matchedExisting": {
+        "id": "f934fbda-79ed-4eb5-8bf9-97a53ce347da",
+        "number": "CE-5092-0009",
+        "cost": 66221,
+        "lineCount": 6
+      }
+    },
+    {
+      "jpChangeRequestId": 1916,
+      "number": "CR-5092-0007",
+      "title": "Added Power & Data Receptacles",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 5512.68,
+      "lineItems": 3,
+      "fork": {
+        "prime": 3,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 1916 already linked to CE-5092-0007",
+      "matchedExisting": {
+        "id": "814f6ed1-8080-4d5d-8ad6-9f04155d6089",
+        "number": "CE-5092-0007",
+        "cost": 5512.68,
+        "lineCount": 3
+      }
+    },
+    {
+      "jpChangeRequestId": 2132,
+      "number": "CR-5092-0011",
+      "title": "Duct wrap where drop ceilings where added",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 3720,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2132 already linked to CE-5092-0011",
+      "matchedExisting": {
+        "id": "74e752bf-186b-4683-96de-32d873c358f6",
+        "number": "CE-5092-0011",
+        "cost": 3720,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2131,
+      "number": "CR-5092-0010",
+      "title": "Lift for Vestibule Demo",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 1299.18,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2131 already linked to CE-5092-0010",
+      "matchedExisting": {
+        "id": "bf386ca4-a06d-4e2f-8b09-42b288f6855c",
+        "number": "CE-5092-0010",
+        "cost": 1299.18,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2197,
+      "number": "CR-5092-0012",
+      "title": "EIFS Over Existing Block",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": -37360,
+      "lineItems": 5,
+      "fork": {
+        "prime": 5,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2197 already linked to CE-5092-0012",
+      "matchedExisting": {
+        "id": "fb991645-54bd-4f38-9ac9-82c28d3d676b",
+        "number": "CE-5092-0012",
+        "cost": -37360,
+        "lineCount": 5
+      }
+    },
+    {
+      "jpChangeRequestId": 2599,
+      "number": "CR-5092-0017",
+      "title": "Sound Baffles for Return Air Grilles",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 7380,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "FLAG",
+      "reason": "seq 17 matches 50920017 but title (sim 0.00) AND amount both diverge — verify manually",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2637,
+      "number": "CR-5092-0018",
+      "title": "Mini Split System for Electrical Room",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 0,
+      "lineItems": 3,
+      "fork": {
+        "prime": 3,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2637 already linked to CR-5092-0018",
+      "matchedExisting": {
+        "id": "53b29fe9-35eb-4682-8be2-1921bf99fbdd",
+        "number": "CR-5092-0018",
+        "cost": 0,
+        "lineCount": 3
+      }
+    },
+    {
+      "jpChangeRequestId": 2217,
+      "number": "CR-5092-0013",
+      "title": "Bulkheads at Conference Room, Reception Area & Shared Office",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 2400,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2217 already linked to CE-5092-0013",
+      "matchedExisting": {
+        "id": "19c55823-b711-44f4-ab72-71ab4b130edc",
+        "number": "CE-5092-0013",
+        "cost": 2400,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2721,
+      "number": "CR-5092-0019",
+      "title": "Repaint Wall White Behind The Lounge Cabinets",
+      "statusId": 8,
+      "primeContractNumber": "PC-5092-0001",
+      "cost": 750,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "jobplanner_id 2721 already linked to CR-5092-0019",
+      "matchedExisting": {
+        "id": "9ddacb9e-bc51-42f7-8352-d620af475c11",
+        "number": "CR-5092-0019",
+        "cost": 750,
+        "lineCount": 1
+      }
+    }
+  ],
+  "appOnly": [
+    {
+      "id": "52d83b38-98fa-43a4-94c0-2a5e47032c66",
+      "number": "50920017",
+      "title": "Electrical room mini split system added scope",
+      "cost": 0,
+      "lineCount": 0
+    }
+  ]
+}

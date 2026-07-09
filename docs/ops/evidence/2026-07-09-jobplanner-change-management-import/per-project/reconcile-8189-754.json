@@ -1,0 +1,422 @@
+{
+  "generatedAt": "2026-07-09T05:07:53.494Z",
+  "jpProjectId": 8189,
+  "appProjectId": 754,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 17,
+    "adopt": 2,
+    "create": 15,
+    "flag": 0,
+    "existingChangeEvents": 2,
+    "appOnly": 0,
+    "jpCcos": 18,
+    "ccoWithExecutedTwin": 1,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2435,
+      "number": "CR-8189-0006",
+      "title": "Lay Out Canopy Footers",
+      "statusId": 8,
+      "cost": 697.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2259,
+      "number": "CR-8189-0003",
+      "title": "Demo Loading Dock Roof",
+      "statusId": 8,
+      "cost": 9500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2486,
+      "number": "CR-8189-0012",
+      "title": "Drain for Scissor Lift Pit",
+      "statusId": 8,
+      "cost": 985,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 12, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2455,
+      "number": "CR-8189-0007",
+      "title": "ADA Compliant Eliason Doors",
+      "statusId": 8,
+      "cost": 3800,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2306,
+      "number": "CR-8189-0005",
+      "title": "Air Barrier at the Donation Canopy.",
+      "statusId": 8,
+      "cost": 2929.05,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2471,
+      "number": "CR-8189-0008",
+      "title": "Transom Window above Donation Vestibule Door",
+      "statusId": 8,
+      "cost": 3500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2472,
+      "number": "CR-8189-0009",
+      "title": "Remove Existing Window",
+      "statusId": 8,
+      "cost": 950,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2473,
+      "number": "CR-8189-0010",
+      "title": "Temp Plywood over exterior openings",
+      "statusId": 8,
+      "cost": 2415,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2200,
+      "number": "CR-8189-0002",
+      "title": "Demo existing CMU wall & frame new wall at the Electrical Room",
+      "statusId": 8,
+      "cost": 3755.05,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "seq 2 == 002; amountΔ $1,255.05; titleSim 1.00",
+      "matchedExisting": {
+        "id": "b48120c1-8c8a-457b-a67a-a41f76f1bcab",
+        "number": "002",
+        "title": "Demo existing CMU wall & frame new wall at the Electrical Room",
+        "cost": 2500,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2475,
+      "number": "CR-8189-0011",
+      "title": "Framing Modifications",
+      "statusId": 8,
+      "cost": 4145.45,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 11, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2568,
+      "number": "CR-8189-0015",
+      "title": "Repair CMU ",
+      "statusId": 8,
+      "cost": 2210,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 15, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2567,
+      "number": "CR-8189-0014",
+      "title": "Excavate for Scissor Lift Pit",
+      "statusId": 8,
+      "cost": 1360.8,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 14, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2566,
+      "number": "CR-8189-0013",
+      "title": "Repour Footers",
+      "statusId": 8,
+      "cost": 7315.81,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 13, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2182,
+      "number": "CR-8189-0001",
+      "title": "Saw Cut Asphalt & Pour Light Pole Base",
+      "statusId": 8,
+      "cost": 2815,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "ADOPT",
+      "reason": "seq 1 == 001; amount matches; titleSim 1.00",
+      "matchedExisting": {
+        "id": "2ca16d1f-5249-41fc-8255-a420cb2841cd",
+        "number": "001",
+        "title": "Saw Cut Asphalt & Pour Light Pole Base",
+        "cost": 2815,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 2271,
+      "number": "CR-8189-0004",
+      "title": "Saw Cut CMU Wall & Add Framing at the Electrical Room ",
+      "statusId": 8,
+      "cost": -555.85,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2760,
+      "number": "CR-8189-0017",
+      "title": "Plate for dock leveler pit",
+      "statusId": 8,
+      "cost": 1920,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 17, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2711,
+      "number": "CR-8189-0016",
+      "title": "Plywood next to donation vestibule",
+      "statusId": 8,
+      "cost": 563.78,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 16, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-8189-0004",
+        "commitmentNumber": "SC-8189-0003",
+        "amount": 9500,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0001",
+        "commitmentNumber": "SC-8189-0003",
+        "amount": 2500,
+        "twin": {
+          "id": "90bae1fa-57bf-4b42-8fce-3d3311d65e9c",
+          "number": "CCO-001",
+          "amount": 2500
+        }
+      },
+      {
+        "number": "CCO-8189-0002",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": 1255.05,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0005",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": -555.85,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0006",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": 2929.05,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0020",
+        "commitmentNumber": "SC-8189-0006",
+        "amount": 1920,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0003",
+        "commitmentNumber": "SC-8189-0006",
+        "amount": 2815,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0009",
+        "commitmentNumber": "SC-8189-0010",
+        "amount": 3800,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0008",
+        "commitmentNumber": "SC-8189-0021",
+        "amount": 697.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0010",
+        "commitmentNumber": "SC-8189-0014",
+        "amount": 3500,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0011",
+        "commitmentNumber": "SC-8189-0014",
+        "amount": 950,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0012",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": 2415,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0013",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": 4145.45,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0018",
+        "commitmentNumber": "SC-8189-0006",
+        "amount": 6096.51,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0021",
+        "commitmentNumber": "SC-8189-0011",
+        "amount": 2210,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0017",
+        "commitmentNumber": "SC-8189-0006",
+        "amount": 1360.8,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0014",
+        "commitmentNumber": "SC-8189-0005",
+        "amount": 985,
+        "twin": null
+      },
+      {
+        "number": "CCO-8189-0019",
+        "commitmentNumber": "SC-8189-0008",
+        "amount": 563.78,
+        "twin": null
+      }
+    ],
+    "prime": []
+  }
+}

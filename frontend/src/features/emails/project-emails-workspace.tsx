@@ -1648,7 +1648,7 @@ export function EmailReadingPanel({
             className={cn("flex h-full flex-col", className)}
             style={{ minHeight: "30rem" }}
           >
-            <div className="px-10 py-5 xl:px-12">
+            <div className="px-4 sm:px-6 py-5 xl:px-12">
               <div className="flex items-start justify-between gap-6">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-start justify-between gap-4">
@@ -1753,7 +1753,7 @@ export function EmailReadingPanel({
                 icon={
                   <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                 }
-                className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-10 py-4 text-muted-foreground [&>div]:flex-1 xl:px-12"
+                className="items-start gap-2 rounded-none border-x-0 border-t-0 border-b border-border/60 bg-muted/30 px-4 sm:px-6 py-4 text-muted-foreground [&>div]:flex-1 xl:px-12"
               >
                 <div className="flex w-full items-start gap-2">
                   {summaryLoading ? (
@@ -1780,7 +1780,7 @@ export function EmailReadingPanel({
             ) : null}
 
             <ScrollArea className="flex-1">
-              <div className="flex flex-col gap-8 px-10 pb-10 pt-10 xl:px-12">
+              <div className="flex flex-col gap-8 px-4 sm:px-6 pb-10 pt-10 xl:px-12">
                 <div className="space-y-4 text-[14px] leading-6 text-foreground [overflow-wrap:anywhere]">
                   {selectedBody ? (
                     selectedBodyBlocks.map((block) => {
@@ -1952,7 +1952,7 @@ export function EmailReadingPanel({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className={cn(
-              "flex h-full items-center justify-center px-10 py-12 xl:px-12",
+              "flex h-full items-center justify-center px-4 sm:px-6 py-12 xl:px-12",
               className,
             )}
             style={{ minHeight: "30rem" }}

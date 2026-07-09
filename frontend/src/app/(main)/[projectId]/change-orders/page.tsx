@@ -10,7 +10,6 @@ export default async function ProjectChangeOrdersPage({
   const { projectId } = await params;
   const { numericProjectId, supabase } = await getProjectInfo(projectId);
 
-  // contract_change_orders has no FK to project — must resolve via contract IDs
   const [primeResponse, contractIdsResponse] = await Promise.all([
     supabase
       .from("prime_contract_change_orders")
@@ -31,13 +30,23 @@ export default async function ProjectChangeOrdersPage({
 
   const contractIds = (contractIdsResponse.data || []).map((c) => c.id);
 
-  const commitmentResponse = contractIds.length > 0
-    ? await supabase
-        .from("contract_change_orders")
-        .select("*")
-        .in("contract_id", contractIds)
-        .order("created_at", { ascending: false })
-    : { data: [], error: null };
+  // A commitment CO belongs to this project if EITHER it hangs off one of the
+  // project's contracts OR it is stamped directly with project_id. The second
+  // branch covers Acumatica project-level change orders whose commitment header
+  // was never synced (contract_id points at a deleted "ghost" commitment) —
+  // see scripts/jobplanner/backfill-cco-project-id.mjs (2026-07-09). project_id
+  // now exists on contract_change_orders, so the old "no FK to project" workaround
+  // (resolve only via contract IDs) hid 132 real COs on Westfield Collective.
+  // PostgREST returns each row once, so overlapping matches are not double-counted.
+  const orFilters = [`project_id.eq.${numericProjectId}`];
+  if (contractIds.length > 0) {
+    orFilters.push(`contract_id.in.(${contractIds.join(",")})`);
+  }
+  const commitmentResponse = await supabase
+    .from("contract_change_orders")
+    .select("*")
+    .or(orFilters.join(","))
+    .order("created_at", { ascending: false });
 
   if (commitmentResponse.error) {
     console.error("Error loading commitment change orders:", commitmentResponse.error);

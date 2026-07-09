@@ -574,6 +574,12 @@ export interface UnifiedTablePageProps<T> {
     plainFooterTotals?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
+    /**
+     * Keep the toolbar (search/filter/column/export icons) on the SAME row as
+     * the tabs at every width, instead of the default (icons drop into the
+     * header row below `lg`). Only meaningful when `tabs` are provided.
+     */
+    toolbarWithTabs?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
     containerClassName?: string;
     /** Override the card-view grid className (default: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4) */
@@ -881,6 +887,7 @@ export function UnifiedTablePage<T>({
   const plainFooterTotals = layout?.plainFooterTotals ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
+  const toolbarWithTabs = (layout?.toolbarWithTabs ?? false) && Boolean(tabs);
   const containerMaxWidth = layout?.maxWidth ?? "full";
   const containerClassName = layout?.containerClassName;
   const containerPadding = layout?.containerPadding !== false;
@@ -2011,6 +2018,23 @@ export function UnifiedTablePage<T>({
   const headerContent = (
     <PageHeader
       title={header.title}
+      // Render the title with `truncate` instead of PageHeader's default
+      // `break-words`. Table-page headers place the toolbar inline with the
+      // title (mobileActionsInline), and the toolbar is `shrink-0`, so in a
+      // narrow container (e.g. the tablet 3-pane center column) the title's
+      // flex column can be squeezed below one word's width — `break-words`
+      // then shatters it one letter per line. Truncating fails gracefully to
+      // an ellipsis and is a no-op on desktop where the title fits.
+      // Scoped to the default variant: the `compact` variant renders the title
+      // as a small Eyebrow, so passing titleContent there would wrongly replace
+      // it with this large <h1>.
+      titleContent={
+        header.variant === "compact" ? undefined : (
+          <h1 className="truncate text-3xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
+            {header.title}
+          </h1>
+        )
+      }
       eyebrow={header.eyebrow}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
@@ -2026,6 +2050,9 @@ export function UnifiedTablePage<T>({
             {headerActionsSlot}
             {tableToolbar}
           </div>
+        ) : toolbarWithTabs ? (
+          // Toolbar lives on the tabs row at all widths — no duplicate in the header.
+          headerActionsSlot
         ) : headerActionsSlot ? (
           <div className="flex items-center gap-2">
             {headerActionsSlot}
@@ -2056,10 +2083,15 @@ export function UnifiedTablePage<T>({
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
-            "flex flex-col gap-2",
-            tabs
-              ? "md:flex-row md:items-center md:justify-between md:gap-4"
-              : "md:flex-row md:items-center md:justify-end md:gap-4",
+            toolbarWithTabs
+              ? // Keep tabs + toolbar on one horizontal row at EVERY width.
+                "flex flex-row items-center justify-between gap-2"
+              : cn(
+                  "flex flex-col gap-2",
+                  tabs
+                    ? "md:flex-row md:items-center md:justify-between md:gap-4"
+                    : "md:flex-row md:items-center md:justify-end md:gap-4",
+                ),
             isCompactDensity
               ? "pb-1 pt-0"
               : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
@@ -2075,11 +2107,13 @@ export function UnifiedTablePage<T>({
           {!toolbarInlineWithHeader && !shouldPortalToolbar ? (
             <div
               className={cn(
-                TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
+                toolbarWithTabs
+                  ? "flex min-w-0 justify-end"
+                  : TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
                 tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >
-              {tableToolbar}
+              {toolbarWithTabs ? renderTableToolbar("w-auto py-0") : tableToolbar}
             </div>
           ) : null}
         </div>

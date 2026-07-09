@@ -1,0 +1,3569 @@
+{
+  "generatedAt": "2026-07-09T05:07:52.795Z",
+  "jpProjectId": 2403,
+  "appProjectId": 43,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 137,
+    "adopt": 0,
+    "create": 137,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 150,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 58,
+    "pccoWithExecutedTwin": 40
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 622,
+      "number": "CR-2403-0025",
+      "title": "R15 ISO at Foundation Perimeter",
+      "statusId": 10,
+      "cost": 4304.37,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 25, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 644,
+      "number": "CR-2403-0028",
+      "title": "Mechanical Screens",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 3,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 28, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 582,
+      "number": "CR-2403-0023",
+      "title": "Additional Surveying",
+      "statusId": 8,
+      "cost": 1650,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 23, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 614,
+      "number": "CR-2403-0024",
+      "title": "Lime Stabilization",
+      "statusId": 10,
+      "cost": 80437.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 24, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 633,
+      "number": "CR-2403-0026",
+      "title": "DGI Interior Design Additions",
+      "statusId": 8,
+      "cost": 682752.05,
+      "lineItems": 26,
+      "fork": {
+        "prime": 20,
+        "commitment": 11,
+        "unlinked": 4
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 26, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 940,
+      "number": "CR-2403-0046",
+      "title": "FO Box Relocation",
+      "statusId": 10,
+      "cost": 29333.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 46, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1515,
+      "number": "CR-2403-0096",
+      "title": "True Step: Canceled CO #1 Partitions: Detailing Charge Only",
+      "statusId": 8,
+      "cost": 578,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 96, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 490,
+      "number": "CR-2403-0018",
+      "title": "Damn Good Interiors Design ",
+      "statusId": 8,
+      "cost": 16066,
+      "lineItems": 3,
+      "fork": {
+        "prime": 3,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 18, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 412,
+      "number": "CR-2403-0004",
+      "title": "Vacation and Reconstruction of Existing Drain Tile",
+      "statusId": 8,
+      "cost": 15722.93,
+      "lineItems": 2,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 338,
+      "number": "CR-2403-0002",
+      "title": "Secondary Plat Services",
+      "statusId": 8,
+      "cost": 3500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 479,
+      "number": "CR-2403-0015",
+      "title": "United Excavating T&M Tickets",
+      "statusId": 8,
+      "cost": 19612.18,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 15, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 481,
+      "number": "CR-2403-0016",
+      "title": "Elevator Equipment Room Relocation",
+      "statusId": 8,
+      "cost": 2260,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 16, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 466,
+      "number": "CR-2403-0012",
+      "title": "Add Structure 612",
+      "statusId": 8,
+      "cost": 3932.08,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 12, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 411,
+      "number": "CR-2403-0005",
+      "title": "Removal of Additional Concrete Foundations",
+      "statusId": 8,
+      "cost": 3889.25,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 491,
+      "number": "CR-2403-0019",
+      "title": "Center Point Energy Encroachment Application",
+      "statusId": 8,
+      "cost": 1300,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 19, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 419,
+      "number": "CR-2403-0008",
+      "title": "Add Kitchen Design and Buildout",
+      "statusId": 8,
+      "cost": 303365,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 372,
+      "number": "CR-2403-0006",
+      "title": "ROW Scope Increase From City",
+      "statusId": 8,
+      "cost": 10856,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 432,
+      "number": "CR-2403-0010",
+      "title": "Deduct To Split Buildings",
+      "statusId": 8,
+      "cost": -1600000,
+      "lineItems": 11,
+      "fork": {
+        "prime": 9,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 351,
+      "number": "CR-2403-0007",
+      "title": "Site Work Adds From City Review",
+      "statusId": 8,
+      "cost": 15349,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 946,
+      "number": "CR-2403-0047",
+      "title": "Site Work Contingencies ",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 6,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 6
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 47, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 577,
+      "number": "CR-2403-0021",
+      "title": "Trail Pavement Section Credit",
+      "statusId": 8,
+      "cost": -3321.25,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 21, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 526,
+      "number": "CR-2403-0020",
+      "title": "IBeach Logistics Adds",
+      "statusId": 8,
+      "cost": 2378,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 20, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 639,
+      "number": "CR-2403-0027",
+      "title": "Awning Deduct",
+      "statusId": 8,
+      "cost": -5460,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 27, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 670,
+      "number": "CR-2403-0032",
+      "title": "Add Volley Ball Court Bathrooms",
+      "statusId": 8,
+      "cost": 89913,
+      "lineItems": 13,
+      "fork": {
+        "prime": 13,
+        "commitment": 5,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 32, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 661,
+      "number": "CR-2403-0030",
+      "title": "Foundation Fast Cure Mix",
+      "statusId": 8,
+      "cost": 6265,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 30, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 662,
+      "number": "CR-2403-0031",
+      "title": "Merritt- Additional Stone ",
+      "statusId": 8,
+      "cost": 7286,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 31, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 739,
+      "number": "CR-2403-0033",
+      "title": "Concrete in VB Courts",
+      "statusId": 8,
+      "cost": 48016,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 33, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 749,
+      "number": "CR-2403-0034",
+      "title": "VB Spoils Export",
+      "statusId": 8,
+      "cost": 23578.5,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 34, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1573,
+      "number": "CR-2403-0106",
+      "title": "Casework Concepts Deducts",
+      "statusId": 8,
+      "cost": -9728,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 106, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 792,
+      "number": "CR-2403-0036",
+      "title": "Deduct For Trailer Power Reconnection",
+      "statusId": 8,
+      "cost": -1545,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 36, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 812,
+      "number": "CR-2403-0037",
+      "title": "OH Doors Deduct",
+      "statusId": 8,
+      "cost": -2532,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 37, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 853,
+      "number": "CR-2403-0038",
+      "title": "Electrical Design Shortages",
+      "statusId": 8,
+      "cost": 34150,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 38, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 868,
+      "number": "CR-2403-0039",
+      "title": "Added Stone For Drive and Crane Pad for Agg Piers",
+      "statusId": 8,
+      "cost": 20160,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 39, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 869,
+      "number": "CR-2403-0040",
+      "title": "Concrete Patio Addition",
+      "statusId": 8,
+      "cost": 63036.86,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 40, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 873,
+      "number": "CR-2403-0041",
+      "title": "Concrete Contingency",
+      "statusId": 8,
+      "cost": 10569.37,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 41, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 387,
+      "number": "CR-2403-0003",
+      "title": "Permits and Inspections",
+      "statusId": 8,
+      "cost": 37896.76,
+      "lineItems": 8,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 8
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 908,
+      "number": "CR-2403-0044",
+      "title": "LeMaster Items Left Off Subcontract",
+      "statusId": 8,
+      "cost": 103500,
+      "lineItems": 7,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 7
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 44, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 890,
+      "number": "CR-2403-0043",
+      "title": "Perimeter Trail Deduct From DPW",
+      "statusId": 8,
+      "cost": -34691.8,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 43, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2466,
+      "number": "CR-2403-0154",
+      "title": "(exterior) Walk in cooler electrical hook up ",
+      "statusId": 8,
+      "cost": 2714.7,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 154, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1530,
+      "number": "CR-2403-0098",
+      "title": "True Step CO #7 Rail Post Design Change",
+      "statusId": 8,
+      "cost": 26880,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 98, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 888,
+      "number": "CR-2403-0042",
+      "title": "HVAC Deduct to FITE",
+      "statusId": 8,
+      "cost": -201000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 42, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1531,
+      "number": "CR-2403-0099",
+      "title": "Euro Plastering Winter Conditions",
+      "statusId": 8,
+      "cost": 5000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 99, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 924,
+      "number": "CR-2403-0045",
+      "title": "Big Ass Fans",
+      "statusId": 8,
+      "cost": 25853.72,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 45, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1632,
+      "number": "CR-2403-0108",
+      "title": "8 Added Feminine Hygiene Waste Baskets",
+      "statusId": 8,
+      "cost": 352.68,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 108, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1532,
+      "number": "CR-2403-0100",
+      "title": "Remove and Reinstall Windows and Store Fronts due to vapor barrier ",
+      "statusId": 8,
+      "cost": 4850,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 100, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1078,
+      "number": "CR-2403-0051",
+      "title": "Tracked Equipment Rental",
+      "statusId": 8,
+      "cost": 3623.33,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 51, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1533,
+      "number": "CR-2403-0101",
+      "title": "S&M Painting, painting all MEPs in ceiling, dryfall paint, add for painting sound spray",
+      "statusId": 8,
+      "cost": 21692,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 101, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1077,
+      "number": "CR-2403-0050",
+      "title": "Access Panels At Beer Wall",
+      "statusId": 8,
+      "cost": 1650,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 50, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1534,
+      "number": "CR-2403-0102",
+      "title": "Added Piping for new kitchen & Updated Beer Chase",
+      "statusId": 0,
+      "cost": 23017.57,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 102, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1651,
+      "number": "CR-2403-0109",
+      "title": "Sand and Seal Vendor Kitchens, Bars, Ice Cream Shop, and Commissary",
+      "statusId": 9,
+      "cost": 17800,
+      "lineItems": 2,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 109, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1747,
+      "number": "CR-2403-0118",
+      "title": "S&M CO #5, painting SSB trim, ",
+      "statusId": 8,
+      "cost": 2250,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 118, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1535,
+      "number": "CR-2403-0103",
+      "title": "SSB Added Install Labor",
+      "statusId": 10,
+      "cost": 1900,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 103, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1723,
+      "number": "CR-2403-0117",
+      "title": "Added HVAC work in Elevator Mechanical Room",
+      "statusId": 8,
+      "cost": 2630,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 117, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1536,
+      "number": "CR-2403-0104",
+      "title": "LeMaster December Extra Labor Costs",
+      "statusId": 8,
+      "cost": 200,
+      "lineItems": 11,
+      "fork": {
+        "prime": 0,
+        "commitment": 11,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 104, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1653,
+      "number": "CR-2403-0110",
+      "title": "DGI Design Change: Coffee/ Bourbon Bar",
+      "statusId": 8,
+      "cost": 955,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 110, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1716,
+      "number": "CR-2403-0114",
+      "title": "2nd Floor Patio wood board extension",
+      "statusId": 9,
+      "cost": 14261,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 114, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1537,
+      "number": "CR-2403-0105",
+      "title": "LeMaster January Extra Labor Costs",
+      "statusId": 8,
+      "cost": 2913.75,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 105, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1084,
+      "number": "CR-2403-0052",
+      "title": "Added Downspouts and Underdrains",
+      "statusId": 8,
+      "cost": 5720,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 52, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1097,
+      "number": "CR-2403-0053",
+      "title": "Re-Prep SOG",
+      "statusId": 8,
+      "cost": 16500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 53, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1100,
+      "number": "CR-2403-0054",
+      "title": "Fiber Optic Box Relocation",
+      "statusId": 8,
+      "cost": 29333.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 54, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1585,
+      "number": "CR-2403-0107",
+      "title": "Added Booster for Dishwasher",
+      "statusId": 9,
+      "cost": 5298.64,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 107, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1175,
+      "number": "CR-2403-0056",
+      "title": "November Design Adds",
+      "statusId": 8,
+      "cost": 208483,
+      "lineItems": 10,
+      "fork": {
+        "prime": 0,
+        "commitment": 6,
+        "unlinked": 4
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 56, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1176,
+      "number": "CR-2403-0057",
+      "title": "December Design Adds",
+      "statusId": 8,
+      "cost": 223522.87,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 57, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1181,
+      "number": "CR-2403-0059",
+      "title": "RTU Curb Reinforcement for Screens",
+      "statusId": 8,
+      "cost": 17610,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 59, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1183,
+      "number": "CR-2403-0060",
+      "title": "LeMaster Tickets",
+      "statusId": 8,
+      "cost": 1782.5,
+      "lineItems": 4,
+      "fork": {
+        "prime": 0,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 60, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1234,
+      "number": "CR-2403-0061",
+      "title": "Added Commissary Access door EX111A",
+      "statusId": 8,
+      "cost": 2852.42,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 61, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1247,
+      "number": "CR-2403-0062",
+      "title": "Overtime work ",
+      "statusId": 8,
+      "cost": 1320,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 62, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1248,
+      "number": "CR-2403-0063",
+      "title": "Deduct ceramic Floor tile around bar 1st and 2nd floor",
+      "statusId": 8,
+      "cost": -7200,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 63, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1250,
+      "number": "CR-2403-0064",
+      "title": "Deduct storefront windows from 6'4\" to 6'0\"",
+      "statusId": 8,
+      "cost": 1915,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 64, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1255,
+      "number": "CR-2403-0065",
+      "title": "Demo Curb Walk Combo at Dumpster",
+      "statusId": 8,
+      "cost": 2270,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 65, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1256,
+      "number": "CR-2403-0066",
+      "title": "HVAC Design Change after site walk with Brandon",
+      "statusId": 8,
+      "cost": 23650,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 66, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1303,
+      "number": "CR-2403-0077",
+      "title": "Monument Sign Deduct ",
+      "statusId": 8,
+      "cost": -1646,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 77, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1412,
+      "number": "CR-2403-0089",
+      "title": "Cut Down Frames on 2nd Floor West Elevation",
+      "statusId": 8,
+      "cost": 3185,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 89, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1319,
+      "number": "CR-2403-0078",
+      "title": "Added sidewalk from North volleyball patio to dumpster sidewalk",
+      "statusId": 8,
+      "cost": 1650,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 78, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1288,
+      "number": "CR-2403-0074",
+      "title": "Superior had to cut the frame to the riser room. Superior to install all exterior hollow metal doors, frames, and hardware",
+      "statusId": 8,
+      "cost": 3125,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 74, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1277,
+      "number": "CR-2403-0069",
+      "title": "DGI 10.28.25 Updated Interior Design ",
+      "statusId": 8,
+      "cost": 20275,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 69, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1269,
+      "number": "CR-2403-0067",
+      "title": "(Craving Crapes) Added sidewalk from North volleyball patio to dumpster sidewalk",
+      "statusId": 8,
+      "cost": 1651.75,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 67, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1349,
+      "number": "CR-2403-0083",
+      "title": "Brake Metal trim at single doors",
+      "statusId": 8,
+      "cost": 285,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 83, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1320,
+      "number": "CR-2403-0079",
+      "title": "(3) Added Exterior Gooseneck Light",
+      "statusId": 8,
+      "cost": 2500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 79, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1279,
+      "number": "CR-2403-0070",
+      "title": "CMU Block wall tear down at main entrance",
+      "statusId": 8,
+      "cost": 10400,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 70, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1276,
+      "number": "CR-2403-0068",
+      "title": "Replace Damaged Frame 123 (DKM)",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 68, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1346,
+      "number": "CR-2403-0082",
+      "title": "Kebony Cladding Board",
+      "statusId": 8,
+      "cost": 8335.5,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 3
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 82, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1337,
+      "number": "CR-2403-0080",
+      "title": "11/12/2025 Owner Site Walk Add",
+      "statusId": 8,
+      "cost": 5324.02,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 80, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1344,
+      "number": "CR-2403-0081",
+      "title": "11.20.2025 Interior Design Updates (2nd Lvl Beer Wall)",
+      "statusId": 8,
+      "cost": 18880.94,
+      "lineItems": 6,
+      "fork": {
+        "prime": 6,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 81, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1351,
+      "number": "CR-2403-0084",
+      "title": "East Interior Volleyball wall fur out",
+      "statusId": 9,
+      "cost": 14433.05,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 3
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 84, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1367,
+      "number": "CR-2403-0086",
+      "title": "Added interior walking path along the South and East perimeter of the volleyball building",
+      "statusId": 9,
+      "cost": 23005,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 86, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1411,
+      "number": "CR-2403-0088",
+      "title": "Remove and reinstall storefront for vapor barrier installation",
+      "statusId": 10,
+      "cost": 0,
+      "lineItems": 0,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 88, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1405,
+      "number": "CR-2403-0087",
+      "title": "Winter Conditions (Merritt)",
+      "statusId": 8,
+      "cost": 688.25,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 87, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1863,
+      "number": "CR-2403-0126",
+      "title": "Final Inspection Fees",
+      "statusId": 10,
+      "cost": 153.5,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 3
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 126, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1428,
+      "number": "CR-2403-0090",
+      "title": "Fire Rated Ceiling in Elevator Mech Room",
+      "statusId": 8,
+      "cost": 490,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 90, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1429,
+      "number": "CR-2403-0091",
+      "title": "Commissary Bulkhead & hard lid",
+      "statusId": 8,
+      "cost": 1898,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 91, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1430,
+      "number": "CR-2403-0092",
+      "title": "Deduct for FRP locations & Construct 2nd floor window sills (South Wall)",
+      "statusId": 8,
+      "cost": -6800,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 92, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1433,
+      "number": "CR-2403-0093",
+      "title": "Elevator Mech Room Door , Frame, Hardware (CIH)",
+      "statusId": 8,
+      "cost": 2605.45,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 93, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1465,
+      "number": "CR-2403-0094",
+      "title": "Added Storage room under interior stair case",
+      "statusId": 8,
+      "cost": 6543,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 94, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1719,
+      "number": "CR-2403-0115",
+      "title": "Painting 1st and 2nd floor RR entryways ",
+      "statusId": 9,
+      "cost": 1750,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 115, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1720,
+      "number": "CR-2403-0116",
+      "title": "2nd Floor Casework (C-04) booth safety caps",
+      "statusId": 8,
+      "cost": 1640,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 116, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1712,
+      "number": "CR-2403-0112",
+      "title": "1st and 2nd floor bar islands ",
+      "statusId": 8,
+      "cost": 13088,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 112, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1713,
+      "number": "CR-2403-0113",
+      "title": "Ice Cream Shop (4) Added Receptacles ",
+      "statusId": 8,
+      "cost": 6034.84,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 113, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1498,
+      "number": "CR-2403-0095",
+      "title": "Men's and Women's Bath Accessories",
+      "statusId": 8,
+      "cost": 3546,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 95, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2468,
+      "number": "CR-2403-0155",
+      "title": "Provide and Install two new dumpster enclosure gates",
+      "statusId": 8,
+      "cost": 8901.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 155, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1784,
+      "number": "CR-2403-0120",
+      "title": "Refurbish (2) Owner Provided Countertops ",
+      "statusId": 8,
+      "cost": 600,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 120, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1785,
+      "number": "CR-2403-0121",
+      "title": "(2) Two Semi Recessed Trash Units",
+      "statusId": 8,
+      "cost": 1493.73,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 121, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1786,
+      "number": "CR-2403-0122",
+      "title": "Install electrical cover plates at all owner provided lighting locations to prevent schedule delays",
+      "statusId": 8,
+      "cost": 1074.56,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 122, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1796,
+      "number": "CR-2403-0123",
+      "title": "Lost & Damaged Items (CIH)",
+      "statusId": 0,
+      "cost": 0,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 123, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1801,
+      "number": "CR-2403-0124",
+      "title": "Additional Kebony Boards needed to complete North patio stairs",
+      "statusId": 8,
+      "cost": 3556.88,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 124, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1802,
+      "number": "CR-2403-0125",
+      "title": "Changing Opening 123 from a 20min fire rating to a 45 min. fire rating",
+      "statusId": 8,
+      "cost": 2648.25,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 125, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1900,
+      "number": "CR-2403-0132",
+      "title": "Added tile work under communal bathroom counters & demo installed tile under bar islands",
+      "statusId": 8,
+      "cost": 2300,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 132, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1699,
+      "number": "CR-2403-0111",
+      "title": "DEEM Electrical Change Orders",
+      "statusId": 3,
+      "cost": 27017.59,
+      "lineItems": 7,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 7
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 111, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1355,
+      "number": "CR-2403-0085",
+      "title": "Deduct for drink rails and high tops ",
+      "statusId": 9,
+      "cost": -58770.5,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 85, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1755,
+      "number": "CR-2403-0119",
+      "title": "Mural Art ",
+      "statusId": 9,
+      "cost": 16890,
+      "lineItems": 5,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 5
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 119, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1172,
+      "number": "CR-2403-0055",
+      "title": "Final Permit and Inspection Fees",
+      "statusId": 8,
+      "cost": 1882.14,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 55, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1302,
+      "number": "CR-2403-0076",
+      "title": "Elevator Equipment Room, New Wall outside Private Room, Install 5 welded window frames",
+      "statusId": 8,
+      "cost": 3272,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 76, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1290,
+      "number": "CR-2403-0075",
+      "title": "Ceiling tile VE option credit and Frame between existing building girts and tyvek in two areas",
+      "statusId": 8,
+      "cost": -4080,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 75, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1865,
+      "number": "CR-2403-0127",
+      "title": "Day Laborers Requested By Bobby",
+      "statusId": 8,
+      "cost": 678.58,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 127, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1869,
+      "number": "CR-2403-0128",
+      "title": "3 WOK Faucets ",
+      "statusId": 8,
+      "cost": 445.26,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 128, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1908,
+      "number": "CR-2403-0134",
+      "title": "M-04 and M-05 Interior High Top tables",
+      "statusId": 9,
+      "cost": 48089.44,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 134, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1899,
+      "number": "CR-2403-0131",
+      "title": "Dumpster Enclosure Expansion",
+      "statusId": 8,
+      "cost": 9750,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 131, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1917,
+      "number": "CR-2403-0136",
+      "title": "3 Gas Regulators for vendor kitchens",
+      "statusId": 8,
+      "cost": 300,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 136, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1920,
+      "number": "CR-2403-0137",
+      "title": "Replace Two Lost A2 Cores",
+      "statusId": 8,
+      "cost": 118.41,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 137, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1898,
+      "number": "CR-2403-0130",
+      "title": "West Patio Expansion ",
+      "statusId": 8,
+      "cost": 17150,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 130, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1902,
+      "number": "CR-2403-0133",
+      "title": "Superior Change Order",
+      "statusId": 9,
+      "cost": 820,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 133, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1874,
+      "number": "CR-2403-0129",
+      "title": "Superior to install baby changing tables",
+      "statusId": 9,
+      "cost": 0,
+      "lineItems": 0,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 129, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1967,
+      "number": "CR-2403-0139",
+      "title": "Caulking Specialists T&M Tickets",
+      "statusId": 8,
+      "cost": 2466,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 139, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2444,
+      "number": "CR-2403-0153",
+      "title": "Added concrete testing",
+      "statusId": 8,
+      "cost": 553,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 153, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2014,
+      "number": "CR-2403-0140",
+      "title": "Added bracing for countertops. ",
+      "statusId": 8,
+      "cost": 1000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 140, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2024,
+      "number": "CR-2403-0141",
+      "title": "6 Added dedicated circuits for Co2 machine and walk in cooler",
+      "statusId": 8,
+      "cost": 9188.62,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 141, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2030,
+      "number": "CR-2403-0142",
+      "title": "DEMO Dumpster enclosure front wall and gates",
+      "statusId": 8,
+      "cost": 3000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 142, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2039,
+      "number": "CR-2403-0144",
+      "title": "Opening 123 change",
+      "statusId": 8,
+      "cost": 4894.23,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 144, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2038,
+      "number": "CR-2403-0143",
+      "title": "Recalled CO-2403-0059 \"Delete High Tops\"",
+      "statusId": 8,
+      "cost": 11861.44,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 143, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2091,
+      "number": "CR-2403-0145",
+      "title": "Additional Topsoil (Riser Room & Electrical Room)",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 145, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2093,
+      "number": "CR-2403-0146",
+      "title": "T&M Path Undercuts (Asphalt Path)",
+      "statusId": 8,
+      "cost": 8059.5,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 146, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2198,
+      "number": "CR-2403-0151",
+      "title": "Added electrical work for added tamper switches required by fire marshal",
+      "statusId": 8,
+      "cost": 759.16,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 151, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2158,
+      "number": "CR-2403-0147",
+      "title": "Added Storefront 214",
+      "statusId": 8,
+      "cost": 2970,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 147, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1010,
+      "number": "CR-2403-0048",
+      "title": "ROW Undercutting",
+      "statusId": 8,
+      "cost": 24050,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 48, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2196,
+      "number": "CR-2403-0150",
+      "title": "Added topsoil at 4 service doors",
+      "statusId": 8,
+      "cost": 625,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 150, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2195,
+      "number": "CR-2403-0149",
+      "title": "Added top soil and removal of gravel near asphalt path",
+      "statusId": 8,
+      "cost": 1250,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 149, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2235,
+      "number": "CR-2403-0152",
+      "title": "Deduct for nonslip sealer not being placed from contract",
+      "statusId": 0,
+      "cost": -3000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 152, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-2403-0043",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 2569.36,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0063",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": -7200,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0021",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": -1545,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0001",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 19612.18,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0068",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 78000,
+        "twin": null
+      },
+      {
+        "number": "1",
+        "commitmentNumber": "SC-2403-0003",
+        "amount": 2260,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0048",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 8658.82,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0143",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 606.69,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0049",
+        "commitmentNumber": "SC-2403-0021",
+        "amount": 1800,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0006",
+        "commitmentNumber": "SC-2403-0014",
+        "amount": -3321.25,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0007",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 4304.37,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0008",
+        "commitmentNumber": "SC-2403-0017",
+        "amount": -5460,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0009",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 6265,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0010",
+        "commitmentNumber": "SC-2403-0008",
+        "amount": 1650,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0011",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 23750,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0012",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 3932.08,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0013",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 82915,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0014",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 180000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0015",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 3868,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0016",
+        "commitmentNumber": "SC-2403-0021",
+        "amount": 1800,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0017",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 22225,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0018",
+        "commitmentNumber": "SC-2403-0004",
+        "amount": 17000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0019",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 2500,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0025",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 5500,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0027",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 18078.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0026",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 7286,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0023",
+        "commitmentNumber": "SC-2403-0015",
+        "amount": -2532,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0022",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 80437.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0024",
+        "commitmentNumber": "SC-2403-0025",
+        "amount": 15000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0028",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 26955,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0029",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 21061,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0030",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 34150,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0031",
+        "commitmentNumber": "SC-2403-0012",
+        "amount": 2030,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0060",
+        "commitmentNumber": "SC-2403-0018",
+        "amount": -3722,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0032",
+        "commitmentNumber": "SC-2403-0014",
+        "amount": -34691.8,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0033",
+        "commitmentNumber": "SC-2403-0004",
+        "amount": -201000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0146",
+        "commitmentNumber": "SC-2403-0025",
+        "amount": 2250,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0034",
+        "commitmentNumber": "SC-2403-0028",
+        "amount": 49730,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0038",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 1500,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0036",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 20160,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0037",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 5713.32,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0039",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 54836.86,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0040",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 3623.33,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0041",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": -7500,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0035",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 111000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0054",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 24302.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0061",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": -2060.2,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0042",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 181542,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0051",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 14610,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0055",
+        "commitmentNumber": "SC-2403-0012",
+        "amount": 10000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0058",
+        "commitmentNumber": "SC-2403-0018",
+        "amount": 3300,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0138",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 450,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0137",
+        "commitmentNumber": "SC-2403-0030",
+        "amount": 3718,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0071",
+        "commitmentNumber": "SC-2403-0028",
+        "amount": 23650,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0072",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 41690,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0069",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 17610,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0044",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 19000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0074",
+        "commitmentNumber": "SC-2403-0027",
+        "amount": -606.69,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0076",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 3125,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0075",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 1650,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0062",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 1320,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0059",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 83756,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0078",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 3272,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0139",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 700,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0079",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 1650,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0080",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 1651.75,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0082",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 3667.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0065",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": -1915,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0083",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": -212.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0084",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": -427.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0081",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": -1245,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0066",
+        "commitmentNumber": "SC-2403-0025",
+        "amount": 2100,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0077",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": -4080,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0070",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 2270,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0085",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 1242.27,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0086",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 875,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0087",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 1000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0088",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 15550,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0089",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 300,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0091",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": -1600,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0090",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 3681.75,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0094",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 2500,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0140",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 6034.84,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0147",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 2210.65,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0132",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 3710,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0142",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 1074.56,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0125",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": -860,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0096",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": -10400,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0097",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 285,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0098",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 3185,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0101",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 3160,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0102",
+        "commitmentNumber": "SC-2403-0030",
+        "amount": 6000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0111",
+        "commitmentNumber": "PO-2403-0003",
+        "amount": 2200,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0099",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 490,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0103",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 5270.94,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0109",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 6335,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0112",
+        "commitmentNumber": "SC-2403-0018",
+        "amount": 578,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0127",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 2552.42,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0105",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 2605.45,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0100",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": -6800,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0104",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 4000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0110",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 6543,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0106",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 1898,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0113",
+        "commitmentNumber": "SC-2403-0018",
+        "amount": 10002,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0115",
+        "commitmentNumber": "SC-2403-0028",
+        "amount": -3000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0107",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": 688.25,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0108",
+        "commitmentNumber": "SC-2403-0009",
+        "amount": -1646,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0133",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 6042,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0122",
+        "commitmentNumber": "SC-2403-0030",
+        "amount": -9728,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0129",
+        "commitmentNumber": "SC-2403-0022",
+        "amount": 7000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0130",
+        "commitmentNumber": "SC-2403-0028",
+        "amount": 3000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0123",
+        "commitmentNumber": "SC-2403-0003",
+        "amount": -2260,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0116",
+        "commitmentNumber": "SC-2403-0018",
+        "amount": 26880,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0117",
+        "commitmentNumber": "SC-2403-0011",
+        "amount": 5000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0118",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 4850,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0131",
+        "commitmentNumber": "SC-2403-0028",
+        "amount": 2630,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0144",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 400,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0119",
+        "commitmentNumber": "SC-2403-0025",
+        "amount": 21692,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0047",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": -1600,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0134",
+        "commitmentNumber": "SC-2403-0030",
+        "amount": 1640,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0120",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 2913.75,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0135",
+        "commitmentNumber": "SC-2403-0024",
+        "amount": 4400,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0124",
+        "commitmentNumber": "SC-2403-0001",
+        "amount": 1405,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0136",
+        "commitmentNumber": "SC-2403-0024",
+        "amount": 600,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0145",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 2648.25,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0126",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": -345,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0128",
+        "commitmentNumber": "PO-2403-0003",
+        "amount": 352.68,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0148",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 2300,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0149",
+        "commitmentNumber": "SC-2403-0006",
+        "amount": 300,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0150",
+        "commitmentNumber": "PO-2403-0002",
+        "amount": 118.41,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0151",
+        "commitmentNumber": "SC-2403-0023",
+        "amount": 820,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0153",
+        "commitmentNumber": "SC-2403-0022",
+        "amount": 2466,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0053",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 5720,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0154",
+        "commitmentNumber": "SC-2403-0024",
+        "amount": 4000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0156",
+        "commitmentNumber": "SC-2403-0026",
+        "amount": 1200,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0064",
+        "commitmentNumber": "SC-2403-0005",
+        "amount": 9440,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0067",
+        "commitmentNumber": "SC-2403-0024",
+        "amount": 16814.87,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0157",
+        "commitmentNumber": "SC-2403-0024",
+        "amount": 1000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0159",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 9188.62,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0158",
+        "commitmentNumber": "SC-2403-0012",
+        "amount": 20800,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0160",
+        "commitmentNumber": "SC-2403-0012",
+        "amount": 3000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0161",
+        "commitmentNumber": "SC-2403-0019",
+        "amount": 625,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0162",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": -625,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0164",
+        "commitmentNumber": "SC-2403-0013",
+        "amount": 2970,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0165",
+        "commitmentNumber": "SC-2403-0019",
+        "amount": 1250,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0166",
+        "commitmentNumber": "SC-2403-0019",
+        "amount": 625,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0167",
+        "commitmentNumber": "SC-2403-0007",
+        "amount": 759.16,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0168",
+        "commitmentNumber": "SC-2403-0014",
+        "amount": 8059.5,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0169",
+        "commitmentNumber": "SC-2403-0021",
+        "amount": -4000,
+        "twin": null
+      },
+      {
+        "number": "CCO-2403-0170",
+        "commitmentNumber": "SC-2403-0016",
+        "amount": 553,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCO-006",
+        "amount": 8032,
+        "twin": {
+          "id": 17,
+          "number": "000514",
+          "amount": 8032
+        }
+      },
+      {
+        "number": "PCO-001",
+        "amount": 47005.83,
+        "twin": {
+          "id": 12,
+          "number": "000479",
+          "amount": 47005.83
+        }
+      },
+      {
+        "number": "PCO-004",
+        "amount": 17511.42,
+        "twin": {
+          "id": 13,
+          "number": "000480",
+          "amount": 17511.42
+        }
+      },
+      {
+        "number": "PCO-002",
+        "amount": -1782000,
+        "twin": {
+          "id": 10,
+          "number": "000477",
+          "amount": -1782000
+        }
+      },
+      {
+        "number": "PCO-003",
+        "amount": 3898.13,
+        "twin": {
+          "id": 1739,
+          "number": "001877",
+          "amount": 3898.13
+        }
+      },
+      {
+        "number": "PCO-005",
+        "amount": 2648.51,
+        "twin": {
+          "id": 14,
+          "number": "000488",
+          "amount": 2648.5
+        }
+      },
+      {
+        "number": "PCCO-2403-0012",
+        "amount": 1447.88,
+        "twin": {
+          "id": 19,
+          "number": "000569",
+          "amount": 1447.88
+        }
+      },
+      {
+        "number": "PCCO-2403-0013",
+        "amount": 104072.18,
+        "twin": {
+          "id": 22,
+          "number": "000581",
+          "amount": 104072.18
+        }
+      },
+      {
+        "number": "PCCO-2403-0014",
+        "amount": 337872.78,
+        "twin": {
+          "id": 26,
+          "number": "000605",
+          "amount": 337872.78
+        }
+      },
+      {
+        "number": "PCCO-2403-0015",
+        "amount": 2784.38,
+        "twin": {
+          "id": 81,
+          "number": "001468",
+          "amount": 2784.38
+        }
+      },
+      {
+        "number": "PCCO-2403-0016",
+        "amount": 0,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0018",
+        "amount": 0,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0050",
+        "amount": 2450.25,
+        "twin": {
+          "id": 100,
+          "number": "001774",
+          "amount": 2450.25
+        }
+      },
+      {
+        "number": "PCCO-2403-0017",
+        "amount": 55687.5,
+        "twin": {
+          "id": 32,
+          "number": "000727",
+          "amount": 55687.5
+        }
+      },
+      {
+        "number": "PCCO-2403-0019",
+        "amount": 0,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0023",
+        "amount": 80746.88,
+        "twin": {
+          "id": 51,
+          "number": "001040",
+          "amount": 80746.88
+        }
+      },
+      {
+        "number": "PCCO-2403-0021",
+        "amount": 0,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0026",
+        "amount": 235365.06,
+        "twin": {
+          "id": 74,
+          "number": "001420",
+          "amount": 235365.06
+        }
+      },
+      {
+        "number": "PCCO-2403-0024",
+        "amount": 42207.51,
+        "twin": {
+          "id": 55,
+          "number": "001243",
+          "amount": 42207.51
+        }
+      },
+      {
+        "number": "PCCO-2403-0025",
+        "amount": 32670.19,
+        "twin": {
+          "id": 56,
+          "number": "001244",
+          "amount": 32670.19
+        }
+      },
+      {
+        "number": "PCCO-2403-0027",
+        "amount": 230911.15,
+        "twin": {
+          "id": 5,
+          "number": "001421",
+          "amount": 230911.15
+        }
+      },
+      {
+        "number": "PCCO-2403-0020",
+        "amount": 231223.5,
+        "twin": {
+          "id": 5,
+          "number": "001421",
+          "amount": 230911.15
+        }
+      },
+      {
+        "number": "PCCO-2403-0029",
+        "amount": 3677.32,
+        "twin": {
+          "id": 80,
+          "number": "001467",
+          "amount": 3677.32
+        }
+      },
+      {
+        "number": "PCCO-2403-0030",
+        "amount": 3677.32,
+        "twin": {
+          "id": 80,
+          "number": "001467",
+          "amount": 3677.32
+        }
+      },
+      {
+        "number": "PCCO-2403-0031",
+        "amount": 22748.35,
+        "twin": {
+          "id": 96,
+          "number": "001770",
+          "amount": 22748.35
+        }
+      },
+      {
+        "number": "PCCO-2403-0051",
+        "amount": 15120,
+        "twin": {
+          "id": 2,
+          "number": "001775",
+          "amount": 15120
+        }
+      },
+      {
+        "number": "PCCO-2403-0032",
+        "amount": 3789.45,
+        "twin": {
+          "id": 87,
+          "number": "001624",
+          "amount": 3789.45
+        }
+      },
+      {
+        "number": "PCCO-2403-0033",
+        "amount": 2784.38,
+        "twin": {
+          "id": 81,
+          "number": "001468",
+          "amount": 2784.38
+        }
+      },
+      {
+        "number": "PCCO-2403-0039",
+        "amount": 25093.85,
+        "twin": {
+          "id": 85,
+          "number": "001598",
+          "amount": 25093.85
+        }
+      },
+      {
+        "number": "PCCO-2403-0060",
+        "amount": 2096.23,
+        "twin": {
+          "id": 4,
+          "number": "001777",
+          "amount": 2096.23
+        }
+      },
+      {
+        "number": "PCCO-2403-0059",
+        "amount": -66226.37,
+        "twin": {
+          "id": 1744,
+          "number": "001887",
+          "amount": -66226.37
+        }
+      },
+      {
+        "number": "PCCO-2403-0055",
+        "amount": 668.25,
+        "twin": {
+          "id": 94,
+          "number": "001761",
+          "amount": 668.25
+        }
+      },
+      {
+        "number": "PCCO-2403-0036",
+        "amount": 40100.57,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0056",
+        "amount": 1663.65,
+        "twin": {
+          "id": 97,
+          "number": "001784",
+          "amount": 1663.65
+        }
+      },
+      {
+        "number": "PCCO-2403-0058",
+        "amount": 1196.79,
+        "twin": {
+          "id": 95,
+          "number": "001763",
+          "amount": 1196.79
+        }
+      },
+      {
+        "number": "PCCO-2403-0070",
+        "amount": 495.91,
+        "twin": {
+          "id": 1741,
+          "number": "001884",
+          "amount": 495.91
+        }
+      },
+      {
+        "number": "PCCO-2403-0041",
+        "amount": 8900,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0047",
+        "amount": 7389.56,
+        "twin": {
+          "id": 92,
+          "number": "001757",
+          "amount": 7389.56
+        }
+      },
+      {
+        "number": "PCCO-2403-0061",
+        "amount": 52290.26,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0044",
+        "amount": 9912.38,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0052",
+        "amount": 1063.63,
+        "twin": {
+          "id": 93,
+          "number": "001758",
+          "amount": 1063.63
+        }
+      },
+      {
+        "number": "PCCO-2403-0071",
+        "amount": 755.77,
+        "twin": {
+          "id": 1742,
+          "number": "001885",
+          "amount": 755.77
+        }
+      },
+      {
+        "number": "PCCO-2403-0075",
+        "amount": 11861.44,
+        "twin": {
+          "id": 1743,
+          "number": "001886",
+          "amount": 11861.44
+        }
+      },
+      {
+        "number": "PCCO-2403-0034",
+        "amount": 6507.74,
+        "twin": {
+          "id": 88,
+          "number": "001684",
+          "amount": 6507.74
+        }
+      },
+      {
+        "number": "PCCO-2403-0040",
+        "amount": 6458.23,
+        "twin": {
+          "id": 88,
+          "number": "001684",
+          "amount": 6507.74
+        }
+      },
+      {
+        "number": "PCCO-2403-0048",
+        "amount": 18611.89,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0054",
+        "amount": 18811.24,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0049",
+        "amount": 2673,
+        "twin": {
+          "id": 14,
+          "number": "000488",
+          "amount": 2648.5
+        }
+      },
+      {
+        "number": "PCCO-2403-0069",
+        "amount": 23550.25,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0072",
+        "amount": 11124.83,
+        "twin": {
+          "id": 1738,
+          "number": "001875",
+          "amount": 11124.83
+        }
+      },
+      {
+        "number": "PCCO-2403-0073",
+        "amount": 3898.13,
+        "twin": {
+          "id": 1739,
+          "number": "001877",
+          "amount": 3898.13
+        }
+      },
+      {
+        "number": "PCCO-2403-0062",
+        "amount": 9745.32,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0076",
+        "amount": 5562.34,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0074",
+        "amount": -34691.8,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0066",
+        "amount": 51089.44,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0079",
+        "amount": 3023.49,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0080",
+        "amount": 9914.05,
+        "twin": null
+      },
+      {
+        "number": "PCCO-2403-0078",
+        "amount": 3023.49,
+        "twin": null
+      }
+    ]
+  }
+}

@@ -11,6 +11,7 @@ import {
   generateEmbedding,
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
+import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
 import { withExecutiveDailyBriefObservation } from "@/lib/ai/executive-daily-brief-langfuse";
 import {
   buildAgentLearningContextBlock,
@@ -1516,25 +1517,18 @@ async function loadRecentCommunicationSignalItems(
 }
 
 async function runChunkSearch(
-  queryEmbedding: string,
+  query: string,
   sourceGroup: SourceGroup,
 ): Promise<RagRow[]> {
-  const supabase = createRagServiceClient();
-  const { data, error } = await supabase.rpc("search_document_chunks", {
-    query_embedding: queryEmbedding,
-    filter_source_types: sourceGroup.sourceTypes,
-    filter_project_id: undefined,
-    match_count: 10,
-    match_threshold: 0.08,
+  return retrieveChunks({
+    query,
+    openai: getOpenAI(),
+    ragClient: createRagServiceClient(),
+    sourceTypes: sourceGroup.sourceTypes,
+    matchCount: 10,
+    matchThreshold: 0.08,
+    errorLabel: `Daily Brief chunk search for ${sourceGroup.label}`,
   });
-
-  if (error) {
-    throw new Error(
-      `search_document_chunks failed for ${sourceGroup.label}: ${error.message}`,
-    );
-  }
-
-  return data ?? [];
 }
 
 async function loadMetadata(
@@ -4391,10 +4385,10 @@ export async function generateBrandonDailyUpdate(
         async () =>
           (
             await Promise.allSettled(
-              embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
+              embeddingsBySpec.flatMap(({ spec }) =>
                 SOURCE_GROUPS.map(async (sourceGroup) => {
                   const rows = await withBriefingTimeout(
-                    runChunkSearch(queryEmbedding, sourceGroup),
+                    runChunkSearch(spec.query, sourceGroup),
                     EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS,
                     `Daily Brief chunk search for ${spec.title} (${sourceGroup.label})`,
                   );

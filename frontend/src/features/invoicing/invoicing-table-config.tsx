@@ -165,7 +165,7 @@ export function buildInvoiceTableColumns(
         <Button
           type="button"
           variant="link"
-          className="h-auto p-0 font-medium"
+          className="h-auto p-0 font-medium text-foreground hover:text-foreground hover:underline"
           onClick={() => onView(invoice)}
         >
           {invoice.invoice_number || `INV-${invoice.id}`}

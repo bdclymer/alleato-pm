@@ -242,14 +242,16 @@ export function SiteHeader() {
             />
           </Link>
 
-          {/* Breadcrumbs — Desktop */}
+          {/* Breadcrumbs — only where there's room (lg+). Below lg the project
+              selector + tools dropdown already convey location, so hiding the
+              trail here keeps the header from crowding into it. */}
           {breadcrumbs.length > 1 && (
-            <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
+            <div className="hidden lg:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
               <BreadcrumbTrail
                 items={breadcrumbs}
                 listClassName="text-xs"
-                linkClassName="max-w-[10rem] text-muted-foreground"
-                currentClassName="max-w-[12rem] font-medium text-foreground"
+                linkClassName="max-w-[8rem] xl:max-w-[10rem] text-muted-foreground"
+                currentClassName="max-w-[10rem] xl:max-w-[12rem] font-medium text-foreground"
                 maxVisibleItems={5}
                 leadingItems={2}
                 trailingItems={2}
@@ -259,7 +261,7 @@ export function SiteHeader() {
         </div>
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
-        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+        <div className="hidden md:flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
@@ -407,7 +409,7 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className={cn("w-52", headerSelectTriggerClassName)}
+          className={cn("w-36 lg:w-44 xl:w-52", headerSelectTriggerClassName)}
         >
           <span
             className={cn(

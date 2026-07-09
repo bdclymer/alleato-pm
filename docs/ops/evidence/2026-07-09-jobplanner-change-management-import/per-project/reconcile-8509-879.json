@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-07-09T05:07:54.093Z",
+  "jpProjectId": 8509,
+  "appProjectId": 879,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 2,
+    "adopt": 0,
+    "create": 2,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 2,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 0,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2499,
+      "number": "CR-8509-0002",
+      "title": "Additional Fab & Loose Material",
+      "statusId": 8,
+      "cost": 25749.29,
+      "lineItems": 4,
+      "fork": {
+        "prime": 0,
+        "commitment": 4,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2478,
+      "number": "CR-8509-0001",
+      "title": "Phase 2 Sprinkler Installation",
+      "statusId": 8,
+      "cost": 98875,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-8509-0002",
+        "commitmentNumber": "PO-8509-0001",
+        "amount": 25749.29,
+        "twin": null
+      },
+      {
+        "number": "CCO-8509-0001",
+        "commitmentNumber": "SC-8509-0001",
+        "amount": 98875,
+        "twin": null
+      }
+    ],
+    "prime": []
+  }
+}

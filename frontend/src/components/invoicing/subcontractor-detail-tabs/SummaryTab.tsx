@@ -407,7 +407,7 @@ export function SummaryTab({
         <SectionRuleHeading label="Summary Preview" />
 
         {/* TO / FROM address blocks (stacked) + Project metadata (right column) */}
-        <div className="grid grid-cols-2 gap-x-20 gap-y-0">
+        <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-20 sm:gap-y-0">
           {/* Left column: stacked TO then FROM */}
           <div className="space-y-6">
             <div className="space-y-1 text-sm">
@@ -595,7 +595,7 @@ export function SummaryTab({
                   </TableCell>
                   <TableCell
                     colSpan={2}
-                    className="text-center tabular-nums text-sm font-medium"
+                    className="text-right tabular-nums text-sm font-medium"
                   >
                     {formatCurrency(changeOrderNet)}
                   </TableCell>

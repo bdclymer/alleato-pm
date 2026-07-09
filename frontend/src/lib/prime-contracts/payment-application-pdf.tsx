@@ -12,10 +12,10 @@ import {
 import React from "react";
 
 import {
-  calculatePaymentApplicationSummary,
+  computePrimePaymentApplication,
   type PaymentApplicationSummary,
   type PaymentApplicationSummaryLineItem,
-} from "@/lib/prime-contracts/payment-application-summary";
+} from "@/lib/invoicing/payment-application";
 
 const ALLEATO_ORANGE = "#df8324";
 const ALLEATO_BLACK = "#2f2f2f";
@@ -287,7 +287,7 @@ export function PaymentApplicationPdfDocument({
 }: {
   data: PaymentApplicationPdfData;
 }) {
-  const summary = calculatePaymentApplicationSummary({
+  const summary = computePrimePaymentApplication({
     lineItems: data.lineItems,
     contract: {
       original_contract_value: data.contract.originalContractValue,
@@ -357,21 +357,21 @@ export function PaymentApplicationPdfDocument({
         <View style={styles.rollup}>
           <View style={styles.rollupLine}>
             <Text style={styles.rollupLabel}>Total Completed</Text>
-            <Text>{fmtCurrency(summary.totalCompletedAndStored)}</Text>
+            <Text>{fmtCurrency(summary.total_completed_and_stored)}</Text>
           </View>
           <View style={styles.rollupLine}>
             <Text style={styles.rollupLabel}>Retainage</Text>
-            <Text>{fmtCurrency(summary.totalRetainage)}</Text>
+            <Text>{fmtCurrency(summary.total_retainage)}</Text>
           </View>
           <View style={styles.rollupLine}>
             <Text style={styles.rollupLabel}>Previously Certified</Text>
-            <Text>{fmtCurrency(summary.previousPaymentDue)}</Text>
+            <Text>{fmtCurrency(summary.less_previous_certificates)}</Text>
           </View>
         </View>
 
         <View style={styles.totalBox}>
           <Text style={styles.totalLabel}>Current Payment Due</Text>
-          <Text style={styles.totalValue}>{fmtCurrency(summary.currentPaymentDue)}</Text>
+          <Text style={styles.totalValue}>{fmtCurrency(summary.current_payment_due)}</Text>
         </View>
 
         {data.notes ? <Text style={styles.notes}>Notes: {data.notes}</Text> : null}

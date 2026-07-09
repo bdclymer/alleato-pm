@@ -111,3 +111,43 @@ def test_single_failure_does_not_page(monkeypatch):
     monkeypatch.setattr(notifier, "get_rag_read_client", lambda: _Client(rows))
 
     assert notifier.evaluate_pipeline_outcomes(now) == []
+
+
+def test_project_intelligence_staleness_alert_fires_when_stale(monkeypatch):
+    """A stale project_current_state must produce a page-worthy alert descriptor
+    (issue #759 — silent 2-week staleness had no alert)."""
+    monkeypatch.setattr(
+        "src.services.health.project_intelligence_staleness_check.check_project_intelligence_staleness",
+        lambda: {
+            "healthy": False,
+            "project_current_state_staleness_days": 15,
+            "alerts": [
+                {"table": "project_current_state", "message": "project_current_state narratives are stale: 15 days old"}
+            ],
+        },
+    )
+    alert = notifier._project_intelligence_staleness_alert()
+    assert alert is not None
+    assert alert["source"] == "project_intelligence_staleness"
+    assert alert["failed"] == 15
+    assert "15 days" in alert["reason"]
+
+
+def test_project_intelligence_staleness_alert_silent_when_fresh(monkeypatch):
+    monkeypatch.setattr(
+        "src.services.health.project_intelligence_staleness_check.check_project_intelligence_staleness",
+        lambda: {"healthy": True},
+    )
+    assert notifier._project_intelligence_staleness_alert() is None
+
+
+def test_project_intelligence_staleness_alert_never_raises(monkeypatch):
+    """Best-effort: a failing check must return None, never take down the notifier."""
+    def _boom():
+        raise RuntimeError("db down")
+
+    monkeypatch.setattr(
+        "src.services.health.project_intelligence_staleness_check.check_project_intelligence_staleness",
+        _boom,
+    )
+    assert notifier._project_intelligence_staleness_alert() is None

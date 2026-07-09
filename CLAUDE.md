@@ -387,6 +387,13 @@ Branch naming: `feat/{slug}` for features/refactors/infra, `fix/issue-{number}-{
 GitHub-issue fixes (e.g. `fix/issue-427-direct-costs-panel`). For issue fixes, the PR body
 must contain `Closes #{number}` so GitHub auto-closes the issue on merge.
 
+**Open PRs ready for review, NOT as drafts.** Megan's standing preference (2026-07-09): a
+new PR should be created ready for review, not draft. If your harness defaults to opening
+a draft, immediately mark it ready for review after creating it. The only exception is the
+Codex automation lane, which may still open a **draft PR for human review** when its risk
+gate flags a change (see the automation section above) — that is an automated safety
+decision, not the default for interactive work.
+
 **Keep branches short-lived and delete them after merge** — do not let a long-lived
 `develop`/staging branch drift behind `main`. Drift causes painful multi-file merge
 conflicts (and is what motivated this workflow). If a branch must live a while, merge
@@ -404,6 +411,8 @@ once checks pass (described above).
 - Use MCP, CLI, or Bash — never tell the user to do something manually.
 - When you find a bug during any task, fix it or spawn a sub-agent. No "improvement opportunities" lists.
 - `cd X && command` chains fail in zsh — use absolute paths.
+- **Reporting back to Megan:** every progress report, completion, or hand-back uses the four-section format in `.claude/rules/RESPONSE-FORMAT-CONTRACT.md` (✅ Done with screenshots + live links / 🔀 In review / ⏭ Recommended next / 🙋 Needs you). The `🙋 Needs you` section is what she scans first — never bury a decision or approval elsewhere.
+- **Tracking work:** the single ranked backlog is GitHub Issues per `docs/ops/BACKLOG-SYSTEM.md` (type/priority/state axes + the `needs-megan` flag). File real follow-ups as issues; tag anything blocked on Megan `needs-megan`. Do not add `codex:fix`/`autofix` to a backlog item unless a bot should attempt it.
 - **START of session:** Read `WORKING_CONTEXT.md`.
 - **END of session:** Update `WORKING_CONTEXT.md`.
 - **Resuming from a context summary:** Execute every pending task listed in the summary immediately and completely — fix, commit, deploy, verify — without asking. If a deploy doesn't auto-trigger, detect it and trigger it via the Render/Vercel API. Use `spawn_task` for any optional follow-up items discovered along the way. The user should come back to "done", not to a question.

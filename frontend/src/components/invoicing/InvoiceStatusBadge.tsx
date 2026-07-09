@@ -13,11 +13,12 @@ export type InvoiceStatus =
   | "not_invited"
   | "invited";
 
-const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "warning" | "outline"; className?: string }> = {
+const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "warning" | "info" | "outline"; className?: string }> = {
   draft:                { label: "Draft",                variant: "secondary" },
   under_review:         { label: "Under Review",         variant: "outline", className: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800" },
-  approved:             { label: "Approved",             variant: "success" },
-  approved_as_noted:    { label: "Approved as Noted",    variant: "success" },
+  // Approved-but-not-yet-paid is blue (info); only Paid — money settled — is green (success).
+  approved:             { label: "Approved",             variant: "info" },
+  approved_as_noted:    { label: "Approved as Noted",    variant: "info" },
   pending_owner_approval: { label: "Pending Owner Approval", variant: "warning" },
   revise_and_resubmit:  { label: "Revise and Resubmit",  variant: "destructive" },
   paid:                 { label: "Paid",                 variant: "success" },

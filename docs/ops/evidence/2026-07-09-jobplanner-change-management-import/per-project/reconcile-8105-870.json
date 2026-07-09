@@ -1,0 +1,369 @@
+{
+  "generatedAt": "2026-07-09T05:07:49.541Z",
+  "jpProjectId": 8105,
+  "appProjectId": 870,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 12,
+    "adopt": 0,
+    "create": 12,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 13,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 8,
+    "pccoWithExecutedTwin": 8
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2407,
+      "number": "CR-8105-0008",
+      "title": "Owner Requested Replacement of Wall-Hung Urinal, Lavatory Sink, and Faucet",
+      "statusId": 8,
+      "cost": 1773.61,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2032,
+      "number": "CR-8105-0001",
+      "title": "GW Washington Owner Change Request",
+      "statusId": 8,
+      "cost": 1010,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2122,
+      "number": "CR-8105-0002",
+      "title": "Additional-Canopy EIFS work",
+      "statusId": 8,
+      "cost": 3390,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2201,
+      "number": "CR-8105-0003",
+      "title": "GW Washington Owner request demo work",
+      "statusId": 8,
+      "cost": 2945,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2224,
+      "number": "CR-8105-0005",
+      "title": "Owner request added BR material",
+      "statusId": 8,
+      "cost": 259.36,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2228,
+      "number": "CR-8105-0006",
+      "title": "Relocate Electrical Panels",
+      "statusId": 0,
+      "cost": 78800,
+      "lineItems": 7,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 7
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2242,
+      "number": "CR-8105-0007",
+      "title": "HVAC Relocation",
+      "statusId": 8,
+      "cost": 39754,
+      "lineItems": 5,
+      "fork": {
+        "prime": 3,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2593,
+      "number": "CR-8105-0009",
+      "title": "Donation Door Ramp Extension and Restriping",
+      "statusId": 10,
+      "cost": 4400,
+      "lineItems": 4,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 4
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2639,
+      "number": "CR-8105-0010",
+      "title": "Owner Request-Added Work – Windowsill Demolition and Drywall Repairs",
+      "statusId": 8,
+      "cost": 1918.98,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2646,
+      "number": "CR-8105-0012",
+      "title": "Floor Drain and Cleanout Removal",
+      "statusId": 8,
+      "cost": 2270.34,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 12, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2641,
+      "number": "CR-8105-0011",
+      "title": "Bathroom – Additional Drywall Repairs Outside Original Scope",
+      "statusId": 8,
+      "cost": 4240,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 11, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2672,
+      "number": "CR-8105-0013",
+      "title": "Owner Request-Customer Restroom Door Replacement",
+      "statusId": 8,
+      "cost": 1860,
+      "lineItems": 3,
+      "fork": {
+        "prime": 3,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 13, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-8105-0001",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 1010,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0002",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 3585,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0003",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 3390,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0005",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 2945,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0006",
+        "commitmentNumber": "PO-8105-0001",
+        "amount": 259.36,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0007",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 2885,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0008",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": -2025,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0010",
+        "commitmentNumber": "SC-8105-0006",
+        "amount": 4638.21,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0009",
+        "commitmentNumber": "SC-8105-0006",
+        "amount": 1773.61,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0011",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 1918.98,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0013",
+        "commitmentNumber": "SC-8105-0006",
+        "amount": 2270.34,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0012",
+        "commitmentNumber": "SC-8105-0004",
+        "amount": 4240,
+        "twin": null
+      },
+      {
+        "number": "CCO-8105-0014",
+        "commitmentNumber": "SC-8105-0002",
+        "amount": 1860,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-8105-0002",
+        "amount": 4152.24,
+        "twin": {
+          "id": 1753,
+          "number": "001973",
+          "amount": 4152.24
+        }
+      },
+      {
+        "number": "PCCO-8105-0003",
+        "amount": 259.36,
+        "twin": {
+          "id": 1969,
+          "number": "002010",
+          "amount": 259.36
+        }
+      },
+      {
+        "number": "PCCO-8105-0004",
+        "amount": 44266.08,
+        "twin": {
+          "id": 1970,
+          "number": "002020",
+          "amount": 44266.08
+        }
+      },
+      {
+        "number": "PCCO-8105-0005",
+        "amount": 1974.91,
+        "twin": {
+          "id": 2355,
+          "number": "002128",
+          "amount": 1974.91
+        }
+      },
+      {
+        "number": "PCCO-8105-0008",
+        "amount": 2528.02,
+        "twin": {
+          "id": 2878,
+          "number": "002312",
+          "amount": 2528.02
+        }
+      },
+      {
+        "number": "PCCO-8105-0010",
+        "amount": 2071.11,
+        "twin": {
+          "id": 3983,
+          "number": "002319",
+          "amount": 2071.11
+        }
+      },
+      {
+        "number": "PCCO-8105-0006",
+        "amount": 2136.79,
+        "twin": {
+          "id": 2874,
+          "number": "002305",
+          "amount": 2136.79
+        }
+      },
+      {
+        "number": "PCCO-8105-0007",
+        "amount": 4721.24,
+        "twin": {
+          "id": 2877,
+          "number": "002310",
+          "amount": 4721.24
+        }
+      }
+    ]
+  }
+}

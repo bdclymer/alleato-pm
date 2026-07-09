@@ -1,0 +1,237 @@
+{
+  "generatedAt": "2026-07-09T05:07:55.221Z",
+  "jpProjectId": 8109,
+  "appProjectId": 865,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 7,
+    "adopt": 0,
+    "create": 7,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 8,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 6,
+    "pccoWithExecutedTwin": 5
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2308,
+      "number": "CR-8109-0007",
+      "title": "Owner Adds Windowsills and New breakroom cabinets",
+      "statusId": 8,
+      "cost": 8770,
+      "lineItems": 5,
+      "fork": {
+        "prime": 3,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2397,
+      "number": "CR-8109-0008",
+      "title": "Owner Request: Demolition of (2) wingwalls and bracing, with patching of existing soffit.",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 6,
+      "fork": {
+        "prime": 4,
+        "commitment": 2,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2173,
+      "number": "CR-8109-0003",
+      "title": "Owner Walk 4/7/26- Additional Scope Changes ",
+      "statusId": 8,
+      "cost": 34925,
+      "lineItems": 15,
+      "fork": {
+        "prime": 13,
+        "commitment": 13,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2147,
+      "number": "CR-8109-0002",
+      "title": "Owner Added Scope Items",
+      "statusId": 10,
+      "cost": 34925,
+      "lineItems": 4,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 4
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2218,
+      "number": "CR-8109-0004",
+      "title": " Steel-Angel Install",
+      "statusId": 8,
+      "cost": 9186,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2225,
+      "number": "CR-8109-0005",
+      "title": "Owner added additional sanitary napkin disposal",
+      "statusId": 8,
+      "cost": 77.53,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2640,
+      "number": "CR-8109-0009",
+      "title": "Owner Request-Added Work – Wall Demolition, Drywall Repairs, and Chase Wall Construction",
+      "statusId": 8,
+      "cost": 3958.95,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-8109-0007",
+        "commitmentNumber": "SC-8109-0002",
+        "amount": 2610,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0001",
+        "commitmentNumber": "PO-8109-0001",
+        "amount": 77.53,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0002",
+        "commitmentNumber": "SC-8109-0004",
+        "amount": 34925,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0003",
+        "commitmentNumber": "SC-8109-0003",
+        "amount": 200,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0004",
+        "commitmentNumber": "SC-8109-0004",
+        "amount": 4910,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0005",
+        "commitmentNumber": "SC-8109-0001",
+        "amount": 6791.88,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0006",
+        "commitmentNumber": "SC-8109-0001",
+        "amount": -332.38,
+        "twin": null
+      },
+      {
+        "number": "CCO-8109-0008",
+        "commitmentNumber": "SC-8109-0004",
+        "amount": 3958.95,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-8109-0003",
+        "amount": 10241.01,
+        "twin": {
+          "id": 1756,
+          "number": "001988",
+          "amount": 10241.01
+        }
+      },
+      {
+        "number": "PCCO-8109-0002",
+        "amount": 38936.14,
+        "twin": {
+          "id": 1755,
+          "number": "001987",
+          "amount": 38936.14
+        }
+      },
+      {
+        "number": "PCCO-8109-0005",
+        "amount": 86.43,
+        "twin": {
+          "id": 1971,
+          "number": "002036",
+          "amount": 86.43
+        }
+      },
+      {
+        "number": "PCCO-8109-0006",
+        "amount": 9777.24,
+        "twin": {
+          "id": 2346,
+          "number": "002039",
+          "amount": 9777.24
+        }
+      },
+      {
+        "number": "PCCO-8109-0007",
+        "amount": 0,
+        "twin": null
+      },
+      {
+        "number": "PCCO-8109-0008",
+        "amount": 4413.64,
+        "twin": {
+          "id": 2875,
+          "number": "002306",
+          "amount": 4413.64
+        }
+      }
+    ]
+  }
+}

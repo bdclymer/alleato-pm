@@ -1,0 +1,790 @@
+{
+  "generatedAt": "2026-07-09T05:08:03.237Z",
+  "jpProjectId": 3729,
+  "appProjectId": 31,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 31,
+    "adopt": 0,
+    "create": 31,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 24,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 15,
+    "pccoWithExecutedTwin": 12
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 972,
+      "number": "CR-3729-0015",
+      "title": "Insurance for special policy to meet there contract requirements",
+      "statusId": 8,
+      "cost": 72976,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 15, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 864,
+      "number": "CR-3729-0012",
+      "title": "Adding (14) additional branch lines and overtime to avoid adding 5 weeks to project  duration",
+      "statusId": 8,
+      "cost": 93150.52,
+      "lineItems": 3,
+      "fork": {
+        "prime": 3,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 12, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 996,
+      "number": "CR-3729-0020",
+      "title": "Air Compressor ",
+      "statusId": 0,
+      "cost": 0,
+      "lineItems": 0,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 20, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1003,
+      "number": "CR-3729-0021",
+      "title": "Additional loose materials",
+      "statusId": 8,
+      "cost": 869.9,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 21, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 710,
+      "number": "CR-3729-0007",
+      "title": "Permit Drawing Changes (Plumbing)",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2327,
+      "number": "CR-3729-0039",
+      "title": "Floor Taping & Chain Link",
+      "statusId": 8,
+      "cost": 4750,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 39, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 742,
+      "number": "CR-3729-0010",
+      "title": "Permit cost exceeding amount in contract allowance",
+      "statusId": 8,
+      "cost": 743.5,
+      "lineItems": 2,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 989,
+      "number": "CR-3729-0019",
+      "title": "Credit for 2 Transformers",
+      "statusId": 8,
+      "cost": -7000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 19, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1529,
+      "number": "CR-3729-0033",
+      "title": "Credit for Bollards",
+      "statusId": 8,
+      "cost": -700,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 33, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 974,
+      "number": "CR-3729-0016",
+      "title": "Electrical Changes",
+      "statusId": 8,
+      "cost": 21303,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 16, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1072,
+      "number": "CR-3729-0022",
+      "title": "D.5 Line Fabrication",
+      "statusId": 8,
+      "cost": 284.89,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 22, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2519,
+      "number": "CR-3729-0042",
+      "title": "Final connection materials",
+      "statusId": 8,
+      "cost": 2609.22,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 42, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1225,
+      "number": "CR-3729-0023",
+      "title": "Added Pipes",
+      "statusId": 8,
+      "cost": 286.1,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 23, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1242,
+      "number": "CR-3729-0025",
+      "title": "Air Compressor Power Adjustments",
+      "statusId": 8,
+      "cost": 25704,
+      "lineItems": 4,
+      "fork": {
+        "prime": 4,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 25, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1259,
+      "number": "CR-3729-0026",
+      "title": "U bolts and Head Wrench",
+      "statusId": 8,
+      "cost": 3202.31,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 26, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1328,
+      "number": "CR-3729-0027",
+      "title": "Fire Alarm Connection Cost Exceeding Budgeted Amount",
+      "statusId": 8,
+      "cost": 4690,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 27, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1330,
+      "number": "CR-3729-0028",
+      "title": "Returned 3 inch Riser Clamps",
+      "statusId": 8,
+      "cost": -1601.48,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 28, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1413,
+      "number": "CR-3729-0030",
+      "title": "Credit for Data Drops",
+      "statusId": 8,
+      "cost": -1999,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 30, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1235,
+      "number": "CR-3729-0024",
+      "title": "Design, Furnish and install of Air Compressors",
+      "statusId": 8,
+      "cost": 263260.39,
+      "lineItems": 5,
+      "fork": {
+        "prime": 5,
+        "commitment": 3,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 24, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1343,
+      "number": "CR-3729-0029",
+      "title": "CSO-2 Breaker Change",
+      "statusId": 8,
+      "cost": 1847,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 29, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1455,
+      "number": "CR-3729-0031",
+      "title": "Additional Head Guards",
+      "statusId": 8,
+      "cost": 2439.84,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 31, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1731,
+      "number": "CR-3729-0034",
+      "title": "Extra Loose Sprinkler Materials",
+      "statusId": 8,
+      "cost": 8114.63,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 34, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2367,
+      "number": "CR-3729-0040",
+      "title": "Vertical Replacement Pipes",
+      "statusId": 8,
+      "cost": 7054.25,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 40, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1491,
+      "number": "CR-3729-0032",
+      "title": "Additional Head Guards",
+      "statusId": 8,
+      "cost": 2439.84,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 32, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2404,
+      "number": "CR-3729-0041",
+      "title": "Vertical Pipe Replacement - Labor",
+      "statusId": 8,
+      "cost": 15600,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 41, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1866,
+      "number": "CR-3729-0035",
+      "title": "Additional Sprinkler Heads",
+      "statusId": 8,
+      "cost": 5181.98,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 35, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1901,
+      "number": "CR-3729-0036",
+      "title": "Conduit attachment Change",
+      "statusId": 8,
+      "cost": 5000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 36, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1921,
+      "number": "CR-3729-0037",
+      "title": "Pressure relief valve for compressor tank",
+      "statusId": 8,
+      "cost": 413.6,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 37, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2236,
+      "number": "CR-3729-0038",
+      "title": "Compressor Electrical  Connection",
+      "statusId": 8,
+      "cost": -4639,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 38, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2585,
+      "number": "CR-3729-0043",
+      "title": "S.A. COMUNALE Contract - Sales Tax",
+      "statusId": 8,
+      "cost": 641.96,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 43, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2634,
+      "number": "CR-3729-0044",
+      "title": "Fire Alarm Sub Panel Installation",
+      "statusId": 8,
+      "cost": 48434,
+      "lineItems": 2,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 44, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-3729-0018",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 5181.98,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0008",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": 25704,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0002",
+        "commitmentNumber": "SC-3729-0002",
+        "amount": 67300,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0001",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 25850.52,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0003",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": 21303,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0004",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": -7000,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0006",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 284.89,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0005",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 869.9,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0009",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 3202.31,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0007",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 286.1,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0020",
+        "commitmentNumber": "SC-3729-0003",
+        "amount": 413.6,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0010",
+        "commitmentNumber": "SC-3729-0003",
+        "amount": 244550,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0011",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": -1601.48,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0012",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": 1847,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0017",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 8114.63,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0013",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 463.82,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0014",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": -1999,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0015",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 2439.84,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0016",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 2439.84,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0019",
+        "commitmentNumber": "SC-3729-0001",
+        "amount": 5000,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0023",
+        "commitmentNumber": "SC-3729-0003",
+        "amount": 2609.22,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0021",
+        "commitmentNumber": "PO-3729-0002",
+        "amount": 7054.25,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0022",
+        "commitmentNumber": "SC-3729-0002",
+        "amount": 15600,
+        "twin": null
+      },
+      {
+        "number": "CCO-3729-0024",
+        "commitmentNumber": "PO-3729-0005",
+        "amount": 641.96,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-3729-0008",
+        "amount": 19518.47,
+        "twin": {
+          "id": 30,
+          "number": "000725",
+          "amount": 19518.47
+        }
+      },
+      {
+        "number": "PCCO-3729-0009",
+        "amount": 627.04,
+        "twin": {
+          "id": 41,
+          "number": "000862",
+          "amount": 627.04
+        }
+      },
+      {
+        "number": "PCCO-3729-0014",
+        "amount": 192290.05,
+        "twin": {
+          "id": 36,
+          "number": "000793",
+          "amount": 192290.05
+        }
+      },
+      {
+        "number": "PCCO-3729-0016",
+        "amount": 81277.02,
+        "twin": {
+          "id": 42,
+          "number": "000876",
+          "amount": 81277.02
+        }
+      },
+      {
+        "number": "PCCO-3729-0017",
+        "amount": 23749.65,
+        "twin": {
+          "id": 45,
+          "number": "000949",
+          "amount": 23749.65
+        }
+      },
+      {
+        "number": "PCCO-3729-0018",
+        "amount": -7000,
+        "twin": {
+          "id": 44,
+          "number": "000948",
+          "amount": -7000
+        }
+      },
+      {
+        "number": "PCCO-3729-0019",
+        "amount": 28656.11,
+        "twin": {
+          "id": 63,
+          "number": "001368",
+          "amount": 28656.11
+        }
+      },
+      {
+        "number": "PCCO-3729-0020",
+        "amount": 300184.95,
+        "twin": {
+          "id": 77,
+          "number": "001425",
+          "amount": 300184.95
+        }
+      },
+      {
+        "number": "PCCO-3729-0017",
+        "amount": 5780.37,
+        "twin": {
+          "id": 82,
+          "number": "001487",
+          "amount": 5780.37
+        }
+      },
+      {
+        "number": "PCCO-3729-0022",
+        "amount": 2226.36,
+        "twin": {
+          "id": 78,
+          "number": "001456",
+          "amount": 2226.36
+        }
+      },
+      {
+        "number": "PCCO-3729-0023",
+        "amount": -700,
+        "twin": null
+      },
+      {
+        "number": "PCCO-3729-0024",
+        "amount": 734.24,
+        "twin": {
+          "id": 200,
+          "number": "001816",
+          "amount": 734.24
+        }
+      },
+      {
+        "number": "PCCO-3729-0025",
+        "amount": -4639,
+        "twin": {
+          "id": 1757,
+          "number": "001991",
+          "amount": -4639
+        }
+      },
+      {
+        "number": "PCCO-3729-0026",
+        "amount": 5290.32,
+        "twin": null
+      },
+      {
+        "number": "PCCO-3729-0029",
+        "amount": 54907.88,
+        "twin": null
+      }
+    ]
+  }
+}

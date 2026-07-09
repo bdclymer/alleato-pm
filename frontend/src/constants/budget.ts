@@ -59,3 +59,22 @@ export function getUomLabel(code: string): string {
   const uom = UNITS_OF_MEASURE.find((u) => u.code === code);
   return uom ? uom.label : code;
 }
+
+/**
+ * Resolve a stored unit-of-measure string to its canonical (UPPERCASE) code.
+ *
+ * Canonical codes are stored uppercase. An edit form whose `<Select>` options
+ * use a different casing than the stored value renders a blank placeholder on
+ * edit (the value never matches an option) and can silently drop the value on
+ * save — the same symptom as a FK id mismatch. Always normalize a stored UOM
+ * through this helper before seeding a select. Case-insensitive match falls
+ * back to the trimmed raw value so unknown/custom codes are preserved.
+ */
+export function normalizeUomCode(raw?: string | null): string {
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return "";
+  const match = UNITS_OF_MEASURE.find(
+    (u) => u.code.toLowerCase() === trimmed.toLowerCase(),
+  );
+  return match ? match.code : trimmed;
+}

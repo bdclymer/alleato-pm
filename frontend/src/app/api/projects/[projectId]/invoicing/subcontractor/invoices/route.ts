@@ -309,6 +309,25 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const invoiceRows = invoices ?? [];
     const invoiceIds = invoiceRows.map((i) => i.id);
 
+    // Batch: ERP (Acumatica AP bill) status for linked invoices, keyed by bill id.
+    const apBillStatusById = new Map<number, string | null>();
+    const apBillIds = Array.from(
+      new Set(
+        invoiceRows
+          .map((i) => i.acumatica_ap_bill_id as number | null)
+          .filter((id): id is number => id != null),
+      ),
+    );
+    if (apBillIds.length > 0) {
+      const { data: billRows } = await supabase
+        .from("acumatica_ap_bills")
+        .select("id, status")
+        .in("id", apBillIds);
+      for (const bill of billRows ?? []) {
+        apBillStatusById.set(bill.id as number, (bill.status as string | null) ?? null);
+      }
+    }
+
     // Batch: line items for all invoices
     const lineItemsByInvoice = new Map<number, Array<Record<string, unknown>>>();
     if (invoiceIds.length > 0) {
@@ -511,7 +530,15 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         net_change_by_cos: netChangeByCos,
         total_contract_amount: totalContractAmount,
         percent_complete: percentComplete,
-        erp_status: null as string | null,
+        // ERP status = the linked Acumatica AP bill's status (Open/Closed/Hold/…);
+        // fall back to a sync signal when a ref exists without a resolvable bill.
+        erp_status: (() => {
+          const billId = invoice.acumatica_ap_bill_id as number | null;
+          const billStatus = billId != null ? apBillStatusById.get(billId) : null;
+          if (billStatus) return billStatus;
+          if (invoice.acumatica_ref_nbr || invoice.acumatica_sync_at) return "Synced";
+          return null;
+        })() as string | null,
         payment_status: paymentStatus,
       };
     });

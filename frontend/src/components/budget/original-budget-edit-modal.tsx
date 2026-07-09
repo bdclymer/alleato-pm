@@ -24,6 +24,7 @@ import {
 import {
   budgetRadioCardClass,
 } from "@/components/budget/modals/style-tokens";
+import { UNITS_OF_MEASURE, normalizeUomCode } from "@/constants/budget";
 
 interface HistoryEntry {
   id: string;
@@ -61,18 +62,6 @@ interface OriginalBudgetEditModalProps {
     originalBudget: number;
   }) => void | Promise<void>;
 }
-
-const UOM_OPTIONS = [
-  { value: "ea", label: "Each" },
-  { value: "lf", label: "Linear Feet" },
-  { value: "sf", label: "Square Feet" },
-  { value: "cy", label: "Cubic Yards" },
-  { value: "ls", label: "Lump Sum" },
-  { value: "hr", label: "Hours" },
-  { value: "day", label: "Days" },
-  { value: "ton", label: "Tons" },
-  { value: "gal", label: "Gallons" },
-];
 
 type CalculationMethod = "manual" | "calculated";
 
@@ -121,7 +110,7 @@ export function OriginalBudgetEditModal({
   const [calculationMethod, setCalculationMethod] =
     useState<CalculationMethod>(getInitialCalculationMethod(lineItem));
   const [unitQty, setUnitQty] = useState(toEditableNumberString(lineItem.unitQty));
-  const [uom, setUom] = useState(lineItem.uom || "");
+  const [uom, setUom] = useState(normalizeUomCode(lineItem.uom));
   const [unitCost, setUnitCost] = useState(toEditableNumberString(lineItem.unitCost));
   const [originalBudget, setOriginalBudget] = useState(
     toEditableNumberString(lineItem.originalBudgetAmount),
@@ -130,7 +119,7 @@ export function OriginalBudgetEditModal({
 
   const hasChanges =
     parseNumberOrDefault(unitQty, lineItem.unitQty ?? 0) !== (lineItem.unitQty ?? 0) ||
-    uom !== (lineItem.uom || "") ||
+    uom !== normalizeUomCode(lineItem.uom) ||
     parseNumberOrDefault(unitCost, lineItem.unitCost ?? 0) !== (lineItem.unitCost ?? 0) ||
     parseNumberOrDefault(originalBudget, lineItem.originalBudgetAmount) !==
       lineItem.originalBudgetAmount;
@@ -158,7 +147,7 @@ export function OriginalBudgetEditModal({
     if (open) {
       setCalculationMethod(getInitialCalculationMethod(lineItem));
       setUnitQty(toEditableNumberString(lineItem.unitQty));
-      setUom(lineItem.uom || "");
+      setUom(normalizeUomCode(lineItem.uom));
       setUnitCost(toEditableNumberString(lineItem.unitCost));
       setOriginalBudget(toEditableNumberString(lineItem.originalBudgetAmount));
     }
@@ -408,9 +397,9 @@ export function OriginalBudgetEditModal({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">Select</SelectItem>
-                        {UOM_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                        {UNITS_OF_MEASURE.map((option) => (
+                          <SelectItem key={option.code} value={option.code}>
+                            {option.code} - {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

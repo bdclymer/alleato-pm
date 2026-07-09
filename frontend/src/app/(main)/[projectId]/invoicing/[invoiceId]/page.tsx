@@ -446,8 +446,8 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
           <ModalTitle>Add Line Item</ModalTitle>
         </ModalHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2 space-y-1">
               <Label htmlFor="add-description">Description</Label>
               <Input
                 id="add-description"
@@ -936,7 +936,7 @@ export default function InvoiceDetailPage() {
         statusBadge={<StatusBadge status={invoice.status} type="invoice" />}
         onBack={() => router.back()}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {/* Primary workflow action(s) for the current status */}
             {(invoice.status === "draft" || invoice.status === "revise_and_resubmit") && (
               <Button size="sm" onClick={handleSubmit}>
