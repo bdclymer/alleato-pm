@@ -48,3 +48,40 @@ Per-line stored figures (`net_amount_this_period`, `total_completed_stored`) are
 GENERATED columns — the database is the single source of truth for stored per-line values;
 the module recomputes them only for edit **preview** and is pinned to the DB expression by
 a parity test.
+
+---
+
+## Project intelligence / content retrieval
+
+**Project content source** — the one operation "get me the content for project X in
+window Y at granularity G." Today it has no home: it is reimplemented across the executive
+brief script, the AI assistant tools, the synthesis sweep, and the intelligence pages,
+each independently choosing a database, a table, a date-window predicate, and a
+project-name lookup. The deepening target is a single module,
+`frontend/src/lib/intelligence/content-source.ts`, exposing `getProjectContent(...)`, that
+absorbs all four decisions behind one interface — so switching a source (RAG chunks ↔ full
+transcripts) is one edit behind the seam, not six edits across copies. This is why the
+2026-06/07 "RAG → full transcripts" change broke the assistant, the daily-brief pages, and
+`/intelligence`: the switch had to be made in every copy, and the copies nobody remembered
+(the Python synthesis sweep) simply froze.
+
+**Content granularity** — the axis the content source is parameterised on, replacing the
+implicit storage choice each caller hardcodes today:
+- `chunks` — embedding-searched excerpts (the current `retrieveChunks` path).
+- `full` — the COMPLETE transcript: concatenated `document_chunks` in `chunk_index` order,
+  or the Storage `transcripts/*.md` markdown. The "full transcripts instead of RAG" path.
+- `summary` — the lossy `document_metadata.summary`/`overview` auto-summary.
+
+**Content window** — the normalized date range for a retrieval. The single source of truth
+for the `date`/`created_at`/`captured_at`/`source_occurred_at`/`coalesce(...)` predicates
+currently forked per caller. Owned by the content source, so project-name resolution
+(and its int8-as-string coercion) happens exactly once.
+
+**Operating record** — the full per-project intelligence row in `project_current_state`
+(`current_summary`, `health_status`, `active_risks`, `open_decisions`, `needs_attention`,
+`financial_read`, `schedule_read`, `field_read`, `source_confidence`, …), plus its sibling
+snapshot/timeline projections. Written by ONE deep module,
+`backend/.../intelligence/compiler.py::apply_source_operating_record_projection`. The
+`/[projectId]/intelligence` page reads the whole record. The Daily Deep Read packet must
+feed this writer through a **packet → operating-record adapter**, not a shallow `.mjs` that
+updates only `current_summary` and leaves the rest of the record stale.
