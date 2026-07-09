@@ -350,6 +350,138 @@ async function fetchProjectNames(projectIds) {
   );
 }
 
+// --- #807: attribution backstop -----------------------------------------------
+// The upstream classifier that stamps rag_document_metadata.project_id sometimes
+// gets it wrong (e.g. a "Shawnee Collective Reconnect" email labeled Westfield
+// Collective). Fixing the classifier is the real fix; here we backstop it, but
+// CONSERVATIVELY: only when a source's title contains the FULL, specific name of
+// exactly one real project that differs from the assigned one. Matching on loose
+// tokens ("sprinkler", "alleato") over-corrects and corrupts attribution, so we
+// deliberately don't — a false correction is worse than a missed one.
+
+function normalizeForMatch(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// All real (non-internal) projects with their normalized names for exact matching.
+async function fetchAllProjects() {
+  return withPg(
+    getAppDatabaseUrl(),
+    { includeSslMode: false, rewriteSupabaseDirectHost: false },
+    async (client) => {
+      const { rows } = await client.query(
+        "select id, name, type from public.projects where name is not null",
+      );
+      return rows
+        .filter((row) => {
+          const name = String(row.name || "");
+          return (
+            !/^temporary project code/i.test(name) &&
+            !/^budget audit seed/i.test(name) &&
+            row.type !== "Internal"
+          );
+        })
+        .map((row) => ({ id: Number(row.id), name: row.name, normalizedName: normalizeForMatch(row.name) }));
+    },
+  );
+}
+
+// The single project whose FULL name appears as a whole phrase in the title, or
+// null. Requires a name specific enough to be an identifier (>= 8 chars) matched
+// on word boundaries. Ambiguous (0 or >1 matches) → null. Never a guess.
+function projectIdFromTitle(title, projects) {
+  const norm = ` ${normalizeForMatch(title)} `;
+  if (norm.trim().length === 0) return null;
+  const matches = projects.filter(
+    (project) =>
+      project.normalizedName &&
+      project.normalizedName.length >= 8 &&
+      norm.includes(` ${project.normalizedName} `),
+  );
+  return matches.length === 1 ? matches[0].id : null;
+}
+
+// Words that are a shared project-naming suffix — the last token of 2+ real
+// project names (e.g. "collective" from Union/Westfield Collective). A one-off
+// place name like "morrisville" (only Exol Morrisville) is NOT a category, so we
+// won't treat "erw01 morrisville" as a sibling of "exol morrisville".
+function categorySuffixWords(projects) {
+  const counts = new Map();
+  for (const project of projects) {
+    const parts = (project.normalizedName || "").split(" ");
+    const last = parts[parts.length - 1];
+    if (last && last.length >= 6) counts.set(last, (counts.get(last) || 0) + 1);
+  }
+  return new Set([...counts.entries()].filter(([, n]) => n >= 2).map(([word]) => word));
+}
+
+// True when the title names a same-category SIBLING of the assigned project —
+// e.g. assigned "Westfield Collective" but the title says "Shawnee Collective".
+// Requires: assigned name absent from the title; the shared last word is a real
+// category suffix (2+ projects); and the differing prefix is a plain word (not a
+// code like "erw01"). Signals the source is about a different entity.
+function titleNamesDifferentSibling(source, assignedNorm, categoryWords) {
+  if (!assignedNorm) return false;
+  const titleNorm = ` ${normalizeForMatch(source.title)} `;
+  if (titleNorm.includes(` ${assignedNorm} `)) return false; // title names the assigned project → trust it
+  const parts = assignedNorm.split(" ");
+  if (parts.length < 2) return false;
+  const category = parts[parts.length - 1];
+  const assignedPrefix = parts[parts.length - 2];
+  if (!categoryWords.has(category)) return false; // not a project-naming convention
+  const re = new RegExp(`\\b([a-z]{4,})\\s+${category}\\b`, "g");
+  for (const match of titleNorm.matchAll(re)) {
+    if (match[1] !== assignedPrefix && match[1] !== category) return true;
+  }
+  return false;
+}
+
+// Backstop the upstream project classifier. Two conservative moves, both keyed
+// on the source title. Mutates sources; returns corrections for the manifest/log.
+function correctAttribution(sources, projects) {
+  const byId = new Map(projects.map((project) => [project.id, project]));
+  const categoryWords = categorySuffixWords(projects);
+  const corrections = [];
+  for (const source of sources) {
+    const assignedNorm = source.projectName ? normalizeForMatch(source.projectName) : "";
+    const titleNamesAssigned = assignedNorm && ` ${normalizeForMatch(source.title)} `.includes(` ${assignedNorm} `);
+    if (titleNamesAssigned) continue; // title confirms the assignment — leave it
+
+    // 1. Title names the full name of a different REAL project → re-attribute to it.
+    const titleProjectId = projectIdFromTitle(source.title, projects);
+    if (titleProjectId && titleProjectId !== Number(source.projectId)) {
+      const to = byId.get(titleProjectId);
+      corrections.push({
+        alias: source.alias,
+        title: source.title,
+        from: { projectId: source.projectId ?? null, projectName: source.projectName ?? null },
+        to: { projectId: titleProjectId, projectName: to?.name ?? null },
+      });
+      source.projectId = titleProjectId;
+      source.projectName = to?.name ?? null;
+      source.attributionCorrected = true;
+      continue;
+    }
+
+    // 2. Title names a same-category SIBLING that isn't a project (e.g. "Shawnee
+    //    Collective" when only "Westfield Collective" exists) → de-attribute, so
+    //    the brief doesn't confidently assert the wrong project.
+    if (source.projectId != null && titleNamesDifferentSibling(source, assignedNorm, categoryWords)) {
+      corrections.push({
+        alias: source.alias,
+        title: source.title,
+        from: { projectId: source.projectId, projectName: source.projectName ?? null },
+        to: { projectId: null, projectName: null },
+        reason: "title names a different same-category entity than the assigned project",
+      });
+      source.projectId = null;
+      source.projectName = null;
+      source.attributionCorrected = true;
+    }
+  }
+  return corrections;
+}
+
 function transcriptUrl(row) {
   const url = row.url || row.source_web_url;
   if (typeof url === "string" && url.includes("/storage/v1/object/public/transcripts/")) return url;
@@ -367,9 +499,21 @@ async function downloadTranscriptMarkdown(row) {
   return cleanText(text);
 }
 
+// Content signature for dedup: same title + same normalized body = the same
+// message ingested twice (e.g. one email delivered to two mailboxes → two
+// rag_document_metadata rows with different ids but identical content). Collapsing
+// them stops the brief from citing / counting the same source twice (#806).
+function contentSignature(title, text) {
+  const normTitle = String(title || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const normText = String(text || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const hash = crypto.createHash("sha1").update(normText).digest("hex").slice(0, 20);
+  return `${normTitle}::${hash}`;
+}
+
 async function materializeSources(rows) {
   const sources = [];
   const skipped = [];
+  const seenSignatures = new Map(); // content signature -> alias of the kept source
   for (const row of rows) {
     const lane = classifyLane(row);
     if (lane === "ignored") continue;
@@ -401,13 +545,23 @@ async function materializeSources(rows) {
       skipped.push({ id: row.id, title: row.title, lane, reason: "meeting source lacks ## Transcript marker" });
       continue;
     }
+    // #806 — deduplicate identical content before it gets an alias, so aliases
+    // stay sequential and gap-free and the source counts are honest.
+    const signature = contentSignature(row.title, text);
+    const duplicateOf = seenSignatures.get(signature);
+    if (duplicateOf) {
+      skipped.push({ id: row.id, title: row.title, lane, reason: `duplicate content of ${duplicateOf}` });
+      continue;
+    }
+    const alias = `S${sources.length + 1}`;
+    seenSignatures.set(signature, alias);
     sources.push({
       id: row.id,
       // Short, stable, mangle-proof citation token. The model is only ever
       // shown this alias (never the raw id), so it cannot truncate a long
       // Outlook id into an ambiguous prefix. The packet manifest maps the alias
       // back to `id`, and the review-page/consumer resolvers do the same.
-      alias: `S${sources.length + 1}`,
+      alias,
       appDocumentId: row.app_document_id,
       title: row.title || row.file_name || row.id,
       lane,
@@ -1006,6 +1160,17 @@ async function main() {
       ? (projectNames.get(key) ?? null)
       : null;
   }
+  // #807: backstop the upstream project classifier against each source's title.
+  const allProjects = await fetchAllProjects();
+  const attributionCorrections = correctAttribution(sources, allProjects);
+  if (attributionCorrections.length) {
+    console.error(`[attribution] re-attributed ${attributionCorrections.length} source(s) from title mismatch:`);
+    for (const correction of attributionCorrections) {
+      console.error(
+        `  ${correction.alias} "${correction.title}": ${correction.from.projectName ?? "unassigned"} -> ${correction.to.projectName}`,
+      );
+    }
+  }
   assertLaneCoverage(rows, sources);
   const corpusMarkdown = renderCorpus(sources, skipped);
   await fs.writeFile(path.join(evidenceDir, "source-corpus.md"), corpusMarkdown);
@@ -1018,6 +1183,7 @@ async function main() {
         generatedAt: new Date().toISOString(),
         shouldWrite,
         rowsConsidered: rows.length,
+        attributionCorrections,
         sources: sources.map(({ text, ...source }) => source),
         skipped,
       },
@@ -1092,7 +1258,16 @@ async function main() {
 
 // Pure helpers exported for unit testing (no DB, no model). The CLI entry point
 // only runs when this file is executed directly, not when imported.
-export { parseModelJson, buildSourcesMap, collectCitedAliases, renderBriefMarkdownV3, validateBriefV3 };
+export {
+  parseModelJson,
+  buildSourcesMap,
+  collectCitedAliases,
+  renderBriefMarkdownV3,
+  validateBriefV3,
+  contentSignature,
+  projectIdFromTitle,
+  correctAttribution,
+};
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main().catch((error) => {

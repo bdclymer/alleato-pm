@@ -182,3 +182,87 @@ describe("generator pure helpers", () => {
     assert.equal(map.S2.url, null);
   });
 });
+
+// --- input hygiene: dedup (#806) + attribution backstop (#807) ---------------
+import {
+  contentSignature,
+  projectIdFromTitle,
+  correctAttribution,
+} from "../daily-executive-brief.mjs";
+
+describe("dedup content signature (#806)", () => {
+  it("same title + same body → same signature; different body → different", () => {
+    const a = contentSignature("Re: UQ scope", "Please see the FA panel breakdown.");
+    const b = contentSignature("Re: UQ scope", "please   see the FA panel breakdown."); // whitespace/case
+    const c = contentSignature("Re: UQ scope", "Different reply entirely.");
+    assert.equal(a, b); // normalized duplicate collapses
+    assert.notEqual(a, c);
+  });
+});
+
+describe("attribution backstop (#807)", () => {
+  const projects = [
+    { id: 1, name: "Shawnee Collective", normalizedName: "shawnee collective", tokens: ["shawnee", "collective"], distinctiveTokens: ["shawnee"] },
+    { id: 2, name: "Westfield Collective", normalizedName: "westfield collective", tokens: ["westfield", "collective"], distinctiveTokens: ["westfield"] },
+    { id: 3, name: "Vermillion Rise Warehouse", normalizedName: "vermillion rise warehouse", tokens: ["vermillion", "rise"], distinctiveTokens: ["vermillion"] },
+  ];
+
+  it("matches a title only when it contains a project's full name", () => {
+    assert.equal(projectIdFromTitle("FW: Shawnee Collective Reconnect", projects), 1);
+    assert.equal(projectIdFromTitle("Vermillion Rise Warehouse weekly coordination", projects), 3);
+    assert.equal(projectIdFromTitle("Generic status update", projects), null);
+    // Generic construction terms and partial names must NOT match — the over-correction case.
+    assert.equal(projectIdFromTitle("RFQ - Sprinkler Pipe Fabrication - Pensacola FL", projects), null);
+    assert.equal(projectIdFromTitle("Vermillion weekly sync", projects), null);
+  });
+
+  it("re-attributes a mislabeled source (Shawnee thread tagged Westfield)", () => {
+    const sources = [
+      { alias: "S1", title: "FW: Shawnee Collective Reconnect", projectId: 2, projectName: "Westfield Collective" },
+    ];
+    const corrections = correctAttribution(sources, projects);
+    assert.equal(corrections.length, 1);
+    assert.equal(sources[0].projectId, 1);
+    assert.equal(sources[0].projectName, "Shawnee Collective");
+    assert.equal(sources[0].attributionCorrected, true);
+    assert.equal(corrections[0].from.projectName, "Westfield Collective");
+    assert.equal(corrections[0].to.projectName, "Shawnee Collective");
+  });
+
+  it("de-attributes when the title names a same-category sibling that isn't a real project", () => {
+    // Reality: no "Shawnee Collective" project exists; the email was mis-stamped
+    // onto the real Westfield Collective. "Collective" is a category (2+ projects:
+    // Westfield + Union), so the Shawnee sibling is recognized → de-attribute.
+    const realProjects = [
+      { id: 2, name: "Westfield Collective", normalizedName: "westfield collective" },
+      { id: 4, name: "Union Collective", normalizedName: "union collective" },
+      { id: 5, name: "Exol Morrisville", normalizedName: "exol morrisville" },
+    ];
+    const sources = [{ alias: "S1", title: "FW: Shawnee Collective Reconnect", projectId: 2, projectName: "Westfield Collective" }];
+    const corrections = correctAttribution(sources, realProjects);
+    assert.equal(corrections.length, 1);
+    assert.equal(sources[0].projectId, null);
+    assert.equal(sources[0].projectName, null);
+  });
+
+  it("does NOT de-attribute a correct source whose place-name suffix is a one-off (Exol Morrisville)", () => {
+    // "morrisville" is the suffix of only one project → not a category, so a
+    // code-prefixed variant in the title must not trigger de-attribution.
+    const realProjects = [
+      { id: 2, name: "Westfield Collective", normalizedName: "westfield collective" },
+      { id: 4, name: "Union Collective", normalizedName: "union collective" },
+      { id: 5, name: "Exol Morrisville", normalizedName: "exol morrisville" },
+    ];
+    const sources = [{ alias: "S1", title: "RE: Exol ERW01 Morrisville PA - Weekly Milestone Review", projectId: 5, projectName: "Exol Morrisville" }];
+    assert.equal(correctAttribution(sources, realProjects).length, 0);
+    assert.equal(sources[0].projectId, 5); // unchanged
+  });
+
+  it("leaves correct assignments alone, and won't override when title names the assigned project", () => {
+    const ok = [{ alias: "S1", title: "Vermillion Rise slab pour", projectId: 3, projectName: "Vermillion Rise Warehouse" }];
+    assert.equal(correctAttribution(ok, projects).length, 0);
+    // Title names both the assigned and another → ambiguous, do not override.
+    const ambiguous = [{ alias: "S2", title: "Westfield vs Shawnee comparison", projectId: 2, projectName: "Westfield Collective" }];
+    assert.equal(correctAttribution(ambiguous, projects).length, 0);
+  });
+});
