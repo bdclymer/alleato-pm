@@ -21,6 +21,8 @@ const badgeVariants = cva(
           "border-transparent bg-success text-success-foreground [a&]:hover:bg-success/90",
         warning:
           "border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90",
+        info:
+          "border-transparent bg-info text-info-foreground [a&]:hover:bg-info/90",
         // Semantic status variants
         active:
           "border-transparent bg-success/10 text-success dark:bg-success/20 [a&]:hover:bg-success/15",

@@ -595,7 +595,7 @@ export function SummaryTab({
                   </TableCell>
                   <TableCell
                     colSpan={2}
-                    className="text-center tabular-nums text-sm font-medium"
+                    className="text-right tabular-nums text-sm font-medium"
                   >
                     {formatCurrency(changeOrderNet)}
                   </TableCell>
