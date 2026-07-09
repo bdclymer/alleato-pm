@@ -1,0 +1,30 @@
+{
+  "stamp": "2026-07-09T08:31:23.523Z",
+  "applied": [
+    {
+      "ref": "002087",
+      "ap_bills": [
+        {
+          "id": 2052,
+          "project_id": 43
+        }
+      ],
+      "direct_costs": [
+        {
+          "id": "365075d5-d87e-423d-8190-ce993effd101",
+          "project_id": 43
+        }
+      ]
+    },
+    {
+      "ref": "002125",
+      "ap_bills": [
+        {
+          "id": 2085,
+          "project_id": 43
+        }
+      ],
+      "direct_costs": []
+    }
+  ]
+}
