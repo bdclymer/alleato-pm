@@ -27,9 +27,11 @@ from . import (
     acumatica_vendor_spend,
     describe_schema,
     list_recent_meetings,
+    portfolio_intelligence_brief,
     portfolio_overview,
     project_briefing_snapshot,
     project_budget_summary,
+    project_intelligence_brief,
     project_risk_snapshot,
     query_db,
     recent_activity,
@@ -102,6 +104,7 @@ def build_subagents(
         )
 
     schedule_tools = [
+        project_intelligence_brief,
         project_briefing_snapshot,
         project_risk_snapshot,
         search_meeting_transcripts,
@@ -113,6 +116,8 @@ def build_subagents(
         schedule_tools = [describe_schema, query_db, *schedule_tools]
 
     risk_tools = [
+        project_intelligence_brief,
+        portfolio_intelligence_brief,
         project_briefing_snapshot,
         project_risk_snapshot,
         search_meeting_transcripts,
@@ -136,6 +141,8 @@ def build_subagents(
     ]
 
     business_development_tools = [
+        portfolio_intelligence_brief,
+        project_intelligence_brief,
         portfolio_overview,
         project_briefing_snapshot,
         list_recent_meetings,
