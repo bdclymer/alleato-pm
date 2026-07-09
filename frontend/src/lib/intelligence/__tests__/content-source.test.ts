@@ -139,6 +139,22 @@ describe("getProjectContent — int8-as-string coercion (the 'all Unassigned' re
   });
 });
 
+describe("getProjectContent — project_id = 0 is the 'unassigned' sentinel, not an FK", () => {
+  it("maps project_id 0 to null projectId/projectName and never looks it up", async () => {
+    const rows = [meetingRow({ id: "m-zero", date: "2026-07-08", project_id: 0 })];
+    const client = makeFakeClient({ document_metadata: rows, projects: PROJECTS });
+
+    const items = await getProjectContent(
+      { window: WINDOW, granularity: "full", sourceTypes: ["meeting"] },
+      { pmClient: client },
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0].projectId).toBeNull();
+    expect(items[0].projectName).toBeNull();
+  });
+});
+
 describe("getProjectContent — lane → column mapping", () => {
   it("selects email rows by category, not type", async () => {
     const rows = [

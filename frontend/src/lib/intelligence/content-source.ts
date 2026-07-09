@@ -116,11 +116,24 @@ function textForGranularity(row: ContentRow, granularity: ContentGranularity): s
 }
 
 /**
- * Resolve project_id → display name in ONE query.
+ * The one definition of "a real project id."
  *
- * Postgres `int8` is returned as a JS string by some drivers; coerce here so the
- * "all projects render Unassigned" regression (int8-as-string key miss) cannot
- * recur. This coercion lives in exactly one place now.
+ * `int8` is returned as a JS string by some drivers (the "all projects render
+ * Unassigned" regression — a string key never matches a numeric lookup), and
+ * `document_metadata.project_id = 0` is the "unassigned" sentinel, not an FK.
+ * Both truths live here so no caller re-learns them: coerce to number, and only
+ * a positive integer counts as a project.
+ */
+export function normalizeProjectId(
+  raw: number | string | null | undefined,
+): number | null {
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/**
+ * Resolve project_id → display name in ONE query. Only positive-integer ids are
+ * looked up (see `normalizeProjectId`).
  */
 async function resolveProjectNames(
   pmClient: SupabaseClient<Database>,
@@ -129,8 +142,8 @@ async function resolveProjectNames(
   const unique = Array.from(
     new Set(
       projectIds
-        .map((id) => Number(id))
-        .filter((id): id is number => Number.isInteger(id)),
+        .map((id) => normalizeProjectId(id))
+        .filter((id): id is number => id != null),
     ),
   );
   if (unique.length === 0) return new Map();
@@ -143,8 +156,8 @@ async function resolveProjectNames(
   }
   const map = new Map<number, string>();
   for (const row of (data ?? []) as Array<{ id: number | string; name: string | null }>) {
-    const id = Number(row.id);
-    if (Number.isInteger(id) && row.name) map.set(id, row.name);
+    const id = normalizeProjectId(row.id);
+    if (id != null && row.name) map.set(id, row.name);
   }
   return map;
 }
@@ -198,9 +211,7 @@ async function getMetadataContent(
   );
 
   return flat.map(({ lane, row }) => {
-    const projectId = Number.isInteger(Number(row.project_id))
-      ? Number(row.project_id)
-      : null;
+    const projectId = normalizeProjectId(row.project_id);
     return {
       documentId: row.id,
       projectId,
@@ -243,8 +254,9 @@ async function getChunkContent(
   const nameMap = await resolveProjectNames(pmClient, projectIds);
 
   return rows.map((row) => {
-    const rawPid = row.doc_metadata?.project_id as number | string | undefined;
-    const projectId = Number.isInteger(Number(rawPid)) ? Number(rawPid) : null;
+    const projectId = normalizeProjectId(
+      row.doc_metadata?.project_id as number | string | undefined,
+    );
     return {
       documentId: row.document_id ?? row.id ?? "",
       projectId,
