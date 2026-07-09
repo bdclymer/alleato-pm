@@ -306,6 +306,41 @@ async function fetchRows() {
   );
 }
 
+// Project names live in the PM APP `projects` table, not the RAG DB the corpus
+// is drawn from. Resolve id -> name so the brief never surfaces a bare numeric
+// project id (e.g. "Project 67") to the owner — always a real name.
+async function fetchProjectNames(projectIds) {
+  const ids = [
+    ...new Set(
+      projectIds
+        .map((id) => Number(id))
+        .filter((id) => Number.isFinite(id)),
+    ),
+  ];
+  if (ids.length === 0) return new Map();
+  return withPg(
+    getAppDatabaseUrl(),
+    { includeSslMode: false, rewriteSupabaseDirectHost: false },
+    async (client) => {
+      const { rows } = await client.query(
+        `select id, name, project_number
+           from public.projects
+          where id = any($1::int[])`,
+        [ids],
+      );
+      const map = new Map();
+      for (const row of rows) {
+        const label =
+          (typeof row.name === "string" && row.name.trim()) ||
+          (typeof row.project_number === "string" && row.project_number.trim()) ||
+          null;
+        if (label) map.set(row.id, label);
+      }
+      return map;
+    },
+  );
+}
+
 function transcriptUrl(row) {
   const url = row.url || row.source_web_url;
   if (typeof url === "string" && url.includes("/storage/v1/object/public/transcripts/")) return url;
@@ -430,7 +465,7 @@ function renderCorpus(sources, skipped) {
     }
     for (const source of grouped[lane]) {
       lines.push(
-        `- ${source.id} | ${source.title} | project=${source.projectId ?? "none"} | sourceAt=${source.sourceAt ?? "unknown"} | chars=${source.charCount} | basis=${source.inclusionBasis} | storage=${source.usedStorage ? "yes" : "no"}`,
+        `- ${source.id} | ${source.title} | project=${source.projectName ?? "unassigned"} | sourceAt=${source.sourceAt ?? "unknown"} | chars=${source.charCount} | basis=${source.inclusionBasis} | storage=${source.usedStorage ? "yes" : "no"}`,
       );
     }
     lines.push("");
@@ -441,7 +476,7 @@ function renderCorpus(sources, skipped) {
       `### ${source.lane.toUpperCase()} | ${source.title}`,
       "",
       `Source ID: ${source.id}`,
-      `Project ID: ${source.projectId ?? "none"}`,
+      `Project: ${source.projectName ?? "Unassigned"}`,
       `Source at: ${source.sourceAt ?? "unknown"}`,
       `URL: ${source.url ?? "none"}`,
       "",
@@ -460,7 +495,7 @@ function sourceForModel(source) {
     id: source.id,
     lane: source.lane,
     title: source.title,
-    projectId: source.projectId,
+    project: source.projectName ?? "Unassigned",
     sourceAt: source.sourceAt,
     text: truncate(source.text, MAX_MODEL_CHARS_PER_ITEM),
   };
@@ -535,7 +570,7 @@ async function summarizeLane(lane, items) {
         {
           role: "system",
           content:
-            "You are preparing source notes for an owner-grade construction executive brief. Extract only concrete decisions, risks, money, schedule movement, commitments, blockers, and owner-relevant context. Preserve source IDs. Do not write generic summaries.",
+            "You are preparing source notes for an owner-grade construction executive brief. Extract only concrete decisions, risks, money, schedule movement, commitments, blockers, and owner-relevant context. Preserve source IDs. Always refer to a project by its name (the `project` field) — never by a numeric id, and never write 'Project <number>'. If a source's project is 'Unassigned', say 'an unassigned project'. Do not write generic summaries.",
         },
         {
           role: "user",
@@ -561,7 +596,7 @@ async function draftExecutiveBrief(sources) {
       {
         role: "system",
         content:
-          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
+          "You write Daily Deep Read packets for a construction company owner. The brief must be useful in under two minutes: decisions needed, money exposure, schedule risk, client/vendor issues, project-specific movement, and follow-ups. Be direct. Cite source IDs inline. Always refer to a project by its name — never by a numeric id, and never write 'Project <number>' (e.g. write 'Hillsdale', not 'Project 67'). Do not write a chronological recap. If evidence is thin, say exactly which lane is thin. Use these exact markdown section headings: ## Executive Brief, ## Highest-Leverage Owner Decisions, ## Project Intelligence Updates, ## Risk Candidates, ## Decision Candidates, ## Task Candidates, ## Initiative Candidates, ## Source Coverage, ## Automation Instructions Learned.",
       },
       {
         role: "user",
@@ -806,6 +841,7 @@ async function writePacket({ sources, brief, laneNotes }) {
             title: source.title,
             lane: source.lane,
             projectId: source.projectId,
+            projectName: source.projectName ?? null,
             sourceAt: source.sourceAt,
             url: source.url,
           })),
@@ -911,6 +947,13 @@ async function main() {
   await fs.mkdir(evidenceDir, { recursive: true });
   const rows = await fetchRows();
   const { sources, skipped } = await materializeSources(rows);
+  const projectNames = await fetchProjectNames(sources.map((s) => s.projectId));
+  for (const source of sources) {
+    const key = Number(source.projectId);
+    source.projectName = Number.isFinite(key)
+      ? (projectNames.get(key) ?? null)
+      : null;
+  }
   assertLaneCoverage(rows, sources);
   const corpusMarkdown = renderCorpus(sources, skipped);
   await fs.writeFile(path.join(evidenceDir, "source-corpus.md"), corpusMarkdown);
