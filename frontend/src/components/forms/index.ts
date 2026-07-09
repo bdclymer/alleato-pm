@@ -5,6 +5,7 @@ export { FormGrid } from "./FormGrid";
 export { FormGridRow } from "./FormGridRow";
 export { FormTotalRow } from "./FormTotalRow";
 export { FormActions } from "./FormActions";
+export { FormServerError } from "./FormServerError";
 export { FormSheet } from "./FormSheet";
 export { FormField, FormLayoutProvider } from "./FormField";
 export { TextField } from "./TextField";
