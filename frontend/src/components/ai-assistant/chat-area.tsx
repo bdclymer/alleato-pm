@@ -2076,7 +2076,7 @@ export function ChatArea({
       ) : (
         <>
           <div className="flex min-h-0 flex-1">
-            <div className="relative min-w-0 flex-1">
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
               <Conversation className="min-h-0">
                 <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
               {messages.map((msg, msgIndex) => {

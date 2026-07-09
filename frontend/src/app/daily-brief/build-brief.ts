@@ -482,11 +482,11 @@ function buildReadGrid(focus: ExecutiveOperatingBriefFocusItem[]): string {
     .map((entry, index) => {
       const eyebrowClass = index === 0 ? "" : index === 1 ? " amber" : "";
       const label = LANE_LABELS[entry.lane] ?? "Priority";
-      const text = entry.whatChanged || entry.whyItMatters || "";
+      const text = entry.whatChanged || realWhy(entry.whyItMatters);
       return `
         <div class="read-item">
           <div class="eyebrow${eyebrowClass}">${esc(label)}</div>
-          <p>${esc(truncate(text, 180))}</p>
+          <p>${esc(truncate(cleanProse(text), 180))}</p>
         </div>`;
     })
     .join("");
@@ -496,7 +496,7 @@ function buildReadGrid(focus: ExecutiveOperatingBriefFocusItem[]): string {
 function buildTodaysRead(input: BuildBriefInput): string {
   const { operatingBrief } = input;
   const lead = operatingBrief.startHere.length
-    ? operatingBrief.startHere.map((line) => esc(line)).join(" ")
+    ? operatingBrief.startHere.map((line) => esc(cleanProse(line))).join(" ")
     : "";
   if (!lead && operatingBrief.topExecutiveFocus.length === 0) return "";
   const leadHtml = lead ? `<p class="lead">${lead}</p>` : "";
@@ -505,6 +505,52 @@ function buildTodaysRead(input: BuildBriefInput): string {
       <div class="sec-head"><span class="idx">01</span><h2>Today's read</h2></div>
       ${leadHtml}${buildStatStrip(input)}${buildReadGrid(operatingBrief.topExecutiveFocus)}
     </section>`;
+}
+
+// Deep-read candidates carry hardcoded pipeline metadata in `why_it_matters`
+// ("Derived from Daily Deep Read section: …") and `next_action` ("Review
+// candidate and decide…"). That is bookkeeping, not real content — never surface
+// it. The real decision text lives in `summary`.
+const PLACEHOLDER_WHY = /^Derived from Daily Deep Read section:/i;
+const PLACEHOLDER_ACTIONS = new Set([
+  "Review candidate and decide whether to promote into project intelligence.",
+  "Review and either assign as a task or reject.",
+]);
+// Inline source tokens (`S12`, `teamsdm_…`, `outlook_…`, meeting ULIDs) are shown
+// as linked sources separately, so strip the raw backtick tokens from prose —
+// otherwise they render as literal noise inside the sentence.
+// Match a whole backtick-wrapped source token: a short alias (`S12`), a
+// channel-prefixed id (`outlook_…`, `teamsdm_…` — these carry base64 chars like
+// = / +, so consume to the closing backtick), or a bare meeting ULID.
+const SOURCE_TOKEN_RE =
+  /`\s*(?:S\d+|(?:teamsdm|teams|outlook|email|meeting|document|doc)_[^`]*|[0-9A-HJKMNP-TV-Z]{20,})\s*`/gi;
+export function cleanProse(text: string | null | undefined): string {
+  return (text ?? "")
+    .replace(SOURCE_TOKEN_RE, "")
+    // The deep-read consumer's placeholder prose is woven into derived narrative
+    // (the lead + focus lines) as substrings, so strip the phrases too — not just
+    // when they are the whole field.
+    .replace(/Derived from Daily Deep Read section:[^.]*\.?/gi, "")
+    .replace(/Review candidate and decide whether to promote into project intelligence\.?/gi, "")
+    .replace(/Review and either assign as a task or reject\.?/gi, "")
+    // Collapse brackets/parens left holding only separators after token removal:
+    // "(`S1`, `S2`)" → "(, )" → "".
+    .replace(/[([{]\s*[,;·|/&\s]*\s*[)\]}]/g, "")
+    .replace(/\s+([.,;:)])/g, "$1")
+    .replace(/\(\s*[,;]\s*/g, "(")
+    .replace(/([:;,])\s*\./g, ".")
+    .replace(/\.{2,}/g, ".")
+    .replace(/\s{2,}/g, " ")
+    .replace(/[\s:;,]+$/, "")
+    .trim();
+}
+function realWhy(text: string | null | undefined): string {
+  const value = (text ?? "").trim();
+  return value && !PLACEHOLDER_WHY.test(value) ? value : "";
+}
+function realAction(text: string | null | undefined): string {
+  const value = (text ?? "").trim();
+  return value && !PLACEHOLDER_ACTIONS.has(value) ? value : "";
 }
 
 function buildDecisions(input: BuildBriefInput): string {
@@ -518,8 +564,11 @@ function buildDecisions(input: BuildBriefInput): string {
       const badgeClass =
         sev === "crit" ? "badge--crit" : sev === "amber" ? "badge--amber" : "badge--info";
       const due = esc(item.status || "Needs decision");
-      const body = esc(truncate(item.whyItMatters || item.summary || "", 320));
-      const step = item.recommendedAction
+      const body = esc(
+        truncate(cleanProse(item.summary || realWhy(item.whyItMatters)), 320),
+      );
+      const action = realAction(item.recommendedAction);
+      const step = action
         ? `
           <details class="more">
             <summary><span class="chev">&rsaquo;</span> Recommended next step</summary>
@@ -528,7 +577,7 @@ function buildDecisions(input: BuildBriefInput): string {
                 <div class="delegate__label">Suggested next step &mdash; your call</div>
                 <div class="delegate__row">
                   <span class="owner-chip">&rarr; ${esc(item.owner || "Owner")}</span>
-                  <span class="delegate__action">${esc(item.recommendedAction)}</span>
+                  <span class="delegate__action">${esc(cleanProse(action))}</span>
                 </div>
               </div>
             </div>
@@ -538,7 +587,7 @@ function buildDecisions(input: BuildBriefInput): string {
         <article class="decision${cardClass}" data-fb-item>
           <div class="decision__head">
             <div class="decision__ref">${esc(item.project || "Portfolio")}</div>
-            <h3>${esc(item.title)}</h3>
+            <h3>${esc(cleanProse(item.title))}</h3>
             <p>${body}</p>
             ${itemSourcesHtml(item)}
           </div>
@@ -567,11 +616,13 @@ function watchItemHtml(
   const figClass =
     sev === "crit" ? "fig--crit" : sev === "amber" ? "fig--amber" : "fig--info";
   const fig = esc(truncate(item.impact || brief.status || "", 16));
-  const detail = esc(truncate(item.nextAction || brief.summary || "", 220));
+  const detail = esc(
+    truncate(cleanProse(realAction(item.nextAction) || brief.summary || ""), 220),
+  );
   return `
           <div class="watch-item ${wClass}" data-fb-item>
             <div class="watch-item__top">
-              <h4>${esc(truncate(brief.title, 60))}</h4>
+              <h4>${esc(truncate(cleanProse(brief.title), 60))}</h4>
               <span class="watch-item__fig ${figClass}">${fig}${fbHtml(itemKey(brief), { title: brief.title, project: brief.project })}</span>
             </div>
             <p>${detail}</p>
@@ -662,7 +713,7 @@ function buildProjects(input: BuildBriefInput): string {
           : worst === "amber"
             ? "Watch"
             : `${group.items.length} update${group.items.length === 1 ? "" : "s"}`;
-      const oneline = esc(truncate(group.items[0].summary || group.items[0].title, 90));
+      const oneline = esc(truncate(cleanProse(group.items[0].summary) || group.items[0].title, 90));
       const nameHtml = group.projectId
         ? `<a href="/${group.projectId}/home" style="color:inherit;text-decoration:none">${esc(group.label)}</a>`
         : esc(group.label);
@@ -672,7 +723,7 @@ function buildProjects(input: BuildBriefInput): string {
           return `
               <div class="subsite" data-fb-item>
                 <div class="subsite__name">${esc(truncate(item.title, 48))}</div>
-                <p>${esc(truncate(item.summary || "", 200))}${itemSourcesHtml(item, 2)}</p>
+                <p>${esc(truncate(cleanProse(item.summary), 200))}${itemSourcesHtml(item, 2)}</p>
                 <div class="subsite__status"><span class="pill ${
                   severity(item.tone ?? item.status) === "crit"
                     ? "pill--crit"
@@ -795,7 +846,7 @@ function buildActions(input: BuildBriefInput): string {
     baseItem: BrandonBriefItem,
     text: string | undefined | null,
   ) => {
-    const clean = (text ?? "").replace(/\s+/g, " ").trim();
+    const clean = cleanProse(text);
     if (!clean) return;
     const dedupeKey = clean.toLowerCase();
     if (seen.has(dedupeKey)) return;
@@ -816,13 +867,13 @@ function buildActions(input: BuildBriefInput): string {
   };
 
   for (const item of input.packet.sections.needsBrandon) {
-    push(item, item.recommendedAction);
+    push(item, realAction(item.recommendedAction));
   }
   for (const risk of input.operatingBrief.cashAndMarginWatch) {
-    push(risk.item, risk.nextAction);
+    push(risk.item, realAction(risk.nextAction));
   }
   for (const risk of input.operatingBrief.projectRiskRadar) {
-    push(risk.item, risk.nextAction);
+    push(risk.item, realAction(risk.nextAction));
   }
 
   const capped = rows.slice(0, 12);
@@ -873,9 +924,9 @@ function buildCarryover(input: BuildBriefInput): string {
       return `
           <div class="carry-item" data-fb-item>
             <div class="carry-item__ref">${esc(item.project || "Portfolio")} · carried from yesterday</div>
-            <h4>${esc(truncate(item.title, 90))}</h4>
+            <h4>${esc(truncate(cleanProse(item.title), 90))}</h4>
             ${age}
-            <p>${esc(truncate(item.summary || "", 220))}</p>
+            <p>${esc(truncate(cleanProse(item.summary), 220))}</p>
             <div class="src-row">${source}${fbHtml(item.key, { title: item.title, project: item.project })}</div>
           </div>`;
     })
