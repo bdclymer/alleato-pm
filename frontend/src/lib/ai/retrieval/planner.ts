@@ -42,6 +42,15 @@ const FOLLOWUP_PHRASES = [
   /\b(source|cite|citation|evidence)\b/i,
   /\b(why|how come|why did)\b/i,
   /\b(more detail|elaborate|expand)\b/i,
+  // "tell me more about union collective", "more on the permit risk", "what
+  // about steel pricing" — the single most common way a user drills into a
+  // subject the prior turn just named. Without these, such a turn fell through
+  // to conversational_fallback with ZERO retrieval and the model returned an
+  // empty response. See the trace in docs/architecture/AI-RAG-ARCHITECTURE.md.
+  /\btell me more\b/i,
+  /\b(more|read more|learn more|know more) (about|on|regarding)\b/i,
+  /\bwhat about\b/i,
+  /\b(go deeper|dig (in|deeper)|drill (in|down)|deep[- ]?dive)\b/i,
 ];
 
 const FINANCIAL_KEYWORDS = /\b(budget|cost|margin|invoice|payment|exposure|cash|retention|forecast)\b/i;
@@ -298,7 +307,14 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     return {
       intent,
       responseFormat: "conversational",
-      sources: { reusePriorBriefing: true },
+      // Reuse the prior briefing's snapshot AND pull fresh grounding on whatever
+      // subject the follow-up names ("union collective", "steel pricing"). The
+      // reused briefing alone only lets the model paraphrase the last turn;
+      // the vector search is what gives a drill-down real depth.
+      sources: {
+        reusePriorBriefing: true,
+        semanticVectorSearch: { query: message },
+      },
       preconsult: detectPreconsult(message),
       selectedProjectId,
       reason: "followup_to_prior_briefing",

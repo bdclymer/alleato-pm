@@ -279,6 +279,31 @@ describe("planRetrieval", () => {
     });
     expect(plan.sources.reusePriorBriefing).toBe(true);
   });
+
+  // Regression for session d87edc77: "tell me more about union collective" was
+  // NOT recognized as a follow-up, fell through to conversational_fallback with
+  // zero sources, and the model returned an empty response. It must now route
+  // to the follow-up path with prior-briefing reuse AND a fresh vector search.
+  it.each([
+    "tell me more about union collective",
+    "more about the permit risk",
+    "what about steel pricing",
+    "go deeper on the FA panel approval",
+  ])("drill-down follow-up %j retrieves fresh grounding", (message) => {
+    const plan = planRetrieval({
+      message,
+      messages: [
+        userMsg("what's the status of our projects"),
+        assistantMsg(
+          "Union Collective is the biggest watch item; permit/earthwork timing could slip...",
+        ),
+        userMsg(message),
+      ],
+    });
+    expect(plan.reason).toBe("followup_to_prior_briefing");
+    expect(plan.sources.reusePriorBriefing).toBe(true);
+    expect(plan.sources.semanticVectorSearch).toBeDefined();
+  });
 });
 
 describe("source-health routing must not hijack content questions", () => {

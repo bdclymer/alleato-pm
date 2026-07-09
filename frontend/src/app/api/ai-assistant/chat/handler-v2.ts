@@ -13,6 +13,7 @@ import {
   maybeJudgeAndScore,
 } from "@/lib/ai/langfuse-trace";
 import { aiTelemetry } from "@/lib/ai/ai-telemetry";
+import { buildEmptyResponseMessage } from "@/lib/ai/empty-response-message";
 import {
   propagateAttributes,
   startActiveObservation,
@@ -2598,6 +2599,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     stepCount: number;
   } | null = null;
   let contextCompactionMetadata: ContextCompactionMetadata | null = null;
+  // Real provider/stream error captured by streamText.onError. When the model
+  // yields no text, this is used to explain WHY instead of the old hardcoded
+  // "out of credits / billing" guess (which was wrong whenever the failure was
+  // a swallowed provider or tool-schema error rather than an actual billing
+  // block). Null means the stream ended without an error event.
+  let streamErrorMessage: string | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
   const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
@@ -5622,9 +5629,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                   },
                 }),
                 onError: ({ error }) => {
+                  const message =
+                    error instanceof Error ? error.message : String(error);
+                  streamErrorMessage = message;
                   console.error("[handler-v2] streamText onError", {
-                    message:
-                      error instanceof Error ? error.message : String(error),
+                    message,
                     stack:
                       error instanceof Error
                         ? error.stack?.split("\n").slice(0, 5).join("\n")
@@ -5706,7 +5715,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       const assistantText = extractTextFromParts(responseMessage.parts);
       const assistantContent = assistantText.trim()
         ? assistantText
-        : "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.";
+        : buildEmptyResponseMessage(streamErrorMessage);
 
       const dataParts = extractPersistableDataParts(responseMessage);
       const streamToolTrace =
@@ -5754,6 +5763,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           : "ai-gateway",
         finish_reason: finishMetadata?.finishReason ?? finishReason ?? null,
         empty_model_response: !assistantText.trim(),
+        stream_error: streamErrorMessage,
         usage: finishMetadata?.usage ?? null,
         tool_trace: toolTrace,
         response_quality: buildResponseQualityMetadata({
