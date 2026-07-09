@@ -210,7 +210,7 @@ export default function NewInvoicePage() {
   const { options: contractOptions, isLoading: contractsLoading } = useContracts({
     projectId: Number.isFinite(parsedProjectId) ? parsedProjectId : undefined,
   });
-  const { options: commitmentOptions, isLoading: commitmentsLoading } = useCommitments();
+  const { options: commitmentOptions, isLoading: commitmentsLoading } = useCommitments(projectId);
 
   const form = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
