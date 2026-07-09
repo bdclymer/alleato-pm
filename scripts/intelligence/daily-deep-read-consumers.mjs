@@ -465,17 +465,19 @@ function candidatesFromPacket(packet, projectRows) {
         signal_type: signalType,
         title,
         summary,
-        why_it_matters: `Derived from Daily Deep Read section: ${section}`,
+        // No real "why" is extracted from a bullet — the section it came from is
+        // already carried in extraction_json.section. Never store placeholder
+        // prose here: it gets woven into /daily-brief and /executive narrative.
+        why_it_matters: null,
         current_status: "open",
         confidence_score: score,
         confidence: label,
         status: "needs_review",
         suggested_owner_person_id: null,
         suggested_owner_label: null,
-        next_action:
-          signalType === "task"
-            ? "Review and either assign as a task or reject."
-            : "Review candidate and decide whether to promote into project intelligence.",
+        // No real next action is extracted; the review workflow owns "promote or
+        // reject". Store null rather than generic boilerplate that pollutes surfaces.
+        next_action: null,
         stale_after: null,
         source_occurred_at: packet.covered_end_at,
         excerpt: bullet.slice(0, 2000),
@@ -502,6 +504,36 @@ function candidatesFromPacket(packet, projectRows) {
     }
   }
   return dedupeCandidates(candidates);
+}
+
+// Guardrail: candidate prose fields must never carry derived placeholder
+// boilerplate. Those strings get woven into /daily-brief and /executive
+// narrative (PR #801 had to strip them defensively at render time). Fail the
+// run loudly at the source rather than persist polluted rows.
+const BANNED_PLACEHOLDER_PATTERNS = [
+  /Derived from Daily Deep Read section/i,
+  /Review candidate and decide/i,
+  /Review and either assign as a task or reject/i,
+];
+
+function assertNoPlaceholderProse(candidates) {
+  const proseFields = ["why_it_matters", "next_action"];
+  const offenders = [];
+  for (const candidate of candidates) {
+    for (const field of proseFields) {
+      const value = candidate[field];
+      if (typeof value === "string" && BANNED_PLACEHOLDER_PATTERNS.some((re) => re.test(value))) {
+        offenders.push(`${candidate.normalized_signal_key} → ${field}: ${JSON.stringify(value)}`);
+      }
+    }
+  }
+  if (offenders.length) {
+    throw new Error(
+      `Refusing to write ${offenders.length} candidate(s) with placeholder prose in ` +
+        `why_it_matters/next_action. Set these fields to null or derive real values.\n` +
+        offenders.join("\n"),
+    );
+  }
 }
 
 async function writeCandidates(candidates, packet) {
@@ -685,6 +717,7 @@ async function main() {
   if (!candidates.length) {
     throw new Error(`No candidates parsed from Daily Deep Read packet ${packet.id}.`);
   }
+  assertNoPlaceholderProse(candidates);
   const evidenceDir = path.join(
     process.cwd(),
     "docs/ops/evidence/2026-07-07-daily-deep-read-consumers",
