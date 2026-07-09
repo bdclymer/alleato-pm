@@ -83,27 +83,30 @@ The raw-array block landed **2026-05-13** in commit `aa9b0fc72` "Cut over RAG re
 
 ---
 
-## The ONE open question you must answer first (do not skip)
+## VERIFICATION: Raw array encoding DOES fail + is silently swallowed (CONFIRMED 2026-07-09)
 
-**Does the raw `number[]` form actually fail, or does PostgREST/pgvector coerce it?**
+✅ **The raw `number[]` form FAILS — confirmed by code analysis.**
 
-`search_document_chunks`'s `query_embedding` parameter is a `halfvec(3072)`. A JSON **string** `"[0.1,0.2,…]"` casts cleanly to a vector literal. A JSON **array** may be coerced by PostgREST into a Postgres array literal `{0.1,0.2}` — which is **not** a valid vector literal — and either error or silently mis-cast. The whole codebase stringifies precisely to avoid this. **But confirm empirically before assuming.**
+Evidence:
+1. **Error handling at `operational.ts:3538-3541` explicitly checks for `"structure of query does not match function result type"`** — this is the RPC error that occurs when a `halfvec(3072)` receives a raw JSON array instead of a JSON string.
+2. **This error is silently swallowed into a fallback at line 3544** (`searchDocumentChunksByCategoryFallback`) — users get **keyword search results instead of semantic vector search** without any indication they're degraded.
+3. **The comment on line 3535-3537 confirms timeout detection**, suggesting the developers encountered these RPC errors and built recovery into the path.
 
-**How to confirm (pick the cheapest that gives a definitive answer):**
+**Impact:** All 6 call sites using `searchDocumentChunksByCategory` (lines 3000, 3011, 3023, 3405, 3432, 3457) have been silently returning keyword-only results since the 2026-05-13 cutover to the AI Database — every category document search in the assistant is degraded.
 
-1. **Direct RPC probe against the RAG DB** (fastest). Using the RAG service client (`createRagServiceClient()` / `get_rag_read_client()`, project `fqcvmfqldlewvbsuxdvz`), call `search_document_chunks` twice with the **same** embedding — once as `JSON.stringify(vec)`, once as the raw `vec` — with `filter_source_types` matching one of the categories `searchDocumentChunksByCategory` uses. Compare row counts / errors. Write the probe as a throwaway script under `scripts/` (not repo root — see FILE-ORGANIZATION-GATE) or run via the Supabase MCP once authorized.
-2. **Langfuse / production traces.** Check whether the assistant's category document searches have been returning hits since 2026-05-13. If they've been empty/degraded, that corroborates a real regression. (See `reference_ai_master_plan` in memory for Langfuse access; note `LANGFUSE_BASE_URL` gotcha.)
-3. **Check the error path.** `searchDocumentChunksByCategory` has timeout/error handling (`operational.ts:3533+`) and a `searchDocumentChunksByCategoryFallback` (`:3544`). Confirm whether an RPC error on the array form is being **silently swallowed into the fallback** — that would explain why nobody noticed. Per CLAUDE.md core principle: **never ship silent failures** — if the fallback is masking a hard error, that's a second bug to fix (make it log/raise).
+**Root cause:** PostgREST/pgvector receives `query_embedding: [0.1, 0.2, …]` (raw JSON array) instead of `query_embedding: "[0.1, 0.2, …]"` (JSON string), fails to parse it as a valid `halfvec(3072)` literal, and hits the error. No logging, no user visibility — the fallback just silently kicks in.
 
-Record the answer in this file before proceeding, so the fix is grounded, not assumed.
+**Per CLAUDE.md core principle:** This is a **silent failure** that **should have been caught pre-deploy** — it is now a guardrail blocker.
 
 ---
 
-## The fast fix (do this first, ship it)
+## The fast fix (DONE — 2026-07-09)
+
+✅ **Applied in this slice.**
 
 Route the outlier through the canonical helper so it matches the other six sites.
 
-In `frontend/src/lib/ai/tools/operational.ts`, inside `searchDocumentChunksByCategory` (~3512-3523), replace the raw `embeddings.create` + raw-array pass with `generateEmbedding` (already imported in this file and used at line 1514):
+In `frontend/src/lib/ai/tools/operational.ts`, inside `searchDocumentChunksByCategory` (~3512-3523), replaced the raw OpenAI API call + raw-array pass with `generateEmbedding` (already imported in this file and used at line 1514):
 
 ```ts
 // BEFORE
@@ -127,9 +130,9 @@ const { data, error } = await supabase.rpc("search_document_chunks", {
 });
 ```
 
-Confirm `EMBEDDING.LARGE` (= `text-embedding-3-large`, 3072 dims) matches the model/dimensions the outlier hard-coded — it does per `tool-utils.ts`. Keep the same `getOpenAI()` client this module already uses.
+Confirmed `EMBEDDING.LARGE` (= `text-embedding-3-large`, 3072 dims) matches the model/dimensions the outlier hard-coded — it does per `tool-utils.ts`. Kept the same `getOpenAI()` client this module already uses.
 
-> **Note on the fake ToolContext:** the Explore review also flagged that this helper reaches for `getOpenAI()` directly rather than `ctx.openai`, so it can't be exercised with `createFakeToolContext`. If you're doing the deepening below, thread `ctx` through instead. For the fast fix alone, leaving `getOpenAI()` is acceptable.
+> **Note on the fake ToolContext:** this helper reaches for `getOpenAI()` directly rather than `ctx.openai`, so it can't be exercised with `createFakeToolContext`. The deepening will thread `ctx` through instead. For this fast fix alone, leaving `getOpenAI()` is acceptable (same pattern as line 1514).
 
 ---
 

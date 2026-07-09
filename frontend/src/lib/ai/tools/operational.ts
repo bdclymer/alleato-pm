@@ -3510,14 +3510,11 @@ async function searchDocumentChunksByCategory({
   filterProjectId?: number | null;
 }) {
   try {
-    const openaiClient = getOpenAI();
-
-    const embeddingResponse = await openaiClient.embeddings.create({
-      model: "text-embedding-3-large",
-      dimensions: 3072,
-      input: query,
-    });
-    const queryEmbedding = embeddingResponse.data[0].embedding;
+    const queryEmbedding = await generateEmbedding(
+      getOpenAI(),
+      query,
+      EMBEDDING.LARGE,
+    );
 
     const { data, error } = await supabase.rpc("search_document_chunks", {
       query_embedding: queryEmbedding,

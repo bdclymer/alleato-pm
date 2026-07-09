@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (335)
+## UI Routes (336)
 
-_301/335 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_301/336 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -313,6 +313,7 @@ _301/335 have a description (from the page's `PageShell` or the curated `fronten
 | `/rag-eval` | Retrieval quality metrics, answer quality scores, and eval runners | frontend/src/app/(admin)/rag-eval/page.tsx |
 | `/redoc` | Explore auth flows, schema details, and every frontend/backend endpoint in one place. | frontend/src/app/(admin)/redoc/page.tsx |
 | `/respond/rfi/[token]` | — | frontend/src/app/respond/rfi/[token]/page.tsx |
+| `/roadmap` | — | frontend/src/app/(tables)/roadmap/page.tsx |
 | `/settings` | Redirect to user profile settings for account and preference management | frontend/src/app/(main)/settings/page.tsx |
 | `/settings/account` | Manage company account profile, logo, address, billing plan, seats, and renewal information | frontend/src/app/(main)/settings/account/page.tsx |
 | `/settings/audit` | Audit events will appear here as actions are taken in the system. | frontend/src/app/(main)/settings/audit/page.tsx |

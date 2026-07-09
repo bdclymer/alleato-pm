@@ -1482,6 +1482,11 @@
       "description": null
     },
     {
+      "url": "/roadmap",
+      "title": null,
+      "description": null
+    },
+    {
       "url": "/settings",
       "title": null,
       "description": "Redirect to user profile settings for account and preference management"
