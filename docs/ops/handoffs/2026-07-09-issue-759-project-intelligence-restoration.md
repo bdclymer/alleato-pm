@@ -152,9 +152,9 @@ If the cron fails again after unsuspending:
 ## Monitoring Going Forward
 
 The new health check (`alleato-project-intelligence-staleness-check`) will run daily at 08:30 UTC and alert if:
-- Narratives go stale (older than 2 days)
-- Synthesis packets fail to generate
-- The sweep cron fails
+- Narratives go stale (project_current_state table is older than 2 days or empty)
+- Synthesis packets fail to generate (intelligence_packets table is older than 2 days or empty)
+- Sweep cron failures are detected indirectly via table staleness (no fresh rows)
 
 This provides the missing visibility that allowed the 2+ week freeze in this incident.
 
