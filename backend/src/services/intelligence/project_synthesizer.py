@@ -975,10 +975,14 @@ def run_synthesis_sweep(
         "teams": 0,
         "cards_written": 0,
         "tasks_written": 0,
-        "pm_projection_rows": {},
+        "pm_projection_rows_total": {},
         "errors": [],
         "per_project": [],
     }
+
+    # Accumulate projection budget usage across the entire sweep for reporting visibility.
+    # Per-project budgets are reset inside the loop to prevent guard self-blocking.
+    sweep_projection_totals: Dict[str, int] = {}
 
     # Reset the projection budget per project to prevent accumulation across the
     # entire sweep. This fixes incident #759 where the projection guard self-blocked
@@ -1003,7 +1007,8 @@ def run_synthesis_sweep(
             summary["teams"] += r.get("teams", 0)
             summary["cards_written"] += r.get("cards_written", 0)
             summary["tasks_written"] += r.get("tasks_written", 0)
-            summary["pm_projection_rows"] = dict(project_projection_counts)
+            for key, count in project_projection_counts.items():
+                sweep_projection_totals[key] = sweep_projection_totals.get(key, 0) + count
             # Flag -> outcome calibration for this project (cheap: only open flags).
             flag_res = {}
             try:
@@ -1026,7 +1031,8 @@ def run_synthesis_sweep(
                         project_projection_counts,
                         {"intelligence_packets": 1},
                     )
-                    summary["pm_projection_rows"] = dict(project_projection_counts)
+                    for key, count in project_projection_counts.items():
+                        sweep_projection_totals[key] = sweep_projection_totals.get(key, 0) + count
                     synthesis_res = refresh_project_intelligence(pid)
                     summary["synthesis_packets_written"] = (
                         summary.get("synthesis_packets_written", 0)
@@ -1041,6 +1047,7 @@ def run_synthesis_sweep(
             logger.error("[ProjectSynthesizer] sweep failed for project %s: %s", pid, exc, exc_info=True)
             summary["errors"].append({"project_id": pid, "error": str(exc)})
 
+    summary["pm_projection_rows_total"] = sweep_projection_totals
     logger.info(
         "[ProjectSynthesizer] sweep done: projects=%d emails=%d teams=%d cards=%d tasks=%d errors=%d",
         summary["projects"], summary["emails"], summary["teams"],

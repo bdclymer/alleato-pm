@@ -70,6 +70,12 @@ def check_project_intelligence_staleness() -> dict:
         else:
             result["project_current_state_last_update"] = None
             result["project_current_state_staleness_days"] = None
+            result["healthy"] = False
+            result["alerts"].append({
+                "table": "project_current_state",
+                "error": "table_empty",
+                "message": "project_current_state table has no rows — no narratives exist",
+            })
     except Exception as e:  # noqa: BLE001
         logger.error("[ProjectIntelligenceStalenessCheck] Failed to check project_current_state: %s", e)
         result["healthy"] = False
@@ -110,6 +116,12 @@ def check_project_intelligence_staleness() -> dict:
         else:
             result["intelligence_packets_last_generated"] = None
             result["intelligence_packets_staleness_days"] = None
+            result["healthy"] = False
+            result["alerts"].append({
+                "table": "intelligence_packets",
+                "error": "table_empty",
+                "message": "intelligence_packets table has no synthesis packets — narrative compilation not running",
+            })
     except Exception as e:  # noqa: BLE001
         logger.error("[ProjectIntelligenceStalenessCheck] Failed to check intelligence_packets: %s", e)
         result["healthy"] = False
