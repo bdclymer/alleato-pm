@@ -25,6 +25,11 @@ import {
   InlineTableRow,
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
+import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
+import {
+  normalizeBudgetCodesForSelector,
+  resolvePrimeCoBudgetCode,
+} from "@/lib/budget/budget-code-selection";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -118,6 +123,7 @@ export function SubcontractorSovTab({
     canReview: false,
     canSendNotification: false,
   });
+  const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
 
   const fetchSsov = useCallback(async () => {
     setIsLoading(true);
@@ -147,6 +153,48 @@ export function SubcontractorSovTab({
   useEffect(() => {
     void fetchSsov();
   }, [fetchSsov]);
+
+  // Load budget codes so the budget-code column can show the full
+  // "code – description" label (matching the selector), not just the raw code.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const payload = await apiFetch<{
+          budgetCodes?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+          data?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+        }>(`/api/projects/${projectId}/budget-codes`);
+        if (cancelled) return;
+        setBudgetCodes(
+          normalizeBudgetCodesForSelector(payload.budgetCodes || payload.data || []),
+        );
+      } catch (error) {
+        // Non-fatal: budget-code cells fall back to the raw budget_code text.
+        // Report the degraded state rather than swallowing it silently.
+        if (!cancelled) {
+          console.warn(
+            "SubcontractorSovTab: failed to load budget codes for label enrichment; falling back to raw codes.",
+            error,
+          );
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  // Resolve a stored budget_code text to its full "code – description" label.
+  const budgetCodeLabel = useCallback(
+    (code: string | null): string => {
+      if (!code) return "—";
+      const resolved = resolvePrimeCoBudgetCode(code, budgetCodes);
+      return resolved.isMapped
+        ? resolved.displayLabel || resolved.displayCode
+        : code;
+    },
+    [budgetCodes],
+  );
 
   // Group children under parents
   const groups = useMemo(() => {
@@ -373,7 +421,7 @@ export function SubcontractorSovTab({
               {/* Parent SOV row */}
               <InlineTableRow type="group">
                 <InlineTableCell className="font-semibold tabular-nums">{parent.line_number ?? "—"}</InlineTableCell>
-                <InlineTableCell className="font-medium">{parent.budget_code || "—"}</InlineTableCell>
+                <InlineTableCell className="font-medium">{budgetCodeLabel(parent.budget_code)}</InlineTableCell>
                 <InlineTableCell className="font-medium">{parent.description || "—"}</InlineTableCell>
                 <InlineTableCell align="right" numeric className="text-muted-foreground">
                   {formatCurrency(parent.billed_to_date ?? 0)}
@@ -467,7 +515,7 @@ export function SubcontractorSovTab({
               {orphans.map((child) => (
                 <InlineTableRow key={child.id}>
                   <InlineTableCell numeric>{child.line_number ?? "—"}</InlineTableCell>
-                  <InlineTableCell>{child.budget_code || "—"}</InlineTableCell>
+                  <InlineTableCell>{budgetCodeLabel(child.budget_code)}</InlineTableCell>
                   <InlineTableCell className="min-w-56">
                     <Input
                       value={child.description || ""}
