@@ -58,6 +58,71 @@ def _is_transient(exc: BaseException) -> bool:
     return any(marker in msg for marker in _TRANSIENT_MARKERS)
 
 
+# Markers that mean "we could not reach / talk to the database at all" — a
+# connectivity/network failure, NOT a SQL or logic error. This is the class of
+# failure that must surface loudly (the 2026-07-09 IPv6 DATABASE_URL drift, where
+# psycopg2 raised "Network is unreachable" and the agent silently answered
+# "no portfolio data"). Kept deliberately distinct from `_TRANSIENT_MARKERS`:
+# a statement-timeout is transient-but-connected and must NOT be treated as an
+# outage, so those markers (statement timeout / 57014 / 5xx) are excluded here.
+_CONNECTION_MARKERS = (
+    "Network is unreachable",
+    "No route to host",
+    "could not connect",
+    "Connection refused",
+    "connection refused",
+    "could not translate host name",
+    "Name or service not known",
+    "Temporary failure in name resolution",
+    "nodename nor servname provided",
+    "server closed the connection unexpectedly",
+    "SSL connection has been closed",
+    "connection terminated",
+    "Connection terminated",
+    "connection timed out",
+    "timeout expired",
+    "Is the server running",
+    "ECHECKOUTTIMEOUT",
+    "authentication did not complete",
+    "password authentication failed",
+    "too many connections",
+    "remaining connection slots",
+)
+
+
+def _exception_messages(exc: BaseException) -> str:
+    """Flatten an exception plus its cause/context/`.orig` chain into one string.
+
+    SQLAlchemy wraps the real DBAPI error (psycopg2) under `.orig` and the
+    __cause__/__context__ chain, so the connectivity marker often is not in
+    `str(exc)` itself. Walk the whole chain so detection is robust.
+    """
+    parts: list[str] = []
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        parts.append(str(cur))
+        orig = getattr(cur, "orig", None)
+        if isinstance(orig, BaseException) and id(orig) not in seen:
+            seen.add(id(orig))
+            parts.append(str(orig))
+        cur = cur.__cause__ or cur.__context__
+    return " || ".join(parts)
+
+
+def is_connection_error(exc: BaseException) -> bool:
+    """True when a failure means the app database was unreachable.
+
+    Distinguishes a genuine connectivity/network outage (bad DATABASE_URL host,
+    DNS failure, refused/timed-out connection, pooler auth) from a SQL error or
+    a query-level statement timeout. Tools and the agent runtime use this to
+    decide whether to surface a loud "database unreachable" signal instead of a
+    misleading empty/partial answer.
+    """
+    return any(marker in _exception_messages(exc) for marker in _CONNECTION_MARKERS)
+
+
 def with_db_retry(
     fn: Callable[..., T],
     *,

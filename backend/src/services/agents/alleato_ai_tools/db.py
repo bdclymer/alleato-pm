@@ -21,6 +21,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.pool import NullPool
 
 from ._retry import with_db_retry
+from .db_health import format_db_tool_error
 
 _MAX_ROWS = 200
 _STATEMENT_TIMEOUT_MS = 30_000
@@ -179,7 +180,10 @@ def describe_schema(table_name: str | None = None) -> str:
                 lines += ["", f"_(sample query failed: {exc})_"]
             return "\n".join(lines)
 
-    return _run()
+    try:
+        return _run()
+    except Exception as exc:
+        return format_db_tool_error(exc, tool_hint="describe_schema")
 
 
 _SELECT_RE = re.compile(r"^\s*(select|with)\b", re.IGNORECASE)
@@ -233,7 +237,7 @@ def query_db(sql: str) -> str:
     try:
         columns, rows = _run()
     except Exception as exc:
-        return f"Error executing query: {exc}"
+        return format_db_tool_error(exc, tool_hint="query_db")
 
     table = _format_markdown_table(columns, rows)
     suffix = f"\n\n_{len(rows)} row(s)_"
