@@ -1,0 +1,77 @@
+{
+  "summary": {
+    "mode": "APPLY",
+    "commitmentsTouched": 18,
+    "sovLinesUpdated": 82,
+    "totalBilledPlaced": 3134245.86,
+    "flaggedCount": 3,
+    "projects": 9
+  },
+  "projectRows": [
+    {
+      "project": "24-115 Westfield Collective",
+      "commitments": 8,
+      "billed": 1829483.17
+    },
+    {
+      "project": "24-109 Goodwill Bloomington",
+      "commitments": 2,
+      "billed": 1148034.49
+    },
+    {
+      "project": "25-113 Radial Martinsville VA",
+      "commitments": 1,
+      "billed": 53784
+    },
+    {
+      "project": "26-102 Goodwill Commons",
+      "commitments": 2,
+      "billed": 36470.7
+    },
+    {
+      "project": "25-109 Uniqlo Phillipsburg NJ",
+      "commitments": 1,
+      "billed": 30253.5
+    },
+    {
+      "project": "25-120 GPC Hai Robotic",
+      "commitments": 1,
+      "billed": 20970
+    },
+    {
+      "project": "26-118 Champaign Ace Addition",
+      "commitments": 1,
+      "billed": 5300
+    },
+    {
+      "project": "26-112 McLane Jazz - UT",
+      "commitments": 1,
+      "billed": 5000
+    },
+    {
+      "project": "26-107 Goodwill Canton, IL",
+      "commitments": 1,
+      "billed": 4950
+    }
+  ],
+  "flagged": [
+    {
+      "commitmentId": "225fbd2d-9a42-4895-8183-2331d49ad8d4",
+      "contract_number": "SC-000316",
+      "reason": "cost-code fallback: $1126241.49 spread proportionally",
+      "acuTotal": 1126241.4900000002
+    },
+    {
+      "commitmentId": "8cfbbd0d-cbd0-4093-9172-6438d372363f",
+      "contract_number": "SC-000392",
+      "reason": "cost-code fallback: $4950 spread proportionally",
+      "acuTotal": 4950
+    },
+    {
+      "commitmentId": "fcae1ec1-d93a-4b1d-b67d-9b18b125f603",
+      "contract_number": "SC-000251",
+      "reason": "cost-code fallback: $2179.3 spread proportionally",
+      "acuTotal": 21793
+    }
+  ]
+}
