@@ -15,6 +15,10 @@ import {
 import { aiTelemetry } from "@/lib/ai/ai-telemetry";
 import { buildEmptyResponseMessage } from "@/lib/ai/empty-response-message";
 import {
+  buildAssistantOpenAiProviderOptions,
+  hasFunctionTools,
+} from "@/lib/ai/assistant-provider-options";
+import {
   propagateAttributes,
   startActiveObservation,
   getActiveTraceId,
@@ -5593,21 +5597,20 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               langfuseTraceId = getActiveTraceId();
               setActiveTraceIO({ input: inputText });
 
+              // gpt-5.4 rejects reasoning_effort + function tools on
+              // /v1/chat/completions (empty-response crash traced 2026-07-09).
+              // buildAssistantOpenAiProviderOptions omits reasoningEffort when
+              // tools are attached — see that module + its tests.
               const result = streamText({
                 model: getLanguageModel(synthesisModel),
                 system: systemPrompt,
                 messages: modelMessages,
                 tools,
                 maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-                // GPT-5.4 is a reasoning model; without an explicit effort it burns
-                // full "medium" reasoning on every agentic step — including trivial
-                // "which tool do I call" steps. Verified against the live Vercel
-                // Gateway: reasoningEffort "low" drops reasoning_tokens 95->8 and a
-                // single call 10s->4.3s on gpt-5.4. textVerbosity "low" shortens the
-                // final answer. (Provider only warns — never throws — if a future
-                // non-reasoning model is selected, so this is safe unconditionally.)
                 providerOptions: {
-                  openai: { reasoningEffort: "low", textVerbosity: "low" },
+                  openai: buildAssistantOpenAiProviderOptions(
+                    hasFunctionTools(tools),
+                  ),
                 },
                 stopWhen: stepCountIs(6),
                 experimental_telemetry: aiTelemetry({
