@@ -3,6 +3,8 @@ import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-ac
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
+import { buildCanonicalOperatingPacket } from "@/lib/executive/canonical-operating-packet";
+import { listDailyExecutiveBriefPackets } from "@/lib/daily-briefs/canonical-packets";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
   hydrateExecutiveOperatingBrief,
@@ -183,46 +185,30 @@ type YesterdayItem = Pick<
 >;
 
 /**
- * Runtime-validating adapter for the `daily_recaps.briefing_packet` JSONB column.
- * Narrows the untyped Json to the packet's `sections` shape via real object
- * checks, not an unsafe double-cast (banned by the unsafe-patterns gate).
- */
-function extractPacketSections(
-  value: unknown,
-): BrandonDailyUpdatePacket["sections"] | null {
-  if (!value || typeof value !== "object") return null;
-  const sections = (value as { sections?: unknown }).sections;
-  if (!sections || typeof sections !== "object") return null;
-  return sections as BrandonDailyUpdatePacket["sections"];
-}
-
-/**
- * Read the most recent prior-day executive packet and return its open items
- * (owner decisions + waiting-on-others). These are matched against today's open
- * items to surface what is *still* pending across both days.
+ * Yesterday's open owner items (decisions + waiting-on-others), read from the
+ * most recent prior-day CANONICAL brief packet in `intelligence_packets` and
+ * routed through the SAME candidate mapper as today's brief
+ * (`buildCanonicalOperatingPacket`). This replaces the retired `daily_recaps`
+ * generator (#792) — there is now one brief pipeline. Sourcing both days from
+ * the same mapper is also what makes carryover work: item keys derived from
+ * today's and yesterday's items are computed identically, so
+ * `computeCarryover` can actually match a still-open item across the two days.
  */
 async function loadYesterdayOpenItems(
   todayKey: string,
 ): Promise<YesterdayItem[]> {
-  const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("daily_recaps")
-    .select("briefing_packet, recap_date")
-    .eq("recap_kind", "executive_briefing")
-    .lt("recap_date", todayKey)
-    .order("recap_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // Packets are ordered newest-first; take the most recent one whose business
+  // date is strictly before today (reruns can produce multiple per date).
+  const packets = await listDailyExecutiveBriefPackets(60);
+  const prior = packets.find(
+    (packet) => packet.businessDate && packet.businessDate < todayKey,
+  );
+  if (!prior) return [];
 
-  if (error || !data?.briefing_packet) return [];
-
-  const sections = extractPacketSections(data.briefing_packet);
-  if (!sections) return [];
-
+  const yesterday = await buildCanonicalOperatingPacket(prior);
   return [
-    ...(sections.needsBrandon ?? []),
-    ...(sections.waitingOnOthers ?? []),
+    ...yesterday.sections.needsBrandon,
+    ...yesterday.sections.waitingOnOthers,
   ].map((item) => ({
     title: item.title,
     project: item.project,
@@ -294,10 +280,11 @@ function computeCarryover(
 /**
  * Standalone, full-viewport Daily Executive Brief.
  *
- * Bound to the live executive-brief packet (daily_recaps → briefing_packet) —
- * the same data that powers /executive — and rendered in a bespoke editorial
- * layout outside the app's PageShell chrome. Every claim links to its real
- * source (Fireflies transcript, Outlook email, document, or in-app meeting).
+ * Bound to the canonical executive-brief packet (`intelligence_packets`, target
+ * `daily-executive-brief`) — the same deep-read data that powers /executive —
+ * and rendered in a bespoke editorial layout outside the app's PageShell chrome.
+ * Every claim links to its real source (Fireflies transcript, Outlook email,
+ * document, or in-app meeting).
  *
  * Access is gated by the same `view_executive_briefing` capability as every
  * other Daily Brief surface — the page exposes owner-level financials, schedule

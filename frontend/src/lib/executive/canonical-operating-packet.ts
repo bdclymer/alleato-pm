@@ -146,8 +146,11 @@ function buildSourceCoverage(
  * the full operating brief (Start Here, risk radar, focus, waiting-on) from these
  * `sections`, so producing well-routed sections is all the dashboard needs.
  */
-export async function buildCanonicalOperatingPacket(): Promise<BrandonDailyUpdatePacket> {
-  const canonical = await loadCurrentDailyExecutiveBriefPacket();
+export async function buildCanonicalOperatingPacket(
+  canonicalOverride?: CanonicalDailyBriefPacket,
+): Promise<BrandonDailyUpdatePacket> {
+  const canonical =
+    canonicalOverride ?? (await loadCurrentDailyExecutiveBriefPacket());
   const [candidates, financialPulse] = await Promise.all([
     loadBriefSignalCandidates(canonical.coveredStartAt, canonical.coveredEndAt),
     loadFinancialPulse().catch(() => undefined),
