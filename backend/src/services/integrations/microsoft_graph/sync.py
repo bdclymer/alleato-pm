@@ -989,7 +989,12 @@ def _run_graph_downstream_processing(
         try:
             from src.services.intelligence.project_synthesizer import synthesize_new_comms_since
 
-            extract_result = synthesize_new_comms_since(sync_started_at.isoformat())
+            extract_result = synthesize_new_comms_since(
+                sync_started_at.isoformat(),
+                # graph-sync cannot persist PM-APP L2 projections (no ALLOW_PM_APP_FINAL_PROJECTIONS),
+                # so skip the every-2h L2 re-synthesis here; the daily sweep owns L2. Extraction still runs.
+                refresh_intelligence=False,
+            )
             summary["intelligence_extraction"] = extract_result
             logger.info(
                 "[GraphSync] Event-driven extraction: projects=%d cards=%d packets=%d errors=%d",

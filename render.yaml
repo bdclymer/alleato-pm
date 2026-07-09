@@ -197,6 +197,9 @@ services:
         value: "2"
       - key: SHAREPOINT_SYNC_MAX_FOLDERS
         value: "2"
+      - key: INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED
+        # graph-sync can't project L2 to PM APP; skip the operating-read LLM synthesis here (daily sweep owns it).
+        value: "false"
       - key: GRAPH_SYNC_ENABLED
         value: "true"
       - key: GRAPH_SYNC_OUTLOOK
