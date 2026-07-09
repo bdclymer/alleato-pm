@@ -6,9 +6,9 @@ import { forwardRef } from "react";
 
 const detailGridClassMap = {
   default:
-    "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(340px,420px)] gap-x-12 gap-y-10",
+    "grid grid-cols-1 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(340px,420px)] lg:gap-x-12",
   compact:
-    "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,380px)] gap-x-10 gap-y-8",
+    "grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,380px)] lg:gap-x-10",
 } as const;
 
 export interface ContentSectionStackProps {
@@ -107,7 +107,7 @@ export const SectionAction = forwardRef<HTMLButtonElement, SectionActionProps>(
         variant="outline"
         size="sm"
         disabled={disabled}
-        className={cn("h-7 text-xs", className)}
+        className={cn("h-9 text-xs sm:h-7", className)}
         {...props}
       >
         {children}

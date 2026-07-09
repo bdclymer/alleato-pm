@@ -92,7 +92,8 @@ export function ProjectSelector({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="border border-border p-0 shadow-sm"
+        collisionPadding={{ left: 60, right: 8 }}
+        className="z-[110] border border-border p-0 shadow-sm"
         style={{ width: "min(340px, calc(100vw - 1rem))" }}
       >
         {/* Panel header */}

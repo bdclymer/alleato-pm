@@ -295,7 +295,7 @@ export function DetailTab({
           {" — "}Enter amounts to release from previously withheld retainage. Billing fields are read-only.
         </div>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <SectionRuleHeading label="Schedule of Values (G703)" />
           <p className="text-xs text-muted-foreground">
@@ -304,7 +304,7 @@ export function DetailTab({
           </p>
         </div>
         {canEdit && lineItems.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {editing ? (
               <>
                 {!isRetainageRelease && (

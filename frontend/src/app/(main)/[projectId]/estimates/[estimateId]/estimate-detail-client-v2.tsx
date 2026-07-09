@@ -5796,7 +5796,7 @@ function SummaryTab({
     <div className="space-y-5">
       {/* ── Letterhead ─────────────────────────────────────────────── */}
       <div className="rounded-lg p-5">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col items-start justify-between gap-6 lg:flex-row">
           {/* Logo + address */}
           <div className="flex items-start gap-4">
             <img

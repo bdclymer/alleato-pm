@@ -177,7 +177,7 @@ export function DataTable<TData, TValue>({
           )}
         </div>
       ) : (
-        <div>
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader className="[&_tr]:hover:bg-transparent">
               {table.getHeaderGroups().map((headerGroup) => (
