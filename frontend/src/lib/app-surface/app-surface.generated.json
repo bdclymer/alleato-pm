@@ -1252,6 +1252,11 @@
       "description": "How AI is woven through the life of a project — from chasing the work to closing it out — built like a building, floor by floor. What's live today, what's framing up, and where it all goes."
     },
     {
+      "url": "/intelligence/sources/[sourceDocumentId]",
+      "title": "Intelligence source",
+      "description": null
+    },
+    {
       "url": "/invoice/add",
       "title": null,
       "description": "Create a new invoice"
