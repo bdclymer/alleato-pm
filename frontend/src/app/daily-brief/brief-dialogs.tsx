@@ -43,7 +43,7 @@ export type FeedbackTarget = {
  * (`ai_feedback_events`). Accurate / Inaccurate plus an optional note — the note
  * is the highest-signal training input, so it's always available.
  */
-export function BriefFeedbackModal({
+export function BriefFeedbackDialog({
   target,
   onOpenChange,
 }: {
@@ -137,7 +137,7 @@ export function BriefFeedbackModal({
 
 // ── Task dialog (create + edit) ─────────────────────────────────────────────
 
-export type TaskModalState = {
+export type TaskDialogState = {
   mode: "create" | "edit";
   taskId?: string;
   title: string;
@@ -150,26 +150,26 @@ export type TaskModalState = {
   priority: "high" | "medium" | "low";
 };
 
-const PRIORITIES: Array<TaskModalState["priority"]> = ["high", "medium", "low"];
+const PRIORITIES: Array<TaskDialogState["priority"]> = ["high", "medium", "low"];
 
 /**
  * Create or edit a real task from the brief. Create → the brief task route
  * (anchored to the item source when it has one). Edit / Delete → the shared
  * task routes. On success the caller updates the brief in place.
  */
-export function BriefTaskModal({
+export function BriefTaskDialog({
   state,
   onOpenChange,
   onSaved,
   onDeleted,
 }: {
-  state: TaskModalState | null;
+  state: TaskDialogState | null;
   onOpenChange: (open: boolean) => void;
   onSaved: (taskId: string) => void;
   onDeleted?: (taskId: string) => void;
 }) {
   const { options: userOptions } = useUsers({ personType: "user" });
-  const [draft, setDraft] = useState<TaskModalState | null>(state);
+  const [draft, setDraft] = useState<TaskDialogState | null>(state);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -184,7 +184,7 @@ export function BriefTaskModal({
     return <Modal open={false} onOpenChange={onOpenChange} />;
   }
 
-  const set = (patch: Partial<TaskModalState>) =>
+  const set = (patch: Partial<TaskDialogState>) =>
     setDraft((current) => (current ? { ...current, ...patch } : current));
 
   const canSave = draft.title.trim().length > 0 && draft.description.trim().length > 0;
@@ -306,7 +306,7 @@ export function BriefTaskModal({
               <Select
                 value={draft.priority}
                 onValueChange={(value) =>
-                  set({ priority: value as TaskModalState["priority"] })
+                  set({ priority: value as TaskDialogState["priority"] })
                 }
               >
                 <SelectTrigger>
