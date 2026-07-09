@@ -5,6 +5,7 @@ import {
   parseChangeEventIdsParam,
   resolveSourceChangeReason,
   resolveSourcePrimeContractId,
+  sumSourceChangeEventRom,
   type PrimePcoSourceChangeEvent,
 } from "../prime-pco-source";
 
@@ -110,5 +111,25 @@ describe("prime PCO source change events", () => {
         title: "Owner Contract",
       },
     ]);
+  });
+
+  it("sums source-event Revenue ROM (string or number) to prefill the PCO amount", () => {
+    // The PCO amount should default to the source events' Revenue ROM so the
+    // user does not have to retype it (the reported blank-Amount bug).
+    expect(
+      sumSourceChangeEventRom([
+        { ...sourceEvents[0], rom: "20000" },
+      ]),
+    ).toBe(20000);
+
+    expect(
+      sumSourceChangeEventRom([
+        { ...sourceEvents[0], rom: "20000" },
+        { ...sourceEvents[0], id: "b", rom: 5000 },
+        { ...sourceEvents[0], id: "c", rom: null },
+      ]),
+    ).toBe(25000);
+
+    expect(sumSourceChangeEventRom([])).toBe(0);
   });
 });

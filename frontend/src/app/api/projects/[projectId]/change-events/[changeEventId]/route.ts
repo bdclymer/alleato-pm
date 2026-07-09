@@ -16,6 +16,7 @@ import {
   resolveUserEmails,
   mapChangedBy,
 } from "@/lib/change-events/history-formatters";
+import { computeLineItemRevenueRom } from "@/lib/change-events/financial-summary";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -330,7 +331,14 @@ export const GET = withApiGuardrails(
     }
 
     const baseRevenueRom = lineItems.reduce(
-      (sum: number, item: any) => sum + (item.revenue_rom || 0),
+      (sum, item) =>
+        sum +
+        computeLineItemRevenueRom({
+          expectingRevenue: changeEvent.expecting_revenue !== false,
+          revenueSource: changeEvent.line_item_revenue_source,
+          costRom: item.cost_rom,
+          revenueRom: item.revenue_rom,
+        }),
       0,
     );
     const baseCostRom = lineItems.reduce(
@@ -426,7 +434,14 @@ export const GET = withApiGuardrails(
           unitOfMeasure: item.unit_of_measure,
           unitCost: item.unit_cost,
           extendedAmount: quantity * unitCost,
-          revenueRom: item.revenue_rom,
+          // Effective revenue (unset source defaults to match-cost) so the
+          // line-items table agrees with the rolled-up Revenue ROM summary.
+          revenueRom: computeLineItemRevenueRom({
+            expectingRevenue: changeEvent.expecting_revenue !== false,
+            revenueSource: changeEvent.line_item_revenue_source,
+            costRom: item.cost_rom,
+            revenueRom: item.revenue_rom,
+          }),
           costRom: item.cost_rom,
           rfqCost: latestRfqAmountByLineItemId.get(item.id) ?? null,
           nonCommittedCost: item.non_committed_cost,
@@ -656,7 +671,12 @@ export const PATCH = withApiGuardrails(
           unitOfMeasure: item.unit_of_measure,
           unitCost: item.unit_cost,
           extendedAmount: quantity * unitCost,
-          revenueRom: item.revenue_rom,
+          revenueRom: computeLineItemRevenueRom({
+            expectingRevenue: data.expecting_revenue !== false,
+            revenueSource: data.line_item_revenue_source,
+            costRom: item.cost_rom,
+            revenueRom: item.revenue_rom,
+          }),
           costRom: item.cost_rom,
           nonCommittedCost: item.non_committed_cost,
           vendorId: item.vendor_id,

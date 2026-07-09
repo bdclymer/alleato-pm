@@ -123,6 +123,22 @@ export function getSourcePrimeContracts(
   return Array.from(contractsById.values());
 }
 
+/**
+ * Sum the Revenue ROM across the source change events. This is the amount a
+ * Prime PCO created from those change events should default its Amount to —
+ * revenue (what the owner is billed), not cost. `rom` is the change event's
+ * Revenue ROM as returned by the detail API (a numeric string or number).
+ */
+export function sumSourceChangeEventRom(
+  events: PrimePcoSourceChangeEvent[],
+): number {
+  return events.reduce((total, event) => {
+    const numeric =
+      typeof event.rom === "number" ? event.rom : Number(event.rom);
+    return total + (Number.isFinite(numeric) ? numeric : 0);
+  }, 0);
+}
+
 export function resolveSourceChangeReason(
   events: PrimePcoSourceChangeEvent[],
   allowedReasons: readonly string[],

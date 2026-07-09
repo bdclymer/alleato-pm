@@ -43,6 +43,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import {
+  DEFAULT_LINE_ITEM_REVENUE_SOURCE,
+  computeLineItemRevenueRom,
+} from "@/lib/change-events/financial-summary";
 
 /**
  * Helper to get the appropriate Supabase client based on auth method
@@ -326,6 +330,20 @@ export const GET = withApiGuardrails(
     const events = data || []
     const eventIds = events.map((event: ChangeEvent) => event.id)
 
+    // Per-event revenue settings drive how each line item's revenue rolls up
+    // (an unset revenue source defaults to match-cost — see
+    // computeLineItemRevenueRom). Keyed by change_event_id.
+    const eventRevenueSettings = new Map<
+      string,
+      { expectingRevenue: boolean; revenueSource: string | null }
+    >()
+    for (const event of events as ChangeEvent[]) {
+      eventRevenueSettings.set(String(event.id), {
+        expectingRevenue: event.expecting_revenue !== false,
+        revenueSource: event.line_item_revenue_source ?? null,
+      })
+    }
+
     // Batch fetch line-item level parity data for all rows on page.
     const { data: allLineItems } = eventIds.length
       ? await supabase
@@ -363,7 +381,13 @@ export const GET = withApiGuardrails(
         commitmentId: null,
         commitmentType: null,
       }
-      existing.rom += item.revenue_rom || 0
+      const revenueSettings = eventRevenueSettings.get(key)
+      existing.rom += computeLineItemRevenueRom({
+        expectingRevenue: revenueSettings?.expectingRevenue ?? true,
+        revenueSource: revenueSettings?.revenueSource,
+        costRom: item.cost_rom,
+        revenueRom: item.revenue_rom,
+      })
       existing.costRom += item.cost_rom || 0
       existing.total += (item.cost_rom || 0) + (item.non_committed_cost || 0)
       existing.count += 1
@@ -701,7 +725,12 @@ export const POST = withApiGuardrails(
       origin: origin || 'Internal',
       origin_id: originId,
       expecting_revenue: expectingRevenue,
-      line_item_revenue_source: lineItemRevenueSource || null,
+      // When revenue is expected but no source was chosen, persist Procore's
+      // default ("Match Revenue to Latest Cost") so revenue mirrors cost and
+      // rolls up (rather than silently staying $0). No revenue expected → null.
+      line_item_revenue_source:
+        lineItemRevenueSource ||
+        (expectingRevenue === false ? null : DEFAULT_LINE_ITEM_REVENUE_SOURCE),
       prime_contract_id: primeContractId != null ? String(primeContractId) : null,
       description: description || null,
       created_at: new Date().toISOString(),

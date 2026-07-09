@@ -207,17 +207,15 @@ export const REVENUE_SOURCE_OPTIONS = [
  *     Qty / Unit Cost cells are READ-ONLY (auto-computed from cost).
  *   - "Enter manually" / "Quantity x Unit Cost" → the user types the revenue
  *     Qty + Unit Cost. (Revenue ROM is always computed, never directly edited.)
- *   - "" / unset → editable (no source chosen yet).
+ *   - "" / unset → editable (no source chosen yet). NOTE: while the read-only
+ *     gate treats unset as editable, the *effective* source of an unset field
+ *     defaults to match-cost when rolling revenue up — see `resolveRevenueSource`
+ *     / `computeLineItemRevenueRom` in `@/lib/change-events/financial-summary`.
  *
- * Only the match-cost source is read-only. Handles the canonical values above
- * AND the legacy aliases that may already be stored in the DB (see
- * api/.../change-events/validation.ts → LineItemRevenueSource).
+ * Canonical predicate lives in the shared financial-summary module so the form,
+ * the detail API totals, and the list API rollup all agree.
  */
-export function isMatchCostRevenueSource(source?: string | null): boolean {
-  const normalized = (source ?? "").trim().toLowerCase();
-  return (
-    normalized === "match_cost" ||
-    normalized === "match_revenue_to_cost" ||
-    normalized.includes("match revenue to latest cost")
-  );
-}
+export {
+  DEFAULT_LINE_ITEM_REVENUE_SOURCE,
+  isMatchCostRevenueSource,
+} from "@/lib/change-events/financial-summary";

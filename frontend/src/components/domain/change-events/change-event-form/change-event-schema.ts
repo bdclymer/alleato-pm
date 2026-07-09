@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { ChangeEventFormData } from "./types";
-import { createEmptyLineItem } from "./types";
+import { createEmptyLineItem, DEFAULT_LINE_ITEM_REVENUE_SOURCE } from "./types";
 
 /**
  * Zod schema for the Change Event form.
@@ -78,6 +78,7 @@ export const changeEventFormSchema = z
 export function buildChangeEventDefaults(
   initialData?: Partial<ChangeEventFormData>,
 ): ChangeEventFormData {
+  const expectingRevenue = initialData?.expectingRevenue ?? true;
   return {
     number: initialData?.number,
     contractNumber: initialData?.contractNumber || initialData?.number || "",
@@ -88,8 +89,13 @@ export function buildChangeEventDefaults(
     type: initialData?.type || "",
     changeReason: initialData?.changeReason,
     scope: initialData?.scope || "",
-    expectingRevenue: initialData?.expectingRevenue ?? true,
-    lineItemRevenueSource: initialData?.lineItemRevenueSource || "",
+    expectingRevenue,
+    // Default to Procore's revenue source ("Match Revenue to Latest Cost") when
+    // revenue is expected and none was chosen, so revenue mirrors cost and the
+    // revenue Qty/Unit-Cost cells auto-populate + roll up (instead of $0).
+    lineItemRevenueSource:
+      initialData?.lineItemRevenueSource ||
+      (expectingRevenue === false ? "" : DEFAULT_LINE_ITEM_REVENUE_SOURCE),
     primeContractId: initialData?.primeContractId || "",
     description: initialData?.description || "",
     attachments: initialData?.attachments || [],

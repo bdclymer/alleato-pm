@@ -55,6 +55,7 @@ import {
   parseChangeEventIdsParam,
   resolveSourceChangeReason,
   resolveSourcePrimeContractId,
+  sumSourceChangeEventRom,
   type PrimePcoSourceChangeEvent,
   type PrimePcoSourceContract,
   type PrimePcoSourceLineItem,
@@ -482,8 +483,17 @@ export default function NewPrimeContractPcoPage() {
       form.setValue("title", buildPrimePcoSourceTitle(events), {
         shouldValidate: true,
       });
+
+      // Prefill the Amount from the source change events' Revenue ROM so the
+      // user isn't forced to retype it. Only when the user is creating from
+      // change events and hasn't selected existing PCOs to sum instead.
+      if (selectedPcoIds.length === 0) {
+        form.setValue("total_amount", sumSourceChangeEventRom(events), {
+          shouldValidate: true,
+        });
+      }
     },
-    [form],
+    [form, selectedPcoIds.length],
   );
 
   useEffect(() => {
@@ -646,7 +656,12 @@ export default function NewPrimeContractPcoPage() {
   useEffect(() => {
     setSelectedPcoIds([]);
     setPcoSelectOpen(false);
-    form.setValue("total_amount", null);
+    // In the change-event flow the Amount is prefilled from the source events'
+    // Revenue ROM (see applyChangeEventDefaults); don't clobber it when the
+    // prime contract auto-populates. Only the select-existing-PCO flow resets.
+    if (!hasChangeEvents) {
+      form.setValue("total_amount", null);
+    }
 
     if (!selectedContractId) {
       setPotentialChangeOrders([]);
@@ -686,7 +701,7 @@ export default function NewPrimeContractPcoPage() {
     return () => {
       active = false;
     };
-  }, [form, projectId, selectedContractId]);
+  }, [form, projectId, selectedContractId, hasChangeEvents]);
 
   useEffect(() => {
     if (selectedPotentialChangeOrders.length === 0) return;
