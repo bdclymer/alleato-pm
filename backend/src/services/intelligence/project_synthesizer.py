@@ -955,6 +955,18 @@ def run_synthesis_sweep(
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
 
     if project_ids is None:
+        # Get active projects (exclude archived/complete phases)
+        active_projects = (
+            client.table("projects")
+            .select("id")
+            .not_.in_("phase", ["archived", "complete"])
+            .execute()
+            .data
+            or []
+        )
+        active_project_ids = {int(p["id"]) for p in active_projects if p.get("id")}
+
+        # Find projects with recent documents, filtered to active projects only
         rows = (
             client.table("document_metadata")
             .select("project_id")
@@ -965,7 +977,7 @@ def run_synthesis_sweep(
             .data
             or []
         )
-        project_ids = sorted({int(r["project_id"]) for r in rows if r.get("project_id")})
+        project_ids = sorted({int(r["project_id"]) for r in rows if r.get("project_id") and int(r["project_id"]) in active_project_ids})
 
     project_ids = project_ids[:max_projects]
 
