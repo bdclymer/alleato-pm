@@ -952,7 +952,6 @@ def run_synthesis_sweep(
     # its next scheduled run.
     enforce_app_db_pressure_guard("project_synthesis_sweep")
     client = get_supabase_client()
-    projection_counts: Dict[str, int] = {}
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
 
     if project_ids is None:
@@ -980,7 +979,16 @@ def run_synthesis_sweep(
         "errors": [],
         "per_project": [],
     }
+
+    # Reset the projection budget per project to prevent accumulation across the
+    # entire sweep. This fixes incident #759 where the projection guard self-blocked
+    # on large sweeps (104+ projects) because accumulated card counts exceeded the
+    # cap after ~30 projects. Each project gets its own projection budget allocation
+    # so no single project's cards/packets can be blamed for blocking future projects.
     for pid in project_ids:
+        # Fresh budget per project — each project's projection reserve is independent
+        project_projection_counts: Dict[str, int] = {}
+
         try:
             r = synthesize_project_intelligence(
                 pid,
@@ -988,14 +996,14 @@ def run_synthesis_sweep(
                 max_docs=200,
                 max_extractions=max_extractions_per_project,
                 skip_synthesized=True,
-                projection_budget_counts=projection_counts,
+                projection_budget_counts=project_projection_counts,
                 projection_budget_job_name="project_synthesizer_sweep_projection",
             )
             summary["emails"] += r.get("emails", 0)
             summary["teams"] += r.get("teams", 0)
             summary["cards_written"] += r.get("cards_written", 0)
             summary["tasks_written"] += r.get("tasks_written", 0)
-            summary["pm_projection_rows"] = dict(projection_counts)
+            summary["pm_projection_rows"] = dict(project_projection_counts)
             # Flag -> outcome calibration for this project (cheap: only open flags).
             flag_res = {}
             try:
@@ -1015,10 +1023,10 @@ def run_synthesis_sweep(
 
                     _reserve_pm_projection_budget(
                         "project_synthesizer_sweep_projection",
-                        projection_counts,
+                        project_projection_counts,
                         {"intelligence_packets": 1},
                     )
-                    summary["pm_projection_rows"] = dict(projection_counts)
+                    summary["pm_projection_rows"] = dict(project_projection_counts)
                     synthesis_res = refresh_project_intelligence(pid)
                     summary["synthesis_packets_written"] = (
                         summary.get("synthesis_packets_written", 0)
