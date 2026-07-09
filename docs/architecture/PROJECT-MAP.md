@@ -907,6 +907,7 @@ _301/337 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit` | POST | frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit/route.ts |
 | `/api/projects/[projectId]/invoicing/owner/[invoiceId]/void` | POST | frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/void/route.ts |
 | `/api/projects/[projectId]/invoicing/owner/atomic` | POST | frontend/src/app/api/projects/[projectId]/invoicing/owner/atomic/route.ts |
+| `/api/projects/[projectId]/invoicing/owner/sov` | GET | frontend/src/app/api/projects/[projectId]/invoicing/owner/sov/route.ts |
 | `/api/projects/[projectId]/invoicing/payments` | GET, POST | frontend/src/app/api/projects/[projectId]/invoicing/payments/route.ts |
 | `/api/projects/[projectId]/invoicing/payments/[paymentId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/invoicing/payments/[paymentId]/route.ts |
 | `/api/projects/[projectId]/invoicing/settings` | GET, PATCH | frontend/src/app/api/projects/[projectId]/invoicing/settings/route.ts |

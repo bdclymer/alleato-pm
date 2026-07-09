@@ -108,6 +108,25 @@ const toErrorMessage = (error: unknown): string => {
   return "Invoice creation failed because the request did not return a usable error message.";
 };
 
+interface OwnerInvoiceSovResponse {
+  contract: {
+    id: string;
+    contract_number: string | null;
+    title: string | null;
+    contract_amount: number;
+    retention_percentage: number | null;
+  };
+  line_items: Array<{
+    id: string;
+    line_number: number;
+    cost_code: string | null;
+    cost_code_name: string | null;
+    description: string;
+    scheduled_value: number;
+    previously_billed: number;
+  }>;
+}
+
 interface AtomicOwnerInvoiceResponse {
   data: {
     invoice_id: number;
@@ -229,12 +248,14 @@ export default function NewInvoicePage() {
   });
 
   const watchedContractType = form.watch("contractType");
+  const watchedContractId = form.watch("contractId");
   const includeRetention = form.watch("includeRetention");
   const retentionPercentValue = form.watch("retentionPercentage") ?? 0;
 
   const [lineItems, setLineItems] = useState<LineItem[]>([
     withCalculatedFields(createLineItem(), true, 10),
   ]);
+  const [sovLoading, setSovLoading] = useState(false);
 
   const totals = useMemo(() => {
     return lineItems.reduce(
@@ -309,6 +330,9 @@ export default function NewInvoicePage() {
     setLineItems((previous) => recalculateAllLineItems(previous));
   }, [recalculateAllLineItems]);
 
+  // Tracks which contract's Schedule of Values is currently loaded into the grid.
+  const loadedContractRef = useRef<string | null>(null);
+
   // Switching contract type clears the previously selected contract/commitment.
   // Guarded so the URL-provided initial contract id survives the first render.
   const previousContractType = useRef(initialContractType);
@@ -316,7 +340,88 @@ export default function NewInvoicePage() {
     if (previousContractType.current === watchedContractType) return;
     previousContractType.current = watchedContractType;
     form.setValue("contractId", "");
-  }, [watchedContractType, form]);
+    // Drop any auto-loaded Schedule of Values back to a single manual row, and
+    // forget which contract was loaded so re-selecting it re-fetches the SOV.
+    loadedContractRef.current = null;
+    setLineItems([withCalculatedFields(createLineItem(), includeRetention, retentionPercentValue)]);
+  }, [watchedContractType, form, includeRetention, retentionPercentValue]);
+
+  // When a prime contract is selected, auto-load its Schedule of Values so the
+  // billable lines (cost code, description, contract value, previously billed)
+  // are pre-filled — matching the subcontractor invoice flow. Without this the
+  // user had to hand-type every line and Contract Amount showed $0.
+  useEffect(() => {
+    if (watchedContractType !== "prime" || !watchedContractId || !projectId) {
+      return;
+    }
+    if (loadedContractRef.current === watchedContractId) {
+      return;
+    }
+
+    let cancelled = false;
+    setSovLoading(true);
+    apiFetch<OwnerInvoiceSovResponse>(
+      `/api/projects/${projectId}/invoicing/owner/sov?contractId=${encodeURIComponent(watchedContractId)}`,
+    )
+      .then((response) => {
+        if (cancelled) return;
+        loadedContractRef.current = watchedContractId;
+
+        const retentionPct = response.contract.retention_percentage;
+        if (typeof retentionPct === "number" && Number.isFinite(retentionPct)) {
+          form.setValue("retentionPercentage", retentionPct);
+        }
+        const applyRetention = typeof retentionPct === "number" ? retentionPct : retentionPercentValue;
+
+        const loaded = response.line_items.map((line) =>
+          withCalculatedFields(
+            {
+              ...createLineItem(),
+              costCode: line.cost_code ?? "",
+              description: line.description ?? "",
+              contractAmount: line.scheduled_value.toFixed(2),
+              previouslyBilled: line.previously_billed.toFixed(2),
+            },
+            includeRetention,
+            applyRetention,
+          ),
+        );
+
+        // A contract with no SOV lines still needs one editable row to bill against.
+        setLineItems(
+          loaded.length > 0
+            ? loaded
+            : [withCalculatedFields(createLineItem(), includeRetention, applyRetention)],
+        );
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : "Failed to load the contract's Schedule of Values.";
+        toast.error(message);
+      })
+      .finally(() => {
+        if (!cancelled) setSovLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // includeRetention / retentionPercentValue are read only on first load of a
+    // given contract — the loadedContractRef guard early-returns on later runs,
+    // so a retention tweak re-runs this effect but never re-fetches or discards
+    // the user's in-progress this-month entries (recalculateAllLineItems owns
+    // recomputation from there).
+  }, [
+    watchedContractType,
+    watchedContractId,
+    projectId,
+    form,
+    includeRetention,
+    retentionPercentValue,
+  ]);
 
   const onSubmit = async (values: InvoiceFormValues) => {
     if (!Number.isFinite(parsedProjectId)) {
@@ -536,6 +641,11 @@ export default function NewInvoicePage() {
 
             <FormSection title="Invoice Line Items">
               <div className="space-y-4">
+                {sovLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Loading the contract&rsquo;s Schedule of Values&hellip;
+                  </p>
+                ) : null}
                 <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20 px-2">
                   <InlineTable variant="edit" tableClassName="min-w-[1040px]">
                     <InlineTableHeader>
