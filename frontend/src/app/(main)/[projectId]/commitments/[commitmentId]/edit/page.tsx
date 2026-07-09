@@ -455,10 +455,11 @@ export default function EditCommitmentPage() {
 
   return (
     <PageShell
-      variant="form"
+      variant="detailWide"
       title={title}
       onBack={handleCancel}
       backLabel="Cancel"
+      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
     >
       <CreateSubcontractForm
         projectId={projectId}
