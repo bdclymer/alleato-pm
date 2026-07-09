@@ -350,16 +350,25 @@ export function SubmittalFormPage({
   const isPending =
     createMutation.isPending || updateMutation.isPending || isUploadingAttachments;
 
-  const companyOptions = useMemo(
-    () =>
-      companies
-        .filter((c) => c.company_id)
-        .map((c) => ({
-          value: c.company_id,
-          label: c.company?.name ?? c.company_id,
-        })),
-    [companies],
-  );
+  // companies dropdown returns companies.id, which is exactly what
+  // responsible_contractor_id (FK → companies.id) expects — no resolution
+  // needed. But the list is scoped to the project's companies, so a saved
+  // contractor no longer on the project would render an empty placeholder on
+  // edit. Inject the saved contractor (name from the joined read) so it
+  // pre-fills — mirrors the submittal detail page.
+  const companyOptions = useMemo(() => {
+    const opts = companies
+      .filter((c) => c.company_id)
+      .map((c) => ({
+        value: c.company_id,
+        label: c.company?.name ?? c.company_id,
+      }));
+    const saved = submittal?.responsible_contractor;
+    if (saved?.id && !opts.some((o) => o.value === saved.id)) {
+      opts.unshift({ value: saved.id, label: saved.name ?? saved.id });
+    }
+    return opts;
+  }, [companies, submittal?.responsible_contractor]);
 
   const userOptions = useMemo(
     () =>

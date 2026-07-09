@@ -131,6 +131,7 @@ export default function EditChangeEventPage() {
           budgetCode: li.projectBudgetCodeId ?? "",
           description: li.description ?? "",
           vendor: li.vendorId ?? li.vendor?.id ?? li.commitment?.contract_company_id ?? "",
+          vendorName: li.vendor?.name ?? li.commitment?.company_name ?? "",
           contract: prefixedCommitmentId,
           commitmentId: prefixedCommitmentId || undefined,
             commitmentLineItemId: li.commitmentLineItemId ?? "",
