@@ -2326,6 +2326,7 @@ export function UnifiedTablePage<T>({
                                 <>
                                   {hasContextActions ? (
                                     <div className="flex items-center w-full">
+                                      {columnAlignment === "right" && dragHandle}
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button
@@ -2348,6 +2349,14 @@ export function UnifiedTablePage<T>({
                                               event.currentTarget.click();
                                             }}
                                           >
+                                            {/* Right-aligned headers place the sort
+                                                indicator BEFORE the label so the label
+                                                stays flush with the column's right edge,
+                                                matching the right-aligned numeric cells. */}
+                                            {columnAlignment === "right" &&
+                                              isSortable &&
+                                              column.showSortIcon !== false &&
+                                              renderSortIcon(column.id)}
                                             <span
                                               className={
                                                 TABLE_HEADER_LABEL_CLASSNAME
@@ -2355,7 +2364,8 @@ export function UnifiedTablePage<T>({
                                             >
                                               {column.label}
                                             </span>
-                                            {isSortable &&
+                                            {columnAlignment !== "right" &&
+                                              isSortable &&
                                               column.showSortIcon !== false &&
                                               renderSortIcon(column.id)}
                                           </Button>
@@ -2435,7 +2445,7 @@ export function UnifiedTablePage<T>({
                                           )}
                                         </DropdownMenuContent>
                                       </DropdownMenu>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   ) : (
                                     <div
@@ -2450,12 +2460,13 @@ export function UnifiedTablePage<T>({
                                             : "justify-start",
                                       )}
                                     >
+                                      {columnAlignment === "right" && dragHandle}
                                       <span
                                         className={TABLE_HEADER_LABEL_CLASSNAME}
                                       >
                                         {column.label}
                                       </span>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   )}
                                   <div
