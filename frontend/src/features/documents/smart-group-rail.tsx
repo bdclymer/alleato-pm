@@ -96,3 +96,50 @@ export function SmartGroupRail({
     </nav>
   );
 }
+
+/**
+ * Horizontally-scrollable pill row used below the `md` breakpoint, where the
+ * vertical rail would steal too much width from the file table. Each pill is a
+ * compact icon + label + count chip.
+ */
+export function SmartGroupPills({
+  counts,
+  activeGroupId,
+  onSelect,
+}: {
+  counts: SmartGroupCounts;
+  activeGroupId: string;
+  onSelect: (groupId: string) => void;
+}): React.ReactElement {
+  return (
+    <nav
+      aria-label="Smart groups"
+      className="flex w-full gap-1.5 overflow-x-auto bg-muted/30 px-3 py-2"
+    >
+      {SMART_GROUPS.map((group) => {
+        const Icon = ICONS[group.icon] ?? Files;
+        const active = group.id === activeGroupId;
+        const count = counts[group.id] ?? 0;
+        return (
+          <Button
+            key={group.id}
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onSelect(group.id)}
+            className={cn(
+              "h-8 shrink-0 gap-1.5 rounded-full border px-3 text-xs font-normal",
+              active
+                ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            )}
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="whitespace-nowrap">{group.label}</span>
+            <span className="tabular-nums text-[11px] opacity-70">{count}</span>
+          </Button>
+        );
+      })}
+    </nav>
+  );
+}

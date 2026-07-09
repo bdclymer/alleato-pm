@@ -626,8 +626,8 @@ export default function DrawingViewerV3Page() {
             className={cn("flex-1 flex overflow-hidden", isResizingRightPanel && "cursor-col-resize select-none")}
           >
 
-            {/* ── Tools sidebar (left) ─────────────────────────────────── */}
-            <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-card border-r border-border">
+            {/* ── Tools sidebar (left on desktop, fixed bottom bar on mobile) ── */}
+            <div className="shrink-0 bg-card flex items-center gap-1 md:w-14 md:flex-col md:py-3 md:border-r md:border-border max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-30 max-md:h-14 max-md:w-full max-md:overflow-x-auto max-md:border-t max-md:border-border max-md:px-2">
               {ANNOTATION_TOOLS.map(({ tool, icon, label }) => (
                 <Tooltip key={tool}>
                   <TooltipTrigger asChild>
@@ -635,7 +635,7 @@ export default function DrawingViewerV3Page() {
                       type="button" variant="ghost"
                       onClick={() => setActiveTool(tool)}
                       className={cn(
-                        "w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-xs p-0",
+                        "w-10 h-10 shrink-0 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-xs p-0",
                         activeTool === tool
                           ? tool === "link"
                             ? "bg-status-success text-white"
@@ -653,8 +653,8 @@ export default function DrawingViewerV3Page() {
 
               {activeTool !== "select" && activeTool !== "comment" && activeTool !== "link" && activeTool !== "eraser" && (
                 <>
-                  <div className="w-8 h-px bg-muted my-1" />
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 h-px bg-muted my-1 max-md:hidden" />
+                  <div className="flex items-center gap-1 shrink-0 md:flex-col max-md:flex-row">
                     {PRESET_COLORS.map((c) => (
                       <Button
                         key={c} type="button" variant="ghost"
@@ -673,15 +673,15 @@ export default function DrawingViewerV3Page() {
 
               {activeTool === "link" && (
                 <>
-                  <div className="w-8 h-px bg-muted my-1" />
-                  <p className="text-[9px] text-muted-foreground/80 text-center px-1 leading-tight">
+                  <div className="w-8 h-px bg-muted my-1 max-md:hidden" />
+                  <p className="text-[9px] text-muted-foreground/80 text-center px-1 leading-tight max-md:hidden">
                     Click on drawing to place a link pin
                   </p>
                 </>
               )}
 
-              <div className="mt-auto pb-1 flex flex-col items-center gap-1">
-                <div className="w-8 h-px bg-muted mb-1" />
+              <div className="md:mt-auto pb-1 flex items-center gap-1 shrink-0 md:flex-col max-md:flex-row max-md:ml-auto">
+                <div className="w-8 h-px bg-muted mb-1 max-md:hidden" />
                 {[
                   { action: zoomIn, icon: <ZoomIn className="h-4 w-4" />, label: "Zoom in" },
                   { action: zoomOut, icon: <ZoomOut className="h-4 w-4" />, label: "Zoom out" },
@@ -733,7 +733,7 @@ export default function DrawingViewerV3Page() {
             {/* ── Right sidebar ────────────────────────────────────────── */}
             {activePanel && (
               <div
-                className="relative shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
+                className="relative shrink-0 flex flex-col bg-card border-l border-border overflow-hidden max-md:fixed max-md:inset-0 max-md:z-50 max-md:!w-full max-md:border-l-0"
                 style={{
                   width: isRightPanelExpanded
                     ? "calc(100% - 3.5rem)"
@@ -744,7 +744,7 @@ export default function DrawingViewerV3Page() {
                   type="button" variant="ghost" aria-label="Resize sidebar"
                   onMouseDown={() => { setIsRightPanelExpanded(false); setIsResizingRightPanel(true); }}
                   className={cn(
-                    "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center rounded-none h-auto p-0",
+                    "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center rounded-none h-auto p-0 max-md:hidden",
                     "text-muted-foreground/80 hover:text-foreground/80",
                     isResizingRightPanel && "text-foreground"
                   )}
@@ -764,7 +764,7 @@ export default function DrawingViewerV3Page() {
                   <div className="flex items-center gap-1">
                     <Button
                       type="button" variant="ghost" onClick={handleRightPanelExpandToggle}
-                      className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0"
+                      className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0 max-md:hidden"
                       aria-label={isRightPanelExpanded ? "Restore sidebar width" : "Expand sidebar"}
                     >
                       {isRightPanelExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
