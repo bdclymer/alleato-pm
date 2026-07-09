@@ -607,6 +607,77 @@ async function readBack(packet) {
   );
 }
 
+// --- Slice A: project intelligence stems from the packet (ungated) ---------
+// The Daily Deep Read packet's "Project Intelligence Updates" section is already
+// a per-project narrative synthesized from the day's FULL transcripts / emails /
+// Teams. Roll each project's block straight into project_current_state.current_summary
+// — the exact field the /[projectId]/intelligence page reads — so project
+// intelligence is a CONSUMER of the one packet spine, not a parallel synthesizer.
+// No review gate: the packet is the source of truth. Corrections happen via
+// downstream feedback (remove/learn), never a pre-approval hold.
+
+const PROJECT_INTELLIGENCE_SECTION = "Project Intelligence Updates";
+
+function stripPacketCitations(text) {
+  return String(text || "")
+    .replace(/`S\d+`/g, "") // packet source aliases don't resolve outside the packet
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([.,;:])/g, "$1")
+    .trim();
+}
+
+function projectHeaderFromBullet(bullet) {
+  // Bullet shape: "- **Vermillion Rise Warehouse:** narrative..."
+  const match = String(bullet || "").match(/^\s*[-*]\s+\*\*(.+?):?\*\*\s*([\s\S]*)$/);
+  if (!match) return null;
+  return { name: match[1].trim(), body: match[2].trim() };
+}
+
+function projectCurrentStateFromPacket(packet, projectRows) {
+  const section = packet.packet_json?.sections?.[PROJECT_INTELLIGENCE_SECTION];
+  if (typeof section !== "string" || !section.trim()) return [];
+  const seen = new Set();
+  const records = [];
+  for (const bullet of parseBullets(section)) {
+    const header = projectHeaderFromBullet(bullet);
+    if (!header) continue;
+    const projectId = projectIdForText(`${header.name}\n${header.body}`, projectRows);
+    if (!projectId || seen.has(projectId)) continue; // one row per project per run
+    seen.add(projectId);
+    const currentSummary = stripPacketCitations(`${header.name}: ${header.body}`);
+    if (!currentSummary) continue;
+    records.push({
+      project_id: projectId,
+      project_name: header.name,
+      current_summary: currentSummary,
+    });
+  }
+  return records;
+}
+
+async function writeProjectCurrentState(records) {
+  if (!records.length) return { updated: 0, unmatchedRowMissing: 0 };
+  return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
+    let updated = 0;
+    let unmatchedRowMissing = 0;
+    for (const rec of records) {
+      // UPDATE-only: every live project already has a project_current_state row.
+      // We never invent one here, so we can't trip a NOT NULL / enum default.
+      const res = await client.query(
+        `
+          update public.project_current_state
+             set current_summary = $2, updated_at = now()
+           where project_id = $1
+        `,
+        [rec.project_id, rec.current_summary],
+      );
+      if (res.rowCount > 0) updated += 1;
+      else unmatchedRowMissing += 1;
+    }
+    return { updated, unmatchedRowMissing };
+  });
+}
+
 async function main() {
   const packet = await loadDailyDeepReadPacket();
   const projectRows = await loadProjectRows();
@@ -627,6 +698,17 @@ async function main() {
 
   const writeResult = shouldWrite ? await writeCandidates(candidates, packet) : { deleted: 0, inserted: 0 };
   const readBackRows = shouldWrite ? await readBack(packet) : [];
+
+  // Slice A: project intelligence stems from this same packet (ungated).
+  const projectStateRecords = projectCurrentStateFromPacket(packet, projectRows);
+  await fs.writeFile(
+    path.join(evidenceDir, "project-current-state-preview.json"),
+    JSON.stringify({ packetId: packet.id, shouldWrite, records: projectStateRecords }, null, 2),
+  );
+  const projectStateResult = shouldWrite
+    ? await writeProjectCurrentState(projectStateRecords)
+    : { updated: 0, unmatchedRowMissing: 0 };
+
   const summary = {
     ok: true,
     packetId: packet.id,
@@ -634,6 +716,10 @@ async function main() {
     shouldWrite,
     candidateCount: candidates.length,
     writeResult,
+    projectIntelligence: {
+      projectsInPacket: projectStateRecords.length,
+      ...projectStateResult,
+    },
     readBack: readBackRows,
     evidenceDir,
   };
