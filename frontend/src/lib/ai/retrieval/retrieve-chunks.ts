@@ -17,6 +17,7 @@
  * a raw number[] array, causing silent RPC failures.
  */
 
+import * as Sentry from "@sentry/nextjs";
 import { OpenAI } from "@ai-sdk/openai";
 import { generateEmbedding, EMBEDDING } from "@/lib/ai/tools/tool-utils";
 import {
@@ -105,35 +106,82 @@ export async function retrieveChunks(opts: RetrieveChunksOptions): Promise<RagRo
     errorLabel = "Document retrieval",
   } = opts;
 
-  // Generate embedding via the canonical helper (returns JSON-stringified vector)
-  const queryEmbedding = await generateEmbedding(openai, query, EMBEDDING.LARGE);
+  try {
+    // Generate embedding via the canonical helper (returns JSON-stringified vector)
+    let queryEmbedding: string;
+    try {
+      queryEmbedding = await generateEmbedding(openai, query, EMBEDDING.LARGE);
+    } catch (embeddingErr) {
+      const embeddingError = embeddingErr instanceof Error ? embeddingErr : new Error(String(embeddingErr));
+      Sentry.captureException(embeddingError, {
+        level: "error",
+        tags: {
+          component: "retrieve-chunks",
+          stage: "embedding-generation",
+        },
+        contexts: {
+          retrieval: {
+            query_length: query.length,
+            source_types: sourceTypes?.join(","),
+            project_id: projectId,
+            error_label: errorLabel,
+          },
+        },
+      });
+      throw embeddingError;
+    }
 
-  // Use provided client or create one
-  const ragClient = providedRagClient ?? createRagServiceClient();
+    // Use provided client or create one
+    const ragClient = providedRagClient ?? createRagServiceClient();
 
-  // Call the RPC with all standardized args
-  const { data, error } = await ragClient.rpc("search_document_chunks", {
-    query_embedding: queryEmbedding, // Always a JSON string from generateEmbedding
-    filter_source_types: sourceTypes ?? undefined,
-    filter_project_id: typeof projectId === "number" ? projectId : undefined,
-    match_count: matchCount,
-    match_threshold: matchThreshold,
-    ...(hybridRankingEnabled && {
-      ranking_mode: "hybrid",
-      query_text: query,
-    }),
-    ...(telemetryEnabled && {
-      telemetry_enabled: true,
-    }),
-  });
+    // Call the RPC with all standardized args
+    const { data, error } = await ragClient.rpc("search_document_chunks", {
+      query_embedding: queryEmbedding, // Always a JSON string from generateEmbedding
+      filter_source_types: sourceTypes ?? undefined,
+      filter_project_id: typeof projectId === "number" ? projectId : undefined,
+      match_count: matchCount,
+      match_threshold: matchThreshold,
+      ...(hybridRankingEnabled && {
+        ranking_mode: "hybrid",
+        query_text: query,
+      }),
+      ...(telemetryEnabled && {
+        telemetry_enabled: true,
+      }),
+    });
 
-  // Error handling: always loud, never silent
-  if (error) {
-    const message = (error as { message?: string }).message || String(error);
-    throw new Error(`${errorLabel}: ${message}`);
+    // Error handling: always loud, never silent
+    if (error) {
+      const message = (error as { message?: string }).message || String(error);
+      const rpcError = new Error(`${errorLabel}: ${message}`);
+      Sentry.captureException(rpcError, {
+        level: "error",
+        tags: {
+          component: "retrieve-chunks",
+          stage: "rpc-search",
+          source_types: sourceTypes?.join(",") || "unfiltered",
+        },
+        contexts: {
+          retrieval: {
+            query_length: query.length,
+            source_types: sourceTypes?.join(","),
+            project_id: projectId,
+            match_count: matchCount,
+            match_threshold: matchThreshold,
+            hybrid_ranking: hybridRankingEnabled,
+            error_label: errorLabel,
+            rpc_error_message: message,
+          },
+        },
+      });
+      throw rpcError;
+    }
+
+    return (data ?? []) as RagRow[];
+  } catch (err) {
+    // Re-throw to maintain loud error behavior
+    throw err;
   }
-
-  return (data ?? []) as RagRow[];
 }
 
 /**
