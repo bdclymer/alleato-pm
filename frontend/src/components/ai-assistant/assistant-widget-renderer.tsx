@@ -3150,11 +3150,6 @@ function getSourceTitle(source: SourceItem, index: number): string {
 
 function getSourceHref(source: SourceItem): string | null {
   const metadata = asRecord(source.metadata);
-  const externalLink = [metadata.url, metadata.fireflies_link]
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .find((value) => Boolean(value && /^https?:\/\//.test(value)));
-  if (externalLink) return externalLink;
-
   const projectId =
     typeof metadata.project_id === "number"
       ? metadata.project_id
@@ -3164,13 +3159,25 @@ function getSourceHref(source: SourceItem): string | null {
   ).trim();
   const type = String(metadata.doc_type ?? metadata.type ?? metadata.category ?? "").toLowerCase();
 
-  if (!recordId) return null;
-  if (type.includes("meeting")) return `/meetings/${recordId}`;
-  if (!projectId) return null;
-  if (type.includes("rfi")) return `/${projectId}/rfis/${recordId}`;
-  if (type.includes("submittal")) return `/${projectId}/submittals/${recordId}`;
-  if (type.includes("change event")) return `/${projectId}/change-events/${recordId}`;
-  return null;
+  // Prefer the IN-APP record page — "the actual file on the app" — over an
+  // external link, so a meeting citation opens our transcript page (which reads
+  // document_metadata by id) rather than the raw Fireflies recording.
+  if (recordId) {
+    if (type.includes("meeting")) return `/meetings/${recordId}`;
+    if (Number.isFinite(projectId) && projectId) {
+      if (type.includes("rfi")) return `/${projectId}/rfis/${recordId}`;
+      if (type.includes("submittal")) return `/${projectId}/submittals/${recordId}`;
+      if (type.includes("change event")) return `/${projectId}/change-events/${recordId}`;
+    }
+  }
+
+  // Fall back to the external link when there is no in-app detail page for this
+  // source type — e.g. an email opens its Outlook URL (there is no in-app email
+  // detail page), and a document opens its stored URL.
+  const externalLink = [metadata.url, metadata.fireflies_link]
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .find((value) => Boolean(value && /^https?:\/\//.test(value)));
+  return externalLink ?? null;
 }
 
 export function AssistantSourceEvidenceWidget({

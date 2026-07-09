@@ -2517,8 +2517,13 @@ export function ChatArea({
                               tucked behind the Trace icon in the message actions
                               row below (see TraceMenu). */}
 
-                          {/* Source citations — disabled in chat UI per 2026-05-19. */}
-                          {false && persistedSources.length > 0 && (
+                          {/* Source citations. Re-enabled 2026-07-09: originally
+                              disabled 2026-05-19 because the sources column was
+                              always empty (nothing to show). #827 now persists
+                              real citations, and getSourceHref links each to the
+                              in-app record (meeting page / email), so the
+                              evidence drawer shows grounded, clickable sources. */}
+                          {persistedSources.length > 0 && (
                             <AssistantSourceEvidenceWidget
                               sources={persistedSources}
                             />
