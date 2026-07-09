@@ -33174,7 +33174,7 @@ export type Database = {
           file_name: string | null
           id: string
           meeting_item_id: string | null
-          metadata_id: string
+          metadata_id: string | null
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
@@ -33203,7 +33203,7 @@ export type Database = {
           file_name?: string | null
           id?: string
           meeting_item_id?: string | null
-          metadata_id: string
+          metadata_id: string | null
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
@@ -33232,7 +33232,7 @@ export type Database = {
           file_name?: string | null
           id?: string
           meeting_item_id?: string | null
-          metadata_id?: string
+          metadata_id?: string | null
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null

@@ -1083,7 +1083,7 @@ _300/337 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/table-update` | POST | frontend/src/app/api/table-update/route.ts |
 | `/api/table-views` | GET, POST | frontend/src/app/api/table-views/route.ts |
 | `/api/table-views/[viewId]` | PATCH, DELETE | frontend/src/app/api/table-views/[viewId]/route.ts |
-| `/api/tasks` | GET | frontend/src/app/api/tasks/route.ts |
+| `/api/tasks` | GET, POST | frontend/src/app/api/tasks/route.ts |
 | `/api/tasks/[taskId]` | GET, PATCH, DELETE | frontend/src/app/api/tasks/[taskId]/route.ts |
 | `/api/tasks/[taskId]/comments` | GET, POST | frontend/src/app/api/tasks/[taskId]/comments/route.ts |
 | `/api/tasks/[taskId]/comments/[commentId]` | PATCH, DELETE | frontend/src/app/api/tasks/[taskId]/comments/[commentId]/route.ts |

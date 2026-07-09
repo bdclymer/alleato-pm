@@ -110,6 +110,7 @@ import {
   parseMeetingContext,
   parseTeamsConversation,
 } from "@/features/tasks/email-thread-parser";
+import { NewTaskDialog } from "@/features/tasks/new-task-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -2786,6 +2787,14 @@ export function TasksInbox({
                     >
                       <ListFilter className="h-4 w-4" />
                     </Button>
+                    <NewTaskDialog
+                      projects={projects}
+                      users={users}
+                      defaultProjectId={
+                        isProjectScoped ? Number(projectId) : null
+                      }
+                      onCreated={fetchItems}
+                    />
                   </div>
                 </div>
 
@@ -2895,6 +2904,14 @@ export function TasksInbox({
         header={{
           title: "Tasks",
           description,
+          actions: (
+            <NewTaskDialog
+              projects={projects}
+              users={users}
+              defaultProjectId={isProjectScoped ? Number(projectId) : null}
+              onCreated={fetchItems}
+            />
+          ),
         }}
         tabs={showTabs && !profileLoading ? scopeTabs : undefined}
         toolbar={{
