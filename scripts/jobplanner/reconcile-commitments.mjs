@@ -84,21 +84,28 @@ async function planProject(sb, app, jpProjectId, refs) {
   const jpCodeById = new Map(costCodes.map((c) => [c.id, c]));
   const jpTypeCodeById = new Map(costTypes.map((t) => [t.id, t.code]));
 
-  // active app commitments (both tables) with SOV sum, vendor, child counts
+  // app commitments (both tables) — INCLUDING soft-deleted, so a CREATE can never
+  // collide with an existing (active or soft-deleted) contract_number on the project.
   const loadApp = async (table, sovTable, fk) => {
-    const { data } = await sb.from(table).select("id, contract_number, title, contract_company_id").eq("project_id", app).is("deleted_at", null);
+    const { data } = await sb.from(table).select("id, contract_number, title, contract_company_id, deleted_at").eq("project_id", app);
     const out = [];
     for (const c of data ?? []) {
       const { data: items } = await sb.from(sovTable).select("amount").eq(fk, c.id);
       const { count: inv } = await sb.from("subcontractor_invoices").select("id", { count: "exact", head: true }).eq(fk, c.id);
       const { count: pay } = await sb.from("commitment_payments").select("id", { count: "exact", head: true }).eq(fk, c.id);
-      out.push({ id: c.id, table, sovTable, fk, contract_number: c.contract_number, title: c.title, vendor: c.contract_company_id, sovSum: (items ?? []).reduce((a, x) => a + (Number(x.amount) || 0), 0), invoices: inv ?? 0, payments: pay ?? 0 });
+      out.push({ id: c.id, table, sovTable, fk, contract_number: c.contract_number, title: c.title, vendor: c.contract_company_id, deleted: Boolean(c.deleted_at), sovSum: (items ?? []).reduce((a, x) => a + (Number(x.amount) || 0), 0), invoices: inv ?? 0, payments: pay ?? 0 });
     }
     return out;
   };
   const appCommits = [...await loadApp("subcontracts", "subcontract_sov_items", "subcontract_id"), ...await loadApp("purchase_orders", "purchase_order_sov_items", "purchase_order_id")];
-  const byJpNumber = new Map(appCommits.filter((c) => isJpNumber(c.contract_number)).map((c) => [String(c.contract_number), c]));
-  const acuPool = appCommits.filter((c) => !isJpNumber(c.contract_number)); // adoption candidates
+  const jpNumberSet = new Set(commitments.map((c) => String(c.number)));
+  const activeCommits = appCommits.filter((c) => !c.deleted);
+  // Match an existing commitment by EXACT contract_number (any format, e.g. SC-000158
+  // when a JP commitment carries that number) — not just JP ####-#### format.
+  const byActiveNumber = new Map(activeCommits.map((c) => [String(c.contract_number), c]));
+  const byDeletedNumber = new Map(appCommits.filter((c) => c.deleted).map((c) => [String(c.contract_number), c]));
+  // Adoption candidates: active commitments whose number is NOT itself a JP number.
+  const acuPool = activeCommits.filter((c) => !jpNumberSet.has(String(c.contract_number)));
   const consumed = new Set();
 
   // resolve JP lineitems for all commitments (parallel)
@@ -129,8 +136,10 @@ async function planProject(sb, app, jpProjectId, refs) {
     });
 
     let action, target = null, note = "";
-    const existing = byJpNumber.get(number);
-    if (existing) { action = "REBUILD_SOV"; target = existing; }
+    const activeMatch = byActiveNumber.get(number);
+    const deletedMatch = byDeletedNumber.get(number);
+    if (activeMatch) { action = "REBUILD_SOV"; target = activeMatch; }
+    else if (deletedMatch) { action = "REACTIVATE"; target = deletedMatch; note = "un-delete soft-deleted row with this number"; }
     else {
       // twin: unique unconsumed acu commitment, total match + (vendor match if resolvable)
       const totalMatches = acuPool.filter((c) => !consumed.has(c.id) && Math.abs(c.sovSum - jpTotal) < 0.5 && c.sovSum > 0);
@@ -174,6 +183,15 @@ async function applyProject(sb, app, refs, planResult) {
       const { error } = await sb.from(table).update(upd).eq("id", commitmentId);
       if (error) throw new Error(`adopt update ${c.number}: ${error.message}`);
       applied.adopted++;
+    } else if (c.action === "REACTIVATE") {
+      // A soft-deleted row already owns this contract_number; un-delete it and rebuild
+      // its SOV rather than inserting a colliding duplicate.
+      const upd = { deleted_at: null };
+      if (c.title) upd.title = c.title;
+      if (c.vendorCompanyId) upd.contract_company_id = c.vendorCompanyId;
+      const { error } = await sb.from(table).update(upd).eq("id", commitmentId);
+      if (error) throw new Error(`reactivate ${c.number}: ${error.message}`);
+      applied.reactivated = (applied.reactivated || 0) + 1;
     } else if (c.action === "CREATE") {
       const { data: ins, error } = await sb.from(table).insert({ project_id: app, contract_number: c.number, title: c.title, status: "Draft", contract_company_id: c.vendorCompanyId }).select("id").single();
       if (error) throw new Error(`create ${c.number}: ${error.message}`);
@@ -235,7 +253,7 @@ async function main() {
   const JP = Number(argValue("jp", NaN)), APP = Number(argValue("app", NaN));
   if (!Number.isInteger(JP) || !Number.isInteger(APP)) { console.error("Need --jp= --app= (or --batch)"); process.exit(1); }
   const r = await planProject(sb, APP, JP, refs);
-  const summary = { mode: APPLY ? "APPLY" : "DRY RUN", jp: JP, app: APP, commitments: r.commitments, rebuild: r.plan.filter((p) => p.action === "REBUILD_SOV").length, adopt: r.plan.filter((p) => p.action === "ADOPT").length, adoptWithBilling: r.plan.filter((p) => p.action === "ADOPT" && (p.targetInvoices > 0 || p.targetPayments > 0)).map((p) => `${p.number}<-${p.targetNumber} (${p.targetInvoices}inv/${p.targetPayments}pay)`), create: r.plan.filter((p) => p.action === "CREATE").length, acuOnly: r.acuOnly.map((a) => `${a.contract_number}${a.testData ? " [TEST]" : ""}${a.invoices ? ` (${a.invoices}inv)` : ""}`), integrityFail: r.plan.filter((p) => !p.integrityOk).map((p) => p.number) };
+  const summary = { mode: APPLY ? "APPLY" : "DRY RUN", jp: JP, app: APP, commitments: r.commitments, rebuild: r.plan.filter((p) => p.action === "REBUILD_SOV").length, reactivate: r.plan.filter((p) => p.action === "REACTIVATE").length, adopt: r.plan.filter((p) => p.action === "ADOPT").length, adoptWithBilling: r.plan.filter((p) => p.action === "ADOPT" && (p.targetInvoices > 0 || p.targetPayments > 0)).map((p) => `${p.number}<-${p.targetNumber} (${p.targetInvoices}inv/${p.targetPayments}pay)`), create: r.plan.filter((p) => p.action === "CREATE").length, acuOnly: r.acuOnly.map((a) => `${a.contract_number}${a.testData ? " [TEST]" : ""}${a.invoices ? ` (${a.invoices}inv)` : ""}`), integrityFail: r.plan.filter((p) => !p.integrityOk).map((p) => p.number) };
   let applied = null;
   if (APPLY) applied = await applyProject(sb, APP, refs, r);
   fs.mkdirSync(OUT_DIR, { recursive: true });
