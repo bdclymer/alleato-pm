@@ -13,6 +13,7 @@ import {
   Loader2,
   Mail,
   MoreVertical,
+  Percent,
   Plus,
   Trash2,
   Upload,
@@ -1186,6 +1187,33 @@ export default function CommitmentDetailPage() {
     setIsEmailDialogOpen(true);
   }, []);
 
+  const [isCreatingRetainage, setIsCreatingRetainage] = useState(false);
+
+  const handleCreateRetainageRelease = useCallback(async () => {
+    setIsCreatingRetainage(true);
+    try {
+      const filterKey =
+        commitment?.type === "purchase_order" ? "purchase_order_id" : "subcontract_id";
+      const response = await apiFetch<{ data?: { id?: number } }>(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices`,
+        {
+          method: "POST",
+          body: JSON.stringify({ [filterKey]: commitmentId, is_retainage_release: true }),
+        },
+      );
+      toast.success("Retainage release invoice created");
+      if (response.data?.id) {
+        router.push(
+          `/${projectId}/commitments/${commitmentId}/invoices/${response.data.id}`,
+        );
+      }
+    } catch {
+      toast.error("Failed to create retainage release invoice");
+    } finally {
+      setIsCreatingRetainage(false);
+    }
+  }, [commitment?.type, commitmentId, projectId, router]);
+
   const isPO = commitment?.type === "purchase_order";
 
   const displayNumber = safeNumber(commitment?.number);
@@ -1255,6 +1283,16 @@ export default function CommitmentDetailPage() {
           >
             <DollarSign className="mr-2 h-4 w-4" />
             Create Invoice
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={isCreatingRetainage}
+            onSelect={(event) => {
+              event.preventDefault();
+              void handleCreateRetainageRelease();
+            }}
+          >
+            <Percent className="mr-2 h-4 w-4" />
+            {isCreatingRetainage ? "Creating…" : "Create Retainage Release Invoice"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
