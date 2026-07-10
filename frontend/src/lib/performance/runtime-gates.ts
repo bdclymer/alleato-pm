@@ -12,6 +12,14 @@ const COLLABORATION_FORCED_PREFIXES = [
   "/feedback-inbox",
 ] as const;
 
+// Project-scoped routes (e.g. `/876/drawings/...`) that must force the
+// collaboration runtime on. These carry a leading `/[projectId]` segment, so
+// they need a pattern rather than the global prefixes above. Anchored to
+// `drawings` as the *second* segment so the project drawing viewer/detail
+// (which host comments) match, while the unscoped `/drawings` table page does
+// not needlessly force the runtime + heavy analytics.
+const COLLABORATION_FORCED_PATTERNS = [/^\/[^/]+\/drawings(\/|$)/] as const;
+
 function normalizePathname(pathname: string | null | undefined): string {
   const trimmed = pathname?.trim();
   if (!trimmed) return "/";
@@ -44,8 +52,13 @@ export function shouldForceCollaborationRuntime(
   pathname: string | null | undefined,
 ): boolean {
   const normalizedPathname = normalizePathname(pathname);
-  return COLLABORATION_FORCED_PREFIXES.some((prefix) =>
-    matchesPrefix(normalizedPathname, prefix),
+  return (
+    COLLABORATION_FORCED_PREFIXES.some((prefix) =>
+      matchesPrefix(normalizedPathname, prefix),
+    ) ||
+    COLLABORATION_FORCED_PATTERNS.some((pattern) =>
+      pattern.test(normalizedPathname),
+    )
   );
 }
 

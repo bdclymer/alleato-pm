@@ -895,6 +895,13 @@ function AnnotationOverlay({
   const [inProgress, setInProgress] = useState<Annotation | null>(null);
   const [textPrompt, setTextPrompt] = useState<{ position: ImagePoint } | null>(null);
   const drawingRef = useRef(false);
+  // Guards against the text annotation committing twice (Enter fires onCommit, then
+  // the resulting unmount fires onBlur which would commit the same text again) and
+  // lets Escape cancel without committing. onBlur is the single commit path.
+  const textCancelledRef = useRef(false);
+  // The text-prompt position is computed in the render body, which re-runs on every
+  // pan/zoom frame. If that call throws we report it once per prompt, not per frame.
+  const textPositionErrorReportedRef = useRef(false);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -952,6 +959,7 @@ function AnnotationOverlay({
     e.currentTarget.setPointerCapture(e.pointerId);
 
     if (tool === "text") {
+      textPositionErrorReportedRef.current = false;
       setTextPrompt({ position: pt });
       return;
     }
@@ -1047,16 +1055,34 @@ function AnnotationOverlay({
     ? (() => {
         const viewer = viewerRef.current;
         if (!viewer) return undefined;
-        const elPt = viewer.viewport.imageToViewerElementCoordinates(
-          new OpenSeadragon.Point(textPrompt.position.x, textPrompt.position.y)
-        );
-        return {
-          position: "absolute",
-          left: elPt.x,
-          top: elPt.y,
-          transform: "translate(0, -2.25rem)",
-          zIndex: 30,
-        };
+        // Guard this render-phase OSD call: unlike every other viewport call in
+        // this file it runs during render, so an exception here would blank the
+        // whole viewer instead of logging and recovering.
+        try {
+          const elPt = viewer.viewport.imageToViewerElementCoordinates(
+            new OpenSeadragon.Point(textPrompt.position.x, textPrompt.position.y)
+          );
+          return {
+            position: "absolute",
+            left: elPt.x,
+            top: elPt.y,
+            transform: "translate(0, -2.25rem)",
+            zIndex: 30,
+          };
+        } catch (error) {
+          // Report once per prompt: this runs in render, which re-fires on every
+          // pan/zoom frame, so an unconditional report here would flood telemetry.
+          if (!textPositionErrorReportedRef.current) {
+            textPositionErrorReportedRef.current = true;
+            reportNonCriticalFailure({
+              area: "osd-drawing-viewer",
+              operation: "text-annotation-position",
+              error,
+              userVisibleFallback: "Text annotation position could not be computed.",
+            });
+          }
+          return undefined;
+        }
       })()
     : undefined;
 
@@ -1088,26 +1114,18 @@ function AnnotationOverlay({
             style={{ color }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                const value = (e.target as HTMLInputElement).value.trim();
-                if (value) {
-                  onCommit({
-                    id: uid(),
-                    type: "text",
-                    page,
-                    color,
-                    strokeWidth: Math.max(strokeWidth, 2),
-                    text: value,
-                    position: textPrompt.position,
-                  });
-                }
-                setTextPrompt(null);
+                e.preventDefault();
+                // Commit via the single onBlur path to avoid a double commit.
+                e.currentTarget.blur();
               } else if (e.key === "Escape") {
-                setTextPrompt(null);
+                e.preventDefault();
+                textCancelledRef.current = true;
+                e.currentTarget.blur();
               }
             }}
             onBlur={(e) => {
               const value = e.target.value.trim();
-              if (value) {
+              if (!textCancelledRef.current && value) {
                 onCommit({
                   id: uid(),
                   type: "text",
@@ -1118,6 +1136,7 @@ function AnnotationOverlay({
                   position: textPrompt.position,
                 });
               }
+              textCancelledRef.current = false;
               setTextPrompt(null);
             }}
           />
