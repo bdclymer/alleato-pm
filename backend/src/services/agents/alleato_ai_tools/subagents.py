@@ -9,11 +9,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from .prompts import (
-    BUSINESS_DEVELOPMENT_ANALYST_PROMPT,
-    COMMUNICATIONS_ANALYST_PROMPT,
     FINANCIAL_ANALYST_PROMPT,
     RISK_ANALYST_PROMPT,
-    SCHEDULE_ANALYST_PROMPT,
 )
 from . import (
     acumatica_ap_aging,
@@ -71,9 +68,6 @@ class RiskAnalystPacket(_SubagentPacket):
     """Risk analyst structured output."""
 
 
-class CommunicationsAnalystPacket(_SubagentPacket):
-    """Communications analyst structured output."""
-
 def build_subagents(
     *,
     include_sql: bool = True,
@@ -82,6 +76,8 @@ def build_subagents(
     """Build subagents with the same tool gates as the orchestrator runtime."""
 
     financial_tools = [
+        project_intelligence_brief,
+        portfolio_intelligence_brief,
         project_budget_summary,
         portfolio_overview,
         think_tool,
@@ -103,112 +99,46 @@ def build_subagents(
             ]
         )
 
-    schedule_tools = [
-        project_intelligence_brief,
-        project_briefing_snapshot,
-        project_risk_snapshot,
-        search_meeting_transcripts,
-        list_recent_meetings,
-        recent_activity,
-        think_tool,
-    ]
-    if include_sql:
-        schedule_tools = [describe_schema, query_db, *schedule_tools]
-
     risk_tools = [
         project_intelligence_brief,
         portfolio_intelligence_brief,
         project_briefing_snapshot,
         project_risk_snapshot,
+        project_budget_summary,
         search_meeting_transcripts,
         list_recent_meetings,
         recent_activity,
         search_emails,
         search_teams_messages,
+        search_unstructured,
         think_tool,
     ]
     if include_sql:
         risk_tools = [describe_schema, query_db, *risk_tools]
-
-    communications_tools = [
-        search_meeting_transcripts,
-        list_recent_meetings,
-        recent_activity,
-        search_unstructured,
-        search_emails,
-        search_teams_messages,
-        think_tool,
-    ]
-
-    business_development_tools = [
-        portfolio_intelligence_brief,
-        project_intelligence_brief,
-        portfolio_overview,
-        project_briefing_snapshot,
-        list_recent_meetings,
-        recent_activity,
-        search_unstructured,
-        search_emails,
-        search_teams_messages,
-        search_meeting_transcripts,
-        think_tool,
-    ]
-    if include_sql:
-        business_development_tools = [
-            describe_schema,
-            query_db,
-            *business_development_tools,
-        ]
 
     return [
         {
             "name": "financial-analyst",
             "description": (
                 "Delegate financial questions: budget vs. actuals, commitments, change orders, "
-                "pay applications, cash position, Acumatica data. Give one focused question at a time."
+                "pay applications, cash position, margin, billing, Acumatica data. "
+                "Give one focused question at a time."
             ),
             "system_prompt": FINANCIAL_ANALYST_PROMPT,
             "tools": financial_tools,
             "response_format": FinancialAnalystPacket,
         },
         {
-            "name": "schedule-analyst",
-            "description": (
-                "Delegate schedule questions: status vs. baseline, float, critical path, milestones, "
-                "delays. Give one focused question at a time."
-            ),
-            "system_prompt": SCHEDULE_ANALYST_PROMPT,
-            "tools": schedule_tools,
-        },
-        {
             "name": "risk-analyst",
             "description": (
-                "Delegate risk-surfacing: aged RFIs, late submittals, unanswered communications, "
-                "approaching deadlines, contractual exposure. Give one focused question at a time."
+                "Delegate risk and schedule questions: aged RFIs, late submittals, "
+                "critical path, milestones, procurement pipeline, contractual exposure, "
+                "claim signals, portfolio risk ranking, subcontractor execution, "
+                "action item accountability. Give one focused question at a time."
             ),
             "system_prompt": RISK_ANALYST_PROMPT,
             "tools": risk_tools,
             "response_format": RiskAnalystPacket,
-        },
-        {
-            "name": "communications-analyst",
-            "description": (
-                "Delegate stakeholder-communication investigation: meeting discussions, Teams threads, "
-                "email tone, sentiment. Give one focused question at a time."
-            ),
-            "system_prompt": COMMUNICATIONS_ANALYST_PROMPT,
-            "tools": communications_tools,
-            "response_format": CommunicationsAnalystPacket,
-        },
-        {
-            "name": "business-development-analyst",
-            "description": (
-                "Delegate pipeline and client-development questions: pursuits, estimating handoffs, "
-                "proposal or quote follow-up, client relationship risk, and stuck deals. "
-                "Give one focused question at a time."
-            ),
-            "system_prompt": BUSINESS_DEVELOPMENT_ANALYST_PROMPT,
-            "tools": business_development_tools,
         },
     ]
 

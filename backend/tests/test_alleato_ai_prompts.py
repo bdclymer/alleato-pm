@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from src.services.agents.alleato_ai_tools.prompts import ORCHESTRATOR_PROMPT
+from src.services.agents.alleato_ai_tools.subagents import ALL_SUBAGENTS, build_subagents
 
 
 def test_orchestrator_prompt_composes_context_in_expected_order():
@@ -68,3 +69,67 @@ def test_orchestrator_prompt_excludes_performative_spiritual_jargon():
 
     for term in forbidden_terms:
         assert term not in prompt
+
+
+# --- Consolidation tests (5→2 sub-agents) ---
+
+
+def test_only_two_subagents_remain():
+    """After consolidation, only financial-analyst and risk-analyst exist."""
+    names = [s["name"] for s in ALL_SUBAGENTS]
+    assert sorted(names) == ["financial-analyst", "risk-analyst"]
+
+
+def test_eliminated_subagents_not_present():
+    """Schedule, communications, and business-development analysts are removed."""
+    names = {s["name"] for s in ALL_SUBAGENTS}
+    assert "schedule-analyst" not in names
+    assert "communications-analyst" not in names
+    assert "business-development-analyst" not in names
+
+
+def test_financial_analyst_has_intelligence_briefs():
+    """Financial analyst must have access to synthesized intelligence tools."""
+    financial = next(s for s in ALL_SUBAGENTS if s["name"] == "financial-analyst")
+    tool_names = {t.name for t in financial["tools"]}
+    assert "project_intelligence_brief" in tool_names
+    assert "portfolio_intelligence_brief" in tool_names
+
+
+def test_risk_analyst_has_schedule_tools():
+    """Risk analyst absorbed schedule analysis — must have schedule-relevant tools."""
+    risk = next(s for s in ALL_SUBAGENTS if s["name"] == "risk-analyst")
+    tool_names = {t.name for t in risk["tools"]}
+    assert "search_meeting_transcripts" in tool_names
+    assert "list_recent_meetings" in tool_names
+    assert "recent_activity" in tool_names
+    assert "search_unstructured" in tool_names
+
+
+def test_both_subagents_have_structured_output():
+    """Both remaining sub-agents enforce structured packet output."""
+    for subagent in ALL_SUBAGENTS:
+        assert "response_format" in subagent, (
+            f"{subagent['name']} missing response_format"
+        )
+
+
+def test_orchestrator_prompt_no_eliminated_agent_routing():
+    """Orchestrator prompt must not reference eliminated sub-agents."""
+    assert "schedule-analyst" not in ORCHESTRATOR_PROMPT
+    assert "communications-analyst" not in ORCHESTRATOR_PROMPT
+    assert "business-development-analyst" not in ORCHESTRATOR_PROMPT
+
+
+def test_orchestrator_prompt_has_person_attribution():
+    """Orchestrator absorbed communications-analyst's person-attribution discipline."""
+    assert "Person-attribution" in ORCHESTRATOR_PROMPT
+
+
+def test_build_subagents_sql_gate():
+    """SQL tools should be excluded when include_sql=False."""
+    agents = build_subagents(include_sql=False, include_acumatica=True)
+    for agent in agents:
+        tool_names = {t.name for t in agent["tools"]}
+        assert "query_db" not in tool_names
+        assert "describe_schema" not in tool_names
