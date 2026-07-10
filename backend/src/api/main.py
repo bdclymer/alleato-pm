@@ -1646,7 +1646,7 @@ async def run_deep_agent_research(
 
     response = run_research_agent(
         request,
-        model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.4-mini"),
+        model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.5"),
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
@@ -1676,7 +1676,7 @@ async def run_deep_agent_microsoft_executive_assistant(
         request,
         model=os.getenv(
             "DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL",
-            "openai:gpt-5.4-mini",
+            "openai:gpt-5.5",
         ),
     )
     if response.mode == "unavailable":

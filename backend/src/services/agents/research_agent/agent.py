@@ -185,7 +185,7 @@ def run_research_agent(
     request: ResearchRequest,
     *,
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> ResearchResponse:
     """Run the Alleato research Deep Agent and return a typed response."""
     started = time.perf_counter()
