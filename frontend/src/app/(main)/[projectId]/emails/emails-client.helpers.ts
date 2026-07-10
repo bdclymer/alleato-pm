@@ -4,6 +4,32 @@ import type { EmailImportanceFeedbackState } from "@/lib/ai/email-importance-fee
 export const MAILBOX_REVIEW_REFETCH_INTERVAL_MS = 60 * 60 * 1000;
 export const EMAIL_IMPORTANCE_DEFAULT_FILTER = "default" as const;
 
+// Max email ids per importance-feedback request. That endpoint takes one
+// `emailId` query param each, so a large mailbox (Brandon's has ~1000) would
+// overflow the request URL/header size limit → HTTP 431, silently dropping the
+// importance-training state for the whole inbox. 100 keeps each URL small.
+export const IMPORTANCE_FEEDBACK_BATCH_SIZE = 100;
+
+/**
+ * Split email ids into request-sized batches so the importance-feedback GET URL
+ * never overflows the header/URL size limit (which surfaces as HTTP 431) on
+ * large mailboxes. Falls back to the default batch size for a non-positive size.
+ */
+export function chunkImportanceFeedbackEmailIds(
+  emailIds: readonly string[],
+  batchSize: number = IMPORTANCE_FEEDBACK_BATCH_SIZE,
+): string[][] {
+  const size =
+    Number.isInteger(batchSize) && batchSize > 0
+      ? batchSize
+      : IMPORTANCE_FEEDBACK_BATCH_SIZE;
+  const batches: string[][] = [];
+  for (let index = 0; index < emailIds.length; index += size) {
+    batches.push(emailIds.slice(index, index + size));
+  }
+  return batches;
+}
+
 export type EmailImportanceVisibilityFilter =
   | typeof EMAIL_IMPORTANCE_DEFAULT_FILTER
   | "all"

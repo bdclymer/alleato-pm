@@ -1,5 +1,7 @@
 import type { ProjectEmail } from "@/hooks/use-emails";
 import {
+  chunkImportanceFeedbackEmailIds,
+  IMPORTANCE_FEEDBACK_BATCH_SIZE,
   matchesEmailImportanceVisibility,
   getEmailsRefreshInterval,
   normalizeEmailImportanceVisibilityFilter,
@@ -319,5 +321,38 @@ describe("reconcileSelectedEmail", () => {
   it("clears the selection when the row no longer exists", () => {
     const selected = buildEmail("normal", { id: 99 });
     expect(reconcileSelectedEmail([], selected)).toBeNull();
+  });
+});
+
+describe("chunkImportanceFeedbackEmailIds", () => {
+  const ids = (count: number) =>
+    Array.from({ length: count }, (_, index) => String(index + 1));
+
+  it("returns no batches for an empty list", () => {
+    expect(chunkImportanceFeedbackEmailIds([])).toEqual([]);
+  });
+
+  it("keeps a small mailbox in a single batch", () => {
+    const list = ids(42);
+    const batches = chunkImportanceFeedbackEmailIds(list);
+    expect(batches).toHaveLength(1);
+    expect(batches[0]).toEqual(list);
+  });
+
+  it("splits a large mailbox so no request URL overflows (HTTP 431 guard)", () => {
+    // Brandon's mailbox is ~1000 emails — the exact case that 431'd when every
+    // id went into one `emailId`-per-param GET.
+    const batches = chunkImportanceFeedbackEmailIds(ids(1000));
+    expect(batches).toHaveLength(10);
+    for (const batch of batches) {
+      expect(batch.length).toBeLessThanOrEqual(IMPORTANCE_FEEDBACK_BATCH_SIZE);
+    }
+    // Every id is preserved exactly once across the batches.
+    expect(batches.flat()).toEqual(ids(1000));
+  });
+
+  it("falls back to the default size for a non-positive batch size", () => {
+    expect(chunkImportanceFeedbackEmailIds(ids(250), 0)).toHaveLength(3);
+    expect(chunkImportanceFeedbackEmailIds(ids(250), -5)).toHaveLength(3);
   });
 });

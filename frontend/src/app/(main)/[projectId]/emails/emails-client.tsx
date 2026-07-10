@@ -70,6 +70,7 @@ import {
   normalizeMailboxWorkflowFilter,
 } from "@/features/emails/mailbox-workflow-tabs";
 import {
+  chunkImportanceFeedbackEmailIds,
   EMAIL_IMPORTANCE_DEFAULT_FILTER,
   getEmailsRefreshInterval,
   matchesEmailImportanceVisibility,
@@ -532,27 +533,48 @@ export function EmailsClient({
     if (importanceFeedbackEmailIds.length === 0) return;
 
     const controller = new AbortController();
-    const params = new URLSearchParams();
-    for (const emailId of importanceFeedbackEmailIds) {
-      params.append("emailId", emailId);
-    }
+
+    // The importance-feedback endpoint takes one `emailId` query param per email.
+    // A large mailbox (Brandon's has ~1000) overflows the request URL/header size
+    // limit → HTTP 431, silently dropping the training state for the whole inbox.
+    // Chunk the ids so every request URL stays well under that limit.
+    const batches = chunkImportanceFeedbackEmailIds(importanceFeedbackEmailIds);
 
     void (async () => {
       try {
-        const response = await apiFetch<{
-          feedbackByEmailId?: Record<string, EmailImportanceFeedbackState>;
-        }>(
-          `/api/ai-assistant/email-importance-feedback?${params.toString()}`,
-          {
-            signal: controller.signal,
-          },
+        const responses = await Promise.all(
+          batches.map((batch) => {
+            const params = new URLSearchParams();
+            for (const emailId of batch) {
+              params.append("emailId", emailId);
+            }
+            return apiFetch<{
+              feedbackByEmailId?: Record<string, EmailImportanceFeedbackState>;
+            }>(
+              `/api/ai-assistant/email-importance-feedback?${params.toString()}`,
+              {
+                signal: controller.signal,
+              },
+            );
+          }),
         );
 
-        if (controller.signal.aborted || !response.feedbackByEmailId) return;
+        if (controller.signal.aborted) return;
+
+        const merged = responses.reduce<
+          Record<string, EmailImportanceFeedbackState>
+        >((accumulator, response) => {
+          if (response.feedbackByEmailId) {
+            Object.assign(accumulator, response.feedbackByEmailId);
+          }
+          return accumulator;
+        }, {});
+
+        if (Object.keys(merged).length === 0) return;
 
         setImportanceFeedbackByEmailId((prev) => ({
           ...prev,
-          ...response.feedbackByEmailId,
+          ...merged,
         }));
       } catch (error) {
         if (controller.signal.aborted) return;
