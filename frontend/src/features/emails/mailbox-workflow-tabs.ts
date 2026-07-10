@@ -1,12 +1,7 @@
 import type { ProjectEmail } from "@/hooks/use-emails";
 import type { EmailImportanceFeedbackState } from "@/lib/ai/email-importance-feedback-types";
 
-export const MAILBOX_WORKFLOW_FILTERS = [
-  "inbox",
-  "drafts",
-  "archived",
-  "feedback_submitted",
-] as const;
+export const MAILBOX_WORKFLOW_FILTERS = ["pending", "done"] as const;
 
 export type MailboxWorkflowFilter =
   (typeof MAILBOX_WORKFLOW_FILTERS)[number];
@@ -22,19 +17,15 @@ function isMailboxWorkflowFilter(
 export function normalizeMailboxWorkflowFilter(
   value: string | null | undefined,
 ): MailboxWorkflowFilter {
-  return isMailboxWorkflowFilter(value) ? value : "inbox";
+  return isMailboxWorkflowFilter(value) ? value : "pending";
 }
 
 function mailboxWorkflowLabel(filter: MailboxWorkflowFilter): string {
   switch (filter) {
-    case "drafts":
-      return "Drafts";
-    case "archived":
-      return "Archived";
-    case "feedback_submitted":
-      return "Feedback";
+    case "done":
+      return "Done";
     default:
-      return "Inbox";
+      return "Pending";
   }
 }
 
@@ -81,15 +72,14 @@ export function matchesMailboxWorkflowFilter(
   importanceFeedbackByEmailId?: Record<string, EmailImportanceFeedbackState>,
 ): boolean {
   switch (filter) {
-    case "drafts":
-      return isDraftMailboxEmail(email);
-    case "archived":
-      return isArchivedMailboxEmail(email);
-    case "feedback_submitted":
+    case "done":
+      // Reviewed — the AI has been given feedback (field verdicts saved or the
+      // importance signal recorded).
       return hasMailboxFeedbackSubmitted(email, importanceFeedbackByEmailId);
-    case "inbox":
+    case "pending":
     default:
-      return !isArchivedMailboxEmail(email);
+      // Still needs a review pass.
+      return !hasMailboxFeedbackSubmitted(email, importanceFeedbackByEmailId);
   }
 }
 
@@ -98,30 +88,15 @@ export function countMailboxEmailsByWorkflow(
   importanceFeedbackByEmailId?: Record<string, EmailImportanceFeedbackState>,
 ): Record<MailboxWorkflowFilter, number> {
   const counts: Record<MailboxWorkflowFilter, number> = {
-    inbox: 0,
-    drafts: 0,
-    archived: 0,
-    feedback_submitted: 0,
+    pending: 0,
+    done: 0,
   };
 
   for (const email of emails) {
-    if (matchesMailboxWorkflowFilter(email, "inbox", importanceFeedbackByEmailId)) {
-      counts.inbox += 1;
-    }
-    if (matchesMailboxWorkflowFilter(email, "drafts", importanceFeedbackByEmailId)) {
-      counts.drafts += 1;
-    }
-    if (matchesMailboxWorkflowFilter(email, "archived", importanceFeedbackByEmailId)) {
-      counts.archived += 1;
-    }
-    if (
-      matchesMailboxWorkflowFilter(
-        email,
-        "feedback_submitted",
-        importanceFeedbackByEmailId,
-      )
-    ) {
-      counts.feedback_submitted += 1;
+    if (matchesMailboxWorkflowFilter(email, "done", importanceFeedbackByEmailId)) {
+      counts.done += 1;
+    } else {
+      counts.pending += 1;
     }
   }
 

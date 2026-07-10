@@ -694,11 +694,19 @@ function InboxRow({
   isActive,
   onSelect,
   showCategory = false,
+  draftFeedbackMode = false,
 }: {
   email: ProjectEmail;
   isActive: boolean;
   onSelect: () => void;
   showCategory?: boolean;
+  /**
+   * The AI-training feedback queue. Strips the per-row status/AI-draft/category
+   * pills and the priority dot down to sender · time / subject / preview, with a
+   * single green "done" check once feedback has been given — the queue reads as a
+   * calm list, not a wall of tags (matches the Feedback-inbox design handoff).
+   */
+  draftFeedbackMode?: boolean;
 }) {
   const { onClose } = useSplitPage();
   const senderName = email.from_name || email.from_email || "Unknown sender";
@@ -709,6 +717,7 @@ function InboxRow({
       ? reviewOutcomeLabel(reviewOutcome)
       : "Pending review";
   const categoryLabel = defaultAssistantCategory(email);
+  const isDone = Boolean(email.assistant_review?.feedbackProvidedAt);
 
   return (
     <Button
@@ -727,7 +736,14 @@ function InboxRow({
     >
       <div className="min-w-0 w-full max-w-full flex-1 overflow-hidden space-y-1">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="min-w-0 truncate text-[12px] font-medium leading-4 text-foreground">
+          <div
+            className={cn(
+              "min-w-0 truncate text-[12px] font-medium leading-4",
+              draftFeedbackMode && isDone
+                ? "text-muted-foreground"
+                : "text-foreground",
+            )}
+          >
             {senderName}
           </div>
           <div className="whitespace-nowrap text-[11px] font-medium tabular-nums text-foreground/60">
@@ -737,39 +753,60 @@ function InboxRow({
           </div>
         </div>
         <div className="flex min-w-0 items-center gap-2">
-          <p className="min-w-0 flex-1 truncate text-[12px] font-medium leading-4 text-foreground">
-            {email.subject || "Untitled email"}
-          </p>
-          <span
+          {draftFeedbackMode && isDone ? (
+            <span
+              className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-status-success text-primary-foreground"
+              aria-label="Feedback given"
+            >
+              <Check className="h-2.5 w-2.5" />
+            </span>
+          ) : null}
+          <p
             className={cn(
-              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-3",
-              email.assistant_review?.reviewId || hasDraft
-                ? reviewOutcomeClass(reviewOutcome)
-                : "bg-muted text-muted-foreground",
+              "min-w-0 flex-1 truncate text-[12px] font-medium leading-4",
+              draftFeedbackMode && isDone
+                ? "text-muted-foreground"
+                : "text-foreground",
             )}
           >
-            {reviewLabel}
-          </span>
-          {hasDraft ? (
-            <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
-              AI draft
-            </span>
-          ) : null}
-          {showCategory ? (
-            <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-3 text-muted-foreground">
-              {categoryLabel}
-            </span>
-          ) : null}
+            {email.subject || "Untitled email"}
+          </p>
+          {draftFeedbackMode ? null : (
+            <>
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-3",
+                  email.assistant_review?.reviewId || hasDraft
+                    ? reviewOutcomeClass(reviewOutcome)
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {reviewLabel}
+              </span>
+              {hasDraft ? (
+                <span className="shrink-0 rounded-full bg-status-success/10 px-1.5 py-0.5 text-[10px] font-medium leading-3 text-status-success">
+                  AI draft
+                </span>
+              ) : null}
+              {showCategory ? (
+                <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-3 text-muted-foreground">
+                  {categoryLabel}
+                </span>
+              ) : null}
+            </>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "h-2 w-2 shrink-0 rounded-full",
-              priorityDotClass(email.assistant_priority),
-            )}
-            aria-label={priorityLabel(email.assistant_priority)}
-            title={priorityLabel(email.assistant_priority)}
-          />
+          {draftFeedbackMode ? null : (
+            <span
+              className={cn(
+                "h-2 w-2 shrink-0 rounded-full",
+                priorityDotClass(email.assistant_priority),
+              )}
+              aria-label={priorityLabel(email.assistant_priority)}
+              title={priorityLabel(email.assistant_priority)}
+            />
+          )}
           <p className="min-w-0 truncate text-[11px] leading-4 text-muted-foreground">
             {previewText(email)}
           </p>
@@ -3717,7 +3754,7 @@ export function ProjectEmailsWorkspace({
                     email={email}
                     isActive={selectedEmail?.id === email.id}
                     onSelect={() => handleSelectEmail(email)}
-                    showCategory={draftFeedbackMode}
+                    draftFeedbackMode={draftFeedbackMode}
                   />
                 ))}
               </motion.div>

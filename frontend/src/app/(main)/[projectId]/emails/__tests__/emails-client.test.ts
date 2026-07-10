@@ -51,15 +51,15 @@ function buildEmail(
 }
 
 describe("normalizeMailboxWorkflowFilter", () => {
-  it("falls back invalid values to inbox", () => {
-    expect(normalizeMailboxWorkflowFilter("drafts")).toBe("drafts");
-    expect(normalizeMailboxWorkflowFilter("invalid")).toBe("inbox");
-    expect(normalizeMailboxWorkflowFilter(null)).toBe("inbox");
+  it("falls back invalid values to pending", () => {
+    expect(normalizeMailboxWorkflowFilter("done")).toBe("done");
+    expect(normalizeMailboxWorkflowFilter("invalid")).toBe("pending");
+    expect(normalizeMailboxWorkflowFilter(null)).toBe("pending");
   });
 });
 
 describe("mailbox workflow classification", () => {
-  it("separates inbox, drafts, archived, and feedback-submitted emails from the shared dataset", () => {
+  it("separates pending from done (feedback-given) emails in the shared dataset", () => {
     const inboxEmail = buildEmail("high", { id: 1, assistant_action: "reply" });
     const draftEmail = buildEmail("normal", {
       id: 2,
@@ -153,21 +153,20 @@ describe("mailbox workflow classification", () => {
       feedbackSubmittedEmail,
     ]);
 
+    // Only the email with a feedbackProvidedAt timestamp is "done"; the other
+    // three (unreviewed inbox, draft, archived-without-feedback) stay pending.
     expect(counts).toEqual({
-      inbox: 3,
-      drafts: 1,
-      archived: 1,
-      feedback_submitted: 1,
+      pending: 3,
+      done: 1,
     });
     expect(isDraftMailboxEmail(draftEmail)).toBe(true);
     expect(isArchivedMailboxEmail(archivedEmail)).toBe(true);
-    expect(matchesMailboxWorkflowFilter(inboxEmail, "inbox")).toBe(true);
-    expect(matchesMailboxWorkflowFilter(archivedEmail, "inbox")).toBe(false);
+    expect(matchesMailboxWorkflowFilter(inboxEmail, "pending")).toBe(true);
+    expect(matchesMailboxWorkflowFilter(feedbackSubmittedEmail, "pending")).toBe(
+      false,
+    );
     expect(
-      matchesMailboxWorkflowFilter(
-        feedbackSubmittedEmail,
-        "feedback_submitted",
-      ),
+      matchesMailboxWorkflowFilter(feedbackSubmittedEmail, "done"),
     ).toBe(true);
   });
 });
@@ -180,39 +179,26 @@ describe("buildMailboxWorkflowTabs", () => {
         "view=mail&search=invoice&page=3&priority=high",
       ),
       counts: {
-        inbox: 8,
-        drafts: 2,
-        archived: 3,
-        feedback_submitted: 5,
+        pending: 8,
+        done: 5,
       },
-      activeWorkflow: "drafts",
+      activeWorkflow: "pending",
     });
 
-    expect(tabs.map((tab) => tab.label)).toEqual([
-      "Inbox",
-      "Drafts",
-      "Archived",
-      "Feedback",
-    ]);
+    expect(tabs.map((tab) => tab.label)).toEqual(["Pending", "Done"]);
     expect(tabs[0]).toMatchObject({
-      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=inbox",
+      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=pending",
       count: 8,
-      isActive: false,
-      compact: true,
-    });
-    expect(tabs[1]).toMatchObject({
-      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=drafts",
-      count: 2,
       isActive: true,
       compact: true,
     });
-    expect(tabs[3]).toMatchObject({
-      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=feedback_submitted",
+    expect(tabs[1]).toMatchObject({
+      href: "/outlook-draft-feedback?view=mail&search=invoice&page=1&workflow=done",
       count: 5,
       isActive: false,
       compact: true,
     });
-    expect(tabs[1]?.href.includes("priority=")).toBe(false);
+    expect(tabs[0]?.href.includes("priority=")).toBe(false);
   });
 });
 

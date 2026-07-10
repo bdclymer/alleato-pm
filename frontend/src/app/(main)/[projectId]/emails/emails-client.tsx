@@ -154,7 +154,7 @@ export function EmailsClient({
       ]
     : undefined;
   const title = isMailboxReviewMode
-    ? "Emails Feedback"
+    ? "Feedback inbox"
     : isOutlook
       ? "Outlook Emails"
       : "Emails";

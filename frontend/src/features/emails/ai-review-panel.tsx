@@ -19,15 +19,10 @@
 
 import * as React from "react";
 import {
-  ArrowRight,
   Check,
   ChevronDown,
-  Flag,
-  FolderOpen,
-  ListTodo,
   Loader2,
   Sparkles,
-  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -153,9 +148,9 @@ function formatFeedbackDate(value: string | null | undefined): string | null {
 
 const STATUS_CHIP_CLASS: Record<DecisionStatus, string> = {
   confirmed: "bg-status-success/10 text-status-success",
-  // Corrected uses the blue "info" token, NOT the brand orange — a completed
-  // correction must stand out against a UI where orange is the everyday accent.
-  corrected: "bg-status-info/10 text-status-info",
+  // Corrected uses the warm brand accent so a reviewer's edit reads as the one
+  // decision that changed against the calmer confirmed/review rows.
+  corrected: "bg-primary/10 text-primary",
   unreviewed: "bg-muted text-muted-foreground",
 };
 
@@ -189,7 +184,7 @@ function OptionChips<T extends string>({
   onPick: (next: T) => void;
 }) {
   return (
-    <div className="ml-7 mt-3 flex flex-wrap gap-2">
+    <div className="ml-8 mt-3 flex flex-wrap gap-2">
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -215,28 +210,31 @@ function OptionChips<T extends string>({
 }
 
 interface DecisionRowProps {
-  icon: React.ComponentType<{ className?: string }>;
+  /** 1–4 number badge — self-documents the (future) keyboard shortcut. */
+  num: number;
   label: string;
   value: string;
   aiValue: string | null;
   status: DecisionStatus;
   isEditing: boolean;
   onToggleEdit: () => void;
-  /** When true, the section-level "Show AI reasoning" toggle is on. */
-  showReasoning: boolean;
+  /** Per-row reasoning expander. */
+  whyOpen: boolean;
+  onToggleWhy: () => void;
   why: string;
   editor: React.ReactNode;
 }
 
 function DecisionRow({
-  icon: Icon,
+  num,
   label,
   value,
   aiValue,
   status,
   isEditing,
   onToggleEdit,
-  showReasoning,
+  whyOpen,
+  onToggleWhy,
   why,
   editor,
 }: DecisionRowProps) {
@@ -246,23 +244,19 @@ function DecisionRow({
   return (
     <div className="border-b border-border/60 py-3.5 last:border-b-0">
       <div className="flex items-center gap-3">
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        {/* The value itself is the tap target — no separate "Change" button. */}
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onToggleEdit}
-          aria-expanded={isEditing}
-          className="group flex h-auto min-w-0 flex-1 flex-col items-start gap-0.5 rounded-md p-0 text-left hover:bg-transparent"
-        >
-          <span className="text-[10.5px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[11px] font-semibold text-muted-foreground">
+          {num}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10.5px] font-medium uppercase tracking-[0.04em] text-muted-foreground">
             {label}
-          </span>
-          <span className="flex flex-wrap items-center gap-2">
+          </div>
+          {/* Value line — a correction keeps the AI's original struck through. */}
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
             <span
               className={cn(
-                "text-[13.5px] font-semibold decoration-muted-foreground/40 underline-offset-2 group-hover:underline",
-                corrected ? "text-status-info" : "text-foreground",
+                "text-[13.5px] font-semibold",
+                corrected ? "text-primary" : "text-foreground",
               )}
             >
               {value}
@@ -272,21 +266,35 @@ function DecisionRow({
                 {aiValue}
               </span>
             ) : null}
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-transform",
-                isEditing && "rotate-180",
-              )}
-            />
-          </span>
+          </div>
+        </div>
+        <StatusChip status={status} />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onToggleEdit}
+          aria-expanded={isEditing}
+          className="h-auto shrink-0 px-0 py-0 text-[12px] font-semibold text-primary hover:bg-transparent hover:text-primary hover:underline"
+        >
+          {isEditing ? "Close" : "Change"}
         </Button>
-        {status !== "unreviewed" ? <StatusChip status={status} /> : null}
       </div>
 
       {isEditing ? editor : null}
 
-      {showReasoning ? (
-        <div className="ml-7 mt-2 rounded-lg bg-muted px-3 py-2.5 text-[12px] leading-[1.55] text-muted-foreground">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={onToggleWhy}
+        aria-expanded={whyOpen}
+        className="ml-8 mt-0 block h-auto px-0 py-1 text-[11.5px] font-medium text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+      >
+        {whyOpen ? "Hide reason" : "Why the AI chose this"}
+      </Button>
+      {whyOpen ? (
+        <div className="ml-8 mt-1.5 rounded-lg bg-muted px-3 py-2.5 text-[12px] leading-[1.55] text-muted-foreground">
           {why}
         </div>
       ) : null}
@@ -360,7 +368,12 @@ export function AiReviewPanel({
   const [openEditor, setOpenEditor] = React.useState<
     "action" | "priority" | "project" | "category" | null
   >(null);
-  const [showReasoning, setShowReasoning] = React.useState(false);
+  const [whyOpen, setWhyOpen] = React.useState<{
+    action: boolean;
+    priority: boolean;
+    project: boolean;
+    category: boolean;
+  }>({ action: false, priority: false, project: false, category: false });
   const [projectPickerOpen, setProjectPickerOpen] = React.useState(false);
 
   const [replyFeedback, setReplyFeedback] =
@@ -395,7 +408,7 @@ export function AiReviewPanel({
       category: verdictToStatus(fieldFeedback?.category),
     });
     setOpenEditor(null);
-    setShowReasoning(false);
+    setWhyOpen({ action: false, priority: false, project: false, category: false });
     setDraftBody(review?.draftBody ?? "");
     // Only reflect an explicit prior verdict on the reply — never pre-approve a
     // draft the reviewer hasn't looked at (or one that doesn't exist yet).
@@ -460,6 +473,13 @@ export function AiReviewPanel({
   const toggleEditor = React.useCallback(
     (key: "action" | "priority" | "project" | "category") => {
       setOpenEditor((current) => (current === key ? null : key));
+    },
+    [],
+  );
+
+  const toggleWhy = React.useCallback(
+    (key: "action" | "priority" | "project" | "category") => {
+      setWhyOpen((current) => ({ ...current, [key]: !current[key] }));
     },
     [],
   );
@@ -704,31 +724,21 @@ export function AiReviewPanel({
       {/* Body */}
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className={SECTION_LABEL_CLASS}>
-              The AI&rsquo;s plan for this email
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowReasoning((value) => !value)}
-              className="h-auto shrink-0 px-0 py-0 text-[11.5px] font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
-            >
-              {showReasoning ? "Hide AI reasoning" : "Show AI reasoning"}
-            </Button>
+          <div className={SECTION_LABEL_CLASS}>
+            The AI&rsquo;s plan for this email
           </div>
 
           <div className="mt-1">
             <DecisionRow
-              icon={ListTodo}
+              num={1}
               label="What to do"
               value={actionLabel(action)}
               aiValue={actionLabel(aiValues.action)}
               status={status.action}
               isEditing={openEditor === "action"}
               onToggleEdit={() => toggleEditor("action")}
-              showReasoning={showReasoning}
+              whyOpen={whyOpen.action}
+              onToggleWhy={() => toggleWhy("action")}
               why={whyText.action}
               editor={
                 <OptionChips
@@ -742,14 +752,15 @@ export function AiReviewPanel({
             />
 
             <DecisionRow
-              icon={Flag}
+              num={2}
               label="Priority"
               value={priorityLabel(priority)}
               aiValue={priorityLabel(aiValues.priority)}
               status={status.priority}
               isEditing={openEditor === "priority"}
               onToggleEdit={() => toggleEditor("priority")}
-              showReasoning={showReasoning}
+              whyOpen={whyOpen.priority}
+              onToggleWhy={() => toggleWhy("priority")}
               why={whyText.priority}
               editor={
                 <OptionChips
@@ -763,17 +774,18 @@ export function AiReviewPanel({
             />
 
             <DecisionRow
-              icon={FolderOpen}
+              num={3}
               label="Project"
               value={projectDisplayLabel(projectId)}
               aiValue={projectDisplayLabel(aiValues.projectId)}
               status={status.project}
               isEditing={openEditor === "project"}
               onToggleEdit={() => toggleEditor("project")}
-              showReasoning={showReasoning}
+              whyOpen={whyOpen.project}
+              onToggleWhy={() => toggleWhy("project")}
               why={whyText.project}
               editor={
-                <div className="ml-7 mt-3">
+                <div className="ml-8 mt-3">
                   <Popover
                     open={projectPickerOpen}
                     onOpenChange={setProjectPickerOpen}
@@ -842,14 +854,15 @@ export function AiReviewPanel({
             />
 
             <DecisionRow
-              icon={Tag}
+              num={4}
               label="Category"
               value={category}
               aiValue={aiValues.category}
               status={status.category}
               isEditing={openEditor === "category"}
               onToggleEdit={() => toggleEditor("category")}
-              showReasoning={showReasoning}
+              whyOpen={whyOpen.category}
+              onToggleWhy={() => toggleWhy("category")}
               why={whyText.category}
               editor={
                 <OptionChips
@@ -962,28 +975,15 @@ export function AiReviewPanel({
               )}
               {isSaving ? "Saving..." : "Looks right — save feedback"}
             </Button>
-            {onRequestNext ? (
-              <div className="mt-2 flex items-center justify-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void handleSaveAll({ advance: true })}
-                  disabled={isSaving}
-                  className="h-auto gap-1.5 px-2 py-1 text-[12px] font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
-                >
-                  Save &amp; next
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-                <span className="text-[11px] text-muted-foreground/70">
-                  or press &crarr;
-                </span>
-              </div>
-            ) : savedAt ? (
-              <div className="mt-2 text-center text-[11.5px] text-muted-foreground">
-                Last saved {formatFeedbackDate(savedAt)}
-              </div>
-            ) : null}
+            <div className="mt-2 text-center text-[11px] text-muted-foreground/70">
+              {onRequestNext ? (
+                <>Change any line above first if the AI got it wrong — or press &crarr; to save &amp; go to the next email.</>
+              ) : savedAt ? (
+                <>Last saved {formatFeedbackDate(savedAt)}</>
+              ) : (
+                <>Change any line above first if the AI got it wrong.</>
+              )}
+            </div>
           </>
         )}
       </div>
