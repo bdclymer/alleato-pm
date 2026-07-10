@@ -13,10 +13,9 @@ import {
 } from "lucide-react";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading, DetailPanel, ContentSectionStack } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -168,13 +167,11 @@ export default function SpecificationDetailPage() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <ContentSectionStack>
         {/* Specification Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <DetailPanel>
+          <SectionRuleHeading label="Details" />
+          <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Section Number</p>
@@ -224,15 +221,12 @@ export default function SpecificationDetailPage() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </DetailPanel>
 
         {/* Revision History */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Revision History</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <DetailPanel>
+          <SectionRuleHeading label="Revision History" />
             {revisionsLoading ? (
               <p className="text-muted-foreground">Loading revisions...</p>
             ) : revisions.length === 0 ? (
@@ -312,7 +306,7 @@ export default function SpecificationDetailPage() {
                                   size="sm"
                                   onClick={() => setDeletingRevisionId(revision.id.toString())}
                                 >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                  <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               )}
                             </div>
@@ -324,9 +318,8 @@ export default function SpecificationDetailPage() {
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+        </DetailPanel>
+      </ContentSectionStack>
 
       {/* Edit Modal */}
       <SpecificationEditModal
@@ -349,7 +342,7 @@ export default function SpecificationDetailPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteRevision}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

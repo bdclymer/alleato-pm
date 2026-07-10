@@ -260,7 +260,7 @@ export default function AccountSettingsPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Professional</span>
-                  <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-600">
+                  <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success">
                     Active
                   </span>
                 </div>

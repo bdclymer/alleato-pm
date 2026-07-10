@@ -5,6 +5,15 @@ import {
   PageShell,
   SectionRuleHeading,
 } from "@/components/layout";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { loadMeetingLineage } from "@/lib/meetings/lineage";
 import { parseTranscriptSections } from "../parse-transcript-sections";
@@ -86,43 +95,38 @@ function RowTable({
   rows: Array<Record<string, unknown>>;
 }) {
   return (
-    <div className="overflow-x-auto rounded-md border border-border">
-      <table className="min-w-full divide-y divide-border text-sm">
-        <thead className="bg-muted/40">
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                className="px-3 py-2 text-left text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground"
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border bg-background">
-          {rows.map((row, index) => (
-            <tr key={String(row.id ?? index)}>
-              {columns.map((column) => {
-                const raw = row[column.key];
-                return (
-                  <td
-                    key={column.key}
-                    className="px-3 py-2 align-top text-foreground"
-                  >
-                    {column.render
-                      ? column.render(row)
-                      : typeof raw === "object" && raw !== null
-                        ? JSON.stringify(raw)
-                        : String(raw ?? "")}
-                  </td>
-                );
-              })}
-            </tr>
+    <InlineTable variant="read">
+      <InlineTableHeader>
+        <InlineTableHeaderRow>
+          {columns.map((column) => (
+            <InlineTableHeaderCell key={column.key}>
+              {column.label}
+            </InlineTableHeaderCell>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </InlineTableHeaderRow>
+      </InlineTableHeader>
+      <InlineTableBody>
+        {rows.map((row, index) => (
+          <InlineTableRow key={String(row.id ?? index)}>
+            {columns.map((column) => {
+              const raw = row[column.key];
+              return (
+                <InlineTableCell
+                  key={column.key}
+                  className="align-top"
+                >
+                  {column.render
+                    ? column.render(row)
+                    : typeof raw === "object" && raw !== null
+                      ? JSON.stringify(raw)
+                      : String(raw ?? "")}
+                </InlineTableCell>
+              );
+            })}
+          </InlineTableRow>
+        ))}
+      </InlineTableBody>
+    </InlineTable>
   );
 }
 

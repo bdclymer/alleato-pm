@@ -52,6 +52,7 @@ import {
   TooltipTrigger,
   ToggleGroup,
   ToggleGroupItem,
+  EmptyState,
 } from "@/components/ds";
 import { PageShell, PageTabs } from "@/components/layout";
 import {
@@ -1079,17 +1080,16 @@ function ProjectTeamSection({
               </Button>
             }
           />
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No roles defined yet.{" "}
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-primary"
-              onClick={() => setCreateRoleOpen(true)}
-            >
-              Add a role
-            </Button>
-          </p>
+          <EmptyState
+            title="No roles defined yet"
+            description="Roles help organize your project team by responsibility."
+            action={
+              <Button size="sm" onClick={() => setCreateRoleOpen(true)}>
+                Add a role
+              </Button>
+            }
+            className="py-6"
+          />
         </>
       ) : (
         <DirectoryUnifiedTable
@@ -1235,9 +1235,9 @@ function EffectivePermissionsDialog({
                         highest === "admin" &&
                           "bg-primary/10 text-primary border-primary/20",
                         highest === "write" &&
-                          "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                          "bg-primary/10 text-primary border-primary/20",
                         highest === "read" &&
-                          "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                          "bg-success/10 text-success border-success/20",
                         highest === "none" && "text-muted-foreground",
                       )}
                     >
@@ -1835,17 +1835,16 @@ function VendorsSection({
 
   if (vendors.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No vendors yet.{" "}
-        <Button
-          type="button"
-          variant="link"
-          className="h-auto p-0 align-baseline"
-          onClick={onAddVendorClick}
-        >
-          Add one
-        </Button>
-      </p>
+      <EmptyState
+        title="No vendors yet"
+        description="Add vendors to track subcontractors and suppliers on this project."
+        action={
+          <Button size="sm" onClick={onAddVendorClick}>
+            Add vendor
+          </Button>
+        }
+        className="py-6"
+      />
     );
   }
 

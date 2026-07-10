@@ -45,15 +45,15 @@ import { apiFetch } from "@/lib/api-client";
 import { acumaticaVendorUrl } from "@/lib/acumatica/vendor-url";
 
 const STATUS_COLORS: CellColorMap = {
-  active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  active: "bg-success/10 text-success",
   inactive: "bg-muted text-muted-foreground",
 };
 
 const TYPE_COLORS: CellColorMap = {
-  subcontractor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  supplier: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  vendor: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
-  "connected company": "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  subcontractor: "bg-primary/10 text-primary",
+  supplier: "bg-warning/10 text-warning",
+  vendor: "bg-primary/10 text-primary",
+  "connected company": "bg-success/10 text-success",
 };
 
 function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {

@@ -6,7 +6,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { apiFetchRaw } from "@/lib/api-client";
+import { apiFetch, apiFetchRaw } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { PageShell } from "@/components/layout";
@@ -103,12 +103,10 @@ export default function NewCommitmentPage() {
         commitmentType === "subcontract"
           ? `/api/projects/${projectId}/subcontracts`
           : `/api/projects/${projectId}/purchase-orders`;
-      const res = await fetch(endpoint);
-      if (!res.ok) return null;
-
-      const payload = (await res.json().catch(() => ({}))) as
+      const payload = await apiFetch<
         | { data?: Array<{ id?: string; contract_number?: string }> }
-        | Array<{ id?: string; contract_number?: string }>;
+        | Array<{ id?: string; contract_number?: string }>
+      >(endpoint);
 
       const rows = Array.isArray(payload)
         ? payload

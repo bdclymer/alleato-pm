@@ -178,7 +178,7 @@ export default function SecuritySettingsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{session.device}</span>
                     {session.current && (
-                      <span className="inline-flex items-center rounded-full bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
+                      <span className="inline-flex items-center rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-medium text-success">
                         This device
                       </span>
                     )}

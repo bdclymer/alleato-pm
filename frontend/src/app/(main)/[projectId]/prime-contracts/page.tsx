@@ -4,7 +4,17 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Plus, Settings } from "lucide-react";
-import { StatusBadge, SplitButton } from "@/components/ds";
+import {
+  StatusBadge,
+  SplitButton,
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds";
 import { CreatePrimeContractFromEstimateModal } from "@/components/domain/contracts/CreatePrimeContractFromEstimateModal";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
@@ -644,30 +654,30 @@ export default function ProjectContractsPage(): ReactElement {
                           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             Change Orders ({cached.data.length})
                           </p>
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-left text-xs text-muted-foreground">
-                                <th className="pb-1 pr-4 font-medium">Number</th>
-                                <th className="pb-1 pr-4 font-medium">Title</th>
-                                <th className="pb-1 pr-4 font-medium">Status</th>
-                                <th className="pb-1 text-right font-medium">Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          <InlineTable variant="read">
+                            <InlineTableHeader>
+                              <InlineTableHeaderRow>
+                                <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+                                <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+                                <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                              </InlineTableHeaderRow>
+                            </InlineTableHeader>
+                            <InlineTableBody>
                               {cached.data.map((co) => (
-                                <tr
+                                <InlineTableRow
                                   key={co.id}
-                                  className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
+                                  className="cursor-pointer hover:bg-muted/50"
                                   onClick={(e) => { e.stopPropagation(); router.push(`/${projectId}/change-orders/prime/${co.id}`); }}
                                 >
-                                  <td className="py-1.5 pr-4 font-medium">{co.pcco_number || "—"}</td>
-                                  <td className="max-w-md truncate py-1.5 pr-4">{co.title || "—"}</td>
-                                  <td className="py-1.5 pr-4"><StatusBadge status={co.status || "Unknown"} /></td>
-                                  <td className="py-1.5 text-right">{formatCurrency(co.total_amount)}</td>
-                                </tr>
+                                  <InlineTableCell className="font-medium">{co.pcco_number || "—"}</InlineTableCell>
+                                  <InlineTableCell className="max-w-md truncate">{co.title || "—"}</InlineTableCell>
+                                  <InlineTableCell><StatusBadge status={co.status || "Unknown"} /></InlineTableCell>
+                                  <InlineTableCell align="right" numeric>{formatCurrency(co.total_amount)}</InlineTableCell>
+                                </InlineTableRow>
                               ))}
-                            </tbody>
-                          </table>
+                            </InlineTableBody>
+                          </InlineTable>
                         </div>
                       )}
                       {cached.pcos.length > 0 && (
@@ -675,20 +685,20 @@ export default function ProjectContractsPage(): ReactElement {
                           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                             Potential Change Orders ({cached.pcos.length})
                           </p>
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="text-left text-xs text-muted-foreground">
-                                <th className="pb-1 pr-4 font-medium">Number</th>
-                                <th className="pb-1 pr-4 font-medium">Title</th>
-                                <th className="pb-1 pr-4 font-medium">Status</th>
-                                <th className="pb-1 text-right font-medium">Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          <InlineTable variant="read">
+                            <InlineTableHeader>
+                              <InlineTableHeaderRow>
+                                <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+                                <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+                                <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                              </InlineTableHeaderRow>
+                            </InlineTableHeader>
+                            <InlineTableBody>
                               {cached.pcos.map((pco) => (
-                                <tr
+                                <InlineTableRow
                                   key={pco.id}
-                                  className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
+                                  className="cursor-pointer hover:bg-muted/50"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(
@@ -696,14 +706,14 @@ export default function ProjectContractsPage(): ReactElement {
                                     );
                                   }}
                                 >
-                                  <td className="py-1.5 pr-4 font-medium">{pco.pco_number || "—"}</td>
-                                  <td className="max-w-md truncate py-1.5 pr-4">{pco.title || "—"}</td>
-                                  <td className="py-1.5 pr-4"><StatusBadge status={pco.status || "Unknown"} /></td>
-                                  <td className="py-1.5 text-right">{formatCurrency(pco.total_amount)}</td>
-                                </tr>
+                                  <InlineTableCell className="font-medium">{pco.pco_number || "—"}</InlineTableCell>
+                                  <InlineTableCell className="max-w-md truncate">{pco.title || "—"}</InlineTableCell>
+                                  <InlineTableCell><StatusBadge status={pco.status || "Unknown"} /></InlineTableCell>
+                                  <InlineTableCell align="right" numeric>{formatCurrency(pco.total_amount)}</InlineTableCell>
+                                </InlineTableRow>
                               ))}
-                            </tbody>
-                          </table>
+                            </InlineTableBody>
+                          </InlineTable>
                         </div>
                       )}
                     </div>

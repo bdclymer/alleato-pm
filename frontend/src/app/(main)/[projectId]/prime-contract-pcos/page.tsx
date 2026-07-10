@@ -17,10 +17,8 @@ import {
   TableRowActionsMenu,
   type TableRowActionItem,
 } from "@/components/tables/unified";
-import { StatusBadge } from "@/components/ds";
+import { ErrorState, StatusBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ds/text";
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -577,18 +575,10 @@ export default function PrimeContractPcosPage(): ReactElement {
         title="Prime Contract PCOs"
         description="Provide a valid project identifier to access PCOs."
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>Invalid Project</CardTitle>
-            <CardDescription>
-              PCOs require a numeric project identifier. Navigate through the project
-              workspace to continue.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Text tone="muted">Missing or malformed project parameter.</Text>
-          </CardContent>
-        </Card>
+        <ErrorState
+          title="Invalid Project"
+          error="PCOs require a numeric project identifier. Navigate through the project workspace to continue."
+        />
       </PageShell>
     );
   }

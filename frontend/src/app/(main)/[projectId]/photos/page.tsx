@@ -11,12 +11,10 @@ import {
   MapPin,
   Plus,
   RotateCcw,
-  Search,
   Star,
   StarOff,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
 
 import { PageShell, PageTabs } from "@/components/layout";
@@ -28,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -37,6 +34,7 @@ import {
   Skeleton,
   Textarea,
 } from "@/components/ds";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import {
   useDeletePhoto,
   useDeletePhotoPermanently,
@@ -216,26 +214,11 @@ export default function ProjectPhotosPage() {
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search photos..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-                {search && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
-              </div>
+              <ExpandableSearch
+                placeholder="Search photos..."
+                value={search}
+                onChange={setSearch}
+              />
 
               <Select value={album} onValueChange={setAlbum}>
                 <SelectTrigger className="w-[160px]">

@@ -1,5 +1,6 @@
 import { DirectCostsClient } from "./direct-costs-client";
 import type { DirectCostRow } from "./direct-costs-client";
+import { ErrorState } from "@/components/ds";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import type { CostCodeDetailRow } from "./direct-costs-table-utils";
 
@@ -31,9 +32,7 @@ export default async function ProjectDirectCostsPage({
 
   if (error) {
     return (
-      <div className="text-center text-destructive p-6">
-        Error loading direct costs. Please try again later.
-      </div>
+      <ErrorState error="Error loading direct costs. Please try again later." />
     );
   }
 

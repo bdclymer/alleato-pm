@@ -39,8 +39,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { format as fmtDate } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateField } from "@/components/forms";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -70,6 +72,18 @@ const columnConfigs = [
 const defaultVisibleColumns = columnConfigs
   .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
   .map((c) => c.id);
+
+/** Parse a YYYY-MM-DD string to a local Date (no timezone shift). */
+function parseISODate(s: string): Date | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
+}
+
+/** Convert a Date to YYYY-MM-DD string, or empty string if undefined. */
+function toISODateStr(d: Date | undefined): string {
+  return d ? fmtDate(d, "yyyy-MM-dd") : "";
+}
 
 // =============================================================================
 // Page Component
@@ -436,34 +450,22 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
           {bpMode === "manual" ? (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bp-start">From</Label>
-                  <Input
-                    id="bp-start"
-                    type="date"
-                    value={bpFormStartDate}
-                    onChange={(e) => setBpFormStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bp-end">To</Label>
-                  <Input
-                    id="bp-end"
-                    type="date"
-                    value={bpFormEndDate}
-                    onChange={(e) => setBpFormEndDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bp-billing">Due Date</Label>
-                <Input
-                  id="bp-billing"
-                  type="date"
-                  value={bpFormBillingDate}
-                  onChange={(e) => setBpFormBillingDate(e.target.value)}
+                <DateField
+                  label="From"
+                  value={parseISODate(bpFormStartDate)}
+                  onChange={(d) => setBpFormStartDate(toISODateStr(d))}
+                />
+                <DateField
+                  label="To"
+                  value={parseISODate(bpFormEndDate)}
+                  onChange={(d) => setBpFormEndDate(toISODateStr(d))}
                 />
               </div>
+              <DateField
+                label="Due Date"
+                value={parseISODate(bpFormBillingDate)}
+                onChange={(d) => setBpFormBillingDate(toISODateStr(d))}
+              />
             </div>
           ) : (
             (() => {

@@ -17,6 +17,7 @@ import {
 import {
   DetailField,
   DetailFieldGrid,
+  ErrorState,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
@@ -173,19 +174,11 @@ export default function DirectCostDetailPage({
 
   if (!directCost) {
     return (
-      <PageShell variant="detail" title="Direct Cost Details" description="Direct cost not found" onBack={() => router.back()}>
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <p className="text-muted-foreground">Direct cost not found</p>
-          <Button
-            variant="outline"
-            onClick={() =>
-              router.push(`/${resolvedParams.projectId}/direct-costs`)
-            }
-          >
-            <ArrowLeft />
-            Back to Direct Costs
-          </Button>
-        </div>
+      <PageShell variant="detail" title="Direct Cost Details" onBack={() => router.back()}>
+        <ErrorState
+          title="Direct cost not found"
+          description="The direct cost you are looking for does not exist or has been removed."
+        />
       </PageShell>
     );
   }

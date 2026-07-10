@@ -80,6 +80,7 @@ import {
   InlineTableHeaderRow,
   InlineTableRow,
 } from "@/components/ds";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { PageShell, PageTabs } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { FormSection, ToggleField } from "@/components/forms";
@@ -775,62 +776,57 @@ function GroupedSubmittalView({
           </div>
 
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <table className="w-full text-sm" style={{ minWidth: 960 }}>
-              <thead className="border-b border-border bg-muted/40">
-                <tr>
+            <InlineTable variant="read" tableClassName="min-w-[960px]">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
                   {visibleCols.map((col) => (
-                    <th
-                      key={col.id}
-                      className="h-8 whitespace-nowrap px-3 text-left text-xs font-medium uppercase text-muted-foreground"
-                    >
+                    <InlineTableHeaderCell key={col.id}>
                       {col.label}
-                    </th>
+                    </InlineTableHeaderCell>
                   ))}
                   {extraAction && (
-                    <th className="h-8 whitespace-nowrap px-3 text-left text-xs font-medium uppercase text-muted-foreground">
-                      Actions
-                    </th>
+                    <InlineTableHeaderCell>Actions</InlineTableHeaderCell>
                   )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
                 {group.items.length === 0 ? (
-                  <tr>
-                    <td
+                  <InlineTableRow>
+                    <InlineTableCell
                       colSpan={colSpan}
-                      className="px-3 py-6 text-sm text-muted-foreground"
+                      className="py-6 text-muted-foreground"
                     >
                       No submittals in this group.
-                    </td>
-                  </tr>
+                    </InlineTableCell>
+                  </InlineTableRow>
                 ) : (
                   group.items.map((item) => (
-                    <tr
+                    <InlineTableRow
                       key={item.id}
                       className="cursor-pointer transition-colors hover:bg-muted/50"
                       onClick={() => onRowClick(item)}
                     >
                       {visibleCols.map((col) => (
-                        <td
+                        <InlineTableCell
                           key={col.id}
-                          className="h-9 whitespace-nowrap px-3 text-foreground"
+                          className="h-9 whitespace-nowrap"
                         >
                           {col.render(item)}
-                        </td>
+                        </InlineTableCell>
                       ))}
                       {extraAction && (
-                        <td
-                          className="h-9 whitespace-nowrap px-3"
+                        <InlineTableCell
+                          className="h-9 whitespace-nowrap"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {extraAction(item)}
-                        </td>
+                        </InlineTableCell>
                       )}
-                    </tr>
+                    </InlineTableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </InlineTableBody>
+            </InlineTable>
           </div>
         </section>
       ))}
@@ -2026,14 +2022,11 @@ function PermissionsPanel({ projectId }: { projectId: number }) {
       title="User Permissions for Submittals"
       description="View user permissions for Submittals. You can't adjust permissions for Company Admins or users with assigned permission templates here. As a best practice, always manage user permissions through permission templates."
     >
-      <div className="max-w-sm">
-        <Input
-          placeholder="Search"
-          aria-label="Search permissions"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </div>
+      <ExpandableSearch
+        placeholder="Search permissions"
+        value={search}
+        onChange={setSearch}
+      />
 
       <SettingsTable>
         <InlineTable variant="read">

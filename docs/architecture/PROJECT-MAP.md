@@ -55,9 +55,9 @@ _302/340 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/daily-log/site-lead-checklist` | Complete the separate site lead checklist for a project date without opening the daily log form | frontend/src/app/(main)/[projectId]/daily-log/site-lead-checklist/page.tsx |
 | `/[projectId]/daily-log/site-scribe` | Realtime AI daily-log capture for field crews. | frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx |
 | `/[projectId]/direct-costs` | List direct costs with vendor, amounts, and status tracked separately from commitments | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
-| `/[projectId]/direct-costs/[costId]` | Direct cost not found | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
+| `/[projectId]/direct-costs/[costId]` | The direct cost you are looking for does not exist or has been removed. | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
 | `/[projectId]/direct-costs/new` | Direct costs are synced from Acumatica and cannot be created in Alleato. | frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx |
-| `/[projectId]/directory` | Manage project team members and companies with roles, contact info, and access control | frontend/src/app/(main)/[projectId]/directory/page.tsx |
+| `/[projectId]/directory` | Roles help organize your project team by responsibility. | frontend/src/app/(main)/[projectId]/directory/page.tsx |
 | `/[projectId]/documents` | Store and organize project documents with versioning, search, and metadata tracking | frontend/src/app/(main)/[projectId]/documents/page.tsx |
 | `/[projectId]/documents/[documentId]` | View and preview an individual document with details and content display | frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx |
 | `/[projectId]/drawings` | Upload and manage project drawings and design documents with versioning | frontend/src/app/(main)/[projectId]/drawings/page.tsx |
@@ -102,7 +102,7 @@ _302/340 have a description (from the page's `PageShell` or the curated `fronten
 | `/[projectId]/permissions` | Legacy redirect to user management page | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
 | `/[projectId]/photos` | View geotagged photos on a project map. Photos with location data will appear as pins. | frontend/src/app/(main)/[projectId]/photos/page.tsx |
 | `/[projectId]/prime-contract-pcos` | Provide a valid project identifier to access PCOs. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
-| `/[projectId]/prime-contract-pcos/[pcoId]` | This potential change order does not have any line items yet. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx |
+| `/[projectId]/prime-contract-pcos/[pcoId]` | Upload files to attach them to this PCO. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx |
 | `/[projectId]/prime-contract-pcos/[pcoId]/edit` | Edit prime contract potential change order metadata and status | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx |
 | `/[projectId]/prime-contract-pcos/new` | Create prime contract PCO from change events or standalone for conversion to CO | frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx |
 | `/[projectId]/prime-contracts` | List prime contracts with financial totals, expandable change orders, and PCOs | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |

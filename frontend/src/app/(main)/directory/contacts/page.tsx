@@ -41,8 +41,8 @@ import {
 } from "@/features/contacts/directory-contacts-table-definition";
 
 const CONTACT_TYPE_COLORS: CellColorMap = {
-  user: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  employee: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  user: "bg-primary/10 text-primary",
+  employee: "bg-success/10 text-success",
   contact: "bg-muted text-muted-foreground",
 };
 

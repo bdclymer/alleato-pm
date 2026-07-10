@@ -621,7 +621,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
   const [savingToggle, setSavingToggle] = useState<"is_private" | "executed" | null>(null);
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
-  // <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp.
+  // InlineEditField type="date" expects YYYY-MM-DD, not a full ISO timestamp.
   const dateInput = (value?: string | null) =>
     typeof value === "string" && value.length >= 10 ? value.slice(0, 10) : "";
   const inclusionLines = parseTextLines(commitment.inclusions);

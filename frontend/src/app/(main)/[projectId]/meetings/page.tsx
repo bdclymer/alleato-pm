@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { ErrorState } from "@/components/ds";
 import { MeetingsTablePage } from "@/features/meetings/meetings-table-page";
 import { meetingsSchema } from "@/lib/validation/meetings";
 import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
@@ -41,9 +42,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
         description={PAGE_DESCRIPTION}
         actions={actions}
       >
-        <div className="text-center text-destructive p-6">
-          Error loading meetings. Please try again later.
-        </div>
+        <ErrorState error="Error loading meetings. Please try again later." />
       </TablePageWrapper>
     );
   }
@@ -56,9 +55,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
         description={PAGE_DESCRIPTION}
         actions={actions}
       >
-        <div className="text-center text-destructive p-6">
-          Error loading meetings. Please try again later.
-        </div>
+        <ErrorState error="Error loading meetings. Please try again later." />
       </TablePageWrapper>
     );
   }

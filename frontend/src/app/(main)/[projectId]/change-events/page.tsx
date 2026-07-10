@@ -34,8 +34,7 @@ import { useProject } from "@/contexts/project-context";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { PageShell, PageTabs } from "@/components/layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ds/text";
+import { ErrorState } from "@/components/ds";
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import { ChangeEventsSettingsTab } from "@/features/change-events/change-events-settings-tab";
 
@@ -848,18 +847,10 @@ export default function ProjectChangeEventsPage(): ReactElement {
         title="Change Events"
         description="Provide a valid project identifier to access change events."
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>Invalid Project</CardTitle>
-            <CardDescription>
-              Change events require a numeric project identifier. Navigate through the project
-              workspace to continue.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Text tone="muted">Missing or malformed `{params.projectId}` parameter.</Text>
-          </CardContent>
-        </Card>
+        <ErrorState
+          title="Invalid Project"
+          error="Change events require a numeric project identifier. Navigate through the project workspace to continue."
+        />
       </PageShell>
     );
   }

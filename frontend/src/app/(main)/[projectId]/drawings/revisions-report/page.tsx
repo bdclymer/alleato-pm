@@ -9,7 +9,7 @@ import { PageShell } from "@/components/layout";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import {
   Table,
   TableBody,
@@ -110,11 +110,10 @@ export default function DrawingsRevisionsReportPage() {
     >
       {/* Search */}
       <div className="mb-4">
-        <Input
+        <ExpandableSearch
           placeholder="Search by number or title..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
+          onChange={setSearch}
         />
       </div>
 

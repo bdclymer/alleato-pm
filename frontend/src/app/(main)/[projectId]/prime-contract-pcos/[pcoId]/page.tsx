@@ -872,9 +872,11 @@ export default function PrimeContractPcoDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No attachments yet. Upload files to attach them to this PCO.
-            </p>
+            <EmptyState
+              title="No attachments yet"
+              description="Upload files to attach them to this PCO."
+              className="py-6"
+            />
           )}
         </section>
         </section>

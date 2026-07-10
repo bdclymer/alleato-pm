@@ -503,13 +503,21 @@ function MeetingCommandRail({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No decisions captured yet.</p>
+          <EmptyState
+            title="No decisions captured yet"
+            description="Decisions made during the meeting will appear here."
+            className="py-6"
+          />
         )}
       </section>
 
       <section>
         <SectionRuleHeading label="Parking lot" />
-        <p className="text-sm text-muted-foreground">No parking lot items.</p>
+        <EmptyState
+          title="No parking lot items"
+          description="Items deferred to a later discussion will appear here."
+          className="py-6"
+        />
       </section>
 
       <section>

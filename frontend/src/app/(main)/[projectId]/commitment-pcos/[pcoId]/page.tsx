@@ -36,7 +36,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
 import { PageShell, PageTabs } from "@/components/layout";
-import { StatusBadge, EmptyState, ErrorState } from "@/components/ds";
+import {
+  StatusBadge,
+  EmptyState,
+  ErrorState,
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   formatMoney,
@@ -409,68 +423,46 @@ function PcoLineItemsTable({ pco }: { pco: CommitmentPcoDetail }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              Description
-            </th>
-            <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-              Qty
-            </th>
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              UOM
-            </th>
-            <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-              Unit Cost
-            </th>
-            <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-              Amount
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lineItems.map((item) => (
-            <tr
-              key={item.id}
-              className="border-b border-border last:border-b-0"
-            >
-              <td className="px-3 py-2 text-foreground">
-                {item.description || "--"}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                {item.quantity}
-              </td>
-              <td className="px-3 py-2 text-foreground">
-                {item.unit_of_measure || "--"}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                {formatMoney(item.unit_cost)}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums font-medium text-foreground">
-                {formatMoney(item.amount)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t border-border">
-            <td
-              colSpan={4}
-              className="px-3 py-2 text-right font-medium text-foreground"
-            >
-              Total
-            </td>
-            <td className="px-3 py-2 text-right tabular-nums font-semibold text-foreground">
-              {formatMoney(
-                lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
-              )}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+    <InlineTable variant="read">
+      <InlineTableHeader>
+        <InlineTableHeaderRow>
+          <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
+          <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+        </InlineTableHeaderRow>
+      </InlineTableHeader>
+      <InlineTableBody>
+        {lineItems.map((item) => (
+          <InlineTableRow key={item.id}>
+            <InlineTableCell>{item.description || "--"}</InlineTableCell>
+            <InlineTableCell align="right" numeric>
+              {item.quantity}
+            </InlineTableCell>
+            <InlineTableCell>{item.unit_of_measure || "--"}</InlineTableCell>
+            <InlineTableCell align="right" numeric>
+              {formatMoney(item.unit_cost)}
+            </InlineTableCell>
+            <InlineTableCell align="right" numeric className="font-medium">
+              {formatMoney(item.amount)}
+            </InlineTableCell>
+          </InlineTableRow>
+        ))}
+      </InlineTableBody>
+      <InlineTableFooter>
+        <InlineTableFooterRow type="totals">
+          <InlineTableFooterCell colSpan={4} align="right">
+            Total
+          </InlineTableFooterCell>
+          <InlineTableFooterCell align="right" numeric>
+            {formatMoney(
+              lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
+            )}
+          </InlineTableFooterCell>
+        </InlineTableFooterRow>
+      </InlineTableFooter>
+    </InlineTable>
   );
 }
 
@@ -496,67 +488,51 @@ function PcoLinkedChangeEvents({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              CE #
-            </th>
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              Title
-            </th>
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              Status
-            </th>
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              Type
-            </th>
-            <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-              Revenue ROM
-            </th>
-            <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-              Cost ROM
-            </th>
-            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-              Linked
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {changeEvents.map((ce) => (
-            <tr
-              key={ce.id}
-              className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors"
-              onClick={() =>
-                router.push(`/${projectId}/change-events/${ce.id}`)
-              }
-            >
-              <td className="px-3 py-2 font-mono text-muted-foreground">
-                {ce.number || `CE-${ce.id.slice(0, 8)}`}
-              </td>
-              <td className="px-3 py-2 font-medium text-foreground">
-                {ce.title || "--"}
-              </td>
-              <td className="px-3 py-2">
-                <StatusBadge status={ce.status || "unknown"} />
-              </td>
-              <td className="px-3 py-2 text-foreground">{ce.type || "--"}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                {formatMoney(ce.total_revenue_rom)}
-              </td>
-              <td className="px-3 py-2 text-right tabular-nums text-foreground">
-                {formatMoney(ce.total_cost_rom)}
-              </td>
-              <td className="px-3 py-2 text-muted-foreground">
-                {ce.linked_at
-                  ? new Date(ce.linked_at).toLocaleDateString()
-                  : "--"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <InlineTable variant="read">
+      <InlineTableHeader>
+        <InlineTableHeaderRow>
+          <InlineTableHeaderCell>CE #</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Revenue ROM</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Cost ROM</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Linked</InlineTableHeaderCell>
+        </InlineTableHeaderRow>
+      </InlineTableHeader>
+      <InlineTableBody>
+        {changeEvents.map((ce) => (
+          <InlineTableRow
+            key={ce.id}
+            className="cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() =>
+              router.push(`/${projectId}/change-events/${ce.id}`)
+            }
+          >
+            <InlineTableCell className="font-mono text-muted-foreground">
+              {ce.number || `CE-${ce.id.slice(0, 8)}`}
+            </InlineTableCell>
+            <InlineTableCell className="font-medium">
+              {ce.title || "--"}
+            </InlineTableCell>
+            <InlineTableCell>
+              <StatusBadge status={ce.status || "unknown"} />
+            </InlineTableCell>
+            <InlineTableCell>{ce.type || "--"}</InlineTableCell>
+            <InlineTableCell align="right" numeric>
+              {formatMoney(ce.total_revenue_rom)}
+            </InlineTableCell>
+            <InlineTableCell align="right" numeric>
+              {formatMoney(ce.total_cost_rom)}
+            </InlineTableCell>
+            <InlineTableCell className="text-muted-foreground">
+              {ce.linked_at
+                ? new Date(ce.linked_at).toLocaleDateString()
+                : "--"}
+            </InlineTableCell>
+          </InlineTableRow>
+        ))}
+      </InlineTableBody>
+    </InlineTable>
   );
 }

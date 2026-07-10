@@ -1,4 +1,5 @@
 import { EstimatesClient } from "./estimates-client";
+import { ErrorState } from "@/components/ds";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 
 export default async function ProjectEstimatesPage({
@@ -18,9 +19,7 @@ export default async function ProjectEstimatesPage({
 
   if (error) {
     return (
-      <div className="text-center text-destructive p-6">
-        Error loading estimates. Please try again later.
-      </div>
+      <ErrorState error="Error loading estimates. Please try again later." />
     );
   }
 

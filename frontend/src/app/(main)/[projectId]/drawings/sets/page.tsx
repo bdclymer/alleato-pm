@@ -3,14 +3,22 @@
 import * as React from "react";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, ArrowRight, FolderOpen, Pencil } from "lucide-react";
+import { format as fmtDate } from "date-fns";
+import { Plus, ArrowRight, FolderOpen, Pencil, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -21,6 +29,62 @@ import {
 } from "@/components/ui/table";
 import { useDrawingSets, useCreateDrawingSet, useUpdateDrawingSet } from "@/hooks/use-drawing-sets";
 import { EmptyState } from "@/components/ds";
+
+/** Parse a YYYY-MM-DD string to a local Date (no timezone shift). */
+function parseISODate(s: string): Date | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
+}
+
+/** Compact date input with calendar popover for inline table editing. */
+function InlineDateInput({
+  value,
+  onChange,
+  onClick,
+  onKeyDown,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onClick?: React.MouseEventHandler;
+  onKeyDown?: React.KeyboardEventHandler;
+}) {
+  const dateValue = parseISODate(value);
+  return (
+    <div className="flex gap-1" onClick={onClick}>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="YYYY-MM-DD"
+        onKeyDown={onKeyDown}
+      />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            aria-label="Open calendar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CalendarIcon className="h-3.5 w-3.5" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            mode="single"
+            selected={dateValue}
+            onSelect={(date) => {
+              onChange(date ? fmtDate(date, "yyyy-MM-dd") : "");
+            }}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
@@ -99,11 +163,10 @@ export default function DrawingSetsPage() {
     >
         {/* Search */}
         <div className="mb-4">
-          <Input
+          <ExpandableSearch
             placeholder="Search sets..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
+            onChange={setSearch}
           />
         </div>
 
@@ -135,10 +198,9 @@ export default function DrawingSetsPage() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      type="date"
+                    <InlineDateInput
                       value={newDate}
-                      onChange={(e) => setNewDate(e.target.value)}
+                      onChange={(v) => setNewDate(v)}
                     />
                   </TableCell>
                   <TableCell colSpan={2} />
@@ -218,10 +280,9 @@ export default function DrawingSetsPage() {
                     </TableCell>
                     <TableCell>
                       {editingId === set.id ? (
-                        <Input
-                          type="date"
+                        <InlineDateInput
                           value={editDate}
-                          onChange={(e) => setEditDate(e.target.value)}
+                          onChange={(v) => setEditDate(v)}
                           onClick={(e) => e.stopPropagation()}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") saveEdit(set.id);

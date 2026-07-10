@@ -69,11 +69,11 @@ const TYPE_LABELS: Record<MemoryType, string> = {
 };
 
 const TYPE_COLORS: Record<MemoryType, string> = {
-  preference: "bg-violet-50 text-violet-700 border-violet-200",
-  fact: "bg-blue-50 text-blue-700 border-blue-200",
-  lesson: "bg-amber-50 text-amber-700 border-amber-200",
-  commitment: "bg-red-50 text-red-700 border-red-200",
-  context: "bg-slate-50 text-slate-600 border-slate-200",
+  preference: "bg-primary/10 text-primary border-primary/20",
+  fact: "bg-primary/10 text-primary border-primary/20",
+  lesson: "bg-warning/10 text-warning border-warning/20",
+  commitment: "bg-destructive/10 text-destructive border-destructive/20",
+  context: "bg-muted text-muted-foreground border-border",
 };
 
 const TYPE_FILTERS: Array<{ value: string; label: string }> = [
@@ -255,7 +255,7 @@ function MemoryRow({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-amber-700"
+              className="h-7 w-7 text-muted-foreground hover:text-warning"
               onClick={() => onMarkWrong(memory)}
               title="Mark wrong"
             >

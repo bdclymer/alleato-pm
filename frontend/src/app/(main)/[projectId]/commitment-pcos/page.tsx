@@ -15,8 +15,7 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { PageShell } from "@/components/layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ds/text";
+import { ErrorState } from "@/components/ds";
 import {
   buildPcoTableColumns,
   pcoColumns,
@@ -123,12 +122,7 @@ export default function CommitmentPcosPage(): ReactElement {
       );
       if (statusParam) url.searchParams.set("status", statusParam);
 
-      const res = await fetch(url.toString());
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to load PCOs");
-      }
-      const data = await res.json();
+      const data = await apiFetch<unknown>(url.toString());
       setPcos(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load PCOs");
@@ -426,18 +420,10 @@ export default function CommitmentPcosPage(): ReactElement {
         title="Commitment PCOs"
         description="Provide a valid project identifier to access commitment PCOs."
       >
-        <Card>
-          <CardHeader>
-            <CardTitle>Invalid Project</CardTitle>
-            <CardDescription>
-              Commitment PCOs require a numeric project identifier. Navigate through the
-              project workspace to continue.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Text tone="muted">Missing or malformed project parameter.</Text>
-          </CardContent>
-        </Card>
+        <ErrorState
+          title="Invalid Project"
+          error="Commitment PCOs require a numeric project identifier. Navigate through the project workspace to continue."
+        />
       </PageShell>
     );
   }

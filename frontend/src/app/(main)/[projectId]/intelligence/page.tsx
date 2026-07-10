@@ -1774,21 +1774,12 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       <PageShell
         variant="dashboard"
         title={`${project.name ?? `Project ${project.id}`} Intelligence`}
-        titleContent={
-          <div className="space-y-2">
-            <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
-              {project.name ?? `Project ${project.id}`} Intelligence
-            </h1>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-              <p className="text-sm text-muted-foreground">Internal initiative</p>
-              <p className="text-sm text-muted-foreground">
-                {operatingRecord.currentState
-                  ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
-                  : "Last updated not available"}
-              </p>
-            </div>
-          </div>
-        }
+        description={[
+          "Internal initiative",
+          operatingRecord.currentState
+            ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
+            : "Last updated not available",
+        ].join(" · ")}
         contentClassName="space-y-10"
       >
         <InternalIntelligenceView
@@ -1881,21 +1872,12 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
           </Button>
         </div>
       }
-      titleContent={
-        <div className="space-y-2">
-          <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
-            {project.name ?? `Project ${project.id}`} Project Intelligence
-          </h1>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-            <p className="text-sm text-muted-foreground">{stageLabel(project)}</p>
-            <p className="text-sm text-muted-foreground">
-              {intelligenceLastUpdatedAt(packet, operatingRecord.currentState)
-                ? `Last updated ${formatDateTime(intelligenceLastUpdatedAt(packet, operatingRecord.currentState))}`
-                : "Last updated not available"}
-            </p>
-          </div>
-        </div>
-      }
+      description={[
+        stageLabel(project),
+        intelligenceLastUpdatedAt(packet, operatingRecord.currentState)
+          ? `Last updated ${formatDateTime(intelligenceLastUpdatedAt(packet, operatingRecord.currentState))}`
+          : "Last updated not available",
+      ].join(" · ")}
       contentClassName="space-y-8"
     >
       <ProjectHealthHero

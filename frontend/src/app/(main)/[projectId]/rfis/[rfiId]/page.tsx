@@ -56,21 +56,8 @@ export default async function RfiDetailPage({
     <PageShell
       variant="detail"
       title={rfi ? `RFI #${rfi.number}` : "RFI Detail"}
-      titleContent={
-        rfi ? (
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                {`RFI #${rfi.number}`}
-              </h1>
-              <StatusBadge status={formatStatusLabel(rfi.status ?? "open")} />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Created {formatDate(rfi.created_at)}
-            </p>
-          </div>
-        ) : undefined
-      }
+      description={rfi ? `Created ${formatDate(rfi.created_at)}` : undefined}
+      statusBadge={rfi ? <StatusBadge status={formatStatusLabel(rfi.status ?? "open")} /> : undefined}
       actions={rfi ? <RfiHeaderActions rfi={rfi} projectId={numericProjectId} /> : undefined}
     >
       <RfiDetail

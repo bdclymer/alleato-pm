@@ -194,7 +194,7 @@
     {
       "url": "/[projectId]/direct-costs/[costId]",
       "title": "Direct Cost Details",
-      "description": "Direct cost not found"
+      "description": "The direct cost you are looking for does not exist or has been removed."
     },
     {
       "url": "/[projectId]/direct-costs/new",
@@ -203,8 +203,8 @@
     },
     {
       "url": "/[projectId]/directory",
-      "title": "Project Team",
-      "description": "Manage project team members and companies with roles, contact info, and access control"
+      "title": "No roles defined yet",
+      "description": "Roles help organize your project team by responsibility."
     },
     {
       "url": "/[projectId]/documents",
@@ -429,7 +429,7 @@
     {
       "url": "/[projectId]/prime-contract-pcos/[pcoId]",
       "title": "Loading Prime Contract PCO",
-      "description": "This potential change order does not have any line items yet."
+      "description": "Upload files to attach them to this PCO."
     },
     {
       "url": "/[projectId]/prime-contract-pcos/[pcoId]/edit",

@@ -42,7 +42,7 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
-import { StatusBadge } from "@/components/misc/status-badge";
+import { StatusBadge } from "@/components/ds/status-badge";
 import {
   PageShell,
   ContentSectionStack,

@@ -56,11 +56,11 @@ interface OpenSubmittal {
 
 const SOV_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "Draft — Not submitted", color: "text-muted-foreground" },
-  submitted: { label: "Submitted — Awaiting review", color: "text-blue-600" },
-  under_review: { label: "Under Review — Awaiting review", color: "text-blue-600" },
-  approved: { label: "Approved", color: "text-green-600" },
-  rejected: { label: "Rejected — Revision required", color: "text-red-600" },
-  revise_resubmit: { label: "Revision requested", color: "text-amber-600" },
+  submitted: { label: "Submitted — Awaiting review", color: "text-primary" },
+  under_review: { label: "Under Review — Awaiting review", color: "text-primary" },
+  approved: { label: "Approved", color: "text-success" },
+  rejected: { label: "Rejected — Revision required", color: "text-destructive" },
+  revise_resubmit: { label: "Revision requested", color: "text-warning" },
 };
 
 function StatusPill({ status }: { status: string }) {
@@ -81,8 +81,7 @@ function SectionCard({
     <div className="rounded-xl bg-card p-6">
       <div className="mb-4 flex items-center gap-2.5">
         <Icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <span className="text-sm font-semibold text-foreground">{title}</span>
       </div>
       {children}
     </div>
