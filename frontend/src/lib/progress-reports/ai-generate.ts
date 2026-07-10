@@ -14,6 +14,10 @@ import {
   buildAgentLearningContextBlock,
   getSurfaceScopedLearnings,
 } from "@/lib/ai/services/agent-learning-service";
+import {
+  mapDeepReadRecordToSignals,
+  type IntelligenceSignal,
+} from "@/lib/progress-reports/deep-read-signals";
 
 /**
  * AI progress report enrichment.
@@ -46,19 +50,6 @@ type MeetingSourceRow = {
   summary_bullets: unknown;
   content: string | null;
   raw_text: string | null;
-};
-
-type IntelligenceSignal = {
-  title: string;
-  summary: string;
-  whyItMatters: string | null;
-  nextAction: string | null;
-  evidence: Array<{
-    sourceType: string;
-    sourceTitle: string | null;
-    excerpt: string | null;
-    summary: string | null;
-  }>;
 };
 
 type ProjectReportSuggestionInput = NonNullable<
@@ -194,10 +185,62 @@ async function loadFullDocumentText(documentIds: string[]): Promise<Map<string, 
   return out;
 }
 
+/**
+ * The daily deep read (`scripts/intelligence/daily-executive-brief.mjs`) is the
+ * freshest project synthesis in the system. It writes one `company_process`
+ * intelligence target (`daily-executive-brief`) whose `current` packet carries a
+ * per-project `projectRecords` array — regenerated every run with `whatChanged`,
+ * field/schedule/financial reads, active risks, decisions, and health. Progress
+ * reports must read THIS, not the older per-project `client_project` insight-card
+ * packets (`project_intelligence_synthesis_v1`), which are compiled on a slower,
+ * separate cadence and read as stale next to the deep read.
+ */
+const DAILY_DEEP_READ_TARGET_SLUG = "daily-executive-brief";
+
+/**
+ * Reads the current daily-deep-read packet and maps this project's record into
+ * signals. Returns `null` when the project has no record in the current packet,
+ * letting the caller fall back to the legacy source.
+ */
+async function loadDeepReadSignals(
+  db: ReturnType<typeof createServiceClient>,
+  projectId: number,
+): Promise<IntelligenceSignal[] | null> {
+  const { data: target, error: targetError } = await db
+    .from("intelligence_targets")
+    .select("id")
+    .eq("slug", DAILY_DEEP_READ_TARGET_SLUG)
+    .maybeSingle();
+  if (targetError || !target?.id) return null;
+
+  const { data: packet, error: packetError } = await (db as unknown as UntypedSupabaseReader)
+    .from("intelligence_packets")
+    .select("packet_json")
+    .eq("target_id", target.id)
+    .eq("packet_type", "current")
+    .order("generated_at", { ascending: false })
+    .limit(1);
+  if (packetError || !packet?.length) return null;
+
+  const packetJson = asRecord((packet[0] as Record<string, unknown>).packet_json);
+  const record = asArray(packetJson.projectRecords)
+    .map(asRecord)
+    .find((row) => Number(row.projectId) === projectId);
+  if (!record) return null;
+
+  return mapDeepReadRecordToSignals(record);
+}
+
 async function loadProjectIntelligenceSignals(
   db: ReturnType<typeof createServiceClient>,
   projectId: number,
 ): Promise<IntelligenceSignal[]> {
+  // Prefer the freshest synthesis: the daily deep read. Only fall back to the
+  // legacy per-project insight-card packets when this project has no deep-read
+  // record yet (e.g. it was not covered in the latest brief run).
+  const deepReadSignals = await loadDeepReadSignals(db, projectId).catch(() => null);
+  if (deepReadSignals && deepReadSignals.length > 0) return deepReadSignals;
+
   const { data: target, error: targetError } = await db
     .from("intelligence_targets")
     .select("id")
