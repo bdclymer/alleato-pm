@@ -41,7 +41,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFMoneyField } from "@/components/forms/fields/RHFMoneyField";
-import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { useDrawings } from "@/hooks/use-drawings";
+import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
 import {
@@ -269,16 +271,23 @@ export function PunchItemFormFields({
   projectId,
   withFormProvider = true,
 }: PunchItemFormFieldsProps) {
+  const projectIdStr = projectId ? String(projectId) : "";
   const [assigneeOpen, setAssigneeOpen] = useState(false);
   const [bicOpen, setBicOpen] = useState(false);
+  const [drawingOpen, setDrawingOpen] = useState(false);
 
   const {
     data: projectTeamAssignees = [],
     isLoading: isLoadingAssignees,
     error: assigneesError,
-  } = useProjectTeamAssignees(
-    projectId ? String(projectId) : "",
-  );
+  } = useProjectTeamAssignees(projectIdStr);
+
+  // Drawing Reference must point at a real drawing — never free text.
+  const { data: drawingsData } = useDrawings(projectIdStr);
+  const drawings = drawingsData?.drawings ?? [];
+
+  // Cost Code uses the same project budget-code dropdown as every other tool.
+  const { budgetCodes, loadingCodes } = useProjectBudgetCodes(projectIdStr);
 
   const fields = (
     <div className="space-y-4">
@@ -650,25 +659,129 @@ export function PunchItemFormFields({
         />
       </div>
 
-      <RHFTextField
+      <FormField
         control={form.control}
         name="drawing_reference"
-        label="Drawing Reference"
-        placeholder="Drawing number or sheet"
+        render={({ field }) => {
+          const selected = drawings.find((d) => d.drawingNumber === field.value);
+          const emptyText = !projectIdStr
+            ? "Select a project to link drawings."
+            : "No drawings found.";
+          return (
+            <FormItem>
+              <FormLabel>Drawing Reference</FormLabel>
+              <Popover open={drawingOpen} onOpenChange={setDrawingOpen}>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between font-normal",
+                        !field.value && "text-muted-foreground",
+                      )}
+                    >
+                      <span className="truncate">
+                        {selected
+                          ? `${selected.drawingNumber}${selected.title ? ` — ${selected.title}` : ""}`
+                          : field.value || "Link a drawing..."}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search drawings..." />
+                    <CommandList>
+                      <CommandEmpty>{emptyText}</CommandEmpty>
+                      <CommandGroup>
+                        <CommandItem
+                          value="__none__"
+                          onSelect={() => {
+                            field.onChange("");
+                            setDrawingOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              !field.value ? "opacity-100" : "opacity-0",
+                            )}
+                          />
+                          <span className="text-muted-foreground italic">No drawing</span>
+                        </CommandItem>
+                        {drawings.map((drawing) => {
+                          const searchValue = [drawing.drawingNumber, drawing.title]
+                            .filter(Boolean)
+                            .join(" ");
+                          return (
+                            <CommandItem
+                              key={drawing.id}
+                              value={searchValue}
+                              onSelect={() => {
+                                field.onChange(drawing.drawingNumber);
+                                setDrawingOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  field.value === drawing.drawingNumber
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              <div>
+                                <p className="text-sm">{drawing.drawingNumber}</p>
+                                {drawing.title && (
+                                  <p className="text-xs text-muted-foreground">{drawing.title}</p>
+                                )}
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <RHFTextField
+        <FormField
           control={form.control}
           name="cost_code"
-          label="Cost Code"
-          placeholder="Cost code"
+          render={({ field }) => {
+            const selectedId = budgetCodes.find((c) => c.code === field.value)?.id ?? "";
+            return (
+              <FormItem>
+                <FormLabel>Cost Code</FormLabel>
+                <FormControl>
+                  <BudgetCodeSelector
+                    value={selectedId}
+                    budgetCodes={budgetCodes}
+                    loading={loadingCodes}
+                    placeholder="Select cost code..."
+                    onValueChange={(_id, code) => field.onChange(code.code)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         <RHFMoneyField
           control={form.control}
           name="cost_impact"
           label="Cost Impact"
+          placeholder="0.00"
           allowNegative
         />
       </div>
