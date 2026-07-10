@@ -1,0 +1,280 @@
+{
+  "status": "pass",
+  "tag": "codex-financial-flow-1783415712282",
+  "created": {
+    "projectId": 1125,
+    "companyId": "348795a6-dc3c-4b89-9379-46ee5920a722",
+    "projectBudgetCodeId": "9ad60789-caf9-4e4d-b0e8-a2e67db3a816",
+    "inactiveProjectBudgetCodeId": "c77cb0a9-71af-40ce-9d26-724e32b8b77f",
+    "wrongProjectId": 1126,
+    "wrongProjectBudgetCodeId": "7d2c8965-a4d9-46ac-aa9a-c1a7e77b350d",
+    "budgetLineId": "53261999-cb18-4b41-9c8a-4db857cbc32d",
+    "primeContractId": "29afa34f-e222-472f-960b-17386e90e144",
+    "purchaseOrderId": "2fdc3dbf-c18b-45e4-a261-56e9e6c95320",
+    "purchaseOrderSovId": "29ea1a43-8e16-4838-97c3-6cc2263dafda",
+    "subcontractId": "c02902aa-dba8-472f-a808-d6d1b391e057",
+    "subcontractSovId": "2084a934-1b22-4ed6-a76a-8c92dc44868a",
+    "changeEventId": "878cfbe6-b43f-42f0-90a1-eff11e49fa08",
+    "changeEventLineItemId": "b08a24a3-48b9-44f8-af44-ce1782328810",
+    "primePcoId": "33eca886-a0fa-4a6f-b8aa-990c1b0eef90",
+    "primeChangeOrderId": 5211,
+    "commitmentPcoId": "b28d9343-5c1d-4d66-9c9c-cef185ed10f6",
+    "commitmentChangeOrderId": "adb6135b-d51e-45ef-adb8-37721db8d8cd",
+    "commitmentChangeOrderLineId": "6cd45b79-2610-4b71-a7cb-31f3ef27ece8",
+    "pcoLineItemIds": [
+      "5234d470-3101-48ec-a7f0-0aa413abb7fd",
+      "76ff8251-d918-4995-be11-9bc5217481f6"
+    ],
+    "pcoLinkIds": [
+      "46f907a0-2623-4fec-a9e1-1a3e795ebcf8",
+      "5146859b-219f-42f9-8e53-f784aeaaa4e3"
+    ]
+  },
+  "checks": [
+    {
+      "name": "create project",
+      "status": "pass",
+      "details": {
+        "projectId": 1125
+      }
+    },
+    {
+      "name": "create contract company",
+      "status": "pass",
+      "details": {
+        "companyId": "348795a6-dc3c-4b89-9379-46ee5920a722"
+      }
+    },
+    {
+      "name": "create canonical project budget code",
+      "status": "pass",
+      "details": {
+        "projectBudgetCodeId": "9ad60789-caf9-4e4d-b0e8-a2e67db3a816",
+        "costCodeId": "21-1313",
+        "costTypeCode": "S"
+      }
+    },
+    {
+      "name": "create inactive project budget code for guardrail test",
+      "status": "pass",
+      "details": {
+        "inactiveProjectBudgetCodeId": "c77cb0a9-71af-40ce-9d26-724e32b8b77f"
+      }
+    },
+    {
+      "name": "create wrong-project budget code for guardrail test",
+      "status": "pass",
+      "details": {
+        "wrongProjectId": 1126,
+        "wrongProjectBudgetCodeId": "7d2c8965-a4d9-46ac-aa9a-c1a7e77b350d"
+      }
+    },
+    {
+      "name": "create budget line for change management",
+      "status": "pass",
+      "details": {
+        "budgetLineId": "53261999-cb18-4b41-9c8a-4db857cbc32d"
+      }
+    },
+    {
+      "name": "create prime contract",
+      "status": "pass",
+      "details": {
+        "primeContractId": "29afa34f-e222-472f-960b-17386e90e144"
+      }
+    },
+    {
+      "name": "create purchase order",
+      "status": "pass",
+      "details": {
+        "purchaseOrderId": "2fdc3dbf-c18b-45e4-a261-56e9e6c95320"
+      }
+    },
+    {
+      "name": "purchase order SOV rejects nonzero text-only budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "purchase_order_sov_items requires project_budget_code_id for non-empty or nonzero SOV rows"
+      }
+    },
+    {
+      "name": "purchase order SOV rejects inactive project budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "project_budget_code_id c77cb0a9-71af-40ce-9d26-724e32b8b77f does not exist or is inactive"
+      }
+    },
+    {
+      "name": "purchase order SOV rejects wrong-project budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "project_budget_code project_id 1126 does not match purchase_order_sov_items parent project_id 1125"
+      }
+    },
+    {
+      "name": "create FK-backed purchase order SOV",
+      "status": "pass",
+      "details": {
+        "poSovId": "29ea1a43-8e16-4838-97c3-6cc2263dafda"
+      }
+    },
+    {
+      "name": "create subcontract",
+      "status": "pass",
+      "details": {
+        "subcontractId": "c02902aa-dba8-472f-a808-d6d1b391e057"
+      }
+    },
+    {
+      "name": "subcontract SOV rejects nonzero text-only budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "subcontract_sov_items requires project_budget_code_id for non-empty or nonzero SOV rows"
+      }
+    },
+    {
+      "name": "subcontract SOV rejects inactive project budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "project_budget_code_id c77cb0a9-71af-40ce-9d26-724e32b8b77f does not exist or is inactive"
+      }
+    },
+    {
+      "name": "subcontract SOV rejects wrong-project budget code",
+      "status": "pass",
+      "details": {
+        "rejectedWith": "project_budget_code project_id 1126 does not match subcontract_sov_items parent project_id 1125"
+      }
+    },
+    {
+      "name": "create FK-backed subcontract SOV",
+      "status": "pass",
+      "details": {
+        "subcontractSovId": "2084a934-1b22-4ed6-a76a-8c92dc44868a"
+      }
+    },
+    {
+      "name": "create change event",
+      "status": "pass",
+      "details": {
+        "changeEventId": "878cfbe6-b43f-42f0-90a1-eff11e49fa08"
+      }
+    },
+    {
+      "name": "create change event line with budget FK",
+      "status": "pass",
+      "details": {
+        "changeEventLineItemId": "b08a24a3-48b9-44f8-af44-ce1782328810"
+      }
+    },
+    {
+      "name": "create prime potential change order",
+      "status": "pass",
+      "details": {
+        "primePcoId": "33eca886-a0fa-4a6f-b8aa-990c1b0eef90"
+      }
+    },
+    {
+      "name": "create prime change order and link PCO promotion",
+      "status": "pass",
+      "details": {
+        "primeChangeOrderId": 5211
+      }
+    },
+    {
+      "name": "create commitment potential change order",
+      "status": "pass",
+      "details": {
+        "commitmentPcoId": "b28d9343-5c1d-4d66-9c9c-cef185ed10f6"
+      }
+    },
+    {
+      "name": "create commitment change order and line",
+      "status": "pass",
+      "details": {
+        "commitmentChangeOrderId": "adb6135b-d51e-45ef-adb8-37721db8d8cd"
+      }
+    },
+    {
+      "name": "purchase order SOV readback uses FK",
+      "status": "pass",
+      "details": {
+        "poReadback": {
+          "id": "29ea1a43-8e16-4838-97c3-6cc2263dafda",
+          "project_budget_code_id": "9ad60789-caf9-4e4d-b0e8-a2e67db3a816",
+          "budget_code": "21-1313",
+          "project_budget_codes": {
+            "cost_code_id": "21-1313",
+            "cost_code_types": {
+              "code": "S"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "subcontract SOV readback uses FK",
+      "status": "pass",
+      "details": {
+        "subcontractReadback": {
+          "id": "2084a934-1b22-4ed6-a76a-8c92dc44868a",
+          "project_budget_code_id": "9ad60789-caf9-4e4d-b0e8-a2e67db3a816",
+          "budget_code": "21-1313",
+          "project_budget_codes": {
+            "cost_code_id": "21-1313",
+            "cost_code_types": {
+              "code": "S"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "cleanup verifier records",
+      "status": "pass",
+      "details": {
+        "cleanupReadback": {
+          "projects": 0,
+          "companies": 0,
+          "projectBudgetCodes": 0,
+          "budgetLines": 0,
+          "primeContracts": 0,
+          "purchaseOrders": 0,
+          "purchaseOrderSovItems": 0,
+          "subcontracts": 0,
+          "subcontractSovItems": 0,
+          "changeEvents": 0,
+          "changeEventLineItems": 0,
+          "pcoLinks": 0,
+          "pcoLineItems": 0,
+          "primePcos": 0,
+          "primeChangeOrders": 0,
+          "commitmentPcos": 0,
+          "commitmentChangeOrders": 0,
+          "commitmentChangeOrderLines": 0
+        }
+      }
+    }
+  ],
+  "cleanupReadback": {
+    "projects": 0,
+    "companies": 0,
+    "projectBudgetCodes": 0,
+    "budgetLines": 0,
+    "primeContracts": 0,
+    "purchaseOrders": 0,
+    "purchaseOrderSovItems": 0,
+    "subcontracts": 0,
+    "subcontractSovItems": 0,
+    "changeEvents": 0,
+    "changeEventLineItems": 0,
+    "pcoLinks": 0,
+    "pcoLineItems": 0,
+    "primePcos": 0,
+    "primeChangeOrders": 0,
+    "commitmentPcos": 0,
+    "commitmentChangeOrders": 0,
+    "commitmentChangeOrderLines": 0
+  },
+  "completedAt": "2026-07-07T09:15:19.858Z"
+}

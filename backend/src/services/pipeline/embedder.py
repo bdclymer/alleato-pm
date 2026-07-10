@@ -38,6 +38,12 @@ SEGMENT_IDX_NOTES_TOPIC = -3
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 LOW_CONTENT_STATUS = "skipped_low_content"
 MIN_SEARCHABLE_CHARS = 50
+GRAPH_EMBEDDER_OWNED_TYPES = {
+    "outlook_conversation",
+    "teams_dm_conversation",
+    "teams_message",
+    "teams_dm",
+}
 
 
 def _hash_content(text: str) -> str:
@@ -271,6 +277,28 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     metadata = resp.data
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
+    source_metadata = metadata.get("source_metadata") if isinstance(metadata, dict) else {}
+    if not isinstance(source_metadata, dict):
+        source_metadata = {}
+    graph_owned_kind = source_metadata.get("document_kind")
+    graph_owned_type = metadata.get("type") or metadata.get("document_type")
+    if metadata.get("source") == "microsoft_graph" and (
+        graph_owned_kind in GRAPH_EMBEDDER_OWNED_TYPES
+        or graph_owned_type in GRAPH_EMBEDDER_OWNED_TYPES
+    ):
+        update_ingestion_job_state(
+            metadata_id,
+            stage="done",
+            error_message=None,
+            client=client,
+        )
+        return {
+            "metadataId": metadata_id,
+            "chunkCount": 0,
+            "segmentCount": 0,
+            "skipped": True,
+            "skipReason": "owned_by_graph_embedder",
+        }
 
     rag_metadata = fetch_optional_row(
         get_rag_read_client(),
@@ -280,6 +308,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         metadata_id,
     )
     content = rag_metadata.get("content") or rag_metadata.get("raw_text")
+    rag_content = rag_metadata.get("content")
+    rag_raw_text = rag_metadata.get("raw_text")
+    rag_summary = rag_metadata.get("summary")
+    rag_overview = rag_metadata.get("overview")
     meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")
@@ -605,10 +637,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         "storage_path": metadata.get("file_path"),
         "source_web_url": metadata.get("source_web_url"),
         "url": metadata.get("url"),
-        "content": metadata.get("content"),
-        "raw_text": metadata.get("raw_text"),
-        "summary": metadata.get("summary"),
-        "overview": metadata.get("overview"),
+        "content": rag_content if rag_content is not None else metadata.get("content"),
+        "raw_text": rag_raw_text if rag_raw_text is not None else metadata.get("raw_text"),
+        "summary": rag_summary if rag_summary is not None else metadata.get("summary"),
+        "overview": rag_overview if rag_overview is not None else metadata.get("overview"),
         "parsing_status": metadata.get("status"),
         "embedding_status": "embedded",
         "source_metadata": metadata.get("source_metadata"),

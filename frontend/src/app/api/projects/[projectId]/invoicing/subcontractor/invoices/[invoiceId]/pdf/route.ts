@@ -3,12 +3,18 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { listLinkedPatternCDocuments } from "@/lib/documents/pattern-c-attachments";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
+  buildSubcontractorInvoicePdfFilename,
   renderSubcontractorInvoicePdfBuffer,
+  type SubcontractorInvoicePdfChangeOrder,
+  type SubcontractorInvoicePdfContractLine,
   type SubcontractorInvoicePdfData,
   type SubcontractorInvoicePdfLineItem,
   type SubcontractorInvoicePdfRollup,
 } from "@/lib/subcontractor-invoice-pdf";
+import { resolveGeneralContractorCompany } from "@/lib/invoicing/subcontractor-invoice-company";
 
 // Node runtime is required for React PDF rendering.
 export const runtime = "nodejs";
@@ -78,10 +84,16 @@ async function buildRollup(
 
   let originalContractSum = 0;
   if (contractId) {
+    const sovTable = invoice.subcontract_id
+      ? "subcontract_sov_items"
+      : "purchase_order_sov_items";
+    const sovForeignKey = invoice.subcontract_id
+      ? "subcontract_id"
+      : "purchase_order_id";
     const { data: sovRows } = await supabase
-      .from("subcontract_sov_items")
+      .from(sovTable)
       .select("amount")
-      .eq("subcontract_id", contractId);
+      .eq(sovForeignKey, contractId);
 
     originalContractSum = (sovRows ?? []).reduce(
       (sum, row) => sum + (Number(row.amount) || 0),
@@ -153,6 +165,21 @@ async function buildRollup(
     }
   }
 
+  let coAdditions = 0;
+  let coDeductions = 0;
+  if (contractId) {
+    const { data: coRows } = await supabase
+      .from("contract_change_orders")
+      .select("amount, status")
+      .eq("contract_id", contractId)
+      .in("status", ["approved"]);
+    for (const co of coRows ?? []) {
+      const amt = Number(co.amount) || 0;
+      if (amt >= 0) coAdditions += amt;
+      else coDeductions += amt;
+    }
+  }
+
   const contractSumToDate = originalContractSum + netChangeByChangeOrders;
   if (invoice.is_retainage_release) {
     lessPreviousCertificates = Math.max(totalEarnedLessRetainage - invoiceNetAmount, 0);
@@ -174,7 +201,72 @@ async function buildRollup(
     less_previous_certificates: lessPreviousCertificates,
     current_payment_due: currentPaymentDue,
     balance_to_finish_including_retainage: balanceToFinish,
+    change_order_additions: coAdditions,
+    change_order_deductions: coDeductions,
   };
+}
+
+async function loadContractLines(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  invoice: InvoiceWithJoins,
+): Promise<SubcontractorInvoicePdfContractLine[]> {
+  const contractId = invoice.subcontract_id ?? invoice.purchase_order_id ?? null;
+  if (!contractId) return [];
+
+  if (invoice.subcontract_id) {
+    const { data } = await supabase
+      .from("subcontract_sov_items")
+      .select("id, line_number, sort_order, budget_code, description, amount")
+      .eq("subcontract_id", contractId)
+      .order("line_number", { ascending: true });
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      line_number: row.line_number ?? null,
+      sort_order: row.sort_order ?? null,
+      budget_code: row.budget_code ?? null,
+      description: row.description ?? null,
+      amount: row.amount ?? null,
+    }));
+  }
+
+  const { data } = await supabase
+    .from("purchase_order_sov_items")
+    .select("id, line_number, sort_order, budget_code, description, amount")
+    .eq("purchase_order_id", contractId)
+    .order("line_number", { ascending: true });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    line_number: row.line_number ?? null,
+    sort_order: row.sort_order ?? null,
+    budget_code: row.budget_code ?? null,
+    description: row.description ?? null,
+    amount: row.amount ?? null,
+  }));
+}
+
+async function loadApprovedChangeOrders(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  invoice: InvoiceWithJoins,
+): Promise<SubcontractorInvoicePdfChangeOrder[]> {
+  const contractId = invoice.subcontract_id ?? invoice.purchase_order_id ?? null;
+  if (!contractId) return [];
+
+  const { data } = await supabase
+    .from("contract_change_orders")
+    .select("id, change_order_number, title, description, amount")
+    .eq("contract_id", contractId)
+    .eq("status", "approved")
+    .order("requested_date", { ascending: true });
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    change_order_number: row.change_order_number ?? null,
+    title: row.title ?? null,
+    description: row.description ?? null,
+    amount: row.amount ?? null,
+  }));
 }
 
 // Loads and assembles all data required to render a subcontractor invoice PDF.
@@ -264,6 +356,7 @@ export async function fetchSubcontractorInvoicePdfData(
       .maybeSingle();
     gcCompany = gc ?? null;
   }
+  const resolvedGcCompany = resolveGeneralContractorCompany(gcCompany);
 
   let subcontractorCompany: {
     name: string | null;
@@ -297,6 +390,17 @@ export async function fetchSubcontractorInvoicePdfData(
 
   const lineItems = normalizeLineItems(invoiceRow.subcontractor_invoice_line_items);
   const rollup = await buildRollup(supabase, invoiceRow, invoiceIdNum);
+  const contractLines = await loadContractLines(supabase, invoiceRow);
+  const approvedChangeOrders = await loadApprovedChangeOrders(supabase, invoiceRow);
+
+  const serviceClient = createServiceClient();
+  const linkedAttachments = await listLinkedPatternCDocuments({
+    supabase,
+    serviceClient,
+    entityType: "subcontractor_invoice",
+    entityId: String(invoiceRow.id),
+  });
+  const attachments = linkedAttachments.map((a) => a.title || a.file_name || "Untitled");
 
   return {
     data: {
@@ -307,6 +411,7 @@ export async function fetchSubcontractorInvoicePdfData(
       period_start: invoiceRow.period_start,
       period_end: invoiceRow.period_end,
       billing_date: invoiceRow.billing_date,
+      created_at: invoiceRow.created_at,
       notes: invoiceRow.notes,
       project_name: project?.name ?? null,
       project_number: project?.project_number ?? null,
@@ -314,18 +419,21 @@ export async function fetchSubcontractorInvoicePdfData(
       contract_number: contractJoin?.contract_number ?? null,
       contract_title: contractJoin?.title ?? null,
       contract_date: contractJoin?.contract_date ?? null,
-      gc_company_name: gcCompany?.name ?? null,
-      gc_company_address: gcCompany?.address ?? null,
-      gc_company_city: gcCompany?.city ?? null,
-      gc_company_state: gcCompany?.state ?? null,
-      gc_company_zip: gcCompany?.zip_code ?? null,
+      gc_company_name: resolvedGcCompany.name,
+      gc_company_address: resolvedGcCompany.address,
+      gc_company_city: resolvedGcCompany.city,
+      gc_company_state: resolvedGcCompany.state,
+      gc_company_zip: resolvedGcCompany.zip_code,
       contract_company_name: subcontractorCompany?.name ?? null,
       contract_company_address: subcontractorCompany?.address ?? null,
       contract_company_city: subcontractorCompany?.city ?? null,
       contract_company_state: subcontractorCompany?.state ?? null,
       contract_company_zip: subcontractorCompany?.zip_code ?? null,
       line_items: lineItems,
+      contract_lines: contractLines,
+      approved_change_orders: approvedChangeOrders,
       rollup,
+      attachments,
     },
     error: null,
   };
@@ -391,8 +499,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const pdfBuffer = await renderSubcontractorInvoicePdfBuffer(result.data);
-    const invoiceNumber = result.data.invoice_number || result.data.application_number;
-    const filename = `subcontract-invoice-${invoiceNumber}.pdf`;
+    const filename = buildSubcontractorInvoicePdfFilename(result.data);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

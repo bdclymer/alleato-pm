@@ -9,6 +9,10 @@ const updateSchema = z.object({
   label: z.string().trim().min(1).max(120).optional().nullable(),
   description: z.string().trim().max(2000).optional().nullable(),
   action: z.enum(["skip", "review", "allow", "not_project"]).optional(),
+  senderPattern: z.string().trim().min(1).max(320).optional().nullable(),
+  senderDomain: z.string().trim().min(1).max(255).optional().nullable(),
+  subjectPattern: z.string().trim().min(1).max(500).optional().nullable(),
+  bodyPattern: z.string().trim().min(1).max(2000).optional().nullable(),
 });
 
 async function assertAdmin(where: string) {
@@ -63,9 +67,82 @@ export const PATCH = withApiGuardrails<Promise<{ ruleId: string }>>(
       });
     }
 
+    const { data: existingRule, error: existingRuleError } = await supabase
+      .from("email_filter_rules")
+      .select(
+        "sender_pattern, sender_domain, subject_pattern, body_pattern",
+      )
+      .eq("id", ruleId)
+      .single();
+
+    if (existingRuleError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "email-filter-rules#PATCH",
+        message: existingRuleError.message,
+      });
+    }
+
+    const updateRow = {
+      enabled: parsed.data.enabled,
+      label: parsed.data.label,
+      description: parsed.data.description,
+      action: parsed.data.action,
+      sender_pattern:
+        parsed.data.senderPattern !== undefined
+          ? parsed.data.senderPattern?.toLowerCase() ?? null
+          : undefined,
+      sender_domain:
+        parsed.data.senderDomain !== undefined
+          ? parsed.data.senderDomain?.toLowerCase() ?? null
+          : undefined,
+      subject_pattern:
+        parsed.data.subjectPattern !== undefined
+          ? parsed.data.subjectPattern ?? null
+          : undefined,
+      body_pattern:
+        parsed.data.bodyPattern !== undefined
+          ? parsed.data.bodyPattern ?? null
+          : undefined,
+    };
+
+    const mergedCriteria = {
+      senderPattern:
+        parsed.data.senderPattern !== undefined
+          ? updateRow.sender_pattern
+          : existingRule.sender_pattern,
+      senderDomain:
+        parsed.data.senderDomain !== undefined
+          ? updateRow.sender_domain
+          : existingRule.sender_domain,
+      subjectPattern:
+        parsed.data.subjectPattern !== undefined
+          ? updateRow.subject_pattern
+          : existingRule.subject_pattern,
+      bodyPattern:
+        parsed.data.bodyPattern !== undefined
+          ? updateRow.body_pattern
+          : existingRule.body_pattern,
+    };
+
+    if (
+      !mergedCriteria.senderPattern &&
+      !mergedCriteria.senderDomain &&
+      !mergedCriteria.subjectPattern &&
+      !mergedCriteria.bodyPattern
+    ) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "email-filter-rules#PATCH",
+        message:
+          "At least one of senderPattern, senderDomain, subjectPattern, or bodyPattern must be set.",
+        status: 400,
+      });
+    }
+
     const { data, error } = await supabase
       .from("email_filter_rules")
-      .update(parsed.data)
+      .update(updateRow)
       .eq("id", ruleId)
       .select()
       .single();

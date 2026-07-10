@@ -73,6 +73,8 @@ export function TaskFeedbackButtons({
   const [badReasonCategory, setBadReasonCategory] =
     useState<TaskFeedbackReasonCategory | null>(null);
   const [badReason, setBadReason] = useState("");
+  const [goodReasonOpen, setGoodReasonOpen] = useState(false);
+  const [goodReason, setGoodReason] = useState("");
 
   const handleFeedbackFailure = (
     error: unknown,
@@ -101,14 +103,15 @@ export function TaskFeedbackButtons({
     );
   }
 
-  const handleGood = async () => {
-    if (signal) return;
+  const handleGoodConfirm = async () => {
+    setGoodReasonOpen(false);
     try {
-      await submitFeedback("good");
+      await submitFeedback("good", goodReason.trim() || undefined);
       toast.success("Thanks — marked as a good example.");
     } catch (err) {
       handleFeedbackFailure(err, "good");
     }
+    setGoodReason("");
   };
 
   const handleBadConfirm = async () => {
@@ -146,20 +149,50 @@ export function TaskFeedbackButtons({
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(buttonSizeClass, "hover:text-foreground")}
-        disabled={isSubmitting}
-        onClick={handleGood}
-        aria-label="Mark as good example"
-      >
-        {isSubmitting ? (
-          <Loader2 className={cn(iconSizeClass, "animate-spin")} />
-        ) : (
-          <ThumbsUp className={iconSizeClass} />
-        )}
-      </Button>
+      <Popover open={goodReasonOpen} onOpenChange={setGoodReasonOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(buttonSizeClass, "hover:text-foreground")}
+            disabled={isSubmitting}
+            aria-label="Mark as good example"
+          >
+            {isSubmitting ? (
+              <Loader2 className={cn(iconSizeClass, "animate-spin")} />
+            ) : (
+              <ThumbsUp className={iconSizeClass} />
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" collisionPadding={16} className="w-72 p-3">
+          <p className="mb-2 text-sm font-medium">
+            What made this a good task? (optional)
+          </p>
+          <Textarea
+            value={goodReason}
+            onChange={(e) => setGoodReason(e.target.value)}
+            placeholder="Add context for the next version... (optional)"
+            className="mb-2 min-h-16 resize-none"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setGoodReasonOpen(false);
+                setGoodReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleGoodConfirm} disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Submit
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
 
       <Popover open={badReasonOpen} onOpenChange={setBadReasonOpen}>
         <PopoverTrigger asChild>

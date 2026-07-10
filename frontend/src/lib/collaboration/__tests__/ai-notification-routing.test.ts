@@ -56,7 +56,7 @@ describe("AI notification routing", () => {
     expect(shouldInterruptAiWidget(notification)).toBe(false);
   });
 
-  it("honors explicit interrupt and quiet tier metadata", () => {
+  it("honors explicit interrupt tier metadata", () => {
     expect(
       getAiNotificationDeliveryPlan({
         id: "3",
@@ -65,15 +65,28 @@ describe("AI notification routing", () => {
         metadata: { tier: "interrupt" },
       })?.tier,
     ).toBe("interrupt");
+  });
 
+  it("does not route legacy change request review drafts to the widget", () => {
     expect(
       getAiNotificationDeliveryPlan({
         id: "4",
         kind: "change_request_review_needed",
         readAt: null,
         metadata: { tier: "quiet", channelsSelected: ["quiet_inbox"] },
-      })?.tier,
-    ).toBe("quiet");
+      }),
+    ).toBeNull();
+    expect(
+      shouldInterruptAiWidget({
+        id: "4",
+        kind: "change_request_review_needed",
+        readAt: null,
+        metadata: {
+          tier: "interrupt",
+          channelsSelected: ["assistant_widget"],
+        },
+      }),
+    ).toBe(false);
   });
 
   it("ignores non-AI notification kinds", () => {

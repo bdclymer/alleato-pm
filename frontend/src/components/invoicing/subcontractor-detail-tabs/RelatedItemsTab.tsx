@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { EmptyState, SectionHeader } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
+import { SectionAction, SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -184,14 +185,13 @@ export function RelatedItemsTab({
 
   return (
     <div className="space-y-4">
-      <SectionHeader
-        title="Related Items"
-        count={items.length}
-        action={
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            <Link2 className="mr-1.5 h-4 w-4" />
+      <SectionRuleHeading
+        label="Related Items"
+        actions={
+          <SectionAction onClick={() => setOpen(true)}>
+            <Link2 className="h-4 w-4" />
             Link Item
-          </Button>
+          </SectionAction>
         }
       />
 

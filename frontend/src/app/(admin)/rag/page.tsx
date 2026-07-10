@@ -70,6 +70,13 @@ const SOURCE_SHORT: Record<string, string> = {
   sharepoint: "SharePoint",
 };
 
+const TASK_OUTCOME_LABELS: Record<string, string> = {
+  tasks_created: "Tasks created",
+  no_actionable_tasks: "No actionable tasks",
+  task_signal_staged: "Signal staged",
+  not_extracted: "Not extracted",
+};
+
 type SourceKey = (typeof SOURCES)[number]["key"];
 
 type Lifecycle = NonNullable<SourceSyncStatus["ragLifecycle"]>;
@@ -579,6 +586,9 @@ function LifecycleDocuments({
             )}
             <span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">
               {doc.projectName ?? "Unassigned"}
+            </span>
+            <span className="hidden shrink-0 text-xs text-muted-foreground md:inline">
+              {TASK_OUTCOME_LABELS[doc.taskOutcome] ?? doc.taskOutcome}
             </span>
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {formatDate(doc.date)}

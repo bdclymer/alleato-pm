@@ -5,6 +5,7 @@ import {
   BaseSidebar,
   SidebarBody,
   SidebarFooter,
+  SidebarStats,
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ export function BudgetModificationsModal({
   onClose,
   budgetLineId,
   projectId,
+  costCode,
   onModificationChanged,
 }: BudgetModificationsModalProps) {
   const [activeTab, setActiveTab] = useState<"summary" | "details">("summary");
@@ -180,7 +182,7 @@ export function BudgetModificationsModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -253,7 +255,7 @@ export function BudgetModificationsModal({
 
   // Build a human-readable budget code label for transfer table cells.
   const formatBudgetLineLabel = (line: BudgetModificationLine | null): string => {
-    if (!line) return "-";
+    if (!line) return "";
     const codeWithType = line.costTypeCode
       ? `${line.costCodeId}.${line.costTypeCode}`
       : line.costCodeId;
@@ -292,7 +294,7 @@ export function BudgetModificationsModal({
       date: formatDate(mod.effectiveDate || mod.createdAt),
       from: formatBudgetLineLabel(sourceLine),
       to: formatBudgetLineLabel(destinationLine),
-      notes: (mod.reason || mod.title || "-").trim(),
+      notes: (mod.reason || mod.title || "").trim(),
       amount,
     };
   });
@@ -318,28 +320,18 @@ export function BudgetModificationsModal({
 
       <SidebarBody className="bg-background">
         {activeTab === "summary" ? (
-          <div className="p-4 sm:p-6 space-y-4">
-            {/* Totals Summary */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg border border-border p-4 bg-muted/30">
-                <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {formatCurrency(approvedTotal)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Affects budget totals
-                </p>
-              </div>
-              <div className="rounded-lg border border-border p-4 bg-muted/30">
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-foreground mt-1">
-                  {formatCurrency(pendingTotal)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Awaiting approval
-                </p>
-              </div>
-            </div>
+          <div className="p-4 sm:p-6 space-y-3">
+            <SidebarStats
+              summary={
+                <>
+                  {costCode ? `${costCode} · ` : ""}
+                  {modifications.length} modification
+                  {modifications.length === 1 ? "" : "s"} ·{" "}
+                  {formatCurrency(pendingTotal)} pending
+                </>
+              }
+              value={formatCurrency(approvedTotal)}
+            />
 
             {/* Status Filter */}
             <div className="flex gap-2 flex-wrap">
@@ -427,11 +419,7 @@ export function BudgetModificationsModal({
             </div>
           </div>
         ) : (
-          <div className="p-4 sm:p-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Detailed line-item breakdown of budget modifications.
-            </p>
-
+          <div className="p-4 sm:p-6 space-y-3">
             {loading ? (
               <div className="text-center py-10 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -490,7 +478,7 @@ export function BudgetModificationsModal({
                                 {line.costCodeId}
                               </InlineTableCell>
                               <InlineTableCell>
-                                {line.description || line.costCodeTitle || "-"}
+                                {line.description || line.costCodeTitle || ""}
                               </InlineTableCell>
                               <InlineTableCell
                                 align="right"

@@ -3,6 +3,7 @@
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import type { BoardStatus } from "@/lib/admin-feedback/constants";
+import type { BoardCaptureTopicKey } from "./topics";
 
 export interface BoardComment {
   id: string;
@@ -36,10 +37,16 @@ export interface BoardItemMeta {
   upvotes?: number;
   upvoted_by?: string[]; // user IDs — persists across sessions
   labels?: BoardLabel[];
+  topics?: BoardCaptureTopicKey[];
+  tool?: string | null;
+  category?: string | null;
+  type?: string | null;
   due_date?: string | null;
   subtasks?: ChecklistItem[];
   prerequisites?: ChecklistItem[];
   docs_url?: string | null;
+  linear_issue_id?: string | null;
+  linear_issue_url?: string | null;
 }
 
 // ── Comments ─────────────────────────────────────────────────────────────────
@@ -89,6 +96,34 @@ export function useUpdateBoardItem(itemId: string) {
   });
 }
 
+export function usePatchBoardItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      itemId,
+      updates,
+    }: {
+      itemId: string;
+      updates: {
+        board_status?: BoardStatus;
+        title?: string;
+        comment?: string;
+        severity?: "low" | "medium" | "high";
+        position?: number;
+        assignee_id?: string | null;
+        screenshot_url?: string | null;
+        metadata?: Partial<BoardItemMeta>;
+      };
+    }) =>
+      apiFetch(`/api/admin/feedback/board/${itemId}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["product-board"] }),
+  });
+}
+
 // ── Create ────────────────────────────────────────────────────────────────────
 
 export function useCreateBoardItem() {
@@ -99,6 +134,10 @@ export function useCreateBoardItem() {
       board_status: BoardStatus;
       severity?: string;
       assignee_id?: string | null;
+      topics?: BoardCaptureTopicKey[];
+      tool?: string | null;
+      category?: string | null;
+      type?: string | null;
     }) =>
       apiFetch("/api/admin/feedback/board/create", {
         method: "POST",

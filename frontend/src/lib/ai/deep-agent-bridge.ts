@@ -27,7 +27,7 @@ const DEEP_AGENT_EXECUTIVE_CONTEXT_INTENTS = new Set<AssistantIntent>([
 const toolTraceSchema = z.object({
   agent: z.string(),
   tool: z.string(),
-  status: z.enum(["success", "failed", "skipped"]),
+  status: z.enum(["success", "failed", "skipped", "degraded"]),
   durationMs: z.number(),
   detail: z.string().nullable().optional(),
 });
@@ -54,7 +54,9 @@ const appExpertSourceSchema = z.object({
 
 export const deepResearchResponseSchema = z.object({
   answer: z.string(),
-  mode: z.enum(["deep_agents", "unavailable"]),
+  // "deep_agents_degraded": answer produced while the app DB was unreachable —
+  // it carries a loud degraded-mode banner and must still reach the user.
+  mode: z.enum(["deep_agents", "deep_agents_degraded", "unavailable"]),
   sources: z.array(researchSourceSchema),
   toolTrace: z.array(toolTraceSchema),
   skillsLoaded: z.array(z.string()),
@@ -102,14 +104,7 @@ export type DeepAgentAppExpertRequest = {
 };
 
 export function isDeepAgentBridgeEnabled(): boolean {
-  if (process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "false") {
-    return false;
-  }
-  return Boolean(
-    process.env.AI_ASSISTANT_DEEP_AGENT_BRIDGE_ENABLED === "true" ||
-      process.env.BACKEND_URL ||
-      process.env.PYTHON_BACKEND_URL,
-  );
+  return Boolean(process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL);
 }
 
 function getDeepAgentBridgeTimeoutMs(): number {
@@ -232,7 +227,9 @@ export async function fetchDeepAgentExecutiveBriefing(
     question: [
       "Business-wide executive briefing request.",
       "Use Alleato internal read-only tools first: tasks, emails, Teams, meetings, documents, projects, financials, schedule, and current source health where relevant.",
-      "Return an operator-ready answer with source labels and call out missing or failed source categories.",
+      "Write a direct, conversational operator answer. Lead with the bottom-line status, then the few items that actually need attention. Use short prose and tight bullets.",
+      "Do NOT emit rigid report scaffolding or empty ceremonial sections. Never add headings such as 'Public web evidence', 'Missing or failed source categories', 'Operator read', or 'Alleato internal evidence'. Only mention a source or capability when it genuinely failed AND that failure changes the answer.",
+      "When a claim rests on a public web fact, cite its URL inline. Internal Alleato data needs no citation. Do not tell the user to inspect traces or ask for sources.",
       "",
       params.question,
     ].join("\n"),
@@ -384,12 +381,12 @@ export function shouldUseDeepAgentResearchDirectResponse(
   packet: DeepResearchResponse,
 ): boolean {
   return (
-    packet.mode === "deep_agents" &&
+    (packet.mode === "deep_agents" || packet.mode === "deep_agents_degraded") &&
     packet.answer.trim().length >= 40 &&
     packet.toolTrace.some(
       (item) =>
         item.tool === "deepagents_research_runtime" &&
-        item.status === "success",
+        (item.status === "success" || item.status === "degraded"),
     )
   );
 }
@@ -403,27 +400,18 @@ export function shouldUseDeepAgentExecutiveDirectResponse(
 export function formatDeepAgentResearchDirectResponse(
   packet: DeepResearchResponse,
 ): string {
-  const answer = packet.answer.trim();
-  if (packet.sources.length > 0) return answer;
-
-  return [
-    answer,
-    "",
-    "Source coverage note: the research backend did not return parsed source URLs. Treat uncited claims as lower confidence and ask for sources if you need audit-ready evidence.",
-  ].join("\n");
+  // The answer stands on its own. Source-coverage is captured in the tool trace
+  // and evidence widget — never leak developer-facing "inspect the trace" notes
+  // into the user-facing chat answer.
+  return packet.answer.trim();
 }
 
 export function formatDeepAgentExecutiveDirectResponse(
   packet: DeepResearchResponse,
 ): string {
-  const answer = packet.answer.trim();
-  if (packet.sources.length > 0) return answer;
-
-  return [
-    answer,
-    "",
-    "Source coverage note: the backend executive briefing did not return parsed source URLs. Treat uncited claims as lower confidence and inspect the backend tool trace before acting on audit-sensitive details.",
-  ].join("\n");
+  // Same contract as the research direct response: return the answer verbatim,
+  // with no appended internal source-coverage instructions for the reader.
+  return packet.answer.trim();
 }
 
 export function buildDeepAgentResearchEvidenceWidget(

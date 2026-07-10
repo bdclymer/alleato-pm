@@ -90,8 +90,9 @@
     --popover-foreground: var(--neutral-900);
     --surface-alt: var(--neutral-50);
     --surface-soft: var(--neutral-100);
-    /* Very light gray for summary/sidebar panels (#FBFBFB). Use via <SummaryPanel>. */
-    --surface-summary: 0 0% 98.4%;
+    /* Very light gray for summary/sidebar panels (#F9F9F9). Use via <SummaryPanel>. */
+    --surface-summary: 0 0% 97.6%;
+    --summary-panel-padding: 30px;
     --right-sidebar-bg: 0 0% 100%;
 
     /* Primary Accent — Alleato brand orange */
@@ -119,7 +120,7 @@
 
     /* Structural */
     --border: var(--neutral-300);
-    --input: var(--neutral-300);
+    --input: var(--neutral-400);
     --ring: var(--neutral-400);
     --schedule-view-active: var(--brand-orange-500);
 
@@ -291,7 +292,7 @@
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5% 19%;
-    --input: 240 5% 19%;
+    --input: 240 4% 28%;
     --ring: 240 5% 35%;
     --schedule-view-active: 29 90% 61%;
 
@@ -322,6 +323,12 @@
     --sidebar-accent-foreground: hsl(0 0% 92%);
     --sidebar-border: hsl(240 5% 19%);
     --sidebar-ring: hsl(29 90% 61%);
+  }
+}
+
+@layer components {
+  .summary-panel {
+    padding: var(--summary-panel-padding);
   }
 }
 
@@ -522,26 +529,25 @@
     -webkit-text-fill-color: transparent;
   }
 
-  .line-items-scroll-shell [data-slot="table-container"] {
+  [data-slot="table-container"] {
     scrollbar-color: hsl(var(--border)) transparent;
-    scrollbar-width: thin !important;
+    scrollbar-width: thin;
   }
 
-  .line-items-scroll-shell [data-slot="table-container"]::-webkit-scrollbar {
-    display: block !important;
+  [data-slot="table-container"]::-webkit-scrollbar {
     height: var(--space-1);
   }
 
-  .line-items-scroll-shell [data-slot="table-container"]::-webkit-scrollbar-track {
+  [data-slot="table-container"]::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .line-items-scroll-shell [data-slot="table-container"]::-webkit-scrollbar-thumb {
+  [data-slot="table-container"]::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
     border-radius: 9999px;
   }
 
-  .line-items-scroll-shell [data-slot="table-container"]::-webkit-scrollbar-thumb:hover {
+  [data-slot="table-container"]::-webkit-scrollbar-thumb:hover {
     background-color: hsl(var(--muted-foreground) / 0.45);
   }
 
@@ -1830,20 +1836,20 @@
   /* Typeface → app font (Inter). */
   --velt-default-font-family: var(--font-sans) !important;
 
-  /* Accent → brand primary (orange), not Velt purple. Drives the status pill,
-     send button, links, mentions, and the "all comments" affordance. */
-  --velt-light-mode-accent: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-text: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-hover: hsl(var(--primary)) !important;
-  --velt-light-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
-  --velt-light-mode-accent-light: hsl(var(--primary) / 0.1) !important;
-  --velt-light-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
-  --velt-dark-mode-accent: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-text: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-hover: hsl(var(--primary)) !important;
-  --velt-dark-mode-accent-foreground: hsl(var(--primary-foreground)) !important;
-  --velt-dark-mode-accent-light: hsl(var(--primary) / 0.1) !important;
-  --velt-dark-mode-accent-transparent: hsl(var(--primary) / 0.08) !important;
+  /* Accent → quiet neutral, not brand orange. Comments should feel like
+     annotations, not marketing chrome. */
+  --velt-light-mode-accent: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-text: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-hover: hsl(var(--foreground)) !important;
+  --velt-light-mode-accent-foreground: hsl(var(--background)) !important;
+  --velt-light-mode-accent-light: hsl(var(--foreground) / 0.08) !important;
+  --velt-light-mode-accent-transparent: hsl(var(--foreground) / 0.06) !important;
+  --velt-dark-mode-accent: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-text: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-hover: hsl(var(--foreground)) !important;
+  --velt-dark-mode-accent-foreground: hsl(var(--background)) !important;
+  --velt-dark-mode-accent-light: hsl(var(--foreground) / 0.1) !important;
+  --velt-dark-mode-accent-transparent: hsl(var(--foreground) / 0.08) !important;
 
   /* Neutral/border gray → app border token (was #EBEBEB). */
   --velt-light-mode-gray: hsl(var(--border)) !important;
@@ -1857,6 +1863,141 @@ velt-comment-dialog-internal .velt-comment-dialog {
   border-color: transparent !important;
 }
 
+/* The in-canvas thread dialog should read like a compact thread, not a settings
+   sheet. Keep the overflow menu as the one secondary-action surface and remove
+   redundant banners/buttons that duplicate those actions. */
+velt-comment-dialog-internal velt-comment-dialog-options-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-options-dropdown-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-options-dropdown-trigger-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-dropdown-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-dropdown-wireframe,
+velt-comments-sidebar velt-comment-dialog-options-dropdown-trigger-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-options-dropdown-trigger-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner,
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-assignee-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-visibility-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-private-banner-internal,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-reply-internal,
+velt-comment-dialog-internal velt-comment-dialog-hide-reply-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-hide-reply-internal,
+velt-comment-dialog-internal velt-comment-dialog-more-reply-wireframe {
+  display: none !important;
+}
+
+/* Keep the in-canvas thread card clean: no extra rule between actions and
+   content, and no card-like border chrome on internal containers. */
+velt-comment-dialog-internal .velt-comment-dialog--line-div,
+velt-comment-dialog-internal .velt-thread-card--container,
+velt-comment-dialog-internal .velt-thread-card,
+velt-comment-dialog-internal .velt-comment-dialog-composer {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+velt-comment-dialog-internal .velt-comment-dialog,
+velt-comment-dialog-internal .velt-thread-card,
+velt-comment-dialog-internal .velt-thread-card--container {
+  background: hsl(var(--background)) !important;
+}
+
+velt-comment-dialog-internal .velt-thread-card {
+  padding: 0 !important;
+}
+
+velt-comment-dialog-internal .velt-thread-card--container {
+  padding: 1rem 1.25rem 0 !important;
+}
+
+velt-comment-dialog-internal .velt-comment-dialog-composer {
+  padding: 0 1.25rem 1rem !important;
+}
+
+/* Keep on-page annotations quiet. The marker should read as a lightweight
+   anchor, not a colored badge that competes with the document. */
+velt-comment-annotation-pin,
+velt-comment-pin,
+[data-velt-comment-pin-host],
+[data-testid="velt-comment-pin"],
+.velt-comment-pin,
+[data-velt-annotation],
+[data-annotation-id] {
+  position: relative !important;
+  z-index: 90 !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+}
+
+[data-velt-comment-pin-host] .velt-comment-pin--marker,
+[data-velt-comment-pin-host] .velt-comment-pin--marker-default,
+[data-velt-comment-pin-host] .velt-comment-pin--status-default,
+[data-testid="velt-comment-pin"] .velt-comment-pin--marker,
+[data-testid="velt-comment-pin"] .velt-comment-pin--marker-default,
+[data-testid="velt-comment-pin"] .velt-comment-pin--status-default,
+.velt-comment-pin .velt-comment-pin--marker,
+.velt-comment-pin .velt-comment-pin--marker-default,
+.velt-comment-pin .velt-comment-pin--status-default {
+  background: hsl(var(--background)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: none !important;
+  position: relative !important;
+  z-index: 91 !important;
+}
+
+/* When a thread card is open, the SDK leaves the pin in an "open" state above
+   the dialog. That extra badge reads like a stray notification instead of
+   useful context, so hide the open-state pin entirely. */
+velt-comment-pin.velt-comment-pin-open,
+[data-testid="velt-comment-pin"].velt-comment-pin-open,
+velt-comment-annotation-pin.velt-comment-pin-open {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.cdk-overlay-pane.snippyly-overlay-panel,
+.velt-comment-dialog-overlay-panel,
+velt-comment-dialog-internal {
+  z-index: 120 !important;
+}
+
+/* The standalone copy-link control is redundant next to the overflow menu and
+   reads as visual noise at this size. Hide only the explicit copy-link trigger;
+   keep the overflow menu available for secondary actions. */
+velt-comment-dialog-internal [aria-label="Copy link"],
+velt-comment-dialog-internal [aria-label="Copy Link"],
+velt-comment-dialog-internal [aria-label="Copy thread link"],
+velt-comment-dialog-internal [title="Copy link"],
+velt-comment-dialog-internal [title="Copy Link"],
+velt-comment-dialog-internal velt-comment-dialog-copy-link,
+velt-comment-dialog-internal velt-comment-dialog-copy-link-wireframe,
+velt-comment-dialog-internal velt-comment-dialog-copy-link-internal {
+  display: none !important;
+}
+
+.snippyly-highlight,
+[snippyly-highlight="true"] {
+  outline: 1px solid hsl(var(--border) / 0.35) !important;
+  outline-offset: 0 !important;
+}
+
+#app-main-content.snippyly-highlight,
+#app-main-content[snippyly-highlight="true"] {
+  outline-color: transparent !important;
+}
+
+.velt-persistent-comment-mode-frame,
+.app-persistent-comment-mode .velt-persistent-comment-mode-frame {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Velt hardcodes #EBEBEB on the composer input box and divider lines (it ignores
    the gray token), so retheme those borders to the app's subtle --border token
    directly. Keeps the input's hit-target boundary but on-brand and quiet. */
@@ -1864,6 +2005,144 @@ velt-comment-dialog-internal .velt-composer--input-text-wrap,
 velt-comment-dialog-internal .velt-composer--line-div,
 velt-comment-dialog-internal .velt-comment-dialog--line-div {
   border-color: hsl(var(--border)) !important;
+}
+
+velt-comment-dialog-internal .velt-composer--input-text-wrap {
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+}
+
+velt-comment-dialog-internal velt-comment-dialog-thread-card-message {
+  font-size: 0.975rem !important;
+  line-height: 1.6 !important;
+}
+
+velt-comment-dialog-internal velt-comment-dialog-thread-card-time,
+velt-comment-dialog-internal velt-comment-dialog-thread-card-unread {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* The sidebar should read like a quiet message list, not a ticket board.
+   Hide assignment/status chrome that dominates the actual comment body. */
+velt-comments-sidebar velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-assign-button-wireframe,
+velt-comments-sidebar velt-comment-dialog-status-dropdown-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-status-dropdown-wireframe,
+velt-comments-sidebar velt-comment-dialog-status-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-status-wireframe,
+velt-comments-sidebar velt-comment-dialog-thread-card-reply-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-reply-wireframe {
+  display: none !important;
+}
+
+/* Give the discussion rail enough width to read naturally, and keep the single
+   resolve action available without bringing back status dropdown noise. */
+velt-comments-sidebar,
+velt-comments-sidebar-v2 {
+  width: min(32rem, calc(100vw - 1.5rem)) !important;
+  max-width: min(32rem, calc(100vw - 1.5rem)) !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-resolve-button-wireframe,
+velt-comments-sidebar-v2 velt-comment-dialog-resolve-button-wireframe {
+  display: inline-flex !important;
+}
+
+/* Strip the giant orange "Assigned to" banner block if the SDK still renders
+   it outside the assign-button wireframe. Keep the thread content below. */
+velt-comments-sidebar velt-comment-dialog-thread-card > :first-child,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card > :first-child {
+  display: none !important;
+}
+
+/* Quiet the thread rows and bring them back to whitespace/dividers instead of
+   card-on-card styling. */
+velt-comments-sidebar velt-comment-dialog-thread-card,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card-message,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-message {
+  font-size: 0.975rem !important;
+  line-height: 1.6 !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card + velt-comment-dialog-thread-card,
+velt-comments-sidebar-v2
+  velt-comment-dialog-thread-card
+  + velt-comment-dialog-thread-card {
+  border-top: 1px solid hsl(var(--border) / 0.6) !important;
+  margin-top: 1rem !important;
+  padding-top: 1rem !important;
+}
+
+velt-comments-sidebar velt-comment-dialog-thread-card-time,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-time,
+velt-comments-sidebar velt-comment-dialog-thread-card-unread,
+velt-comments-sidebar-v2 velt-comment-dialog-thread-card-unread {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* The focused thread panel uses the same components; keep attachments useful
+   but reduce border noise around previews. */
+velt-comments-sidebar img,
+velt-comments-sidebar-v2 img {
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+}
+
+/* RFI detail thread styling: align the on-page comment surface to the section
+   heading and soften the composer/thread cards to match the detail mock. Scope
+   strictly to the RFI detail page wrapper so other Velt surfaces keep their own
+   layout contracts. */
+.rfi-detail-comments {
+  --rfi-comment-gutter: 3rem;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog {
+  background: transparent !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog-composer {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-composer--input-text-wrap,
+.rfi-detail-comments velt-comment-dialog-internal .velt-comment-dialog--line-div {
+  background: hsl(var(--muted-subtle)) !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-composer--input-text-wrap {
+  min-height: 3rem !important;
+  border-radius: 9999px !important;
+  padding-inline: 1rem !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-thread-card--container {
+  padding: 0 0 0 var(--rfi-comment-gutter) !important;
+  margin: 0 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal .velt-thread-card {
+  background: hsl(var(--muted-subtle)) !important;
+  border-radius: 1rem !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-message {
+  font-size: 1rem !important;
+  line-height: 1.65 !important;
+}
+
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-time,
+.rfi-detail-comments velt-comment-dialog-internal velt-comment-dialog-thread-card-unread {
+  font-size: 0.8125rem !important;
 }
 
 /* The "All comments" footer band is removed at the source by dropping
@@ -1893,6 +2172,22 @@ velt-comment-dialog-internal velt-sidebar-button {
     padding: 0 !important;
     z-index: 40;
     box-shadow: var(--shadow-sm);
+  }
+
+  /* On mobile the fixed bottom nav (h-14 = 3.5rem, md:hidden) occupies the
+     bottom edge — lift the floating launchers above it so they don't overlap
+     the tab bar. The AI panel is anchored to the launcher, so raise it by the
+     same amount or it would overlap the raised launcher's close button.
+     Desktop (>= md) has no bottom nav, so the offset is removed. */
+  @media (max-width: 767px) {
+    .feedback-launcher-position,
+    .global-ai-widget-launcher {
+      bottom: calc(1rem + 3.5rem + env(safe-area-inset-bottom));
+    }
+    .global-ai-widget-panel {
+      bottom: calc(88px + 3.5rem + env(safe-area-inset-bottom));
+      height: min(640px, calc(100dvh - 112px - 3.5rem - env(safe-area-inset-bottom)));
+    }
   }
 
   .global-ai-widget-panel {
@@ -1945,3 +2240,21 @@ velt-comment-dialog-internal velt-sidebar-button {
   }
 
 }
+
+/* Liveblocks inbox notifications — tighten to app density. Stock defaults are a
+   36px avatar with 1em spacing, which reads oversized in the compact side panel.
+   These custom-property overrides are set on a closer ancestor than Liveblocks'
+   own `.lb-root`, so they win by inheritance regardless of stylesheet order. */
+.lb-inbox-notification-list {
+  --lb-spacing: 0.8rem;
+}
+
+.lb-inbox-notification {
+  --lb-inbox-notification-aside-size: 28px;
+}
+
+.lb-inbox-notification-title {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+

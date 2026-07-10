@@ -16,7 +16,6 @@ import type {
 import { createServiceClient } from "@/lib/supabase/service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
-  approveExecutiveBriefingDraft,
   getExecutiveBriefingDashboard,
   setExecutiveFollowUpState,
 } from "@/lib/executive/executive-briefing-workflow";
@@ -26,7 +25,6 @@ import {
   recordDeliveryAttempt,
   recordDraftEvidence,
   recordEmailPayloadArtifact,
-  regenerateDailyBriefDraftWithLedger,
   sourceHealthForDraft,
   startDailyBriefRun,
   type DailyBriefRunContext,
@@ -46,11 +44,6 @@ const TASK_PRIORITY_VALUES = new Set(["high", "medium", "low"]);
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
-}
-
-function formNumber(formData: FormData, key: string, fallback: number) {
-  const raw = Number(formString(formData, key));
-  return Number.isFinite(raw) ? raw : fallback;
 }
 
 function redirectWithEmailStatus(status: "sent" | "failed", message: string) {
@@ -165,46 +158,6 @@ function briefingProjectCount(packet: BrandonDailyUpdatePacket) {
       .map((item) => item.project)
       .filter(Boolean),
   ).size;
-}
-
-export async function regenerateExecutiveBriefingAction(formData: FormData) {
-  await requireCurrentUserAppCapability(
-    "view_executive_briefing",
-    "executive-briefing-actions#regenerate",
-    "Executive briefing access required.",
-  );
-  const windowDays = formNumber(
-    formData,
-    "windowDays",
-    DEFAULT_EXECUTIVE_WINDOW_DAYS,
-  );
-  await regenerateDailyBriefDraftWithLedger({
-    windowDays,
-    sourceBackedOnly: false,
-    triggerType: "manual_server_action_refresh",
-    surface: "executive-briefing-actions#regenerate",
-    title: "Executive Daily Brief manual refresh",
-    userGoal: "Regenerate the Executive Daily Brief from the executive page.",
-    normalizedGoal:
-      "Generate the Executive Daily Brief through the AI Ops ledger from the executive page action.",
-  });
-  revalidatePath(EXECUTIVE_PATH);
-}
-
-export async function approveExecutiveBriefingAction(formData: FormData) {
-  await requireCurrentUserAppCapability(
-    "view_executive_briefing",
-    "executive-briefing-actions#approve",
-    "Executive briefing access required.",
-  );
-  const draftId = formString(formData, "draftId");
-  if (!draftId) {
-    throw new Error("Missing executive briefing draft id.");
-  }
-
-  const user = await getApiRouteUser();
-  await approveExecutiveBriefingDraft(draftId, user?.id ?? null);
-  revalidatePath(EXECUTIVE_PATH);
 }
 
 export async function resolveExecutiveFollowUpAction(formData: FormData) {

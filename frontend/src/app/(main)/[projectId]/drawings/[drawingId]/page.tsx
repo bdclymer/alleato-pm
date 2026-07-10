@@ -16,7 +16,7 @@ import {
   Link2,
   Mail,
   MessageSquare,
-  MoreHorizontal,
+  MoreVertical,
   PenLine,
   Printer,
   RotateCcw,
@@ -70,7 +70,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { EmptyState } from "@/components/ds";
+import { EmptyState, ErrorState } from "@/components/ds";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
 import { DrawingRelatedItemsPanel } from "@/components/drawings/DrawingRelatedItemsPanel";
 import { DrawingSketchPanel } from "@/components/drawings/DrawingSketchPanel";
@@ -309,7 +309,7 @@ function RevisionRow({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <MoreHorizontal />
+              <MoreVertical />
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
@@ -493,18 +493,22 @@ function DrawingAIExtractionPanel({
             {data.ocr.textPreview}
           </pre>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No OCR/raw text is available for this drawing yet.
-          </p>
+          <EmptyState
+            title="No extracted text"
+            description="No OCR/raw text is available for this drawing yet."
+            className="py-6"
+          />
         )}
       </section>
 
       <section className="space-y-3">
         <SectionRuleHeading label="Visual AI Pages" />
         {data.vision.pages.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No page-level visual AI extraction rows are available.
-          </p>
+          <EmptyState
+            title="No visual AI pages"
+            description="No page-level visual AI extraction rows are available."
+            className="py-6"
+          />
         ) : (
           <div className="divide-y divide-border">
             {data.vision.pages.map((page) => (
@@ -787,23 +791,11 @@ export default function DrawingDetailPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <div className="text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-xl font-semibold text-foreground mb-2">
-            Drawing Not Found
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            {error instanceof Error
-              ? error.message
-              : "An unexpected error occurred — please try again"}
-          </p>
-          <Button onClick={() => router.push(`/${projectId}/drawings`)}>
-            <ArrowLeft />
-            Back to Drawings
-          </Button>
-        </div>
-      </div>
+      <ErrorState
+        title="Drawing Not Found"
+        error={error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
+        onRetry={() => router.push(`/${projectId}/drawings`)}
+      />
     );
   }
 
@@ -923,7 +915,7 @@ export default function DrawingDetailPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="px-2">
-                <MoreHorizontal />
+                <MoreVertical />
                 <span className="sr-only">More actions</span>
               </Button>
             </DropdownMenuTrigger>

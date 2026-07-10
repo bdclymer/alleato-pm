@@ -26,6 +26,7 @@ interface FormattedTranscriptProps {
   meetingId?: string;
   meetingTitle?: string | null;
   projectId?: number | null;
+  showHeading?: boolean;
 }
 
 const SPEAKER_WORD_TO_NUMBER: Record<string, number> = {
@@ -97,6 +98,7 @@ export function FormattedTranscript({
   meetingId,
   meetingTitle,
   projectId,
+  showHeading = true,
 }: FormattedTranscriptProps) {
   const transcriptContainerRef = useRef<HTMLDivElement | null>(null);
   const [selectedText, setSelectedText] = useState("");
@@ -275,7 +277,9 @@ export function FormattedTranscript({
 
   return (
     <div ref={transcriptContainerRef} className="space-y-2">
-      <SectionHeader title="Full Transcript" className="mb-1" />
+      {showHeading ? (
+        <SectionHeader title="Full Transcript" className="mb-1" />
+      ) : null}
 
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { Check, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { Check, MoreVertical, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Modal,
@@ -12,11 +11,6 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -36,7 +30,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiFetch } from "@/lib/api-client";
+import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import {
   ROLE_CATALOG,
   ROLE_CATEGORY_ORDER,
@@ -45,29 +39,6 @@ import {
 } from "@/lib/constants/role-catalog";
 import { useConfirm } from "@/hooks/use-confirm";
 import type { ProjectRole } from "@/hooks/use-project-roles";
-
-interface PersonOption {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  job_title: string | null;
-  company_name: string | null;
-  person_type: string | null;
-}
-
-interface DirectoryPeopleResponse {
-  data?: Array<{
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    email?: string | null;
-    job_title?: string | null;
-    person_type?: string | null;
-    company?: { name?: string | null } | null;
-  }>;
-  meta?: { total?: number };
-}
 
 function reportProjectTeamDialogError(
   event: string,
@@ -117,10 +88,7 @@ export function ProjectTeamDialog({
   deleteRole: (roleId: string) => Promise<void>;
   projectId: string;
 }) {
-  const [people, setPeople] = React.useState<PersonOption[]>([]);
-  const [externalPeople, setExternalPeople] = React.useState<PersonOption[]>([]);
-  const [externalLoaded, setExternalLoaded] = React.useState(false);
-  const [externalLoading, setExternalLoading] = React.useState(false);
+  const [assignRole, setAssignRole] = React.useState<ProjectRole | null>(null);
   const [addRoleOpen, setAddRoleOpen] = React.useState(false);
   const [customRoleMode, setCustomRoleMode] = React.useState(false);
   const [customRoleName, setCustomRoleName] = React.useState("");
@@ -132,6 +100,9 @@ export function ProjectTeamDialog({
 
   React.useEffect(() => {
     if (!open) return;
+    setAddRoleOpen(false);
+    setCustomRoleMode(false);
+    setCustomRoleName("");
     setMemberIdsByRoleId(
       Object.fromEntries(
         roles.map((role) => [
@@ -142,76 +113,13 @@ export function ProjectTeamDialog({
     );
   }, [open, roles]);
 
+  // Keep the selected assign-role in sync with refetched role data so the
+  // assignment modal always reflects the latest members after a save.
   React.useEffect(() => {
-    if (!open) return;
-    const load = async () => {
-      try {
-        const params = new URLSearchParams({
-          type: "employee",
-          status: "active",
-          page: "1",
-          per_page: "1000",
-        });
-        const result = await apiFetch<DirectoryPeopleResponse>(
-          `/api/people?${params}`,
-        );
-        setPeople(
-          (result.data || []).map((p) => ({
-            id: p.id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email ?? null,
-            job_title: p.job_title ?? null,
-            company_name: p.company?.name ?? null,
-            person_type: p.person_type ?? null,
-          })),
-        );
-      } catch (error) {
-        const message = reportProjectTeamDialogError(
-          "project_team_people_load_failed",
-          error,
-        );
-        toast.error(`Project team people did not load: ${message}`);
-      }
-    };
-    void load();
-  }, [open]);
-
-  const loadExternalPeople = React.useCallback(async () => {
-    if (externalLoaded || externalLoading) return;
-    setExternalLoading(true);
-    try {
-      const params = new URLSearchParams({
-        type: "contact",
-        status: "active",
-        page: "1",
-        per_page: "2000",
-      });
-      const result = await apiFetch<DirectoryPeopleResponse>(
-        `/api/people?${params}`,
-      );
-      setExternalPeople(
-        (result.data || []).map((p) => ({
-          id: p.id,
-          first_name: p.first_name,
-          last_name: p.last_name,
-          email: p.email ?? null,
-          job_title: p.job_title ?? null,
-          company_name: p.company?.name ?? null,
-          person_type: p.person_type ?? null,
-        })),
-      );
-      setExternalLoaded(true);
-    } catch (error) {
-      const message = reportProjectTeamDialogError(
-        "project_team_external_people_load_failed",
-        error,
-      );
-      toast.error(`External contacts did not load: ${message}`);
-    } finally {
-      setExternalLoading(false);
-    }
-  }, [externalLoaded, externalLoading]);
+    setAssignRole((current) =>
+      current ? roles.find((r) => r.id === current.id) ?? null : current,
+    );
+  }, [roles]);
 
   const existingRoleNames = React.useMemo(
     () => new Set(roles.map((r) => r.role_name.toLowerCase())),
@@ -284,52 +192,24 @@ export function ProjectTeamDialog({
     [memberIdsByRoleId],
   );
 
-  const commitRoleMembers = async (
-    role: ProjectRole,
-    next: string[],
-    failureEvent: string,
-    context?: Record<string, unknown>,
-  ) => {
+  const handleRemovePerson = async (role: ProjectRole, personId: string) => {
     const previous = getCurrentMemberIds(role);
+    const next = previous.filter((id) => id !== personId);
     setMemberIdsByRoleId((current) => ({ ...current, [role.id]: next }));
     setSavingRoleId(role.id);
     try {
       await updateRoleMembers(role.id, next);
     } catch (error) {
-      setMemberIdsByRoleId((current) => ({
-        ...current,
-        [role.id]: previous,
-      }));
-      const message = reportProjectTeamDialogError(failureEvent, error, {
-        roleId: role.id,
-        ...context,
-      });
+      setMemberIdsByRoleId((current) => ({ ...current, [role.id]: previous }));
+      const message = reportProjectTeamDialogError(
+        "project_team_role_member_remove_failed",
+        error,
+        { roleId: role.id, personId },
+      );
       toast.error(`Role assignment was not updated: ${message}`);
     } finally {
       setSavingRoleId(null);
     }
-  };
-
-  const handleTogglePerson = async (role: ProjectRole, personId: string) => {
-    const current = getCurrentMemberIds(role);
-    const next = current.includes(personId)
-      ? current.filter((id) => id !== personId)
-      : [...current, personId];
-    await commitRoleMembers(
-      role,
-      next,
-      "project_team_role_members_update_failed",
-      { personId },
-    );
-  };
-
-  const handleRemovePerson = async (role: ProjectRole, personId: string) => {
-    await commitRoleMembers(
-      role,
-      getCurrentMemberIds(role).filter((id) => id !== personId),
-      "project_team_role_member_remove_failed",
-      { personId },
-    );
   };
 
   const handleDeleteRole = async (role: ProjectRole) => {
@@ -379,15 +259,8 @@ export function ProjectTeamDialog({
                     key={role.id}
                     role={role}
                     currentMemberIds={getCurrentMemberIds(role)}
-                    people={people}
-                    externalPeople={externalPeople}
-                    externalLoading={externalLoading}
-                    projectId={projectId}
                     saving={savingRoleId === role.id}
-                    onLoadExternalPeople={loadExternalPeople}
-                    onTogglePerson={(personId) =>
-                      handleTogglePerson(role, personId)
-                    }
+                    onAssign={() => setAssignRole(role)}
                     onRemovePerson={(personId) =>
                       handleRemovePerson(role, personId)
                     }
@@ -438,10 +311,7 @@ export function ProjectTeamDialog({
                 </div>
               ) : (
                 <Command className="overflow-visible bg-transparent">
-                  <CommandInput
-                    placeholder="Search roles…"
-                    className="h-9"
-                  />
+                  <CommandInput placeholder="Search roles…" className="h-9" />
                   <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
                     <CommandEmpty>No matching roles.</CommandEmpty>
                     {ROLE_CATEGORY_ORDER.map((category) => {
@@ -523,6 +393,18 @@ export function ProjectTeamDialog({
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Reuse the exact same assignment modal the directory table rows use. */}
+      <AssignMemberDialog
+        open={assignRole !== null}
+        onOpenChange={(next) => {
+          if (!next) setAssignRole(null);
+        }}
+        role={assignRole}
+        onSave={updateRoleMembers}
+        projectId={projectId}
+      />
+
       {ConfirmDialog}
     </>
   );
@@ -531,83 +413,27 @@ export function ProjectTeamDialog({
 function RoleRow({
   role,
   currentMemberIds,
-  people,
-  externalPeople,
-  externalLoading,
-  projectId,
   saving,
-  onLoadExternalPeople,
-  onTogglePerson,
+  onAssign,
   onRemovePerson,
   onDeleteRole,
 }: {
   role: ProjectRole;
   currentMemberIds: string[];
-  people: PersonOption[];
-  externalPeople: PersonOption[];
-  externalLoading: boolean;
-  projectId: string;
   saving: boolean;
-  onLoadExternalPeople: () => void;
-  onTogglePerson: (personId: string) => void;
+  onAssign: () => void;
   onRemovePerson: (personId: string) => void;
   onDeleteRole: () => void;
 }) {
-  const [assignOpen, setAssignOpen] = React.useState(false);
-  const [pickerMode, setPickerMode] = React.useState<"employees" | "external">(
-    "employees",
-  );
-  const selectedIds = React.useMemo(
-    () => new Set(currentMemberIds),
-    [currentMemberIds],
-  );
-  const pickerPeople = pickerMode === "external" ? externalPeople : people;
-  const knownPeople = React.useMemo(() => {
-    const map = new Map<string, PersonOption>();
-    [...people, ...externalPeople].forEach((person) => map.set(person.id, person));
-    return map;
-  }, [externalPeople, people]);
-  const effectiveMembers = React.useMemo(
-    () =>
-      currentMemberIds.map((personId) => {
-        const existing = role.members.find(
-          (member) => member.person_id === personId,
-        );
-        if (existing) return existing;
-        const person = knownPeople.get(personId);
-        return {
-          id: `${role.id}:${personId}`,
-          person_id: personId,
-          assigned_at: null,
-          person: person
-            ? {
-                id: person.id,
-                first_name: person.first_name ?? "",
-                last_name: person.last_name ?? "",
-                full_name: personDisplayName(
-                  person.first_name,
-                  person.last_name,
-                  person.email,
-                ),
-                email: person.email ?? "",
-                phone_mobile: null,
-                phone_business: null,
-                company_name: person.company_name,
-              }
-            : null,
-        };
-      }),
-    [currentMemberIds, knownPeople, role.id, role.members],
-  );
-
   return (
     <li className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/40">
       <span className="w-44 shrink-0 truncate text-sm text-muted-foreground">
         {role.role_name}
       </span>
       <div className="flex flex-1 flex-wrap items-start gap-1.5 min-w-0">
-        {effectiveMembers.map((member) => {
-          const p = member.person;
+        {currentMemberIds.map((personId) => {
+          const member = role.members.find((m) => m.person_id === personId);
+          const p = member?.person ?? null;
           const display = personDisplayName(
             p?.first_name ?? null,
             p?.last_name ?? null,
@@ -615,26 +441,21 @@ function RoleRow({
           );
           return (
             <Badge
-              key={member.id}
+              key={personId}
               variant="outline"
               className="gap-1.5 py-0.5 pl-1 pr-1 text-xs bg-muted/40"
             >
               <Avatar className="h-5 w-5">
                 <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-medium">
-                  {personInitials(
-                    p?.first_name ?? null,
-                    p?.last_name ?? null,
-                  )}
+                  {personInitials(p?.first_name ?? null, p?.last_name ?? null)}
                 </AvatarFallback>
               </Avatar>
-              <span className="w-36 truncate font-medium">
-                {display}
-              </span>
+              <span className="w-36 truncate font-medium">{display}</span>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                onClick={() => onRemovePerson(member.person_id)}
+                onClick={() => onRemovePerson(personId)}
                 className="h-4 w-4 rounded-full text-muted-foreground hover:text-foreground"
                 aria-label={`Remove ${display}`}
                 disabled={saving}
@@ -644,117 +465,15 @@ function RoleRow({
             </Badge>
           );
         })}
-        <Popover
-          open={assignOpen}
-          onOpenChange={(open) => {
-            setAssignOpen(open);
-            if (!open) setPickerMode("employees");
-          }}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs text-primary"
+          disabled={saving}
+          onClick={onAssign}
         >
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-primary"
-              disabled={saving}
-            >
-              {effectiveMembers.length === 0 ? "Assign" : "+ Add"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="flex max-h-96 w-80 flex-col overflow-hidden p-0">
-            <Command className="overflow-visible">
-              <CommandInput
-                placeholder={
-                  pickerMode === "external"
-                    ? "Search external contacts…"
-                    : "Search employees…"
-                }
-                className="h-9"
-              />
-              <CommandList className="max-h-80 overflow-y-auto overscroll-contain">
-                <CommandEmpty>
-                  {pickerMode === "external" && externalLoading
-                    ? "Loading contacts..."
-                    : pickerMode === "external"
-                      ? "No matching external contacts."
-                      : "No matching employees."}
-                </CommandEmpty>
-                <CommandGroup>
-                  {pickerPeople.map((person) => {
-                    const isSelected = selectedIds.has(person.id);
-                    const display = personDisplayName(
-                      person.first_name,
-                      person.last_name,
-                      person.email,
-                    );
-                    return (
-                      <CommandItem
-                        key={person.id}
-                        value={`${display} ${person.email ?? ""} ${person.company_name ?? ""}`}
-                        disabled={saving}
-                        onSelect={() => onTogglePerson(person.id)}
-                      >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <Avatar className="h-6 w-6 shrink-0">
-                            <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
-                              {personInitials(person.first_name, person.last_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm">{display}</div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              {person.job_title ||
-                                person.company_name ||
-                                person.email ||
-                                ""}
-                            </div>
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <Check className="h-4 w-4 text-primary" />
-                        )}
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-            <div className="border-t border-border/40 px-2 py-2">
-              {pickerMode === "employees" ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="xs"
-                  className="h-7 px-1 text-xs"
-                  onClick={() => {
-                    setPickerMode("external");
-                    onLoadExternalPeople();
-                  }}
-                >
-                  <Plus className="h-3 w-3" />
-                  Add external contact
-                </Button>
-              ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="xs"
-                    className="h-7 px-1 text-xs"
-                    onClick={() => setPickerMode("employees")}
-                  >
-                    Back to employees
-                  </Button>
-                  <Button asChild type="button" variant="link" size="xs" className="h-7 px-1 text-xs">
-                    <Link href={`/${projectId}/directory/contacts`}>
-                      Add new contact
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+          {currentMemberIds.length === 0 ? "Assign" : "+ Add"}
+        </Button>
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -765,14 +484,11 @@ function RoleRow({
             disabled={saving}
             aria-label={`Actions for ${role.role_name}`}
           >
-            <MoreHorizontal className="h-3.5 w-3.5" />
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={onDeleteRole}
-          >
+          <DropdownMenuItem className="text-destructive" onClick={onDeleteRole}>
             <Trash2 className="mr-2 h-3.5 w-3.5" />
             Remove role
           </DropdownMenuItem>

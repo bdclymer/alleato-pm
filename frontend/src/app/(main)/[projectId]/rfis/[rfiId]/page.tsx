@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 
+import { StatusBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import { formatDate } from "@/lib/format";
 import { createServiceClient } from "@/lib/supabase/service";
 
 import { RfiDetail } from "./rfi-detail";
@@ -8,6 +10,11 @@ import { RfiHeaderActions } from "./rfi-header-actions";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function formatStatusLabel(status: string): string {
+  if (status === "closed-draft") return "Closed (Draft)";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 export default async function RfiDetailPage({
   params,
@@ -49,6 +56,8 @@ export default async function RfiDetailPage({
     <PageShell
       variant="detail"
       title={rfi ? `RFI #${rfi.number}` : "RFI Detail"}
+      description={rfi ? `Created ${formatDate(rfi.created_at)}` : undefined}
+      statusBadge={rfi ? <StatusBadge status={formatStatusLabel(rfi.status ?? "open")} /> : undefined}
       actions={rfi ? <RfiHeaderActions rfi={rfi} projectId={numericProjectId} /> : undefined}
     >
       <RfiDetail

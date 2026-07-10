@@ -100,6 +100,17 @@ function isCapturable(el: HTMLElement | null): el is HTMLElement {
   );
 }
 
+export function shouldProtectCaptureRoot(
+  root: HTMLElement,
+  candidate: Element | null,
+) {
+  if (!(candidate instanceof HTMLElement)) {
+    return false;
+  }
+
+  return candidate === root || candidate.contains(root) || root.contains(candidate);
+}
+
 /**
  * Resolve a real, renderable capture root. The clicked target can be a Velt
  * overlay (Velt's overlays cover the viewport, so elementFromPoint returns
@@ -143,6 +154,7 @@ export async function captureTargetScreenshot(target: HTMLElement) {
     // Radix dialogs, etc.) still need the live hide.
     if (
       el instanceof HTMLElement &&
+      !shouldProtectCaptureRoot(primaryRoot, el) &&
       !isOverlayHost(el) &&
       el.style.visibility !== "hidden"
     ) {

@@ -12,6 +12,7 @@ interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  description?: React.ReactNode;
   children: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "full";
   className?: string;
@@ -33,6 +34,7 @@ export function BaseModal({
   isOpen,
   onClose,
   title,
+  description,
   children,
   size = "xl",
   className,
@@ -56,7 +58,11 @@ export function BaseModal({
       size={overlaySizeMap[size]}
       className={cn("flex h-full flex-col", className)}
     >
-      <BudgetOverlayHeader title={title} showCloseButton={showCloseButton} />
+      <BudgetOverlayHeader
+        title={title}
+        description={description}
+        showCloseButton={showCloseButton}
+      />
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </BudgetOverlay>
   );

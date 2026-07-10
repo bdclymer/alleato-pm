@@ -4,8 +4,17 @@ import * as React from "react";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
+import { format, parse, isValid } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -187,9 +196,71 @@ export function InlineEditField({
     );
   }
 
+  if (type === "date") {
+    const parseDateDraft = (v: string): Date | undefined => {
+      if (!v) return undefined;
+      const parts = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (parts) return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]));
+      const parsed = parse(v, "MM/dd/yyyy", new Date());
+      return isValid(parsed) ? parsed : undefined;
+    };
+    const dateValue = parseDateDraft(draft);
+
+    return (
+      <div className={cn("flex gap-1", className)}>
+        <Input
+          autoFocus
+          value={draft}
+          disabled={saving}
+          placeholder={placeholder ?? "YYYY-MM-DD"}
+          className="h-7 w-full"
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => void commit(draft)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void commit(draft);
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              setDraft(value);
+              setEditing(false);
+            }
+          }}
+        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              disabled={saving}
+              className="h-7 w-7 shrink-0"
+              aria-label="Open calendar"
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={dateValue}
+              onSelect={(date) => {
+                const next = date ? format(date, "yyyy-MM-dd") : "";
+                setDraft(next);
+                void commit(next);
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
+
   return (
     <Input
-      type={type === "number" ? "number" : type === "date" ? "date" : "text"}
+      type={type === "number" ? "number" : "text"}
       autoFocus
       value={draft}
       disabled={saving}

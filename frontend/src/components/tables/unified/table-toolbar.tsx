@@ -30,7 +30,6 @@ import {
   Download,
   Filter,
   GripVertical,
-  Layers,
   LayoutGrid,
   List,
   MoreVertical,
@@ -50,8 +49,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -171,8 +168,8 @@ export interface TableToolbarProps {
   onSortChange?: (sortBy: string, direction: SortDirection) => void;
   /**
    * Row-grouping options. When provided alongside `onGroupByChange`, the toolbar
-   * renders an icon-only "Group by" control in the icon row (Layers icon, no
-   * text label). The first option should be the "no grouping" choice.
+   * renders the options as a compact view switcher in the icon row. The first
+   * option should be the "no grouping" choice.
    */
   groupByOptions?: { value: string; label: string }[];
   groupBy?: string | null;
@@ -663,7 +660,7 @@ export function FilterMenu({
   );
 }
 
-function GroupByMenu({
+function GroupBySwitcher({
   options,
   value,
   onChange,
@@ -672,50 +669,20 @@ function GroupByMenu({
   value: string;
   onChange: (value: string) => void;
 }): ReactElement {
-  // The first option is the "no grouping" choice; any other value = active.
-  const noneValue = options[0]?.value ?? "none";
-  const isGrouped = value !== noneValue;
-
   return (
-    <DropdownMenu>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-8 w-8 rounded-md p-0 text-muted-foreground hover:text-foreground",
-                  isGrouped && "text-foreground",
-                )}
-                aria-label="Group by"
-              >
-                <Layers className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Group by</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Group rows by
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={value} onValueChange={onChange}>
-          {options.map((option) => (
-            <DropdownMenuRadioItem
-              key={option.value}
-              value={option.value}
-              className="text-sm"
-            >
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Tabs value={value} onValueChange={onChange}>
+      <TabsList className="h-8">
+        {options.map((option) => (
+          <TabsTrigger
+            key={option.value}
+            value={option.value}
+            className="h-6 px-2.5 text-[12px]"
+          >
+            {option.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -1539,8 +1506,8 @@ export function TableToolbar({
                     />
                     {onGroupByChange && groupByOptions && groupByOptions.length > 0 ? (
                       <MobileSettingsRow
-                        icon={<Layers className="h-5 w-5" />}
-                        label="Group"
+                        icon={<Table2 className="h-5 w-5" />}
+                        label="View"
                         value={
                           groupByOptions.find(
                             (option) => option.value === groupBy,
@@ -1560,8 +1527,8 @@ export function TableToolbar({
                       />
                     ) : (
                       <MobileSettingsRow
-                        icon={<Layers className="h-5 w-5" />}
-                        label="Group"
+                        icon={<Table2 className="h-5 w-5" />}
+                        label="View"
                         disabled
                       />
                     )}
@@ -1854,7 +1821,7 @@ export function TableToolbar({
           )}
 
           {onGroupByChange && groupByOptions && groupByOptions.length > 0 && (
-            <GroupByMenu
+            <GroupBySwitcher
               options={groupByOptions}
               value={groupBy ?? groupByOptions[0]?.value ?? "none"}
               onChange={onGroupByChange}

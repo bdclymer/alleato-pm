@@ -212,8 +212,7 @@ export const WRITE_TOOL_SPECS: WriteToolSpec[] = [
     tool: "addBoardItem",
     mode: "write",
     table: "admin_feedback_items",
-    // NOTE: the tool's zod enum also allows "in_review", which the DB CHECK
-    // (submitted|planned|in_progress|shipped) rejects — a latent mismatch.
+    // NOTE: keep the tool zod enum aligned with admin_feedback_items_board_status_check.
     input: (c) => ({ title: c.stamp, description: text("contract test board item"), board_status: "submitted" }),
   },
 

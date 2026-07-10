@@ -193,4 +193,26 @@ describe("buildEmailContentBlocks", () => {
     expect(text).toContain("Rev B: Updated mezzanine columns to match the latest Revit Model");
     expect(text).not.toContain("Symbotic Confidential");
   });
+
+  it("breaks a run-on body whose line breaks were flattened into runs of spaces", () => {
+    // Real shape of an Outlook plain-text export: the original newlines survive
+    // only as runs of 2+ spaces, so without reflow the whole message is a single
+    // 3500-char paragraph (the "big ball of text" bug).
+    const raw =
+      "They accepted many of our changes and I think we are in relatively good shape.   " +
+      "Bigger items - A141   Water Warranty (3.1.12.2). They added back the water-tight language.   " +
+      "Warranty Disclaimer (3.1.12.5). They struck the no other reps/warranties language.  " +
+      "Indemnification (3.1.14).  Exol added the defense obligation.";
+
+    const blocks = buildEmailContentBlocks(raw);
+    const lineCount = blocks.reduce((sum, block) => sum + block.lines.length, 0);
+
+    // Must no longer be one unbroken line.
+    expect(lineCount).toBeGreaterThan(3);
+    const lines = blocks.flatMap((block) => block.lines);
+    expect(lines).toContain("Water Warranty (3.1.12.2). They added back the water-tight language.");
+    expect(lines).toContain("Indemnification (3.1.14).");
+    // No single rendered line should still be a wall of text.
+    expect(Math.max(...lines.map((line) => line.length))).toBeLessThan(200);
+  });
 });

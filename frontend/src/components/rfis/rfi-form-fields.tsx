@@ -3,16 +3,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { FormGrid, FormSection } from "@/components/forms";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
@@ -20,15 +13,17 @@ import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { usePeople } from "@/hooks/use-people";
+import { useProjectRoles } from "@/hooks/use-project-roles";
 import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 import { useSpecifications } from "@/hooks/use-specifications";
+import { projectTeamToUserOptions } from "@/lib/directory/rfi-people";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
 
 interface DirectoryPerson {
   first_name?: string | null;
   last_name?: string | null;
   email?: string | null;
-  person_type?: "user" | "contact";
+  person_type?: "user" | "contact" | "employee";
   company?: { id: string; name: string } | null;
 }
 
@@ -57,34 +52,36 @@ function buildPersonOptions(people: DirectoryPerson[]): PersonOption[] {
 
 /**
  * Person/company option sources for RFI forms, modeled on Procore's field rules:
- *  - `userOptions`      → RFI Manager + Assignees (internal users only)
+ *  - `userOptions`      → RFI Manager + Assignees (the project's **Project Team**)
  *  - `directoryOptions` → Received From + Distribution List (full people directory)
  *  - `companyForPerson` → maps a Received-From display name to that person's
  *                         company, used to auto-prefill the read-only
  *                         Responsible Contractor field.
  *
- * Sourced from the company-wide directory, not project_directory_memberships —
- * the latter is empty for most projects, which left these fields blank.
+ * RFI Manager and Assignees are sourced from the **Project Team** — the people
+ * assigned to project roles (`project_roles` / `project_role_members`), i.e.
+ * exactly the roster the client sees on the Project Directory → Project Team
+ * tab. This is intentionally narrow (repeated client feedback: only people
+ * staffed on the project, not the whole roster).
+ *
+ * NOTE: earlier versions scoped these to `project_directory_memberships`, which
+ * is the *broad* project roster (e.g. 27 people for a project whose Project
+ * Team is 5). That was the long-standing bug this hook now fixes. See
+ * `projectTeamToUserOptions` for why no `person_type` filter is applied
+ * (external consultants like the Architect are `contact` rows on the team).
+ *
+ * Received From / Distribution List stay sourced from the company-wide
+ * directory — intentionally the full people list.
  */
-export function useRfiPeopleOptions() {
-  // "Internal users" for RFI Manager / Assignees = all internal staff, not just
-  // the handful of accounts with a login. type:"employee" resolves to
-  // person_type IN ('employee','user') in /api/people, so employees added to the
-  // directory (e.g. Jesse Remillard) are selectable. type:"user" alone returned
-  // only the 3 login accounts.
-  const { people: users, isLoading: isLoadingUsers } = usePeople({ type: "employee" });
+export function useRfiPeopleOptions(projectId: number) {
+  const { roles, isLoading: isLoadingTeam } = useProjectRoles(String(projectId));
   const { people: directory, isLoading: isLoadingDirectory } = usePeople({ type: "all" });
 
-  const userOptions = useMemo(
-    () => buildPersonOptions(users as DirectoryPerson[]),
-    [users],
-  );
+  // RFI Manager / Assignees = the project's Project Team (role assignments).
+  const userOptions = useMemo(() => projectTeamToUserOptions(roles), [roles]);
 
   const { directoryOptions, companyForPerson } = useMemo(() => {
-    const merged = [
-      ...(users as DirectoryPerson[]),
-      ...(directory as DirectoryPerson[]),
-    ];
+    const merged = directory as DirectoryPerson[];
     const companies = new Map<string, string>();
     for (const person of merged) {
       const fullName = fullNameOf(person);
@@ -96,13 +93,13 @@ export function useRfiPeopleOptions() {
       directoryOptions: buildPersonOptions(merged),
       companyForPerson: companies,
     };
-  }, [users, directory]);
+  }, [directory]);
 
   return {
     userOptions,
     directoryOptions,
     companyForPerson,
-    isLoading: isLoadingUsers || isLoadingDirectory,
+    isLoading: isLoadingTeam || isLoadingDirectory,
   };
 }
 
@@ -184,7 +181,7 @@ export function RfiFormFields({
   withFormProvider = true,
 }: RfiFormFieldsProps) {
   const { userOptions, directoryOptions, companyForPerson, isLoading: isLoadingPeople } =
-    useRfiPeopleOptions();
+    useRfiPeopleOptions(projectId);
   const { specificationOptions, isLoadingSpecifications } =
     useSpecificationOptions(projectId);
   const { costCodeOptions, isLoadingCostCodes } = useCostCodeOptions(projectId);
@@ -369,19 +366,10 @@ export function RfiFormFields({
           />
         </FormGrid>
 
-        <FormField
+        <RHFCheckboxField
           control={form.control}
           name="is_private"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-4 space-y-0">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Private</FormLabel>
-              </div>
-            </FormItem>
-          )}
+          label="Private"
         />
       </FormSection>
     </>

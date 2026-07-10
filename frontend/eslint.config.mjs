@@ -56,6 +56,49 @@ const config = [
       "no-debugger": "error", // Never ship debuggers
       "prefer-const": "error",
       "no-var": "error",
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/components/layout/PageTabsV2",
+              message:
+                "Use PageTabs for page-level tabs or Tabs from @/components/ui/tabs for section tabs.",
+            },
+            {
+              name: "@/components/layout",
+              importNames: ["PageTabsV2"],
+              message:
+                "PageTabsV2 is deprecated. Use PageTabs for page-level tabs or Tabs for section tabs.",
+            },
+            {
+              name: "@/components/ds",
+              importNames: ["PageTabsV2"],
+              message:
+                "PageTabsV2 is deprecated. Use PageTabs for page-level tabs or Tabs for section tabs.",
+            },
+            {
+              name: "radix-ui",
+              message:
+                "Import tab primitives through shared components in src/components/ui instead of raw Radix.",
+            },
+            {
+              name: "@radix-ui/react-tabs",
+              message:
+                "Use the shared tabs primitive from @/components/ui/tabs instead of importing Radix tabs directly.",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXOpeningElement[name.name='TabsList'] > JSXAttribute[name.name='variant'][value.value='line']",
+          message:
+            "Do not use TabsList variant=\"line\". Use PageTabs for page-level tabs or default Tabs for section tabs.",
+        },
+      ],
 
       // IMPORTANT RULES - Warnings (disabled to unblock cleanup tasks)
       "@typescript-eslint/no-explicit-any": "warn",
@@ -86,6 +129,7 @@ const config = [
       "design-system/require-page-shell": "warn",
       "design-system/no-raw-button": "warn",
       "design-system/no-raw-form-controls": "warn",
+      "design-system/require-approved-form-components": "warn",
       "design-system/require-money-field": "warn",
       // WARN globally (300+ existing violations — tracked as debt, fix incrementally).
       // ENFORCED as ERROR on changed files via lint-staged (.lintstagedrc.js).
@@ -105,6 +149,9 @@ const config = [
       "design-system/no-raw-error-message-toast": "warn",
       // Gate 21: blocks raw <Input placeholder="Search..."> — use <ExpandingSearch> from @/components/ds
       "design-system/no-raw-search-input": "warn",
+      // Gate 21b: blocks bespoke popover divs with Button-row menus when the shared
+      // DropdownMenu primitive should own alignment, keyboard behavior, and destructive styling.
+      "design-system/no-hand-rolled-dropdown-menu": "warn",
       // Gate 22: status/dropdown columns in *-table-config files must declare an explicit
       // `editable` decision (wire inline editing, or `editable: false` to opt out). Stops
       // tables shipping a dropdown that forces a redirect-to-edit-page.
@@ -119,6 +166,9 @@ const config = [
       "design-system/no-raw-detail-field": "warn",
       // Gate 25: blocks raw xl:grid-cols-[...] in detail pages — use <DetailLayout> from @/components/layout.
       "design-system/no-raw-detail-grid": "warn",
+      // Gate 26: blocks raw multi-column grids in page files — use <PageScaffold layout=...> from @/components/layout.
+      // WARN globally (73 existing pages are debt); ERROR on changed files via lint-staged.
+      "design-system/no-raw-page-grid": "warn",
     },
   }, // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
   // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.
@@ -126,6 +176,12 @@ const config = [
     files: ["src/app/(admin)/**/*.tsx", "src/app/(admin)/**/*.ts"],
     rules: {
       "design-system/no-raw-heading": "off",
+    },
+  },
+  {
+    files: ["src/components/ui/**/*.tsx", "src/components/ui/**/*.ts"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   }, // Design template files: used as starting points / exploratory UI, not production components.
   // Intentional use of hardcoded colors, arbitrary values, and non-semantic tokens.

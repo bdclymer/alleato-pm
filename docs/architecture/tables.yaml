@@ -1874,9 +1874,94 @@ tables:
       Writes from frontend/src/app/api/email-filter-rules/ (admin-only POST/PATCH/DELETE).
       Allow actions short-circuit allowlist; skip drops the email with no DB writes;
       review writes to outlook_email_skip_audit only.
+      NOT the same as outlook_inbox_rules: this is the SYNC-TIME junk gate
+      (skip/review/allow); outlook_inbox_rules is the READ-TIME assistant-training
+      layer (always-important / never-inbox / set priority|category) for the
+      Outlook Draft Feedback inbox.
     relatedTables:
       - outlook_email_skip_audit
       - outlook_email_intake
+      - outlook_inbox_rules
+
+  - name: outlook_inbox_rules
+    db: MAIN
+    domain: communications
+    owner: communications
+    status: live
+    purpose: >-
+      Gmail/Outlook-style inbox rules for the Outlook Draft Feedback surface.
+      Each rule matches a sender / sender_domain / subject / body / any pattern
+      (contains, equals, starts_with, ends_with) and forces an assistant action:
+      always_important, never_inbox, set_priority, or set_category. This trains
+      the assistant on how to treat mail from a person/pattern.
+    notes_for_ai: >-
+      Applied at READ time in frontend/src/app/api/emails/route.ts (the pure
+      matcher is frontend/src/lib/email-assistant/inbox-rules.ts) — NOT in the
+      backend sync. Human reviews (outlook_email_assistant_reviews) always win
+      over a rule; a rule overrides the derived triage guess. never_inbox drops
+      the mail from the feed (count logged, never a silent hide) but never hides
+      an email a human already reviewed. CRUD via
+      frontend/src/app/api/outlook-inbox-rules/ (owner/admin/mailbox-owner gated,
+      service client + RLS current_is_app_admin). Managed from the AI Review
+      panel and /outlook-draft-feedback/rules. Distinct from email_filter_rules
+      (the sync-time junk gate).
+    relatedTables:
+      - outlook_email_intake
+      - outlook_email_assistant_reviews
+      - email_filter_rules
+
+  # --- Pre-existing tables that were live but undocumented (drift backfill) ---
+  - name: admin_feedback_assistant_threads
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Links an admin feedback item to an assistant session/thread that works it,
+      tracking status, runtime, relay comments, and last message/error.
+    relatedTables: []
+
+  - name: app_page_tags
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Admin-managed catalog of page tags applied from the site map. Reusable
+      across pages; drives curated tagged-page views.
+    relatedTables:
+      - app_page_tag_assignments
+
+  - name: app_page_tag_assignments
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Join table mapping a route from the app route inventory to a tag in
+      app_page_tags.
+    relatedTables:
+      - app_page_tags
+
+  - name: change_event_project_settings
+    db: MAIN
+    domain: financial
+    owner: financial
+    status: live
+    purpose: >-
+      Per-project change-event configuration flags (budget-code sync, ROM
+      columns, line-item autopopulation, attachment copy, PCO/CO behavior).
+    relatedTables: []
+
+  - name: daily_corpus_syntheses
+    db: MAIN
+    domain: intelligence
+    owner: intelligence
+    status: live
+    purpose: >-
+      Canonical previous-day full-corpus synthesis artifact for executive
+      briefing and downstream intelligence consumers.
+    relatedTables: []
 
   - name: email_events
     db: MAIN
@@ -1943,6 +2028,117 @@ tables:
     status: dormant
     purpose: "Dormant meeting preparation records."
     relatedTables: []
+
+  # ─── Meetings tool (Procore-style, added 2026-07-01) ─────
+
+  - name: meeting_series
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Groups recurring meetings under one project-scoped name (e.g. weekly OAC). unique(project_id, name). Backfilled from distinct document_metadata.title per project for existing Fireflies transcripts."
+    relatedTables:
+      - meetings
+      - projects
+
+  - name: meetings
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Procore-style meeting record: agenda/minutes mode, schedule fields, optional link to a Fireflies transcript via transcript_document_id. Backfilled one row per existing document_metadata (type='meeting') row that has a project_id."
+    gotchas: "transcript_document_id references document_metadata.id (TEXT) — do not confuse with meeting_documents (generic attachment junction). number is scoped per series_id via unique(series_id, number)."
+    relatedTables:
+      - meeting_series
+      - meeting_attendees
+      - meeting_categories
+      - meeting_items
+      - meeting_documents
+      - document_metadata
+      - meeting_templates
+
+  - name: meeting_attendees
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Per-meeting attendee roster (person_id -> people.id). attended is null until the meeting is in minutes mode and attendance is marked."
+    relatedTables:
+      - meetings
+      - people
+
+  - name: meeting_categories
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Agenda section headers within a single meeting (ordered by position). Parent of meeting_items."
+    relatedTables:
+      - meetings
+      - meeting_items
+
+  - name: meeting_items
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Individual agenda/minutes line items within a meeting_category: title, assignee, due date, status. Can carry forward to a later meeting (carried_from_item_id) and can spawn a task (tasks.meeting_item_id)."
+    gotchas: "origin_meeting_id and carried_from_item_id both self/cross-reference meetings and meeting_items to support 'carry open item to next meeting' workflows — do not assume carried items always share the same meeting."
+    relatedTables:
+      - meetings
+      - meeting_categories
+      - people
+      - tasks
+      - meeting_item_documents
+
+  - name: meeting_templates
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Company-level (no project_id by design, matching Procore) reusable meeting template. Everyone authenticated can read; only admins write."
+    relatedTables:
+      - meeting_template_categories
+      - meetings
+
+  - name: meeting_template_categories
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Agenda section headers within a meeting_template, mirrors meeting_categories."
+    relatedTables:
+      - meeting_templates
+      - meeting_template_items
+
+  - name: meeting_template_items
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pre-defined agenda line items within a meeting_template_category, mirrors meeting_items minus assignment/status fields."
+    relatedTables:
+      - meeting_template_categories
+
+  - name: meeting_documents
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pattern C attachment junction: links document_metadata records (generic uploads, not the transcript) to a meeting."
+    relatedTables:
+      - meetings
+      - document_metadata
+
+  - name: meeting_item_documents
+    db: MAIN
+    domain: meetings
+    owner: core
+    status: live
+    purpose: "Pattern C attachment junction: links document_metadata records to an individual meeting_item."
+    relatedTables:
+      - meeting_items
+      - document_metadata
 
   # ─── Chat ────────────────────────────────────────────────
 
@@ -3250,18 +3446,40 @@ tables:
   - name: training_docs
     db: MAIN
     domain: support
-    owner: unknown
-    status: dormant
-    purpose: "Training document records present in MAIN. No code references found during AAI-732 DB inventory drift repair."
+    owner: core
+    status: live
+    purpose: "User-facing training/help articles (one row per task). Powers /training-docs admin UI, /knowledge/app/* viewer, and the publish pipeline to alleato-os-docs. tool_category/tool_module/task_key group by feature; status (planned→draft→in_review→approved→published→archived) tracks writing; qa_status (not_tested|passing|failing|needs_update) tracks QA. Tool grouping also mirrored in metadata.appToolCategory for back-compat."
     relatedTables:
+      - training_doc_steps
+      - training_doc_assets
+      - training_doc_relations
+
+  - name: training_doc_steps
+    db: MAIN
+    domain: support
+    owner: core
+    status: live
+    purpose: "Ordered steps for a training_doc (instruction_markdown, expected_result, action_metadata, source_url). QA-ready; produced by the AI step generator and the Playwright tutorial recorder (scripts/tutorials/)."
+    relatedTables:
+      - training_docs
       - training_doc_assets
 
   - name: training_doc_assets
     db: MAIN
     domain: support
-    owner: unknown
-    status: dormant
-    purpose: "Assets attached to training_docs. No code references found during AAI-732 DB inventory drift repair."
+    owner: core
+    status: live
+    purpose: "Screenshots/images/video attached to a training_doc (asset_type: screenshot|image|video), stored in the documents bucket. Rendered into published MDX."
+    relatedTables:
+      - training_docs
+      - training_doc_steps
+
+  - name: training_doc_relations
+    db: MAIN
+    domain: support
+    owner: core
+    status: live
+    purpose: "Links between training_docs for the training map: relation_type related|prerequisite|next, source_doc_id→target_doc_id. Added 2026-06-30 to let docs link related training. Admin-only RLS."
     relatedTables:
       - training_docs
 
@@ -3566,7 +3784,7 @@ tables:
     owner: pipeline
     status: live-empty
     purpose: "Durable per-source lifecycle ledger tracking source item hashes through assignment, RAG indexing, signal extraction, project intelligence, routing, and terminal states."
-    gotchas: "This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecycle rows in RAG, not PM APP."
+    gotchas: "This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecycle rows in RAG, not PM APP. Terminal status `intentionally_excluded` (added 2026-06-30) marks documents the pipeline deliberately does NOT embed (interview-title meetings, sub-minimum low-content docs) — it is NOT a failure. Never count `intentionally_excluded` (or the historical `failed_permanent` rows carrying error_code `interview_title_excluded`/`skipped_low_content`) as a pipeline failure in health/alerting; only real `failed_retryable`/`failed_permanent` outcomes are failures. Status CHECK constraint enumerates allowed values."
     relatedTables:
       - rag_document_metadata
       - document_chunks
@@ -4228,3 +4446,42 @@ tables:
       - subcontractor_invoice_audit_log
       - permission_audit_log
       - acumatica_outbound_audit_logs
+
+  # ─── Inventory Drift Catch-Up: pre-existing tables undocumented before this
+  # commit (found while regenerating TABLE-LIST.md for the meetings tool
+  # migration; not created by this change) ─────────────────────────────────
+
+  - name: app_page_role_access_policies
+    db: MAIN
+    domain: permissions
+    owner: core
+    status: live
+    purpose: "Admin-managed project-page role access policy. Presence of a route row makes the route policy explicit; child rows define allowed permission templates."
+    relatedTables:
+      - app_page_role_access_policy_templates
+
+  - name: app_page_role_access_policy_templates
+    db: MAIN
+    domain: permissions
+    owner: core
+    status: live
+    purpose: "Allowed permission templates for an explicit page-role access policy."
+    relatedTables:
+      - app_page_role_access_policies
+
+  - name: people_junk_backup
+    db: MAIN
+    domain: directory
+    owner: core
+    status: dormant
+    purpose: "Backup of orphaned auto-created people/contact rows deleted during the auto-people-contacts trigger retirement (2026-06-30). Retained for recovery only."
+    relatedTables:
+      - people
+
+  - name: user_phone_links
+    db: RAG
+    domain: unknown
+    status: dormant
+    owner: unknown
+    purpose: "TODO: Document this table. Discovered as pre-existing schema drift while regenerating TABLE-LIST.md; not created or touched by the meetings tool migration."
+    relatedTables: []

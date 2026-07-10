@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, Check, Sparkles } from "lucide-react";
@@ -26,19 +25,18 @@ import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 
 import type {
-  InboxContentType,
   InboxItem,
   InboxProject,
 } from "@/features/assignment-inbox/load-inbox-items";
 import {
   CONTENT_TYPE_META,
-  CONTENT_TYPE_ORDER,
   INBOX_COLUMNS,
   INBOX_DEFAULT_VISIBLE_COLUMNS,
   buildInboxFilters,
   confidenceStatus,
   formatConfidence,
 } from "@/features/assignment-inbox/assignment-inbox-table-config";
+import { AssignmentInboxRulesPanel } from "@/features/assignment-inbox/assignment-inbox-rules-panel";
 
 interface AssignmentInboxClientProps {
   initialItems: InboxItem[];
@@ -61,7 +59,7 @@ export function AssignmentInboxClient({
   const pathname = usePathname() ?? "";
   const router = useRouter();
 
-  const activeTab = (searchParams?.get("tab") ?? "") as InboxContentType | "";
+  const activeSection = searchParams?.get("section") === "rules" ? "rules" : "queue";
 
   const [items, setItems] = useState<InboxItem[]>(initialItems);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -171,30 +169,21 @@ export function AssignmentInboxClient({
     [items, assignedKeys],
   );
 
-  const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const item of visibleItems) {
-      counts[item.contentType] = (counts[item.contentType] ?? 0) + 1;
-    }
-    return counts;
-  }, [visibleItems]);
-
   const tabs = useMemo(
     () => [
       {
-        label: `All (${visibleItems.length.toLocaleString()})`,
+        label: "Needs project assignment",
         href: pathname,
-        isActive: !activeTab,
+        count: visibleItems.length,
+        isActive: activeSection === "queue",
       },
-      ...CONTENT_TYPE_ORDER.filter((type) => (tabCounts[type] ?? 0) > 0).map(
-        (type) => ({
-          label: `${CONTENT_TYPE_META[type].plural} (${(tabCounts[type] ?? 0).toLocaleString()})`,
-          href: `${pathname}?tab=${type}`,
-          isActive: activeTab === type,
-        }),
-      ),
+      {
+        label: "Attribution rules",
+        href: `${pathname}?section=rules`,
+        isActive: activeSection === "rules",
+      },
     ],
-    [visibleItems.length, tabCounts, activeTab, pathname],
+    [visibleItems.length, activeSection, pathname],
   );
 
   const filters = useMemo(() => buildInboxFilters(projects), [projects]);
@@ -231,9 +220,7 @@ export function AssignmentInboxClient({
   const af = tableState.activeFilters;
 
   const filteredItems = useMemo(() => {
-    let result = activeTab
-      ? visibleItems.filter((item) => item.contentType === activeTab)
-      : visibleItems;
+    let result = visibleItems;
 
     const typeFilter = af.type;
     if (Array.isArray(typeFilter) && typeFilter.length > 0) {
@@ -272,7 +259,7 @@ export function AssignmentInboxClient({
     }
 
     return result;
-  }, [visibleItems, activeTab, af, tableState.debouncedSearch]);
+  }, [visibleItems, af, tableState.debouncedSearch]);
 
   const sortedItems = useMemo(() => {
     const dir = tableState.sortDirection === "asc" ? 1 : -1;
@@ -550,13 +537,17 @@ export function AssignmentInboxClient({
     handleManualAssign,
   ]);
 
+  if (activeSection === "rules") {
+    return <AssignmentInboxRulesPanel active tabs={tabs} />;
+  }
+
   return (
     <UnifiedTablePage<InboxItem>
       header={{
-        title: "Assignment Inbox",
+        title: "Project Assignment",
         description: `${totalUnassigned.toLocaleString()} unassigned ${
           totalUnassigned === 1 ? "item" : "items"
-        } (${items.length.toLocaleString()} loaded) — meetings, emails, Teams messages, and documents. Accept the AI suggestion or pick a project; the system learns from every choice.`,
+        } (${items.length.toLocaleString()} loaded). Assign meetings, emails, Teams messages, and documents to the right project, then use the rules tab to inspect the logic shaping future matches.`,
       }}
       tabs={tabs}
       layout={{ fullBleedTable: true }}
@@ -638,8 +629,7 @@ export function AssignmentInboxClient({
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered:
           !!tableState.debouncedSearch ||
-          Object.keys(af).length > 0 ||
-          !!activeTab,
+          Object.keys(af).length > 0,
       }}
       pagination={{
         page: tableState.page,

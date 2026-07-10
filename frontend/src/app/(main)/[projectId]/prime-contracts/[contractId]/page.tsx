@@ -82,8 +82,10 @@ import type {
   OwnerInvoiceSummary,
   Payment,
   PrimeContractCO,
+  RawPrimeContractCoRow,
   VerticalMarkup,
 } from "./types";
+import { mapPrimeContractChangeOrders } from "./types";
 
 // #region Types
 
@@ -403,15 +405,17 @@ export default function ProjectContractDetailPage() {
         const ccoResponse = await fetchWithTransientRouteRetry(
           `/api/projects/${projectId}/prime-contract-change-orders`,
         );
-        const payload: { data?: PrimeContractCO[] } | PrimeContractCO[] =
-          ccoResponse.ok ? await ccoResponse.json() : [];
-        const ccos: PrimeContractCO[] = Array.isArray(payload)
+        const payload:
+          | { data?: RawPrimeContractCoRow[] }
+          | RawPrimeContractCoRow[] = ccoResponse.ok ? await ccoResponse.json() : [];
+        const rawRows: RawPrimeContractCoRow[] = Array.isArray(payload)
           ? payload
           : payload.data ?? [];
-        // Keep the Change Orders tab scoped to actual change orders; PCOs render in the dedicated section below.
-        setChangeOrders(
-          ccos.filter((co) => String(co.contract_id ?? "") === String(contractId)),
-        );
+        // Scope to this prime contract via `prime_contract_id` (the canonical FK set by
+        // both manual creation and PCO promotion). Filtering on the legacy `contract_id`
+        // dropped promoted PCCOs, which only carry `prime_contract_id`. The mapper also
+        // normalizes API column names (pcco_number/total_amount) to the tab's shape.
+        setChangeOrders(mapPrimeContractChangeOrders(rawRows, String(contractId)));
       } catch (err) {
         console.error("Failed to load change orders:", err);
         toast.error("Failed to load change orders. Try refreshing the page.");
@@ -1244,6 +1248,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
+            changeOrders={changeOrders}
             ownerInvoices={ownerInvoices} paymentsLoading={paymentsLoading} ownerInvoicesLoading={ownerInvoicesLoading}
             onDeleteInvoice={handleDeleteInvoice} formatCurrency={formatCurrency}
           />

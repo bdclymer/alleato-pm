@@ -1,6 +1,6 @@
-name: Codex Fixable Frontend Bug
-description: Request a maintainer-reviewed Codex fix attempt for a constrained frontend bug.
-title: "[Codex Fix]: "
+name: Autofix Frontend Bug
+description: Request an automated fix attempt (Codex or Claude Code) for a constrained frontend bug.
+title: "[Autofix]: "
 labels:
   - bug
   - area:frontend
@@ -10,7 +10,9 @@ body:
       value: |
         Use this form only for focused frontend bugs that can be validated by CI.
 
-        A maintainer must add the `codex:fix` label before automation starts.
+        Automation starts when a maintainer (or the triage bot) adds the `autofix` label
+        (engine chosen by the `AUTOFIX_ENGINE` repo variable), or an explicit
+        `codex:fix` / `claude:fix` label.
   - type: dropdown
     id: automation_scope
     attributes:
@@ -89,7 +91,7 @@ body:
       options:
         - label: This issue is frontend-only and does not require schema changes, secrets, or production access.
           required: true
-        - label: I understand Codex will open a draft PR only if fixed validation passes.
+        - label: I understand the agent will open a PR (auto-reviewed and auto-merged when checks pass) only if fixed validation passes.
           required: true
-        - label: I understand Codex will comment with blockers instead of forcing a bad PR.
+        - label: I understand the agent will comment with blockers instead of forcing a bad PR.
           required: true

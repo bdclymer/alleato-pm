@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  normalizeSiteManagementChecklist,
   serializeSiteManagementChecklist,
   type SiteManagementChecklistState,
 } from "@/lib/daily-log/site-management-checklist";
@@ -67,6 +68,10 @@ export type DailyLogNoteInput = {
   description: string;
   issueFlag?: boolean;
 };
+
+function maybeNotFound(error: { code?: string; message: string } | null) {
+  return !error || error.code === "PGRST116";
+}
 
 /** Normalizes weather payloads into a JSON-safe shape accepted by Supabase. */
 function normalizeWeatherConditions(
@@ -157,7 +162,6 @@ export async function saveDailyLogWithCoreSections(params: {
   logDate: string;
   status: DailyLogStatus;
   generalNotes?: string;
-  siteManagementChecklist?: SiteManagementChecklistState;
   weather: DailyLogWeatherInput[];
   manpower: DailyLogManpowerInput[];
   equipment: DailyLogEquipmentInput[];
@@ -205,9 +209,6 @@ export async function saveDailyLogWithCoreSections(params: {
     general_notes: cleanString(params.generalNotes),
     weather_conditions: weatherSummary || null,
     updated_at: new Date().toISOString(),
-    site_management_checklist: serializeSiteManagementChecklist(
-      params.siteManagementChecklist ?? {},
-    ),
   };
 
   const { data: dailyLog, error: logError } = await supabase
@@ -307,6 +308,115 @@ export async function saveDailyLogWithCoreSections(params: {
   revalidatePath(`/${params.projectId}/daily-log/new`);
   revalidatePath(`/${params.projectId}/daily-log/${dailyLog.id}/edit`);
   return { success: true, data: dailyLog } as const;
+}
+
+export async function getSiteLeadChecklistForDate(params: {
+  projectId: number;
+  logDate: string;
+}) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("daily_logs")
+    .select("id, status, site_management_checklist")
+    .eq("project_id", params.projectId)
+    .eq("log_date", params.logDate)
+    .maybeSingle();
+
+  if (error && !maybeNotFound(error)) {
+    return { error: `Site lead checklist could not be loaded: ${error.message}` };
+  }
+
+  return {
+    success: true,
+    data: {
+      dailyLogId: data?.id ?? null,
+      status: (data?.status as DailyLogStatus | null) ?? null,
+      checklist: normalizeSiteManagementChecklist(data?.site_management_checklist),
+    },
+  } as const;
+}
+
+export async function saveSiteLeadChecklistForDate(params: {
+  projectId: number;
+  logDate: string;
+  siteManagementChecklist: SiteManagementChecklistState;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    return { error: `Could not verify checklist author: ${userError.message}` };
+  }
+
+  if (!user) {
+    return { error: "You must be signed in to save a site lead checklist." };
+  }
+
+  const serializedChecklist = serializeSiteManagementChecklist(params.siteManagementChecklist);
+  const existingResult = await supabase
+    .from("daily_logs")
+    .select("id")
+    .eq("project_id", params.projectId)
+    .eq("log_date", params.logDate)
+    .maybeSingle();
+
+  if (existingResult.error && !maybeNotFound(existingResult.error)) {
+    return { error: `Could not load the linked daily log: ${existingResult.error.message}` };
+  }
+
+  if (existingResult.data?.id) {
+    const { data, error } = await supabase
+      .from("daily_logs")
+      .update({
+        site_management_checklist: serializedChecklist,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existingResult.data.id)
+      .eq("project_id", params.projectId)
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      return {
+        error:
+          formatChecklistSchemaError(error?.message) ??
+          error?.message ??
+          "Site lead checklist was not saved.",
+      };
+    }
+
+    revalidatePath(`/${params.projectId}/daily-log`);
+    revalidatePath(`/${params.projectId}/daily-log/site-lead-checklist`);
+    return { success: true, data } as const;
+  }
+
+  const { data, error } = await supabase
+    .from("daily_logs")
+    .insert({
+      project_id: params.projectId,
+      log_date: params.logDate,
+      created_by: user.id,
+      site_management_checklist: serializedChecklist,
+      updated_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return {
+      error:
+        formatChecklistSchemaError(error?.message) ??
+        error?.message ??
+        "Site lead checklist was not saved.",
+    };
+  }
+
+  revalidatePath(`/${params.projectId}/daily-log`);
+  revalidatePath(`/${params.projectId}/daily-log/site-lead-checklist`);
+  return { success: true, data } as const;
 }
 
 export async function createDailyLogManpower(params: {
@@ -447,7 +557,6 @@ export async function updateDailyLogWithCoreSections(
     logDate: string;
     status: DailyLogStatus;
     generalNotes?: string;
-    siteManagementChecklist?: SiteManagementChecklistState;
     weather: DailyLogWeatherInput[];
     manpower: DailyLogManpowerInput[];
     equipment: DailyLogEquipmentInput[];
@@ -485,9 +594,6 @@ export async function updateDailyLogWithCoreSections(
     general_notes: cleanString(params.generalNotes),
     weather_conditions: weatherSummary || null,
     updated_at: new Date().toISOString(),
-    site_management_checklist: serializeSiteManagementChecklist(
-      params.siteManagementChecklist ?? {},
-    ),
   };
 
   const { data: dailyLog, error: logError } = await supabase

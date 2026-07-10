@@ -47,7 +47,7 @@ export function CommentThread({
   return (
     <div className={cn("space-y-4", className)}>
       {comments.length > 0 && (
-        <ul className="space-y-4">
+        <ul className="divide-y divide-border/60">
           {comments.map((comment) => (
             <CommentItem key={comment.id} comment={comment} />
           ))}
@@ -63,7 +63,7 @@ export function CommentThread({
               onChange={(e) => setBody(e.target.value)}
               placeholder={placeholder}
               rows={2}
-              className="resize-none text-sm"
+              className="resize-none border-border/70 text-sm shadow-none"
             />
             {body.trim() && (
               <div className="flex justify-end gap-2">
@@ -90,7 +90,7 @@ export function CommentThread({
 
 function CommentItem({ comment }: { comment: Comment }) {
   return (
-    <li className="flex gap-3">
+    <li className="flex gap-3 py-4 first:pt-0 last:pb-0">
       <Avatar initials={comment.initials} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
@@ -105,7 +105,7 @@ function CommentItem({ comment }: { comment: Comment }) {
 
 function Avatar({ initials }: { initials: string }) {
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
       {initials}
     </div>
   );

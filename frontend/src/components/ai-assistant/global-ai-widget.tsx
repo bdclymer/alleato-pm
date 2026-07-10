@@ -22,28 +22,12 @@ import {
   type AiWidgetNotificationDraft,
 } from "@/lib/collaboration/ai-widget-notifications";
 import { shouldInterruptAiWidget } from "@/lib/collaboration/ai-notification-routing";
+import { useDeferredMount } from "@/hooks/use-deferred-mount";
+import { shouldHideGlobalAiWidgetForRoute } from "@/lib/performance/runtime-gates";
 import { cn } from "@/lib/utils";
 import { WidgetAiChat, type WidgetAiChatView } from "./widget-ai-chat";
 
 const AI_WIDGET_WELCOME_STORAGE_KEY = "alleato-ai-widget-welcome-seen-v1";
-
-/**
- * Routes where the floating widget is hidden: auth screens, and surfaces that
- * already host the full assistant or need the whole viewport.
- */
-function shouldHideForRoute(pathname: string) {
-  return (
-    pathname.startsWith("/auth") ||
-    pathname === "/login" ||
-    pathname === "/signup" ||
-    pathname === "/ai" ||
-    pathname.startsWith("/ai/") ||
-    pathname.startsWith("/ai-assistant") ||
-    pathname.startsWith("/ai-avatar") ||
-    pathname.startsWith("/team-chat") ||
-    /\/drawings\/viewer\//.test(pathname)
-  );
-}
 
 function focusFirstPanelElement(panel: HTMLDivElement) {
   const focusable = panel.querySelector<HTMLElement>(
@@ -75,12 +59,15 @@ export function GlobalAiWidget() {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const openRef = React.useRef(open);
   const pathname = usePathname() ?? "/";
-  const hidden = shouldHideForRoute(pathname);
+  const notificationsReady = useDeferredMount(12_000);
+  const hidden = shouldHideGlobalAiWidgetForRoute(pathname);
   const {
     notifications,
     error: notificationError,
     markAsRead,
-  } = useCollaborationNotifications({ enabled: !hidden });
+  } = useCollaborationNotifications({
+    enabled: !hidden && notificationsReady,
+  });
   const unreadAiNotifications = React.useMemo(
     () => getUnreadAiWidgetNotifications(notifications),
     [notifications],
@@ -291,7 +278,7 @@ export function GlobalAiWidget() {
           aria-label="Alleato AI"
           onKeyDown={handlePanelKeyDown}
           className={cn(
-            "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
+            "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl border border-border bg-background",
             "transition-[opacity,transform] duration-200 ease-out",
             compactPanel && !expanded && "global-ai-widget-panel-compact",
             expanded && "global-ai-widget-panel-expanded",

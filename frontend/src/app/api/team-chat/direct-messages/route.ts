@@ -1,5 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { fetchAllComments } from "@/lib/comments/all-comments";
+import { buildCommentInboxChannel } from "@/lib/team-chat/comment-dm";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -64,67 +66,96 @@ export const GET = withApiGuardrails("team-chat/direct-messages#GET", async () =
     return apiErrorResponse(error);
   }
 
-  if (!channels || channels.length === 0) {
-    return NextResponse.json([]);
-  }
+  const dmChannels = channels ?? [];
+  let dms: Array<{
+    id: string;
+    name: string;
+    topic: string;
+    team: string;
+    section: "dm";
+    unread: number;
+    memberCount: number;
+    preview: string;
+    lastMessageAt: string | null;
+    deletable: false;
+    isDm: true;
+    dmPartnerId: string;
+    dmPartnerName: string;
+  }> = [];
 
-  // Resolve partner display names from user_profiles.
-  const partnerIds = channels.flatMap((ch) => {
-    const match = ch.topic.match(/^__dm__:(.+),(.+)$/);
-    if (!match) return [];
-    return [match[1], match[2]].filter((id) => id !== userId);
-  });
+  if (dmChannels.length > 0) {
+    // Resolve partner display names from user_profiles.
+    const partnerIds = dmChannels.flatMap((ch) => {
+      const match = ch.topic.match(/^__dm__:(.+),(.+)$/);
+      if (!match) return [];
+      return [match[1], match[2]].filter((id) => id !== userId);
+    });
 
-  const uniquePartnerIds = [...new Set(partnerIds)];
-  const { data: partnerProfiles } = await supabase
-    .from("user_profiles")
-    .select("id, full_name, email")
-    .in("id", uniquePartnerIds);
+    const uniquePartnerIds = [...new Set(partnerIds)];
+    const { data: partnerProfiles } = await supabase
+      .from("user_profiles")
+      .select("id, full_name, email")
+      .in("id", uniquePartnerIds);
 
-  const profileMap = new Map(
-    (partnerProfiles ?? []).map((p) => [p.id, p.full_name ?? p.email ?? "Unknown"]),
-  );
+    const profileMap = new Map(
+      (partnerProfiles ?? []).map((p) => [p.id, p.full_name ?? p.email ?? "Unknown"]),
+    );
 
-  // Fetch last message preview for each DM.
-  const channelIds = channels.map((ch) => ch.id);
-  const { data: lastMessages } = await supabase
-    .from("team_chat_messages")
-    .select("channel_id, content, created_at")
-    .in("channel_id", channelIds)
-    .order("created_at", { ascending: false });
+    // Fetch last message preview for each DM.
+    const channelIds = dmChannels.map((ch) => ch.id);
+    const { data: lastMessages } = await supabase
+      .from("team_chat_messages")
+      .select("channel_id, content, created_at")
+      .in("channel_id", channelIds)
+      .order("created_at", { ascending: false });
 
-  const latestByChannel = new Map<string, { content: string; created_at: string }>();
-  for (const msg of lastMessages ?? []) {
-    if (!latestByChannel.has(msg.channel_id)) {
-      latestByChannel.set(msg.channel_id, { content: msg.content, created_at: msg.created_at });
+    const latestByChannel = new Map<string, { content: string; created_at: string }>();
+    for (const msg of lastMessages ?? []) {
+      if (!latestByChannel.has(msg.channel_id)) {
+        latestByChannel.set(msg.channel_id, {
+          content: msg.content,
+          created_at: msg.created_at,
+        });
+      }
     }
+
+    dms = dmChannels.map((ch) => {
+      const match = ch.topic.match(/^__dm__:(.+),(.+)$/);
+      const partnerId = match
+        ? [match[1], match[2]].find((id) => id !== userId) ?? ""
+        : "";
+      const latest = latestByChannel.get(ch.id);
+
+      return {
+        id: ch.id,
+        name: profileMap.get(partnerId) ?? ch.name,
+        topic: ch.topic,
+        team: "Direct Messages",
+        section: "dm" as const,
+        unread: 0,
+        memberCount: 2,
+        preview: latest?.content ?? "No messages yet.",
+        lastMessageAt: latest?.created_at ?? null,
+        deletable: false,
+        isDm: true,
+        dmPartnerId: partnerId,
+        dmPartnerName: profileMap.get(partnerId) ?? ch.name,
+      };
+    });
   }
 
-  const dms = channels.map((ch) => {
-    const match = ch.topic.match(/^__dm__:(.+),(.+)$/);
-    const partnerId = match
-      ? [match[1], match[2]].find((id) => id !== userId) ?? ""
-      : "";
-    const latest = latestByChannel.get(ch.id);
+  let commentInbox: ReturnType<typeof buildCommentInboxChannel>;
+  try {
+    const comments = await fetchAllComments();
+    commentInbox = buildCommentInboxChannel(comments);
+  } catch (error) {
+    console.error("[team-chat/direct-messages] comments inbox unavailable", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    commentInbox = buildCommentInboxChannel([], { unavailable: true });
+  }
 
-    return {
-      id: ch.id,
-      name: profileMap.get(partnerId) ?? ch.name,
-      topic: ch.topic,
-      team: "Direct Messages",
-      section: "dm" as const,
-      unread: 0,
-      memberCount: 2,
-      preview: latest?.content ?? "No messages yet.",
-      lastMessageAt: latest?.created_at ?? null,
-      deletable: false,
-      isDm: true,
-      dmPartnerId: partnerId,
-      dmPartnerName: profileMap.get(partnerId) ?? ch.name,
-    };
-  });
-
-  return NextResponse.json(dms);
+  return NextResponse.json([commentInbox, ...dms]);
 });
 
 // POST: open (or create) a DM channel with a target user.

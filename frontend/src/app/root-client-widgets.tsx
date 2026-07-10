@@ -2,7 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
+import { usePathname } from "next/navigation";
 import { useDeferredMount } from "@/hooks/use-deferred-mount";
+import { shouldForceCollaborationRuntime } from "@/lib/performance/runtime-gates";
+import { useCollaborationRuntimeStore } from "@/lib/stores/collaboration-runtime-store";
 
 const AskAlleatoRoot = dynamic(
   () => import("@/components/ask-alleato/AskAlleatoRoot").then((mod) => mod.AskAlleatoRoot),
@@ -48,19 +51,22 @@ const AppErrorTelemetryProvider = dynamic(
 const ENABLE_DEV_BRIDGE = process.env.NEXT_PUBLIC_ENABLE_DEV_BRIDGE === "true";
 
 export function RootClientWidgets() {
+  const pathname = usePathname();
   const shouldMountDeferredWidgets = useDeferredMount(6_000);
+  const userEnabledCollaboration = useCollaborationRuntimeStore(
+    (state) => state.enabled,
+  );
+  const shouldMountCollaborationWidgets =
+    userEnabledCollaboration ||
+    (shouldMountDeferredWidgets && shouldForceCollaborationRuntime(pathname));
 
   return (
     <Suspense fallback={null}>
       <AppErrorTelemetryProvider />
       {shouldMountDeferredWidgets && <AskAlleatoRoot />}
       {shouldMountDeferredWidgets && <GlobalAiWidget />}
-      {shouldMountDeferredWidgets && (
-        <>
-          <AdminFeedbackWidget />
-          <VeltGlobalLayer />
-        </>
-      )}
+      {shouldMountDeferredWidgets && <AdminFeedbackWidget />}
+      {shouldMountCollaborationWidgets && <VeltGlobalLayer />}
       {shouldMountDeferredWidgets && process.env.NODE_ENV === "development" && (
         <>
           <AgentationThemeSync />

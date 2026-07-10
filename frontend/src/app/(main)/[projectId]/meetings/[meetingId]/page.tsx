@@ -1,11 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { FormattedTranscript } from "../formatted-transcript";
 import { parseTranscriptSections } from "./parse-transcript-sections";
-import { MarkdownSummary } from "./markdown-summary";
-import { DigestSection } from "./digest-section";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { MeetingDetailContent } from "@/components/meetings/meeting-detail-content";
 import { collectSegmentItems } from "@/lib/meetings/collect-segment-items";
+import { loadCuratedMeetingRisks } from "@/lib/meetings/server";
 import type { Database } from "@/types/database.types";
 
 type MeetingSegment =
@@ -26,13 +25,36 @@ export default async function ProjectMeetingDetailPage({
   params,
 }: PageProps) {
   const { projectId, meetingId } = await params;
-  const { project, numericProjectId, supabase } =
+  const { numericProjectId, supabase } =
     await getProjectInfo(projectId);
+
+  // Transcript-first detail. The Meetings tool's structured rows use UUID
+  // ids; historical links and backfilled transcripts use document_metadata
+  // TEXT ids. Resolve either shape to the transcript document — planning
+  // meetings that have no transcript yet get the agenda experience instead.
+  const MEETINGS_UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let documentId = meetingId;
+  if (MEETINGS_UUID_RE.test(meetingId)) {
+    const { data: meetingRow } = await supabase
+      .from("meetings")
+      .select("id, transcript_document_id, deleted_at")
+      .eq("id", meetingId)
+      .eq("project_id", numericProjectId)
+      .maybeSingle();
+    if (!meetingRow || meetingRow.deleted_at) {
+      notFound();
+    }
+    if (!meetingRow.transcript_document_id) {
+      redirect(`/${projectId}/meetings/${meetingId}/agenda`);
+    }
+    documentId = meetingRow.transcript_document_id;
+  }
 
   const { data: meetingData, error } = await supabase
     .from("document_metadata")
     .select("*")
-    .eq("id", meetingId)
+    .eq("id", documentId)
     .eq("project_id", numericProjectId)
     .is("deleted_at", null)
     .single();
@@ -46,7 +68,7 @@ export default async function ProjectMeetingDetailPage({
   const { data: segmentsData } = await supabase
     .from("meeting_segments")
     .select("*")
-    .eq("metadata_id", meetingId)
+    .eq("metadata_id", documentId)
     .order("segment_index", { ascending: true });
 
   const segments = (segmentsData || []) as MeetingSegment[];
@@ -58,7 +80,7 @@ export default async function ProjectMeetingDetailPage({
     .eq("project_id", numericProjectId)
     .eq("type", "meeting")
     .is("deleted_at", null)
-    .neq("id", meetingId)
+    .neq("id", documentId)
     .order("date", { ascending: false })
     .limit(5);
 
@@ -70,6 +92,27 @@ export default async function ProjectMeetingDetailPage({
     decisions: allDecisions,
     opportunities: allOpportunities,
   } = collectSegmentItems(segments);
+  const curatedRisks = await loadCuratedMeetingRisks(supabase, documentId).catch(
+    (error) => {
+      console.warn(JSON.stringify({
+        event: "meeting_curated_risks_load_failed",
+        projectId,
+        meetingId,
+        documentId,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      return [];
+    },
+  );
+  const riskItems = curatedRisks.length
+    ? curatedRisks
+    : allRisks.map((risk, index) => ({
+        id: `${documentId}:segment-risk:${index}`,
+        text: risk,
+        whyItMatters: null,
+        confidence: null,
+        source: "segment_fallback" as const,
+      }));
 
   let transcriptContent = null;
   let transcriptLoadFailed = false;
@@ -121,25 +164,13 @@ export default async function ProjectMeetingDetailPage({
       parsedSections={parsedSections}
       participantsList={participantsList}
       allTasks={allTasks}
-      allRisks={allRisks}
+      riskItems={riskItems}
       allDecisions={allDecisions}
       allOpportunities={allOpportunities}
       transcriptContent={transcriptContent}
       transcriptLoadFailed={transcriptLoadFailed && !transcriptContent}
-      backHref={`/${projectId}/meetings`}
-      backLabel={
-        project?.name ? `${project.name} · Meetings` : "Meetings"
-      }
       relatedMeetings={relatedMeetings}
       relatedMeetingsBaseHref={`/${projectId}/meetings`}
-      digestSlot={
-        <DigestSection projectId={projectId} meetingId={meetingId} />
-      }
-      summarySlot={
-        parsedSections?.summary ? (
-          <MarkdownSummary content={parsedSections.summary} />
-        ) : undefined
-      }
       transcriptSlot={
         parsedSections?.transcript ? (
           <FormattedTranscript
@@ -148,6 +179,7 @@ export default async function ProjectMeetingDetailPage({
             meetingId={meeting.id}
             meetingTitle={meeting.title}
             projectId={meeting.project_id ?? numericProjectId ?? null}
+            showHeading={false}
           />
         ) : undefined
       }

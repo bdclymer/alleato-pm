@@ -19,6 +19,7 @@ from src.services.agents.alleato_ai_tools import (
 )
 from src.services.agents.alleato_ai_tools.subagents import ALL_SUBAGENTS
 from src.services.agents.runtime_common import (
+    app_db_degraded_banner_if_unreachable as _app_db_degraded_banner_if_unreachable,
     extract_agent_text as _extract_agent_text,
     resolve_deep_agents_model as _resolve_deep_agents_model,
 )
@@ -184,12 +185,17 @@ def run_research_agent(
     request: ResearchRequest,
     *,
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> ResearchResponse:
     """Run the Alleato research Deep Agent and return a typed response."""
     started = time.perf_counter()
     skill_roots = _skill_roots()
     loaded_skills = _skills_loaded(skill_roots)
+    # Pre-flight: if the app DB is unreachable, every structured PM tool
+    # (portfolio_overview, recent_activity, resolvers) will silently fail. Detect
+    # it up front so the answer carries a loud degraded-mode banner instead of a
+    # confident "no project data" built with none of the structured evidence.
+    db_degraded_banner = _app_db_degraded_banner_if_unreachable(source="research_agent")
     try:
         if create_agent is None:
             from deepagents import create_deep_agent as create_agent
@@ -235,22 +241,32 @@ def run_research_agent(
         if not answer:
             raise RuntimeError("Deep Agents research runtime returned an empty response.")
 
-        return ResearchResponse(
-            answer=answer,
-            mode="deep_agents",
-            sources=_extract_sources(answer),
-            toolTrace=[
-                ResearchTraceItem(
-                    agent=ORCHESTRATOR_NAME,
-                    tool="deepagents_research_runtime",
-                    status="success",
-                    durationMs=max(0, int((time.perf_counter() - started) * 1000)),
-                    detail=(
+        if db_degraded_banner:
+            answer = db_degraded_banner + "\n" + answer
+
+        trace: list[ResearchTraceItem] = [
+            ResearchTraceItem(
+                agent=ORCHESTRATOR_NAME,
+                tool="deepagents_research_runtime",
+                status="degraded" if db_degraded_banner else "success",
+                durationMs=max(0, int((time.perf_counter() - started) * 1000)),
+                detail=(
+                    "App database unreachable — structured PM tools were degraded; "
+                    "answer carries a degraded-mode banner."
+                    if db_degraded_banner
+                    else (
                         "Deep Agents research runtime produced an answer"
                         + (" with durable memory." if middleware else ".")
-                    ),
-                )
-            ],
+                    )
+                ),
+            )
+        ]
+
+        return ResearchResponse(
+            answer=answer,
+            mode="deep_agents_degraded" if db_degraded_banner else "deep_agents",
+            sources=_extract_sources(answer),
+            toolTrace=trace,
             skillsLoaded=loaded_skills,
             orchestrator=ORCHESTRATOR_NAME,
         )

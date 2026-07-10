@@ -222,9 +222,7 @@ These are set automatically by Vercel — do not set them manually.
 | `GRAPH_SYNC_TEAMS` | No | Render | Enable Teams message sync | Default `false` |
 | `GRAPH_SYNC_ONEDRIVE` | No | Render | Enable OneDrive file sync | Default `false` |
 | `GRAPH_SYNC_TEAMS_DM` | No | Render | Enable Teams DM sync | Known limitation: 10 cross-tenant chats permanently 403 |
-| `GRAPH_SYNC_INTERVAL_MINUTES` | No | Render | Sync interval override | Render cron handles scheduling — this is for inline scheduler |
-| `GRAPH_SYNC_RUN_EMBEDDING_INLINE` | No | Render | Run embedding step at end of each sync | Default `true` |
-| `GRAPH_SYNC_RUN_COMPILER_INLINE` | No | Render | Run intelligence compiler at end of each sync | Default `true` |
+| `GRAPH_SYNC_RUN_EMBEDDING` | No | Render | Run embedding step at end of each sync | Default `true` |
 | `GRAPH_EMBEDDING_ENABLED` | No | Render | Enable embedding pipeline | |
 | `GRAPH_EMBEDDING_INTERVAL_MINUTES` | No | Render | Embedding run interval | |
 | `GRAPH_EMBEDDING_LIMIT` | No | Render | Max docs to embed per run | |
@@ -283,14 +281,7 @@ These are set automatically by Vercel — do not set them manually.
 | Variable | Required | Where Set | Purpose | Notes |
 |----------|----------|-----------|---------|-------|
 | `FIREFLIES_API_KEY` | Yes (if Fireflies enabled) | Render | Fireflies.ai API key for meeting transcripts | |
-| `FIREFLIES_SYNC_ENABLED` | No | Render | Enable Fireflies transcript sync | |
-| `FIREFLIES_SYNC_INTERVAL_MINUTES` | No | Render | Fireflies sync run interval | |
-| `FIREFLIES_SYNC_LIMIT` | No | Render | Max transcripts per sync run | |
 | `FIREFLIES_PROJECT_ASSIGN_MIN_CONFIDENCE` | No | Render | Min confidence for project assignment | |
-| `FIREFLIES_PIPELINE_BACKLOG_ENABLED` | No | Render | Enable backlog processing for Fireflies | |
-| `FIREFLIES_PIPELINE_BACKLOG_INTERVAL_MINUTES` | No | Render | Backlog run interval | |
-| `FIREFLIES_PIPELINE_BACKLOG_LIMIT` | No | Render | Max items per backlog run | |
-| `FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES` | No | Render | Age threshold to consider items stale | |
 
 ### Task Extraction
 

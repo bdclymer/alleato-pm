@@ -323,7 +323,7 @@ async function defaultSummarizeCompaction({
   const { getLanguageModel } = await import("@/lib/ai/providers");
   const result = await generateText({
     model: getLanguageModel(summaryModel ?? DEFAULT_SUMMARY_MODEL),
-    system: [
+    instructions: [
       "You summarize old AI assistant chat turns for future context.",
       "The summary is reference-only. Do not continue the conversation.",
       "Preserve decisions, file paths, commands, errors, project names, source facts, and unresolved blockers.",

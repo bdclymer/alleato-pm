@@ -1,12 +1,11 @@
 /**
- * Single source of truth for Vercel AI SDK telemetry (`experimental_telemetry`).
+ * Single source of truth for Vercel AI SDK telemetry.
  *
  * The Langfuse OTel span processor is registered in `src/instrumentation.ts`.
  * When Langfuse is configured (or Phoenix is opted in for local dev), AI SDK
  * spans — model name, token usage, tool calls, and span hierarchy — are exported
  * automatically. Pass the object returned by `aiTelemetry()` as the
- * `experimental_telemetry` option on `streamText` / `generateText` /
- * `generateObject`.
+ * `telemetry` option on `streamText` / `generateText` / `generateObject`.
  *
  * Why a helper: telemetry enablement was previously gated only on
  * `PHOENIX_TRACING`, so the installed `@langfuse/otel` packages emitted nothing
@@ -33,7 +32,7 @@ type AiTelemetryOptions = {
 };
 
 /**
- * Build the `experimental_telemetry` config for an AI SDK call.
+ * Build the `telemetry` config for an AI SDK call.
  *
  * `recordInputs`/`recordOutputs` default to enabled so prompts and completions
  * appear in Langfuse. Pass only non-sensitive metadata — anything in `metadata`

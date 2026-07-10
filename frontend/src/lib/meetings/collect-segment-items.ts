@@ -1,61 +1,10 @@
+import { dedupeSemanticText } from "./text-dedupe";
+
 interface SegmentLike {
   tasks?: unknown;
   risks?: unknown;
   decisions?: unknown;
   opportunities?: unknown;
-}
-
-const STOPWORDS = new Set([
-  "a", "an", "the", "and", "or", "but", "of", "to", "in", "on", "for", "with",
-  "at", "by", "from", "as", "is", "are", "was", "were", "be", "been", "being",
-  "may", "might", "could", "would", "should", "can", "will", "shall",
-  "that", "this", "these", "those", "it", "its",
-  "potential", "potentially", "possible", "possibly",
-  "due", "if", "not",
-]);
-
-function tokenize(value: string): Set<string> {
-  return new Set(
-    value
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, " ")
-      .split(/\s+/)
-      .filter((word) => word.length > 2 && !STOPWORDS.has(word))
-  );
-}
-
-function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 1;
-  if (a.size === 0 || b.size === 0) return 0;
-  let intersection = 0;
-  for (const word of a) {
-    if (b.has(word)) intersection += 1;
-  }
-  const union = a.size + b.size - intersection;
-  return intersection / union;
-}
-
-const SIMILARITY_THRESHOLD = 0.6;
-
-function dedupeSemantically(items: string[]): string[] {
-  const result: { text: string; tokens: Set<string> }[] = [];
-  for (const raw of items) {
-    const text = raw.trim();
-    if (!text) continue;
-    const tokens = tokenize(text);
-    const duplicate = result.find(
-      (entry) => jaccard(entry.tokens, tokens) >= SIMILARITY_THRESHOLD
-    );
-    if (duplicate) {
-      if (text.length > duplicate.text.length) {
-        duplicate.text = text;
-        duplicate.tokens = tokens;
-      }
-      continue;
-    }
-    result.push({ text, tokens });
-  }
-  return result.map((entry) => entry.text);
 }
 
 function extractText(item: unknown): string | null {
@@ -99,9 +48,9 @@ export function collectSegmentItems(
   }
 
   return {
-    tasks: dedupeSemantically(tasks),
-    risks: dedupeSemantically(risks),
-    decisions: dedupeSemantically(decisions),
-    opportunities: dedupeSemantically(opportunities),
+    tasks: dedupeSemanticText(tasks),
+    risks: dedupeSemanticText(risks),
+    decisions: dedupeSemanticText(decisions),
+    opportunities: dedupeSemanticText(opportunities),
   };
 }

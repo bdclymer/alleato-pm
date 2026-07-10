@@ -12,7 +12,7 @@ export function buildAuthConfirmUrl(
     return actionLink;
   }
 
-  return `${APP_BASE_URL}/auth/confirm?token_hash=${token}&type=${type}&next=${encodeURIComponent(next)}`;
+  return `${APP_BASE_URL}/auth/confirm?token_hash=${encodeURIComponent(token)}&type=${type}&next=${encodeURIComponent(next)}`;
 }
 
 export function buildInviteAcceptUrl(actionLink: string, email: string) {

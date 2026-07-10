@@ -18,7 +18,7 @@ interface CommentsVisibilityState {
 export const useCommentsVisibilityStore = create<CommentsVisibilityState>()(
   persist(
     (set) => ({
-      visible: true,
+      visible: false,
       toggle: () => set((state) => ({ visible: !state.visible })),
       setVisible: (visible) => set({ visible }),
     }),

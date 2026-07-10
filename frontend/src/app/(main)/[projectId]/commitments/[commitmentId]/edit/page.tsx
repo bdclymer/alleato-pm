@@ -12,8 +12,11 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { PageShell } from "@/components/layout";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
+import { ErrorState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import type { CreatePurchaseOrderInput, PurchaseOrderSovLineItem } from "@/lib/schemas/create-purchase-order-schema";
 
@@ -45,6 +48,8 @@ export default function EditCommitmentPage() {
   const commitmentId = params.commitmentId as string;
 
   const { data: rawData, isLoading } = useCommitmentDetail(commitmentId);
+  const { profile } = useCurrentUserProfile();
+  const isAdmin = profile?.isAdmin ?? false;
   const [attachments, setAttachments] = useState<CommitmentAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
 
@@ -126,6 +131,15 @@ export default function EditCommitmentPage() {
       : [];
 
     if (isPO) {
+      const rawAccountingMethod =
+        typeof r.accounting_method === "string"
+          ? r.accounting_method.toLowerCase()
+          : "amount";
+      const normalizedPurchaseOrderAccountingMethod:
+        | "amount"
+        | "unit-quantity" = rawAccountingMethod.includes("unit")
+        ? "unit-quantity"
+        : "amount";
       const companyObj = r.contract_company as
         | { id: string; name: string; license_number?: string | null }
         | null
@@ -138,6 +152,7 @@ export default function EditCommitmentPage() {
         companyLicenseNumber: companyObj?.license_number ?? "",
         status: normalizedPurchaseOrderStatus,
         executed: typeof r.executed === "boolean" ? r.executed : false,
+        accountingMethod: normalizedPurchaseOrderAccountingMethod,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
         description: typeof r.description === "string" ? r.description : undefined,
         billTo: typeof r.bill_to === "string" ? r.bill_to : undefined,
@@ -247,6 +262,13 @@ export default function EditCommitmentPage() {
 
   const detailUrl = `/${projectId}/commitments/${commitmentId}`;
   const handleCancel = () => router.push(detailUrl);
+  const normalizedStatus =
+    rawData && typeof rawData === "object" && typeof (rawData as { status?: unknown }).status === "string"
+      ? String((rawData as { status: string }).status).trim().toLowerCase()
+      : "draft";
+  // Approved commitments are locked to editors — except admins, who can always
+  // edit (matches the detail-page inline-edit and Edit-menu admin bypass).
+  const isApproved = normalizedStatus === "approved" && !isAdmin;
 
   const uploadCommitmentAttachments = async (
     targetCommitmentId: string,
@@ -376,10 +398,11 @@ export default function EditCommitmentPage() {
   if (isLoading || (isSubcontract && attachmentsLoading)) {
     return (
       <PageShell
-        variant="form"
+        variant="detailWide"
         title={title}
         onBack={handleCancel}
         backLabel="Cancel"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
       >
         <div className="space-y-6">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -393,22 +416,32 @@ export default function EditCommitmentPage() {
     );
   }
 
-  return (
-    <PageShell
-      variant="form"
-      title={title}
-      onBack={handleCancel}
-      backLabel="Cancel"
-    >
-      {isSubcontract ? (
-        <CreateSubcontractForm
-          projectId={projectId}
-          onSubmit={handleSubmitSubcontract}
-          onCancel={handleCancel}
-          initialData={subcontractData}
-          mode="edit"
+  if (isApproved) {
+    return (
+      <PageShell
+        variant="detailWide"
+        title={title}
+        onBack={handleCancel}
+        backLabel="Back"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+      >
+        <ErrorState
+          title="Approved commitments cannot be edited"
+          description="Change the commitment status back to Draft on the detail page before editing fields or line items."
         />
-      ) : (
+      </PageShell>
+    );
+  }
+
+  if (!isSubcontract) {
+    return (
+      <PageShell
+        variant="detailWide"
+        title={title}
+        onBack={handleCancel}
+        backLabel="Cancel"
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+      >
         <CreatePurchaseOrderForm
           projectId={projectId}
           onSubmit={handleSubmitPurchaseOrder}
@@ -416,7 +449,25 @@ export default function EditCommitmentPage() {
           initialData={purchaseOrderData}
           mode="edit"
         />
-      )}
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="detailWide"
+      title={title}
+      onBack={handleCancel}
+      backLabel="Cancel"
+      actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+    >
+      <CreateSubcontractForm
+        projectId={projectId}
+        onSubmit={handleSubmitSubcontract}
+        onCancel={handleCancel}
+        initialData={subcontractData}
+        mode="edit"
+      />
     </PageShell>
   );
 }

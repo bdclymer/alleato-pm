@@ -2,22 +2,27 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, CircleDollarSign, GitCommitHorizontal, HelpCircle } from "lucide-react";
+import { AlertTriangle, GitCommitHorizontal, HelpCircle } from "lucide-react";
 
-import { Button, EmptyState, SectionHeader } from "@/components/ds";
-import { KpiRow, type KpiBlockProps } from "@/components/ds/kpi";
+import { Button, EmptyState, ErrorState, SectionHeader } from "@/components/ds";
 import { InsightCardShowcase } from "@/components/ai-intelligence/insight-card-showcase";
 import {
   SourceReferenceButton,
   type SourceReferenceRecord,
 } from "@/components/ai-intelligence/source-reference-button";
-import { PageShell } from "@/components/layout";
-import { ChangeCard } from "@/features/intelligence/change-card";
+import { DetailLayout, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { DailyIngestionFeed } from "@/features/intelligence/daily-ingestion-feed";
 import {
+  DailyDeepReadCandidateReview,
+  type DailyDeepReadReviewCandidate,
+} from "@/features/intelligence/daily-deep-read-candidate-review";
+import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
+import {
   loadCurrentIntelligencePacket,
+  loadCurrentIntelligencePacketBySlug,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
+import { loadCurrentDailyExecutiveBriefPacket } from "@/lib/daily-briefs/canonical-packets";
 import type {
   ClientProjectIntelligencePacket,
   InsightCard,
@@ -149,6 +154,21 @@ type ChangeEventCandidateRow = {
   status: string;
 };
 
+type DailyDeepReadCandidateRow = Pick<
+  import("@/types/rag-database.types").Database["public"]["Tables"]["source_signal_candidates"]["Row"],
+  | "id"
+  | "signal_type"
+  | "title"
+  | "summary"
+  | "why_it_matters"
+  | "status"
+  | "confidence"
+  | "next_action"
+  | "excerpt"
+  | "extraction_json"
+  | "created_at"
+>;
+
 type ProjectReportSuggestionRow = {
   id: string;
   report_type: string;
@@ -165,7 +185,19 @@ type OperatingRecordState = {
   latestSnapshot: OperatingSnapshotRow | null;
   timelineEvents: OperatingTimelineEventRow[];
   changeEventCandidates: ChangeEventCandidateRow[];
+  dailyDeepReadCandidates: DailyDeepReadCandidateRow[];
+  dailyDeepReadCandidateError: string | null;
   reportSuggestions: ProjectReportSuggestionRow[];
+};
+
+type DashboardActionItem = {
+  key: string;
+  title: string;
+  detail?: string;
+  meta: string;
+  href: string;
+  ctaLabel: string;
+  tone: StatusTone;
 };
 
 function formatLabel(value: string | null | undefined): string {
@@ -191,6 +223,12 @@ function formatDateTime(value: string | null | undefined): string {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function parseDateMs(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
 }
 
 function formatCurrency(value: number | null | undefined): string {
@@ -259,6 +297,10 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 function moneyField(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value === "string") {
@@ -296,6 +338,31 @@ function packetSourceAliasMap(packet: ClientProjectIntelligencePacket): Map<stri
 
 function citedSourceIds(record: Record<string, unknown>): string[] {
   return (Array.isArray(record.sourceIds) ? record.sourceIds : []).map((value) => cleanUnknown(value)).filter(Boolean);
+}
+
+function candidateSourceIds(candidate: DailyDeepReadCandidateRow): string[] {
+  const metadata = asRecord(candidate.extraction_json);
+  const sourceIds = metadata.source_ids ?? metadata.sourceIds;
+  return (Array.isArray(sourceIds) ? sourceIds : []).map((value) => cleanUnknown(value)).filter(Boolean);
+}
+
+function stripCandidateCitationNoise(value: string | null | undefined): string {
+  return cleanText(value)
+    .replace(/\[[^\]]*(?:outlook|teams?|fireflies|email|transcript|AAAA|MTA)[^\]]*\]/gi, "")
+    .replace(/\b(?:outlook|teams?|fireflies|email|transcript)[A-Za-z0-9._:-]{16,}\b/gi, "")
+    .replace(/\b[A-Za-z0-9_-]{48,}\b/g, "")
+    .replace(/[\[\]]+/g, "")
+    .replace(/\s+[,:;.-]*$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function candidateDisplayText(value: string | null | undefined, maxLength = 260): string {
+  const stripped = stripCandidateCitationNoise(value);
+  if (!stripped) return "";
+  if (/^candidate:?\s*[\W_]*$/i.test(stripped)) return "";
+  if (looksLikeRawSource(stripped)) return "";
+  return summarizeText(stripped, maxLength);
 }
 
 function narrativeItemsFromUnknown(
@@ -427,6 +494,45 @@ type UntypedSupabaseReader = {
   from: (table: string) => UntypedSupabaseQuery;
 };
 
+async function loadDailyDeepReadCandidates(projectId: number): Promise<{
+  candidates: DailyDeepReadCandidateRow[];
+  error: string | null;
+}> {
+  if (!isRagDatabaseReadsEnabled()) return { candidates: [], error: null };
+
+  let currentPacketId: string;
+  try {
+    currentPacketId = (await loadCurrentDailyExecutiveBriefPacket()).id;
+  } catch (error) {
+    return {
+      candidates: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
+  const ragSupabase = createRagServiceClient();
+  const result = await ragSupabase
+    .from("source_signal_candidates")
+    .select(
+      "id, signal_type, title, summary, why_it_matters, status, confidence, next_action, excerpt, extraction_json, created_at",
+    )
+    .eq("project_id", projectId)
+    .eq("compiler_version", "daily_deep_read_consumers_v1")
+    .eq("extraction_json->>daily_packet_id", currentPacketId)
+    .in("status", ["needs_review", "candidate"])
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (result.error) {
+    return { candidates: [], error: result.error.message };
+  }
+
+  return {
+    candidates: ((result.data ?? []) as DailyDeepReadCandidateRow[]) ?? [],
+    error: null,
+  };
+}
+
 async function loadOperatingRecordState(
   supabase: ReturnType<typeof createServiceClient>,
   projectId: number,
@@ -475,12 +581,15 @@ async function loadOperatingRecordState(
     .in("status", ["suggested", "reviewing"])
     .order("created_at", { ascending: false })
     .limit(8);
+  const dailyDeepReadCandidatesResult = await loadDailyDeepReadCandidates(projectId);
 
   return {
     currentState,
     latestSnapshot,
     timelineEvents: ((timelineResult.data ?? []) as OperatingTimelineEventRow[]) ?? [],
     changeEventCandidates: ((changeCandidatesResult.data ?? []) as ChangeEventCandidateRow[]) ?? [],
+    dailyDeepReadCandidates: dailyDeepReadCandidatesResult.candidates,
+    dailyDeepReadCandidateError: dailyDeepReadCandidatesResult.error,
     reportSuggestions: ((reportSuggestionsResult.data ?? []) as ProjectReportSuggestionRow[]) ?? [],
   };
 }
@@ -586,6 +695,23 @@ function operatingHealthTone(status: string | null | undefined): StatusTone {
   return "healthy";
 }
 
+function isPacketNewerThanCurrentState(
+  packet: ClientProjectIntelligencePacket | null,
+  currentState: ProjectCurrentStateRow | null,
+): boolean {
+  const packetMs = parseDateMs(packet?.generatedAt);
+  const currentStateMs = parseDateMs(currentState?.updated_at);
+  return packetMs != null && (currentStateMs == null || packetMs > currentStateMs);
+}
+
+function intelligenceLastUpdatedAt(
+  packet: ClientProjectIntelligencePacket | null,
+  currentState: ProjectCurrentStateRow | null,
+): string | null {
+  if (isPacketNewerThanCurrentState(packet, currentState)) return packet?.generatedAt ?? null;
+  return currentState?.updated_at ?? packet?.generatedAt ?? null;
+}
+
 function formatTimelineDate(occurredAt: string | null): string {
   if (!occurredAt) return "";
   const parsed = new Date(occurredAt);
@@ -615,17 +741,6 @@ const FOCUS_RANK: Record<string, number> = {
   open_question: 5,
   change_management: 6,
   requirement: 7,
-};
-
-const FOCUS_ICON: Record<string, typeof AlertTriangle> = {
-  blocker: AlertTriangle,
-  risk: AlertTriangle,
-  schedule_risk: AlertTriangle,
-  financial_exposure: CircleDollarSign,
-  decision: GitCommitHorizontal,
-  change_management: GitCommitHorizontal,
-  open_question: HelpCircle,
-  requirement: HelpCircle,
 };
 
 /**
@@ -667,15 +782,20 @@ function cardTone(card: InsightCard): StatusTone {
 function ProjectHealthHero({
   currentState,
   latestSnapshot,
+  packet,
 }: {
   currentState: ProjectCurrentStateRow | null;
   latestSnapshot: OperatingSnapshotRow | null;
+  packet: ClientProjectIntelligencePacket | null;
 }) {
   if (!currentState && !latestSnapshot) return null;
 
   const status = currentState?.health_status ?? "unknown";
   const tone = operatingHealthTone(status);
-  const summary = safeNarrative(currentState?.current_summary, 620);
+  const summarySource = isPacketNewerThanCurrentState(packet, currentState)
+    ? packet?.currentStatus ?? packet?.executiveSummary ?? currentState?.current_summary
+    : currentState?.current_summary ?? packet?.currentStatus ?? packet?.executiveSummary;
+  const summary = safeNarrative(summarySource, 620);
   const sourceConfidence = asRecord(currentState?.source_confidence);
   const sourceCoverage = asRecord(sourceConfidence.source_coverage);
   const sourceCount = typeof sourceCoverage.source_count === "number" ? sourceCoverage.source_count : null;
@@ -718,39 +838,225 @@ function ProjectHealthHero({
   );
 }
 
-function ExecutiveFocusSection({ cards }: { cards: InsightCard[] }) {
-  const focus = cards
+function markdownSection(markdown: string, heading: string): string[] {
+  const lines = markdown.split("\n");
+  const start = lines.findIndex((line) => line.trim().toLowerCase() === `## ${heading}`.toLowerCase());
+  if (start === -1) return [];
+  const sectionLines: string[] = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^##\s+/.test(line.trim())) break;
+    const cleaned = cleanText(line.replace(/^[-*]\s+/, "").replace(/^\d+\.\s+/, ""));
+    if (cleaned && cleaned !== "json") sectionLines.push(cleaned);
+  }
+  return sectionLines;
+}
+
+function dailyBriefMarkdown(packet: ClientProjectIntelligencePacket): string {
+  return (
+    asString(asRecord(packet.packetJson).briefMarkdown) ||
+    packet.strategicRead ||
+    packet.executiveSummary ||
+    ""
+  );
+}
+
+function sourceCountText(packet: ClientProjectIntelligencePacket): string {
+  const counts = asRecord(packet.sourceCoverage.sourceCounts);
+  const total = Object.values(counts).reduce<number>((sum, value) => {
+    return typeof value === "number" && Number.isFinite(value) ? sum + value : sum;
+  }, 0);
+  if (total > 0) return `${total} sources`;
+  const sourceIds = packet.sourceCoverage.sourceIds;
+  return Array.isArray(sourceIds) ? `${sourceIds.length} sources` : "source coverage recorded";
+}
+
+function DailyExecutiveBriefSection({ packet }: { packet: ClientProjectIntelligencePacket | null }) {
+  if (!packet) return null;
+
+  const markdown = dailyBriefMarkdown(packet);
+  const executiveRead = markdownSection(markdown, "Executive read").join(" ");
+  const decisions = markdownSection(markdown, "Critical decisions needed").slice(0, 5);
+  const watchItems = [
+    ...markdownSection(markdown, "Financial / watch items").slice(0, 3),
+    ...markdownSection(markdown, "Schedule / operations watch").slice(0, 3),
+  ].slice(0, 5);
+  const businessDate = asString(packet.sourceCoverage.businessDate) || formatDate(packet.coveredStartAt);
+
+  if (!executiveRead && decisions.length === 0 && watchItems.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <SectionHeader title="Daily executive brief" />
+        <p className="text-xs text-muted-foreground">
+          {businessDate} · {sourceCountText(packet)} · compiled {formatDateTime(packet.generatedAt)}
+        </p>
+      </div>
+      {executiveRead ? (
+        <p className="max-w-4xl text-sm leading-7 text-foreground">{safeNarrative(executiveRead, 900)}</p>
+      ) : null}
+      {decisions.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Decisions</p>
+          <ul className="space-y-2 text-sm leading-6 text-foreground">
+            {decisions.map((item) => (
+              <li key={item}>{safeNarrative(item, 360)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {watchItems.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Watch items</p>
+          <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+            {watchItems.map((item) => (
+              <li key={item}>{safeNarrative(item, 360)}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function DailyExecutiveBriefUnavailable({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <section className="space-y-2">
+      <SectionHeader title="Daily executive brief" />
+      <ErrorState error={`Daily executive brief could not load: ${error}`} />
+    </section>
+  );
+}
+
+function nextDueTask(tasks: InternalTaskRow[]): InternalTaskRow | null {
+  return [...tasks]
+    .filter((task) => task.due_date)
+    .sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""))
+    .at(0) ?? null;
+}
+
+function buildImmediateAttentionItems({
+  cards,
+  changeEventCandidates,
+  tasks,
+  projectId,
+}: {
+  cards: InsightCard[];
+  changeEventCandidates: ChangeEventCandidateRow[];
+  tasks: InternalTaskRow[];
+  projectId: number;
+}): DashboardActionItem[] {
+  const items: DashboardActionItem[] = [];
+  const now = Date.now();
+  const overdueTasks = tasks.filter((task) => {
+    if (!task.due_date) return false;
+    const dueMs = new Date(task.due_date).getTime();
+    return !Number.isNaN(dueMs) && dueMs < now;
+  });
+  const nextTask = nextDueTask(tasks);
+
+  if (overdueTasks.length > 0 || tasks.length > 0) {
+    const label = overdueTasks.length > 0
+      ? `${overdueTasks.length} task${overdueTasks.length === 1 ? "" : "s"} already need follow-up`
+      : `${tasks.length} open task${tasks.length === 1 ? "" : "s"} are part of the current work queue`;
+    const detail = nextTask
+      ? `Next due: ${cleanText(nextTask.title) || "Untitled task"}${nextTask.due_date ? ` on ${formatDate(nextTask.due_date)}` : ""}.`
+      : "Open the project task list to review ownership and due dates.";
+    items.push({
+      key: "tasks",
+      title: label,
+      detail,
+      meta: overdueTasks.length > 0 ? "Project tasks · overdue" : "Project tasks",
+      href: `/${projectId}/tasks`,
+      ctaLabel: "Open tasks",
+      tone: overdueTasks.length > 0 ? "risk" : "watch",
+    });
+  }
+
+  const focusCards = cards
     .filter((card) => FOCUS_CARD_TYPES.has(card.cardType))
     .sort(
       (a, b) =>
         (FOCUS_RANK[a.cardType] ?? 9) - (FOCUS_RANK[b.cardType] ?? 9) ||
         latestEvidenceDate(b).localeCompare(latestEvidenceDate(a)),
     )
-    .slice(0, 5);
+    .slice(0, 3);
 
-  if (focus.length === 0) return null;
+  focusCards.forEach((card) => {
+    const dateLabel = latestEvidenceDate(card) ? formatTimelineDate(latestEvidenceDate(card)) : "";
+    const detail = safeNarrative(card.nextAction || card.whyItMatters || card.summary, 170);
+    items.push({
+      key: card.id,
+      title: cleanText(card.title),
+      detail: detail || undefined,
+      meta: [formatLabel(card.cardType), dateLabel, `${card.evidence.length} source${card.evidence.length === 1 ? "" : "s"}`]
+        .filter(Boolean)
+        .join(" · "),
+      href: `#insight-card-${card.id}`,
+      ctaLabel: "Open evidence",
+      tone: cardTone(card),
+    });
+  });
+
+  changeEventCandidates
+    .filter((candidate) => !isRawTitle(candidate.title))
+    .slice(0, 2)
+    .forEach((candidate) => {
+      items.push({
+        key: candidate.id,
+        title: candidate.title,
+        detail: safeNarrative(candidate.reason || candidate.description, 170) || undefined,
+        meta: [
+          "Potential change order",
+          formatLabel(candidate.confidence),
+          formatLabel(candidate.status),
+        ].join(" · "),
+        href: `/${projectId}/change-events/new?candidateId=${candidate.id}`,
+        ctaLabel: "Create change event",
+        tone: "watch",
+      });
+    });
+
+  return items.slice(0, 5);
+}
+
+function ImmediateAttentionSection({
+  cards,
+  changeEventCandidates,
+  tasks,
+  projectId,
+}: {
+  cards: InsightCard[];
+  changeEventCandidates: ChangeEventCandidateRow[];
+  tasks: InternalTaskRow[];
+  projectId: number;
+}) {
+  const items = buildImmediateAttentionItems({ cards, changeEventCandidates, tasks, projectId });
+  if (items.length === 0) return null;
 
   return (
     <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <SectionHeader title="Executive focus" />
-        <span className="text-xs text-muted-foreground">top {focus.length}</span>
-      </div>
-      <div className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/60">
-        {focus.map((card) => {
-          const Icon = FOCUS_ICON[card.cardType] ?? AlertTriangle;
+      <SectionHeader title="Act now" />
+      <div className="divide-y divide-border/60">
+        {items.map((item) => {
+          const Icon = item.tone === "risk" ? AlertTriangle : item.tone === "watch" ? HelpCircle : GitCommitHorizontal;
           return (
-            <a
-              key={card.id}
-              href={`#insight-card-${card.id}`}
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
-            >
-              <Icon className={`h-4 w-4 shrink-0 ${toneClasses(cardTone(card))}`} aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate text-sm text-foreground">{cleanText(card.title)}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {card.evidence.length} source{card.evidence.length === 1 ? "" : "s"}
-              </span>
-            </a>
+            <article key={item.key} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+              <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${toneClasses(item.tone)}`} aria-hidden="true" />
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-foreground">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">{item.meta}</p>
+                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={item.href}>{item.ctaLabel}</Link>
+                  </Button>
+                </div>
+                {item.detail ? <p className="text-sm leading-6 text-muted-foreground">{item.detail}</p> : null}
+              </div>
+            </article>
           );
         })}
       </div>
@@ -775,23 +1081,76 @@ function WhatChangedSection({
   return (
     <section className="space-y-3">
       <SectionHeader title="What changed" />
-      <div className="flex flex-col gap-2">
-        {[...whatChanged].reverse().map((item) => (
-          <ChangeCard
-            key={item.title}
-            title={item.title}
-            preview={item.detail ? safeNarrative(item.detail, 120) : undefined}
-            detail={item.detail ? safeNarrative(item.detail, 600) : undefined}
-            sources={
-              <SourceLinkRow
-                projectId={projectId}
-                sources={supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap)}
-              />
-            }
-          />
-        ))}
+      <div className="divide-y divide-border/60">
+        {[...whatChanged].reverse().map((item) => {
+          const sources = supportingSourcesForIds(packet, item.sourceIds, sourceDocumentMap);
+          return (
+            <article key={item.title} className="space-y-2 py-3 first:pt-0 last:pb-0">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p className="text-sm font-medium text-foreground">{item.title}</p>
+                {item.occurredAt ? (
+                  <span className="text-xs text-muted-foreground">{formatDate(item.occurredAt)}</span>
+                ) : null}
+              </div>
+              {item.detail ? (
+                <p className="text-sm leading-6 text-muted-foreground">{safeNarrative(item.detail, 420)}</p>
+              ) : null}
+              <SourceLinkRow projectId={projectId} sources={sources} />
+            </article>
+          );
+        })}
       </div>
     </section>
+  );
+}
+
+function DailyDeepReadCandidateSection({
+  candidates,
+  error,
+  projectId,
+  sourceDocumentMap,
+}: {
+  candidates: DailyDeepReadCandidateRow[];
+  error: string | null;
+  projectId: number;
+  sourceDocumentMap: Map<string, SourceDocumentRow>;
+}) {
+  if (candidates.length === 0 && !error) return null;
+
+  const reviewCandidates: DailyDeepReadReviewCandidate[] = candidates.map((candidate) => {
+    const sources = candidateSourceIds(candidate)
+      .map((sourceId) => sourceDocumentMap.get(sourceId))
+      .filter((source): source is SourceDocumentRow => Boolean(source))
+      .slice(0, 3);
+    const title = candidateDisplayText(candidate.title, 220) || formatLabel(candidate.signal_type);
+    const summary =
+      candidateDisplayText(candidate.summary, 360) ||
+      candidateDisplayText(candidate.why_it_matters, 360) ||
+      candidateDisplayText(candidate.excerpt, 360) ||
+      null;
+    const nextAction = candidateDisplayText(candidate.next_action, 220) || null;
+
+    return {
+      id: candidate.id,
+      signalType: candidate.signal_type,
+      status: candidate.status === "candidate" ? "candidate" : "needs_review",
+      title,
+      summary,
+      nextAction,
+      confidence: candidate.confidence,
+      sources: sources.map((source) => ({
+        label: sourceButtonLabel(source),
+        record: sourceReferenceRecord(source, projectId),
+      })),
+    };
+  });
+
+  return (
+    <DailyDeepReadCandidateReview
+      candidates={reviewCandidates}
+      error={error}
+      projectId={projectId}
+    />
   );
 }
 
@@ -814,7 +1173,7 @@ function RisksDecisionsSection({ cards, projectId }: { cards: InsightCard[]; pro
   );
 }
 
-function FinancialSnapshotSection({
+function FinancialContextSection({
   operatingRecord,
   projectId,
   projectBudget,
@@ -837,17 +1196,17 @@ function FinancialSnapshotSection({
   const hasNumbers = budget != null || committed != null || directCosts != null || changeOrders != null;
   if (!hasNumbers && !financialRead && candidates.length === 0) return null;
 
-  const metrics: KpiBlockProps[] = [
-    { label: "Budget", value: budget != null ? formatCurrency(budget) : "Not set" },
-    { label: "Committed", value: formatCurrency(committed) },
-    { label: "Direct costs", value: formatCurrency(directCosts) },
-    { label: "Change orders", value: formatCurrency(changeOrders) },
-  ];
-
   return (
     <section className="space-y-4">
-      <SectionHeader title="Financial snapshot" />
-      {hasNumbers ? <KpiRow metrics={metrics} size="small" /> : null}
+      <SectionHeader title="Financial context" />
+      {hasNumbers ? (
+        <div className="space-y-3">
+          <LabelValueRow label="Budget">{budget != null ? formatCurrency(budget) : "Not set"}</LabelValueRow>
+          <LabelValueRow label="Committed">{formatCurrency(committed)}</LabelValueRow>
+          <LabelValueRow label="Direct costs">{formatCurrency(directCosts)}</LabelValueRow>
+          <LabelValueRow label="Change orders">{formatCurrency(changeOrders)}</LabelValueRow>
+        </div>
+      ) : null}
       {financialRead ? <p className="max-w-4xl text-sm leading-6 text-muted-foreground">{financialRead}</p> : null}
       <p className="text-xs text-muted-foreground">
         Schedule SPI and percent-complete are intentionally omitted — schedule data is not yet reliable enough to show.
@@ -855,7 +1214,6 @@ function FinancialSnapshotSection({
 
       {candidates.length > 0 ? (
         <div className="space-y-3">
-          <SectionHeader title="Potential change orders" />
           <div className="divide-y divide-border/60">
             {candidates.map((candidate) => (
               <article key={candidate.id} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
@@ -877,6 +1235,119 @@ function FinancialSnapshotSection({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function ReliabilitySection({
+  packet,
+  pageState,
+  operatingRecord,
+}: {
+  packet: ClientProjectIntelligencePacket | null;
+  pageState: ReturnType<typeof buildIntelligencePageState> | null;
+  operatingRecord: OperatingRecordState;
+}) {
+  const currentUpdatedAt = operatingRecord.currentState?.updated_at ?? null;
+  const latestSourceAt =
+    (typeof packet?.sourceCoverage.latestSourceAt === "string" ? packet.sourceCoverage.latestSourceAt : null) ??
+    operatingRecord.latestSnapshot?.snapshot_at ??
+    null;
+  const warnings = pageState?.warnings ?? [];
+  const limitations = pageState?.limitations ?? [];
+  const packetFreshness = packet ? formatLabel(packet.freshnessStatus) : "Unavailable";
+
+  return (
+    <section className="space-y-3">
+      <SectionHeader title="Trust this read" />
+      <div className="space-y-3">
+        <LabelValueRow label="Packet freshness">
+          {packet ? `${packetFreshness} · compiled ${formatDateTime(packet.generatedAt)}` : "No current packet available"}
+        </LabelValueRow>
+        <LabelValueRow label="Operating record">
+          {currentUpdatedAt ? `Updated ${formatDateTime(currentUpdatedAt)}` : "No current operating summary available"}
+        </LabelValueRow>
+        <LabelValueRow label="Latest source signal">
+          {latestSourceAt ? formatDateTime(latestSourceAt) : "Not available"}
+        </LabelValueRow>
+      </div>
+
+      {warnings.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-destructive">Warnings</p>
+          <ul className="space-y-2 text-sm leading-6 text-foreground">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {limitations.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Evidence limits</p>
+          <ul className="space-y-2 text-sm leading-6 text-muted-foreground">
+            {limitations.slice(0, 3).map((limitation) => (
+              <li key={limitation}>{limitation}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function CurrentOperatingReadSection({
+  packet,
+  pageState,
+  currentState,
+}: {
+  packet: ClientProjectIntelligencePacket | null;
+  pageState: ReturnType<typeof buildIntelligencePageState> | null;
+  currentState: ProjectCurrentStateRow | null;
+}) {
+  const primaryReadSource = isPacketNewerThanCurrentState(packet, currentState)
+    ? packet?.currentStatus ?? packet?.executiveSummary ?? currentState?.current_summary
+    : currentState?.current_summary ?? packet?.currentStatus ?? packet?.executiveSummary;
+  const primaryRead = safeNarrative(primaryReadSource, 560) || pageState?.briefing.body || "";
+  const whyItMatters = packet ? safeNarrative(packet.whyItMatters, 260) : "";
+  const nextMoves = packet?.recommendedNextMoves.map((move) => cleanText(move)).filter(Boolean).slice(0, 3) ?? [];
+
+  if (!primaryRead && !whyItMatters && nextMoves.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Operating read</p>
+        <SectionRuleHeading label={pageState?.briefing.title ?? "Current project intelligence"} className="mb-0 pb-0" />
+      </div>
+      {primaryRead ? <p className="max-w-4xl text-base leading-8 text-foreground">{primaryRead}</p> : null}
+      {whyItMatters ? (
+        <p className="max-w-4xl text-sm leading-7 text-muted-foreground">{whyItMatters}</p>
+      ) : null}
+      {nextMoves.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Recommended next moves</p>
+          <ol className="space-y-2">
+            {nextMoves.map((move) => (
+              <li key={move} className="text-sm leading-6 text-foreground">{move}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SourceActivitySection({ projectId }: { projectId: number }) {
+  return (
+    <details className="space-y-4">
+      <summary className="cursor-pointer list-none text-sm text-muted-foreground hover:text-foreground">
+        View recent source activity
+      </summary>
+      <div className="pt-3">
+        <DailyIngestionFeed projectId={projectId} />
+      </div>
+    </details>
   );
 }
 
@@ -1303,21 +1774,12 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       <PageShell
         variant="dashboard"
         title={`${project.name ?? `Project ${project.id}`} Intelligence`}
-        titleContent={
-          <div className="space-y-2">
-            <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
-              {project.name ?? `Project ${project.id}`} Intelligence
-            </h1>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-              <p className="text-sm text-muted-foreground">Internal initiative</p>
-              <p className="text-sm text-muted-foreground">
-                {operatingRecord.currentState
-                  ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
-                  : "Last updated not available"}
-              </p>
-            </div>
-          </div>
-        }
+        description={[
+          "Internal initiative",
+          operatingRecord.currentState
+            ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
+            : "Last updated not available",
+        ].join(" · ")}
         contentClassName="space-y-10"
       >
         <InternalIntelligenceView
@@ -1354,11 +1816,21 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
     }
   }
 
-  const [operatingRecord, projectTasks] = await Promise.all([
+  const [operatingRecord, projectTasks, dailyBriefResult] = await Promise.all([
     loadOperatingRecordState(supabase, numericProjectId),
     loadProjectTasks(supabase, numericProjectId),
+    loadCurrentIntelligencePacketBySlug({
+      slug: "daily-executive-brief",
+      supabase,
+      includeSourcePreview: false,
+    })
+      .then((packet) => ({ packet, error: null }))
+      .catch((error) => ({
+        packet: null,
+        error: error instanceof Error ? error.message : "Unexpected daily executive brief load failure.",
+      })),
   ]);
-  const nowMs = Date.now();
+  const pageState = packet ? buildIntelligencePageState(packet) : null;
 
   // insight_cards is the only clean, synthesized, evidence-linked source.
   // Drop raw-email contamination before anything reaches the thinking layer.
@@ -1368,15 +1840,18 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
   const hasOperatingRecord = Boolean(
     operatingRecord.currentState ||
       operatingRecord.latestSnapshot ||
-      operatingRecord.changeEventCandidates.length,
+      operatingRecord.changeEventCandidates.length ||
+      operatingRecord.dailyDeepReadCandidates.length ||
+      operatingRecord.dailyDeepReadCandidateError,
   );
 
   // Source documents for the "what changed" citation buttons (packet aliases).
   const evidenceSourceIds = Array.from(
     new Set(
-      (packet ? packetEvidence(packet).map((evidence) => evidence.sourceDocumentId) : []).filter(
-        (value): value is string => Boolean(value),
-      ),
+      [
+        ...(packet ? packetEvidence(packet).map((evidence) => evidence.sourceDocumentId) : []),
+        ...operatingRecord.dailyDeepReadCandidates.flatMap(candidateSourceIds),
+      ].filter((value): value is string => Boolean(value)),
     ),
   );
   const sourceDocumentMap = await loadSourceDocumentMap(supabase, evidenceSourceIds);
@@ -1387,48 +1862,69 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
     <PageShell
       variant="dashboard"
       title={`${project.name ?? `Project ${project.id}`} Project Intelligence`}
-      titleContent={
-        <div className="space-y-2">
-          <h1 className="text-[2rem] font-semibold leading-tight text-foreground">
-            {project.name ?? `Project ${project.id}`} Project Intelligence
-          </h1>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-            <p className="text-sm text-muted-foreground">{stageLabel(project)}</p>
-            <p className="text-sm text-muted-foreground">
-              {operatingRecord.currentState
-                ? `Last updated ${formatDateTime(operatingRecord.currentState.updated_at)}`
-                : packet
-                  ? `Last updated ${formatDateTime(packet.generatedAt)}`
-                  : "Last updated not available"}
-            </p>
-          </div>
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/${numericProjectId}/tasks`}>Open tasks</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/ai">Open assistant</Link>
+          </Button>
         </div>
       }
-      contentClassName="space-y-10"
+      description={[
+        stageLabel(project),
+        intelligenceLastUpdatedAt(packet, operatingRecord.currentState)
+          ? `Last updated ${formatDateTime(intelligenceLastUpdatedAt(packet, operatingRecord.currentState))}`
+          : "Last updated not available",
+      ].join(" · ")}
+      contentClassName="space-y-8"
     >
-      {/* ---- Thinking ---- */}
-      <ProjectHealthHero currentState={operatingRecord.currentState} latestSnapshot={operatingRecord.latestSnapshot} />
-
-      {hasCards ? <ExecutiveFocusSection cards={cleanCards} /> : null}
-
-      {packet ? (
-        <WhatChangedSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
-      ) : null}
-
-      {/* ---- Evidence ---- */}
-      {hasCards ? <RisksDecisionsSection cards={cleanCards} projectId={numericProjectId} /> : null}
-
-      <FinancialSnapshotSection
-        operatingRecord={operatingRecord}
-        projectId={numericProjectId}
-        projectBudget={project.budget}
+      <ProjectHealthHero
+        currentState={operatingRecord.currentState}
+        latestSnapshot={operatingRecord.latestSnapshot}
+        packet={packet}
       />
+      <DailyExecutiveBriefSection packet={dailyBriefResult.packet} />
+      <DailyExecutiveBriefUnavailable error={dailyBriefResult.error} />
 
-      {hasCards ? <ProjectTimelineSection cards={cleanCards} /> : null}
-
-      <DailyIngestionFeed projectId={numericProjectId} />
-
-      <TaskSection tasks={projectTasks} nowMs={nowMs} />
+      <DetailLayout
+        sidebarAt="lg"
+        sidebar={
+          <>
+            <ImmediateAttentionSection
+              cards={cleanCards}
+              changeEventCandidates={operatingRecord.changeEventCandidates}
+              tasks={projectTasks}
+              projectId={numericProjectId}
+            />
+            <ReliabilitySection packet={packet} pageState={pageState} operatingRecord={operatingRecord} />
+            <FinancialContextSection
+              operatingRecord={operatingRecord}
+              projectId={numericProjectId}
+              projectBudget={project.budget}
+            />
+          </>
+        }
+      >
+        <CurrentOperatingReadSection
+          packet={packet}
+          pageState={pageState}
+          currentState={operatingRecord.currentState}
+        />
+        <DailyDeepReadCandidateSection
+          candidates={operatingRecord.dailyDeepReadCandidates}
+          error={operatingRecord.dailyDeepReadCandidateError}
+          projectId={numericProjectId}
+          sourceDocumentMap={sourceDocumentMap}
+        />
+        {packet ? (
+          <WhatChangedSection packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
+        ) : null}
+        {hasCards ? <RisksDecisionsSection cards={cleanCards} projectId={numericProjectId} /> : null}
+        {hasCards ? <ProjectTimelineSection cards={cleanCards} /> : null}
+        <SourceActivitySection projectId={numericProjectId} />
+      </DetailLayout>
 
       {!hasAnyContent ? (
         !target ? (

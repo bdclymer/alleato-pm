@@ -2,14 +2,16 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
+  getDocumentPdfOptions,
   getDocumentBundle,
   renderDocumentHtml,
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -39,8 +41,8 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Unsupported record type" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const user = await getApiRouteUser();
+    const supabase = createServiceClient();
+    const user = await getApiRouteUserFromRequest(request);
 
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "document-center/[recordType]/[recordId]/pdf#GET", message: "Authentication required." });
@@ -48,15 +50,32 @@ export const GET = withApiGuardrails(
 
     const bundle = await getDocumentBundle(supabase, recordType, recordId);
     const html = renderDocumentHtml(bundle);
-    const pdfBuffer = await renderPdfFromHtml(html);
+    const pdfOptions = getDocumentPdfOptions(bundle);
+    try {
+      const pdfBuffer = await renderPdfFromHtml(html, pdfOptions);
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${bundle.filename}"`,
-        "Cache-Control": "no-store",
-      },
-    });
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${bundle.filename}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    } catch (pdfError) {
+      logger.error({
+        msg: "[document-center/pdf] PDF generation failed",
+        recordType,
+        recordId,
+        error: pdfError instanceof Error ? pdfError.message : String(pdfError),
+      });
+
+      return NextResponse.json({
+        error: "PDF generation failed",
+        details: pdfError instanceof Error ? pdfError.message : String(pdfError),
+      }, {
+        status: 500,
+      });
+    }
     },
 );

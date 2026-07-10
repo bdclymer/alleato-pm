@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { resolveMeetingDocumentId } from "@/lib/meetings/server";
 
 type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> };
 
@@ -10,18 +11,27 @@ type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> }
 export const GET = withApiGuardrails(
   "projects/[projectId]/meetings/[meetingId]/prep#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/meetings/[meetingId]/prep#GET";
     const { meetingId } = await params;
     const supabase = await createClient();
     const user = await getApiRouteUser();
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
+
+    const resolved = await resolveMeetingDocumentId(supabase, meetingId);
+    if (resolved.kind === "meetings_row_no_transcript") {
+      return NextResponse.json(
+        { error: "This meeting has no linked transcript yet" },
+        { status: 404 }
+      );
+    }
+    const documentMetadataId = resolved.documentMetadataId;
 
     const { data, error } = await supabase
       .from("meeting_preps")
       .select("*")
-      .eq("meeting_id", meetingId)
+      .eq("meeting_id", documentMetadataId)
       .maybeSingle();
 
     if (error) {
@@ -43,12 +53,12 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/meetings/[meetingId]/prep#PUT",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/meetings/[meetingId]/prep#PUT";
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const user = await getApiRouteUser();
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep#PUT", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -69,11 +79,20 @@ export const PUT = withApiGuardrails(
       );
     }
 
+    const resolved = await resolveMeetingDocumentId(supabase, meetingId);
+    if (resolved.kind === "meetings_row_no_transcript") {
+      return NextResponse.json(
+        { error: "This meeting has no linked transcript yet" },
+        { status: 404 }
+      );
+    }
+    const documentMetadataId = resolved.documentMetadataId;
+
     // Upsert: update if exists, insert if not
     const { data: existing } = await supabase
       .from("meeting_preps")
       .select("id")
-      .eq("meeting_id", meetingId)
+      .eq("meeting_id", documentMetadataId)
       .maybeSingle();
 
     let data;
@@ -83,7 +102,7 @@ export const PUT = withApiGuardrails(
       const result = await supabase
         .from("meeting_preps")
         .update({ content, updated_at: new Date().toISOString() })
-        .eq("meeting_id", meetingId)
+        .eq("meeting_id", documentMetadataId)
         .select()
         .single();
       data = result.data;
@@ -92,7 +111,7 @@ export const PUT = withApiGuardrails(
       const result = await supabase
         .from("meeting_preps")
         .insert({
-          meeting_id: meetingId,
+          meeting_id: documentMetadataId,
           project_id: numericProjectId,
           content,
           generated_by: "manual",

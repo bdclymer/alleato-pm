@@ -1,5 +1,6 @@
 import {
   streamText,
+  generateText,
   stepCountIs,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -13,6 +14,11 @@ import {
   maybeJudgeAndScore,
 } from "@/lib/ai/langfuse-trace";
 import { aiTelemetry } from "@/lib/ai/ai-telemetry";
+import { buildEmptyResponseMessage } from "@/lib/ai/empty-response-message";
+import {
+  buildAssistantOpenAiProviderOptions,
+  hasFunctionTools,
+} from "@/lib/ai/assistant-provider-options";
 import {
   propagateAttributes,
   startActiveObservation,
@@ -23,7 +29,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { planRetrieval } from "@/lib/ai/retrieval/planner";
 import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
 import { assembleSystemPromptFromContext } from "@/lib/ai/retrieval/system-prompt";
-import { buildExecutorDeps } from "@/lib/ai/retrieval/deps";
+import { buildExecutorDeps, DIRECT_EXEC_OPTIONS } from "@/lib/ai/retrieval/deps";
 import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
@@ -44,6 +50,7 @@ import {
   recordSelectedSkillUsage,
 } from "@/lib/ai/services/skill-injection-service";
 import {
+  isDailyDeepReadPacketQuestion,
   isExecutiveBriefingMetadataQuestion,
   isPersonalTaskRegisterRequest,
 } from "@/lib/ai/personal-daily-brief";
@@ -52,12 +59,27 @@ import { preserveActionToolTraceOutput } from "@/lib/ai/action-tool-trace";
 import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
+import {
+  microsoftAssistantBackendUrl,
+  microsoftAssistantAdminApiKey,
+  defaultMicrosoftMailbox,
+  microsoftAssistantTimeoutMs,
+} from "@/lib/ai/microsoft-backend-config";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type {
   OutlookInboxSummaryWidgetPayload,
+  ProjectPickerWidgetPayload,
   TaskSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
+import {
+  buildChangeEventRelatedEvidence,
+  buildChangeEventWorkflowMetadata,
+  isChangeEventFinalPreviewRequest,
+} from "@/lib/ai/change-event-workflow";
+import {
+  upsertChangeEventDraftArtifact,
+} from "@/lib/ai/services/workspace-artifact-service";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
   CHARS_PER_TOKEN,
@@ -85,8 +107,16 @@ import {
   type CmoWeeklyContentWorkflowResult,
 } from "@/lib/ai/services/marketing-service";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+  isRagDatabaseReadsEnabled,
+} from "@/lib/supabase/service";
 import { createChatHistoryWriter } from "./chat-history-writer";
+import {
+  loadCurrentDailyExecutiveBriefPacket,
+  type CanonicalDailyBriefPacket,
+} from "@/lib/daily-briefs/canonical-packets";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
   isDeepAgentsStrategistModelId,
@@ -130,43 +160,6 @@ const AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS = Number(
   process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
 );
 
-function microsoftAssistantBackendUrl(): string {
-  const value = (
-    (process.env.NODE_ENV === "development"
-      ? process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
-      : process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL || "")
-  )
-    .replace(/\/+$/, "")
-    .trim();
-  try {
-    new URL(value);
-  } catch {
-    throw new Error(
-      "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL before using the Microsoft Executive Assistant.",
-    );
-  }
-  return value;
-}
-
-function microsoftAssistantAdminApiKey(): string {
-  const value = process.env.ADMIN_API_KEY?.trim();
-  if (!value) {
-    throw new Error(
-      "ADMIN_API_KEY is required to call the backend Microsoft Executive Assistant.",
-    );
-  }
-  return value;
-}
-
-function defaultMicrosoftMailbox(): string | undefined {
-  return (
-    process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX?.trim() ||
-    process.env.OUTLOOK_OPERATOR_MAILBOX?.trim() ||
-    process.env.MICROSOFT_SYNC_USERS?.split(",")[0]?.trim() ||
-    undefined
-  );
-}
-
 function isMicrosoftSpecialistDelegationPlan(reason: string): boolean {
   return reason.startsWith("microsoft_specialist_delegation_");
 }
@@ -177,6 +170,76 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .filter((p) => (p as { type?: string }).type === "text")
     .map((p) => (p as { text?: string }).text ?? "")
     .join(" ");
+}
+
+function parseConfirmedChangeEventApprovalInput(
+  message: string,
+): Record<string, unknown> | null {
+  const normalized = message.trim().toLowerCase();
+  if (
+    !normalized.includes("run createchangeevent now") ||
+    !normalized.includes("confirmed=true")
+  ) {
+    return null;
+  }
+
+  const jsonStart = message.indexOf("{");
+  if (jsonStart === -1) return null;
+
+  try {
+    const fields = JSON.parse(message.slice(jsonStart)) as Record<string, unknown>;
+    const projectId =
+      typeof fields.project_id === "number"
+        ? fields.project_id
+        : typeof fields.projectId === "number"
+          ? fields.projectId
+          : null;
+    const title = typeof fields.title === "string" ? fields.title.trim() : "";
+    if (!projectId || !title) return null;
+
+    return {
+      projectId,
+      title,
+      description:
+        typeof fields.description === "string" ? fields.description : undefined,
+      scope: typeof fields.scope === "string" ? fields.scope : undefined,
+      type: typeof fields.type === "string" ? fields.type : undefined,
+      status: typeof fields.status === "string" ? fields.status : undefined,
+      reason: typeof fields.reason === "string" ? fields.reason : undefined,
+      origin: typeof fields.origin === "string" ? fields.origin : undefined,
+      originId:
+        typeof fields.origin_id === "string"
+          ? fields.origin_id
+          : typeof fields.originId === "string"
+            ? fields.originId
+            : undefined,
+      expectingRevenue:
+        typeof fields.expecting_revenue === "boolean"
+          ? fields.expecting_revenue
+          : typeof fields.expectingRevenue === "boolean"
+            ? fields.expectingRevenue
+            : undefined,
+      lineItemRevenueSource:
+        typeof fields.line_item_revenue_source === "string"
+          ? fields.line_item_revenue_source
+          : typeof fields.lineItemRevenueSource === "string"
+            ? fields.lineItemRevenueSource
+            : undefined,
+      primeContractId:
+        typeof fields.prime_contract_id === "string"
+          ? fields.prime_contract_id
+          : typeof fields.primeContractId === "string"
+            ? fields.primeContractId
+            : undefined,
+      confirmed: true,
+      idempotencyKey:
+        typeof fields.idempotencyKey === "string"
+          ? fields.idempotencyKey
+          : `change-event-confirmed-${projectId}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80)}`,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -267,6 +330,68 @@ function extractPersistableDataParts(message: UIMessage): Json[] {
     .filter((part): part is Json => part !== undefined);
 }
 
+function changeEventWorkflowDraftFromMetadata(metadata: unknown): unknown | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  const workflow = (metadata as Record<string, unknown>).change_event_workflow;
+  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) {
+    return null;
+  }
+  return (workflow as Record<string, unknown>).draft ?? null;
+}
+
+async function loadLatestChangeEventWorkflowDraft(params: {
+  supabase: SupabaseClient<Database>;
+  sessionId: string;
+  userId: string;
+}): Promise<unknown | null> {
+  const { data, error } = await params.supabase
+    .from("chat_history")
+    .select("metadata")
+    .eq("session_id", params.sessionId)
+    .eq("user_id", params.userId)
+    .eq("role", "assistant")
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    throw new Error(`Loading change-event workflow state failed: ${error.message}`);
+  }
+
+  for (const row of data ?? []) {
+    const draft = changeEventWorkflowDraftFromMetadata(
+      (row as { metadata?: unknown }).metadata,
+    );
+    if (draft) return draft;
+  }
+  return null;
+}
+
+async function persistChangeEventWorkflowArtifact(params: {
+  userId: string;
+  sessionId: string;
+  workflow: ReturnType<typeof buildChangeEventWorkflowMetadata>;
+}): Promise<void> {
+  const result = await upsertChangeEventDraftArtifact({
+    userId: params.userId,
+    sessionId: params.sessionId,
+    workflow: params.workflow,
+  });
+
+  if ("error" in result) {
+    throw new Error(
+      `Persisting change-event workflow artifact failed: ${result.error}`,
+    );
+  }
+}
+
+function isLikelyChangeEventWorkflowFollowup(message: string): boolean {
+  return /\b(project|project id|use project|cost|price|pricing|estimate|\$[\d,]+|schedule|delay|critical path|owner|client|notified|photo|drawing|rfi|email|meeting|daily log|no impact|no cost|no delay)\b/i.test(
+    message,
+  );
+}
+
 function buildResponseQualityMetadata(params: {
   toolTrace: Array<Record<string, unknown>>;
   content: string;
@@ -281,6 +406,7 @@ function createBackendBridgeTrace(params: {
   selectedProjectId?: number | null;
   durationMs?: number;
   detail?: string | null;
+  diagnostic?: Record<string, unknown> | null;
 }) {
   return {
     tool: params.tool,
@@ -289,11 +415,37 @@ function createBackendBridgeTrace(params: {
     status: params.status,
     durationMs: params.durationMs ?? 0,
     detail: params.detail ?? null,
+    diagnostic: params.diagnostic ?? null,
     input: {
       message: params.message.slice(0, 240),
       selectedProjectId: params.selectedProjectId ?? null,
     },
     timestamp: new Date().toISOString(),
+  };
+}
+
+function bridgeFailureDiagnostic(error: unknown): Record<string, unknown> {
+  if (error instanceof GuardrailError) {
+    return {
+      name: error.name,
+      code: error.code,
+      where: error.where,
+      status: error.status,
+      safeToRetry: error.safeToRetry,
+      message: error.message,
+      details: error.details ?? null,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+    };
+  }
+
+  return {
+    message: String(error),
   };
 }
 
@@ -678,11 +830,27 @@ function namedProjectFromSnapshot(snapshot: Record<string, unknown>): string {
 function shouldUseDirectProjectBriefing(params: {
   plan: ReturnType<typeof planRetrieval>;
   retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+  message: string;
+  selectedProjectId?: number | null;
 }): boolean {
+  if (
+    typeof params.selectedProjectId !== "number" &&
+    isBroadPortfolioProjectHealthRequest(params.message)
+  ) {
+    return false;
+  }
+
   return (
     params.plan.responseFormat === "briefing_template" &&
     params.plan.intent !== "source_health" &&
     Boolean(params.retrievalCtx.projectSnapshot)
+  );
+}
+
+function isBroadPortfolioProjectHealthRequest(message: string): boolean {
+  return (
+    /\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b.{0,80}\b(health|status|overview|risk|risks|read|briefing)\b/i.test(message) ||
+    /\b(health|status|overview|risk|risks|read|briefing)\b.{0,80}\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b/i.test(message)
   );
 }
 
@@ -809,11 +977,6 @@ function buildLiveToolTrace(
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
   };
-}
-
-function microsoftAssistantTimeoutMs(): number {
-  const parsed = Number(process.env.AI_ASSISTANT_MICROSOFT_BRIDGE_TIMEOUT_MS);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
 }
 
 async function fetchMicrosoftExecutiveAssistant(params: {
@@ -974,6 +1137,123 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+/**
+ * A single persisted source citation for `chat_history.sources`. This matches
+ * the `SourceItem` shape the chat UI reads
+ * (`frontend/src/components/ai-assistant/assistant-widget-renderer.tsx` →
+ * `AssistantSourceEvidenceWidget`, and `chat-history.ts` `extractSources`):
+ * each item exposes `snippet` and/or `metadata.title` so the widget renders it,
+ * plus metadata fields (`project_id`, `meeting_id`, `metadata_id`, `type`,
+ * `url`, `fireflies_link`, ...) used by `getSourceHref` to build a deep link.
+ */
+type PersistedAnswerSource = {
+  document_id?: string;
+  snippet?: string;
+  metadata?: Record<string, unknown>;
+};
+
+/**
+ * Build the clickable source-citation list persisted alongside a grounded
+ * assistant answer, from the retrieval context the answer was generated over
+ * (`latestRetrievalCtx`). Draws from the semantic vector results and the
+ * intelligence packet's card evidence. Fully defensive — returns `[]` when
+ * nothing groundable is present, and only emits items the UI will actually
+ * render (i.e. those carrying a `snippet` or a `metadata.title`).
+ */
+function buildAnswerSourceCitations(
+  ctx: unknown,
+  selectedProjectId: number | null,
+): PersistedAnswerSource[] {
+  const context = asRecord(ctx);
+  const sources: PersistedAnswerSource[] = [];
+  const seen = new Set<string>();
+
+  const pushUnique = (item: PersistedAnswerSource, dedupeKeyRaw: string) => {
+    const dedupeKey = dedupeKeyRaw.trim().toLowerCase();
+    if (!dedupeKey || seen.has(dedupeKey)) return;
+    // Only persist items the chat UI will render (needs snippet or a title).
+    if (!item.snippet && !asRecord(item.metadata).title) return;
+    seen.add(dedupeKey);
+    sources.push(item);
+  };
+
+  // 1) Semantic vector results — carry rich metadata (project_id, meeting_id,
+  //    url, fireflies_link) that resolve to deep links in the chat UI.
+  const semanticWrapper = asRecord(context.semanticVectorResults);
+  const semanticResults = Array.isArray(semanticWrapper.results)
+    ? semanticWrapper.results
+    : [];
+  for (const raw of semanticResults.slice(0, 12)) {
+    const result = asRecord(raw);
+    const metadata = asRecord(result.metadata);
+    const content = asString(result.content);
+    const title =
+      asString(metadata.title) ??
+      asString(metadata.subject) ??
+      asString(metadata.meeting_title) ??
+      asString(result.sourceTable);
+    const documentId =
+      asString(metadata.metadata_id) ??
+      asString(metadata.meeting_id) ??
+      asString(metadata.id) ??
+      undefined;
+    const mergedMetadata: Record<string, unknown> = { ...metadata };
+    if (title && !asString(mergedMetadata.title)) mergedMetadata.title = title;
+    if (!asString(mergedMetadata.type) && asString(result.sourceTable)) {
+      mergedMetadata.type = result.sourceTable;
+    }
+    pushUnique(
+      {
+        ...(documentId ? { document_id: documentId } : {}),
+        ...(content ? { snippet: content.slice(0, 600) } : {}),
+        metadata: mergedMetadata,
+      },
+      documentId ?? title ?? content ?? "",
+    );
+  }
+
+  // 2) Intelligence packet card evidence — the records the advisor answer is
+  //    grounded in. Each evidence row becomes a titled/snippeted source chip.
+  const packet = asRecord(context.intelligencePacket);
+  const packetProjectId =
+    typeof packet.projectId === "number" || typeof packet.projectId === "string"
+      ? packet.projectId
+      : selectedProjectId ?? undefined;
+  const cards = Array.isArray(packet.cards) ? packet.cards : [];
+  for (const rawCard of cards) {
+    const card = asRecord(rawCard);
+    const evidence = Array.isArray(card.evidence) ? card.evidence : [];
+    for (const rawEvidence of evidence) {
+      const ev = asRecord(rawEvidence);
+      const snippet =
+        asString(ev.excerpt) ??
+        asString(ev.summary) ??
+        asString(ev.sourceContentPreview);
+      const title = asString(ev.sourceTitle) ?? asString(card.title);
+      const documentId =
+        asString(ev.sourceDocumentId) ??
+        asString(ev.sourceMessageId) ??
+        undefined;
+      const type = asString(ev.sourceCategory) ?? asString(ev.sourceType);
+      const metadata: Record<string, unknown> = {};
+      if (title) metadata.title = title;
+      if (type) metadata.type = type;
+      if (documentId) metadata.metadata_id = documentId;
+      if (packetProjectId !== undefined) metadata.project_id = packetProjectId;
+      pushUnique(
+        {
+          ...(documentId ? { document_id: documentId } : {}),
+          ...(snippet ? { snippet: snippet.slice(0, 600) } : {}),
+          metadata,
+        },
+        documentId ?? title ?? snippet ?? "",
+      );
+    }
+  }
+
+  return sources.slice(0, 12);
 }
 
 function isCmoWeeklyContentWorkflowRequest(message: string): boolean {
@@ -1594,6 +1874,99 @@ async function resolveRfiPreviewProject(params: {
   return project?.id && project?.name ? { id: project.id, name: project.name } : null;
 }
 
+type ProjectPickerOption = ProjectPickerWidgetPayload["projects"][number];
+
+async function loadProjectPickerOptions(params: {
+  supabase: SupabaseClient<Database>;
+  prompt: string;
+}): Promise<ProjectPickerOption[]> {
+  const projectNameHint = params.prompt.match(/\bfor\s+([A-Za-z0-9][A-Za-z0-9 '&.-]{2,80}?)(?:\s+about\b|[.?]|$)/i)?.[1]?.trim();
+  let query = params.supabase
+    .from("projects")
+    .select("id,name,phase,state,health_status,summary,project_number")
+    .eq("archived", false)
+    .not("name", "is", null)
+    .order("name", { ascending: true })
+    .limit(projectNameHint ? 12 : 40);
+
+  if (projectNameHint) {
+    query = query.ilike("name", `%${projectNameHint}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`Loading project options failed: ${error.message}`);
+  }
+
+  const baseProjects = (data ?? [])
+    .filter((project): project is NonNullable<typeof project> & { id: number; name: string } =>
+      typeof project.id === "number" && typeof project.name === "string" && project.name.trim().length > 0,
+    )
+    .map((project) => ({
+      projectId: project.id,
+      name: project.name,
+      phase: asString(project.phase),
+      state: asString(project.state),
+      healthStatus: asString(project.health_status),
+      summary: asString(project.summary),
+      prompt: [
+        `Use project ${project.id} - ${project.name} for this change event.`,
+        `Project ID: ${project.id}`,
+        `Project Name: ${project.name}`,
+      ].join("\n"),
+      contractValue: project.project_number ? `#${project.project_number}` : null,
+    }));
+
+  if (projectNameHint || baseProjects.length === 0) {
+    return baseProjects.slice(0, 12);
+  }
+
+  const { data: activityRows, error: activityError } = await params.supabase
+    .from("project_activity_view")
+    .select("project_id,last_meeting_at,last_task_update,meeting_count,open_tasks")
+    .in("project_id", baseProjects.map((project) => project.projectId));
+
+  if (activityError) {
+    return baseProjects.slice(0, 12);
+  }
+
+  const activityByProjectId = new Map(
+    (activityRows ?? [])
+      .filter((row) => typeof row.project_id === "number")
+      .map((row) => [row.project_id as number, row]),
+  );
+
+  return baseProjects
+    .map((project) => {
+      const activity = activityByProjectId.get(project.projectId);
+      const openTasks = Number(activity?.open_tasks ?? 0);
+      const meetings = Number(activity?.meeting_count ?? 0);
+      const lastActivityAt = [
+        asString(activity?.last_task_update),
+        asString(activity?.last_meeting_at),
+      ]
+        .map((value) => (value ? Date.parse(value) : 0))
+        .filter((value) => Number.isFinite(value));
+      const recencyScore =
+        lastActivityAt.length > 0 ? Math.max(...lastActivityAt) / 1000 / 60 / 60 / 24 : 0;
+      const activityLabel = [
+        openTasks > 0 ? `${openTasks} open tasks` : null,
+        meetings > 0 ? `${meetings} meetings` : null,
+      ].filter((part): part is string => Boolean(part)).join(" · ");
+      return {
+        ...project,
+        activityLabel: activityLabel || null,
+        activityScore: openTasks * 3 + meetings + recencyScore / 30,
+      };
+    })
+    .sort((a, b) => {
+      if (b.activityScore !== a.activityScore) return b.activityScore - a.activityScore;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 12)
+    .map(({ activityScore: _activityScore, ...project }) => project);
+}
+
 function buildRfiPreviewContent(params: {
   project: { id: number; name: string };
   subject: string;
@@ -1621,15 +1994,20 @@ type DirectSemanticResult = {
   metadata?: Record<string, unknown>;
 };
 
-function buildDirectSourceLookupAnswer(params: {
-  message: string;
-  semanticVectorResults: unknown;
-}): string | null {
-  const wrapper = asRecord(params.semanticVectorResults);
+type DirectSourceLookupExcerpt = {
+  label: string;
+  date: string;
+  content: string;
+};
+
+function extractDirectSourceLookupExcerpts(
+  semanticVectorResults: unknown,
+): DirectSourceLookupExcerpt[] {
+  const wrapper = asRecord(semanticVectorResults);
   const rawResults = Array.isArray(wrapper.results)
     ? (wrapper.results as DirectSemanticResult[])
     : [];
-  const results = rawResults
+  return rawResults
     .map((result) => {
       const content =
         typeof result.content === "string" ? result.content.trim() : "";
@@ -1638,84 +2016,94 @@ function buildDirectSourceLookupAnswer(params: {
     .filter((result): result is DirectSemanticResult & { content: string } =>
       Boolean(result),
     )
-    .slice(0, 6);
-  if (results.length === 0) return null;
-
-  const lines = [
-    "I treated this as a source lookup, not a project status report.",
-    "",
-    "Here is the strongest source context I found:",
-    "",
-  ];
-
-  for (const [index, result] of results.entries()) {
-    const title =
-      (typeof result.metadata?.title === "string" && result.metadata.title) ||
-      (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
-      (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
-      result.sourceTable ||
-      `Source ${index + 1}`;
-    const date = result.createdAt
-      ? new Date(result.createdAt).toISOString().slice(0, 10)
-      : "unknown date";
-    const score =
-      typeof result.finalScore === "number"
-        ? result.finalScore
-        : typeof result.similarity === "number"
-          ? result.similarity
-          : null;
-    const sourceLabel = String(title).includes("Teams")
-      ? String(title)
-      : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
-    const content = result.content.replace(/\s+/g, " ").slice(0, 700);
-    lines.push(
-      `${index + 1}. ${sourceLabel} (${date}${score != null ? `, score ${score.toFixed(2)}` : ""})`,
-      `   ${content}`,
-      "",
-    );
-  }
-
-  lines.push(
-    "If you need a wider pull, ask for the exact mailbox, Teams channel, person, and time window and I will keep it source-scoped.",
-  );
-  return lines.join("\n").trim();
+    .slice(0, 6)
+    .map((result, index) => {
+      const title =
+        (typeof result.metadata?.title === "string" && result.metadata.title) ||
+        (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
+        (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
+        result.sourceTable ||
+        `Source ${index + 1}`;
+      const date = result.createdAt
+        ? new Date(result.createdAt).toISOString().slice(0, 10)
+        : "unknown date";
+      const label = String(title).includes("Teams")
+        ? String(title)
+        : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
+      return {
+        label,
+        date,
+        content: result.content.replace(/\s+/g, " ").slice(0, 700),
+      };
+    });
 }
 
-type ExecutiveBriefingMetadataRow = Pick<
-  Database["public"]["Tables"]["daily_recaps"]["Row"],
-  | "id"
-  | "recap_date"
-  | "recap_kind"
-  | "created_at"
-  | "approved_at"
-  | "sent_at"
-  | "workflow_status"
-  | "meeting_count"
-  | "project_count"
-  | "ai_work_run_id"
->;
+// Turns retrieved excerpts into an actual answer instead of a raw templated
+// dump (numbered list of titles + relevance scores + internal source IDs).
+// A dump is never the right response for a chat assistant — even a genuine
+// "pull up the source" ask deserves a synthesized, conversational answer
+// that says whether the evidence actually answers the question (dated
+// excerpts from weeks ago do NOT answer a "today" question, and a raw dump
+// used to present them as if they did). Traced from `/ai` session
+// `11a3d842-7ab3-405d-9a18-90aa5f71d0c5`. See AI-RAG-ARCHITECTURE.md.
+async function synthesizeDirectSourceLookupAnswer(params: {
+  message: string;
+  semanticVectorResults: unknown;
+  synthesisModel: string;
+}): Promise<string | null> {
+  const excerpts = extractDirectSourceLookupExcerpts(
+    params.semanticVectorResults,
+  );
+  if (excerpts.length === 0) return null;
 
-async function loadLatestExecutiveBriefingMetadata(
-  supabase: SupabaseClient<Database>,
-): Promise<{
-  row: ExecutiveBriefingMetadataRow | null;
+  const excerptBlock = excerpts
+    .map(
+      (excerpt, index) =>
+        `[${index + 1}] ${excerpt.label} — ${excerpt.date}\n${excerpt.content}`,
+    )
+    .join("\n\n");
+
+  try {
+    const { text } = await generateText({
+      model: getLanguageModel(params.synthesisModel),
+      system: [
+        "You are Alleato's project intelligence assistant, answering a source-lookup question using ONLY the excerpts below.",
+        "Write a direct, conversational answer — like a sharp operator briefing someone, never a search engine listing results.",
+        "Never mention relevance scores, internal record IDs, or raw table/source names (e.g. do not say '19:meeting_Z' or 'score 0.57').",
+        "Refer to sources naturally by date and topic (e.g. 'a Teams thread from May 11' or 'an email about the McCray change order').",
+        "If the excerpts don't actually answer what was asked — e.g. the user asked about 'today' but every excerpt is from weeks earlier — say that plainly and summarize what the evidence actually shows instead of pretending it's current.",
+        "If nothing in the excerpts is relevant, say so plainly rather than listing weak matches.",
+        "Keep it tight: a few sentences to a short paragraph, not a bulleted dump of every excerpt.",
+      ].join("\n"),
+      prompt: `User's question: ${params.message}\n\nRetrieved excerpts:\n\n${excerptBlock}`,
+    });
+    return text.trim() || null;
+  } catch (error) {
+    console.error("[handler-v2] synthesizeDirectSourceLookupAnswer failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    // Fail toward an honest, still-conversational fallback — never the old
+    // raw dump — so a model outage degrades gracefully instead of reverting
+    // to score/ID clutter.
+    return "I found some source material that might be relevant, but couldn't put together a clean answer from it just now. Try asking again, or narrow it to a specific mailbox, Teams channel, person, or time window.";
+  }
+}
+
+async function loadLatestExecutiveBriefingMetadata(): Promise<{
+  packet: CanonicalDailyBriefPacket | null;
   errorMessage: string | null;
 }> {
-  const { data, error } = await supabase
-    .from("daily_recaps")
-    .select(
-      "id,recap_date,recap_kind,created_at,approved_at,sent_at,workflow_status,meeting_count,project_count,ai_work_run_id",
-    )
-    .eq("recap_kind", "executive_briefing")
-    .order("created_at", { ascending: false, nullsFirst: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    return { row: null, errorMessage: error.message };
+  try {
+    return {
+      packet: await loadCurrentDailyExecutiveBriefPacket(),
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      packet: null,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  return { row: data ?? null, errorMessage: null };
 }
 
 function formatBriefingTimestamp(value: string | null): string {
@@ -1726,45 +2114,192 @@ function formatBriefingTimestamp(value: string | null): string {
 }
 
 function buildExecutiveBriefingMetadataContent(params: {
-  row: ExecutiveBriefingMetadataRow | null;
+  packet: CanonicalDailyBriefPacket | null;
   errorMessage: string | null;
 }): string {
   if (params.errorMessage) {
     return [
       "I checked the daily operating brief metadata, but the lookup failed.",
       "",
-      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "Source checked: intelligence_packets target daily-executive-brief",
       `Failure: ${params.errorMessage}`,
       "",
       "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
     ].join("\n");
   }
 
-  if (!params.row) {
+  if (!params.packet) {
     return [
-      "I checked the daily operating brief metadata and did not find an executive briefing row yet.",
+      "I checked the daily operating brief metadata and did not find a canonical Daily Executive Brief packet yet.",
       "",
-      "Source checked: daily_recaps.recap_kind=executive_briefing",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      "",
+      "Missing generation step: run the canonical manual source-bundle compiler so it writes to the daily-executive-brief packet.",
       "",
       "I did not ask for a project because this question is about the executive briefing metadata, not a project-scoped report.",
     ].join("\n");
   }
 
-  const regeneratedAt =
-    params.row.created_at ?? params.row.approved_at ?? params.row.sent_at;
+  const regeneratedAt = params.packet.generatedAt;
   return [
-    `The daily operating brief was last regenerated at ${formatBriefingTimestamp(regeneratedAt)}.`,
+    `The daily operating brief was last compiled at ${formatBriefingTimestamp(regeneratedAt)}.`,
     "",
-    "Source checked: daily_recaps.recap_kind=executive_briefing",
-    `Recap date: ${params.row.recap_date}`,
-    `Workflow status: ${params.row.workflow_status}`,
-    `Approved at: ${formatBriefingTimestamp(params.row.approved_at)}`,
-    `Sent at: ${formatBriefingTimestamp(params.row.sent_at)}`,
-    `Coverage: ${params.row.project_count ?? 0} projects, ${params.row.meeting_count ?? 0} meetings`,
-    params.row.ai_work_run_id ? `AI work run: ${params.row.ai_work_run_id}` : null,
+    "Source checked: intelligence_packets target daily-executive-brief",
+    `Packet ID: ${params.packet.id}`,
+    `Business date: ${params.packet.businessDate}`,
+    `Packet type: ${params.packet.packetType}`,
+    `Freshness status: ${params.packet.freshnessStatus ?? "not recorded"}`,
+    `Source count: ${params.packet.sourceCount}`,
+    `Compiler version: ${params.packet.compilerVersion ?? "not recorded"}`,
   ]
     .filter((line): line is string => Boolean(line))
     .join("\n");
+}
+
+type DailyDeepReadCandidateCount = {
+  signalType: string;
+  status: string;
+  count: number;
+};
+
+async function loadDailyDeepReadPacketStatus(): Promise<{
+  packet: CanonicalDailyBriefPacket | null;
+  candidateCounts: DailyDeepReadCandidateCount[];
+  candidateErrorMessage: string | null;
+  errorMessage: string | null;
+}> {
+  try {
+    const packet = await loadCurrentDailyExecutiveBriefPacket();
+    if (!isRagDatabaseReadsEnabled()) {
+      return {
+        packet,
+        candidateCounts: [],
+        candidateErrorMessage: "RAG database reads are disabled for this runtime.",
+        errorMessage: null,
+      };
+    }
+
+    const rag = createRagServiceClient();
+    const { data, error } = await rag
+      .from("source_signal_candidates")
+      .select("signal_type,status,extraction_json")
+      .eq("compiler_version", "daily_deep_read_consumers_v1")
+      .limit(2000);
+
+    if (error) {
+      return {
+        packet,
+        candidateCounts: [],
+        candidateErrorMessage: error.message,
+        errorMessage: null,
+      };
+    }
+
+    const counts = new Map<string, DailyDeepReadCandidateCount>();
+    for (const row of data ?? []) {
+      const extraction = asRecord(row.extraction_json);
+      if (extraction.daily_packet_id !== packet.id) continue;
+      const signalType = row.signal_type || "unknown";
+      const status = row.status || "unknown";
+      const key = `${signalType}:${status}`;
+      const existing = counts.get(key);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, { signalType, status, count: 1 });
+      }
+    }
+
+    return {
+      packet,
+      candidateCounts: [...counts.values()].sort((a, b) =>
+        a.signalType === b.signalType
+          ? a.status.localeCompare(b.status)
+          : a.signalType.localeCompare(b.signalType),
+      ),
+      candidateErrorMessage: null,
+      errorMessage: null,
+    };
+  } catch (error) {
+    return {
+      packet: null,
+      candidateCounts: [],
+      candidateErrorMessage: null,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function formatCandidateCounts(counts: DailyDeepReadCandidateCount[]): string {
+  if (counts.length === 0) return "No packet-linked candidates found yet.";
+  return counts
+    .map((item) => `- ${item.signalType} / ${item.status}: ${item.count}`)
+    .join("\n");
+}
+
+function buildDailyDeepReadPacketStatusContent(params: {
+  packet: CanonicalDailyBriefPacket | null;
+  candidateCounts: DailyDeepReadCandidateCount[];
+  candidateErrorMessage: string | null;
+  errorMessage: string | null;
+}): string {
+  if (params.errorMessage) {
+    return [
+      "I checked the Daily Deep Read packet path, but the packet lookup failed.",
+      "",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      `Failure: ${params.errorMessage}`,
+      "",
+      "I did not use generic RAG chunk synthesis or the backend Deep Agents path for this answer.",
+    ].join("\n");
+  }
+
+  if (!params.packet) {
+    return [
+      "I checked the Daily Deep Read packet path and did not find a current packet.",
+      "",
+      "Source checked: intelligence_packets target daily-executive-brief",
+      "Required next step: run the Daily Deep Read compiler so it writes the current daily-executive-brief packet.",
+      "",
+      "I did not use generic RAG chunk synthesis or the backend Deep Agents path for this answer.",
+    ].join("\n");
+  }
+
+  const sourceCounts =
+    Object.entries(params.packet.sourceCounts)
+      .map(([lane, count]) => `${lane}: ${count}`)
+      .join(", ") || "not recorded";
+  const sectionTitles =
+    params.packet.sections.map((section) => section.title).join(", ") ||
+    "not recorded";
+  const candidateStatus = params.candidateErrorMessage
+    ? `Candidate lookup warning: ${params.candidateErrorMessage}`
+    : formatCandidateCounts(params.candidateCounts);
+
+  return [
+    `Latest Daily Deep Read packet: ${params.packet.businessDate}.`,
+    "",
+    "Packet source of truth:",
+    `- Table: intelligence_packets`,
+    `- Target: daily-executive-brief`,
+    `- Packet ID: ${params.packet.id}`,
+    `- Packet type: ${params.packet.packetType}`,
+    `- Generated at: ${formatBriefingTimestamp(params.packet.generatedAt)}`,
+    `- Compiler version: ${params.packet.compilerVersion ?? "not recorded"}`,
+    `- Source count: ${params.packet.sourceCount}`,
+    `- Source counts: ${sourceCounts}`,
+    `- Sections available: ${sectionTitles}`,
+    "",
+    "Project intelligence policy:",
+    "- Project intelligence should consume the full-source Daily Deep Read packet sections and source notes first.",
+    "- Raw RAG chunks are for search, retrieval, and citation support only; they should not be the primary synthesis source for owner-level insights.",
+    "- Tasks, risks, decisions, initiatives, and project updates should be extracted as review-gated candidates before promotion into project intelligence packets.",
+    "",
+    "Current packet-linked candidates:",
+    candidateStatus,
+    "",
+    "Routing proof: this answer used the deterministic Daily Deep Read packet lookup, not generic Deep Agents or raw document_chunks synthesis.",
+  ].join("\n");
 }
 
 // Why: deep-agent and Microsoft-specialist fetches can take 40–60s. Without
@@ -2185,6 +2720,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     stepCount: number;
   } | null = null;
   let contextCompactionMetadata: ContextCompactionMetadata | null = null;
+  // Real provider/stream error captured by streamText.onError. When the model
+  // yields no text, this is used to explain WHY instead of the old hardcoded
+  // "out of credits / billing" guess (which was wrong whenever the failure was
+  // a swallowed provider or tool-schema error rather than an actual billing
+  // block). Null means the stream ended without an error event.
+  let streamErrorMessage: string | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
   const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
@@ -2233,6 +2774,332 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         },
       } as never);
 
+      const confirmedChangeEventInput =
+        parseConfirmedChangeEventApprovalInput(lastUserContent);
+      if (confirmedChangeEventInput) {
+        responseAlreadyPersisted = true;
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-confirmed-write",
+            message: "Creating confirmed change event",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the confirmed change-event user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const directTrace: Array<Record<string, unknown>> = [];
+        const tools = createStrategistTools(args.user.id, {
+          pinnedProjectId:
+            typeof confirmedChangeEventInput.projectId === "number"
+              ? confirmedChangeEventInput.projectId
+              : args.selectedProjectId,
+          sessionId: args.sessionId,
+          includeActionTools: true,
+          onTrace: (trace) => {
+            const normalizedTrace = buildLiveToolTrace(trace, lastUserContent);
+            if (normalizedTrace) directTrace.push(normalizedTrace);
+          },
+        });
+        const executeCreateChangeEvent = tools.createChangeEvent?.execute;
+        if (!executeCreateChangeEvent) {
+          throw new Error("createChangeEvent execute handler was not registered.");
+        }
+
+        const output = await executeCreateChangeEvent(
+          confirmedChangeEventInput as never,
+          DIRECT_EXEC_OPTIONS,
+        );
+        const outputRecord =
+          output && typeof output === "object" && "record" in output
+            ? (output as { record?: unknown }).record
+            : null;
+        const outputError =
+          output && typeof output === "object" && "error" in output
+            ? (output as { error?: unknown }).error
+            : null;
+        const record =
+          outputRecord && typeof outputRecord === "object"
+            ? (outputRecord as Record<string, unknown>)
+            : null;
+        const title =
+          typeof record?.title === "string"
+            ? record.title
+            : typeof confirmedChangeEventInput.title === "string"
+              ? confirmedChangeEventInput.title
+              : "change event";
+        const content = outputError
+          ? `I could not create the change event: ${String(outputError)}`
+          : `Change event created: ${title}.`;
+        const toolTrace = [
+          ...directTrace,
+          {
+            tool: "createChangeEvent",
+            toolName: "createChangeEvent",
+            status: outputError ? "failed" : "success",
+            input: confirmedChangeEventInput,
+            output,
+            timestamp: new Date().toISOString(),
+          },
+        ];
+
+        writeTextResponse(
+          writer,
+          "strategist-change-event-confirmed-write",
+          content,
+        );
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: outputError
+              ? "Change event create failed"
+              : "Change event created",
+            status: outputError ? "error" : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        const { error: assistantPersistError } = await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: toJsonValue({
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-change-event-confirmed-write",
+              model: null,
+            },
+            provider_path: "deterministic-change-event-confirmed-write",
+            model: null,
+            retrieval_plan: {
+              intent: "change_event_write",
+              reason: "confirmed_change_event_write",
+              responseFormat: "write_result",
+              sources: ["chat_history.createChangeEvent.preview"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: {
+              orchestrator: "change-event-confirmed-write",
+              evidenceCount: 1,
+              sourceCoverage: [
+                {
+                  sourceType: "chat_history.createChangeEvent.preview",
+                  status: "checked",
+                  notes: "Confirmed preview fields were sent directly to createChangeEvent with confirmed=true.",
+                },
+              ],
+            },
+          }) as Json,
+        });
+        if (assistantPersistError) {
+          throw new Error(
+            `Persisting the confirmed change-event assistant response failed: ${assistantPersistError.message}`,
+          );
+        }
+
+        const { error: conversationUpdateError } = await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        if (conversationUpdateError) {
+          throw new Error(
+            `Updating the confirmed change-event conversation timestamp failed: ${conversationUpdateError.message}`,
+          );
+        }
+
+        responseAlreadyPersisted = true;
+        return;
+      }
+
+      if (isDailyDeepReadPacketQuestion(lastUserContent)) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "daily-deep-read-packet",
+            message: "Checking Daily Deep Read packet and review-gated candidates",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the Daily Deep Read packet user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const packetStatus = await loadDailyDeepReadPacketStatus();
+        const content = buildDailyDeepReadPacketStatusContent(packetStatus);
+        const toolTrace = [
+          {
+            tool: "intentPlanner",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              intent: "daily_deep_read_packet_status",
+              responseMode: "packet_lookup",
+              rationale:
+                "The user asked about Daily Deep Read source-of-truth, raw RAG chunks, or review-gated packet consumers.",
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "dailyDeepReadPacketLookup",
+            toolName: "dailyDeepReadPacketLookup",
+            agent: "retrieval-planner-v2",
+            status: packetStatus.errorMessage ? "failed" : "success",
+            input: {
+              table: "intelligence_packets",
+              targetSlug: "daily-executive-brief",
+              packetType: "current",
+            },
+            output: {
+              found: Boolean(packetStatus.packet),
+              packetId: packetStatus.packet?.id ?? null,
+              businessDate: packetStatus.packet?.businessDate ?? null,
+              sourceCount: packetStatus.packet?.sourceCount ?? null,
+              error: packetStatus.errorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "dailyDeepReadCandidateLookup",
+            toolName: "dailyDeepReadCandidateLookup",
+            agent: "retrieval-planner-v2",
+            status: packetStatus.candidateErrorMessage ? "warning" : "success",
+            input: {
+              table: "source_signal_candidates",
+              compilerVersion: "daily_deep_read_consumers_v1",
+              packetId: packetStatus.packet?.id ?? null,
+            },
+            output: {
+              counts: packetStatus.candidateCounts,
+              error: packetStatus.candidateErrorMessage,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-daily-deep-read-packet",
+          plan,
+          toolTrace,
+          memoryUsage,
+          sourceCoverage: [
+            {
+              sourceType: "intelligence_packets",
+              status: packetStatus.packet ? "loaded" : "missing",
+              notes:
+                packetStatus.errorMessage ??
+                "target_slug=daily-executive-brief packet_type=current",
+            },
+            {
+              sourceType: "source_signal_candidates",
+              status: packetStatus.candidateErrorMessage ? "warning" : "loaded",
+              notes:
+                packetStatus.candidateErrorMessage ??
+                "compiler_version=daily_deep_read_consumers_v1 filtered by daily_packet_id",
+            },
+          ],
+          evidenceCount:
+            (packetStatus.packet ? 1 : 0) +
+            packetStatus.candidateCounts.reduce((sum, item) => sum + item.count, 0),
+          outputPolicy: {
+            synthesisSource: "daily_deep_read_packet",
+            rawRagChunks: "search_and_citation_only",
+            promotion: "review_gated_candidates_required",
+          },
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "daily-deep-read-packet",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: "daily_deep_read_packet_status",
+            modelId: "retrieval-planner-v2-daily-deep-read-packet",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-daily-deep-read-packet",
+              model: null,
+            },
+            provider_path: "deterministic-daily-deep-read-packet",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: "daily_deep_read_packet_status",
+              reason: plan.reason,
+              responseFormat: "packet_lookup",
+              sources: ["intelligence_packets", "source_signal_candidates"],
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(writer, "strategist-daily-deep-read-packet", content);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Daily Deep Read packet status returned",
+            status:
+              packetStatus.errorMessage || packetStatus.candidateErrorMessage
+                ? "warning"
+                : "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
       if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
         writer.write({
           type: "data-status",
@@ -2246,17 +3113,20 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         if (lastUserContent.trim()) {
-          await args.supabase.from("chat_history").insert({
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
             session_id: args.sessionId,
             user_id: args.user.id,
             role: "user",
             content: lastUserContent,
           });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the change-event workflow user turn failed: ${userPersistError.message}`,
+            );
+          }
         }
 
-        const metadataLookup = await loadLatestExecutiveBriefingMetadata(
-          args.supabase,
-        );
+        const metadataLookup = await loadLatestExecutiveBriefingMetadata();
         const content = buildExecutiveBriefingMetadataContent(metadataLookup);
         const toolTrace = [
           {
@@ -2279,13 +3149,13 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             agent: "retrieval-planner-v2",
             status: metadataLookup.errorMessage ? "failed" : "success",
             input: {
-              table: "daily_recaps",
-              filter: "daily_recaps.recap_kind=executive_briefing",
-              order: "created_at desc",
+              table: "intelligence_packets",
+              targetSlug: "daily-executive-brief",
+              packetType: "current",
             },
             output: {
-              found: Boolean(metadataLookup.row),
-              row: metadataLookup.row,
+              found: Boolean(metadataLookup.packet),
+              packet: metadataLookup.packet,
               error: metadataLookup.errorMessage,
             },
             timestamp: new Date().toISOString(),
@@ -2298,14 +3168,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           memoryUsage,
           sourceCoverage: [
             {
-              sourceType: "daily_recaps",
-              status: metadataLookup.row ? "loaded" : "missing",
+              sourceType: "intelligence_packets",
+              status: metadataLookup.packet ? "loaded" : "missing",
               notes:
                 metadataLookup.errorMessage ??
-                "daily_recaps.recap_kind=executive_briefing",
+                "target_slug=daily-executive-brief packet_type=current",
             },
           ],
-          evidenceCount: metadataLookup.row ? 1 : 0,
+          evidenceCount: metadataLookup.packet ? 1 : 0,
         });
 
         await persistDirectDeepAgentResponse({
@@ -2335,7 +3205,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               intent: "executive_briefing_metadata",
               reason: plan.reason,
               responseFormat: "metadata_lookup",
-              sources: ["daily_recaps"],
+              sources: ["intelligence_packets"],
             },
             tool_trace: toolTrace,
             response_quality: buildResponseQualityMetadata({
@@ -2535,6 +3405,477 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           data: {
             stage: "complete",
             message: "RFI preview prepared",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      const previousChangeEventWorkflowDraft =
+        await loadLatestChangeEventWorkflowDraft({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+        });
+      const shouldUseChangeEventWorkflow =
+        !isChangeEventFinalPreviewRequest(lastUserContent) &&
+        (plan.intent === "change_event_write" ||
+          (Boolean(previousChangeEventWorkflowDraft) &&
+            isLikelyChangeEventWorkflowFollowup(lastUserContent)));
+
+      if (shouldUseChangeEventWorkflow) {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-workflow",
+            message: "Updating change-event intake workflow",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          const { error: userPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+          if (userPersistError) {
+            throw new Error(
+              `Persisting the change-event workflow user turn failed: ${userPersistError.message}`,
+            );
+          }
+        }
+
+        const initialWorkflow = buildChangeEventWorkflowMetadata({
+          prompt: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+          previousDraft: previousChangeEventWorkflowDraft,
+        });
+        await persistChangeEventWorkflowArtifact({
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          workflow: initialWorkflow,
+        });
+
+        if (!initialWorkflow.draft.projectId) {
+          const projectOptions = await loadProjectPickerOptions({
+            supabase: args.supabase,
+            prompt: lastUserContent,
+          });
+          const content = "Which project should I use for this change event?";
+          const dataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-change-event-project-picker",
+            data: {
+              widget: {
+                type: "project_picker",
+                id: "change-event-project-picker",
+                title: "Select Project",
+                subtitle:
+                  "To get started, let me know which project we are creating this change event for.",
+                actionLabel: "Use project",
+                intent: "general",
+                projects: projectOptions,
+                emptyState: "No active projects were available to choose from.",
+              } satisfies ProjectPickerWidgetPayload,
+            },
+          };
+          const toolTrace = [
+            {
+              tool: "projectContextRequired",
+              toolName: "projectContextRequired",
+              status: projectOptions.length > 0 ? "success" : "missing",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: args.selectedProjectId ?? null,
+              },
+              output: {
+                requiredFor: "change_event_workflow",
+                projectOptionCount: projectOptions.length,
+                expectedNextWidget: "project_picker",
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+
+          writeTextResponse(writer, "strategist-change-event-project-required", content);
+          writer.write(dataPart as never);
+
+          const { error: projectPickerPersistError } = await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              provider_decision: {
+                providerPath: "deterministic-change-event-project-picker",
+                model: null,
+              },
+              provider_path: "deterministic-change-event-project-picker",
+              model: null,
+              retrieval_plan: {
+                intent: "change_event_write",
+                reason: "project_context_required",
+                responseFormat: "project_picker",
+                sources: ["public.projects"],
+              },
+              change_event_workflow: initialWorkflow,
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: {
+                orchestrator: "change-event-project-context-required",
+                evidenceCount: projectOptions.length,
+                sourceCoverage: [
+                  {
+                    sourceType: "public.projects",
+                    status: projectOptions.length > 0 ? "checked" : "missing",
+                    notes:
+                      projectOptions.length > 0
+                        ? `${projectOptions.length} active project option(s) loaded.`
+                        : "No active project options were available.",
+                  },
+                ],
+              },
+              data_parts: [dataPart],
+            }) as Json,
+          });
+          if (projectPickerPersistError) {
+            throw new Error(
+              `Persisting the change-event project picker assistant turn failed: ${projectPickerPersistError.message}`,
+            );
+          }
+
+          const { error: conversationUpdateError } = await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          if (conversationUpdateError) {
+            throw new Error(
+              `Updating the change-event project picker conversation timestamp failed: ${conversationUpdateError.message}`,
+            );
+          }
+
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Project context requested",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
+        if (!initialWorkflow.draft.narrative) {
+          const dataPart = {
+            type: "data-assistant-widget",
+            id: "assistant-widget-change-event-workflow",
+            data: {
+              widget: {
+                type: "change_event_workflow",
+                id: "change-event-workflow",
+                title: "Change event workflow",
+                draft: initialWorkflow.draft,
+              },
+            },
+          };
+          const projectName =
+            initialWorkflow.draft.projectName ??
+            (initialWorkflow.draft.projectId
+              ? `project #${initialWorkflow.draft.projectId}`
+              : "this project");
+          const content = `We'll create this for ${projectName}.\n\n${initialWorkflow.draft.nextQuestion}`;
+          const toolTrace = [
+            {
+              tool: "changeEventWorkflowState",
+              toolName: "changeEventWorkflowState",
+              status: "missing",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId:
+                  args.selectedProjectId ??
+                  initialWorkflow.draft.projectId ??
+                  null,
+                hadPriorDraft: Boolean(previousChangeEventWorkflowDraft),
+              },
+              output: {
+                readyForPreview: false,
+                activeChecklistKey: initialWorkflow.readiness.activeChecklistKey,
+                missingChecklistKeys:
+                  initialWorkflow.readiness.missingChecklistKeys,
+                expectedNextStep: "collect_event_description",
+                expectedNativeTool: initialWorkflow.expectedNativeTool,
+              },
+              timestamp: new Date().toISOString(),
+            },
+          ];
+
+          writeTextResponse(writer, "strategist-change-event-description-required", content);
+          writer.write(dataPart as never);
+
+          const { error: descriptionPromptPersistError } =
+            await args.supabase.from("chat_history").insert({
+              session_id: args.sessionId,
+              user_id: args.user.id,
+              role: "assistant",
+              content,
+              metadata: toJsonValue({
+                architecture: "retrieval-planner-v2",
+                provider_decision: {
+                  providerPath:
+                    "deterministic-change-event-description-required",
+                  model: null,
+                },
+                provider_path:
+                  "deterministic-change-event-description-required",
+                model: null,
+                retrieval_plan: {
+                  intent: "change_event_write",
+                  reason: "event_description_required",
+                  responseFormat: "workflow_intake",
+                  sources: ["chat_history.change_event_workflow"],
+                },
+                change_event_workflow: initialWorkflow,
+                tool_trace: toolTrace,
+                response_quality: buildResponseQualityMetadata({
+                  toolTrace,
+                  content,
+                }),
+                source_debug: {
+                  orchestrator: "change-event-description-required",
+                  evidenceCount: 0,
+                  sourceCoverage: [
+                    {
+                      sourceType: "chat_history.change_event_workflow",
+                      status: "checked",
+                      notes:
+                        "Project context is available; event description is still needed before related-record search.",
+                    },
+                  ],
+                },
+                data_parts: [dataPart],
+              }) as Json,
+            });
+          if (descriptionPromptPersistError) {
+            throw new Error(
+              `Persisting the change-event description prompt failed: ${descriptionPromptPersistError.message}`,
+            );
+          }
+
+          const { error: conversationUpdateError } = await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          if (conversationUpdateError) {
+            throw new Error(
+              `Updating the change-event description prompt timestamp failed: ${conversationUpdateError.message}`,
+            );
+          }
+
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Event description requested",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          return;
+        }
+
+        const changeEventRetrievalCtx = await executeRetrievalPlan(
+          plan,
+          buildExecutorDeps({
+            supabase: args.supabase,
+            userId: args.user.id,
+            sessionId: args.sessionId,
+          }),
+          { sessionId: args.sessionId, message: lastUserContent },
+        );
+        latestRetrievalCtx = changeEventRetrievalCtx;
+        const relatedEvidence = buildChangeEventRelatedEvidence(changeEventRetrievalCtx);
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "change-event-evidence",
+            message:
+              relatedEvidence.length > 0
+                ? `Found ${relatedEvidence.length} related source${relatedEvidence.length === 1 ? "" : "s"}`
+                : "Checked related project evidence",
+            status: changeEventRetrievalCtx.warnings.length > 0 ? "warning" : "success",
+            durations: changeEventRetrievalCtx.durationsMs,
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        const workflow = buildChangeEventWorkflowMetadata({
+          prompt: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+          previousDraft: previousChangeEventWorkflowDraft,
+          relatedEvidence,
+        });
+        await persistChangeEventWorkflowArtifact({
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          workflow,
+        });
+        const dataPart = {
+          type: "data-assistant-widget",
+          id: "assistant-widget-change-event-workflow",
+          data: {
+            widget: {
+              type: "change_event_workflow",
+              id: "change-event-workflow",
+              title: "Change event workflow",
+              draft: workflow.draft,
+            },
+          },
+        };
+        const missingLabels = workflow.draft.checklist
+          .filter((item) => item.status !== "complete")
+          .map((item) => item.label.toLowerCase());
+        const content = workflow.readiness.readyForPreview
+          ? "Ready for final preview."
+          : workflow.draft.projectId
+            ? "Draft updated."
+            : "Ready for your project.";
+        const toolTrace = [
+          {
+            tool: "changeEventWorkflowState",
+            toolName: "changeEventWorkflowState",
+            status: "success",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+              hadPriorDraft: Boolean(previousChangeEventWorkflowDraft),
+            },
+            output: {
+              readyForPreview: workflow.readiness.readyForPreview,
+              activeChecklistKey: workflow.readiness.activeChecklistKey,
+              missingChecklistKeys: workflow.readiness.missingChecklistKeys,
+              evidenceCount: workflow.readiness.evidenceCount,
+              evidenceSourcePath: workflow.readiness.evidenceSourcePath,
+              expectedNativeTool: workflow.expectedNativeTool,
+            },
+            timestamp: new Date().toISOString(),
+          },
+          {
+            tool: "semanticVectorSearch",
+            toolName: "semanticVectorSearch",
+            status: changeEventRetrievalCtx.semanticVectorResults ? "success" : "missing",
+            input: {
+              query: plan.sources.semanticVectorSearch?.query ?? lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: {
+              resultCount: summarizeEvalCount(changeEventRetrievalCtx.semanticVectorResults) ?? 0,
+              relatedEvidenceCount: relatedEvidence.length,
+              warnings: changeEventRetrievalCtx.warnings,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        ];
+
+        writer.write(dataPart as never);
+        writeTextResponse(writer, "strategist-change-event-workflow", content);
+
+        const { error: workflowPersistError } = await args.supabase.from("chat_history").insert({
+          session_id: args.sessionId,
+          user_id: args.user.id,
+          role: "assistant",
+          content,
+          metadata: toJsonValue({
+            architecture: "retrieval-planner-v2",
+            provider_decision: {
+              providerPath: "deterministic-change-event-workflow",
+              model: null,
+            },
+            provider_path: "deterministic-change-event-workflow",
+            model: null,
+            retrieval_plan: {
+              intent: "change_event_write",
+              reason: "change_event_workflow_intake",
+              responseFormat: "workflow_intake",
+              sources: [
+                "chat_history.change_event_workflow",
+                "semantic_vector_search",
+              ],
+            },
+            change_event_workflow: workflow,
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: {
+              orchestrator: "change-event-workflow-intake",
+              evidenceCount: workflow.readiness.evidenceCount,
+              sourceCoverage: [
+                {
+                  sourceType: "chat_history.change_event_workflow",
+                  status: "checked",
+                  notes: missingLabels.length
+                    ? `Missing: ${missingLabels.join(", ")}`
+                    : "Workflow intake is ready for final preview.",
+                },
+                {
+                  sourceType: "semantic_vector_search",
+                  status: changeEventRetrievalCtx.semanticVectorResults ? "checked" : "missing",
+                  notes:
+                    relatedEvidence.length > 0
+                      ? `${relatedEvidence.length} related source${relatedEvidence.length === 1 ? "" : "s"} attached to the workflow.`
+                      : `No related evidence suggestions attached from ${
+                          summarizeEvalCount(changeEventRetrievalCtx.semanticVectorResults) ?? 0
+                        } retrieval result(s).`,
+                },
+              ],
+            },
+            data_parts: [dataPart],
+          }) as Json,
+        });
+        if (workflowPersistError) {
+          throw new Error(
+            `Persisting the change-event workflow assistant turn failed: ${workflowPersistError.message}`,
+          );
+        }
+
+        const { error: conversationUpdateError } = await args.supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", args.sessionId)
+          .eq("user_id", args.user.id);
+        if (conversationUpdateError) {
+          throw new Error(
+            `Updating the change-event workflow conversation timestamp failed: ${conversationUpdateError.message}`,
+          );
+        }
+
+        responseAlreadyPersisted = true;
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: workflow.readiness.readyForPreview
+              ? "Change-event workflow ready for final preview"
+              : "Change-event workflow updated",
             status: "success",
             timestamp: new Date().toISOString(),
           },
@@ -3267,8 +4608,8 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
         } as never);
 
+        const executiveBridgeStarted = Date.now();
         try {
-          const executiveBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
             {
@@ -3419,18 +4760,22 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           } as never);
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
+          const diagnostic = bridgeFailureDiagnostic(error);
           bridgeToolTrace.push(
             createBackendBridgeTrace({
               tool: "backendDeepAgentExecutiveBriefing",
               status: "failed",
               message: lastUserContent,
               selectedProjectId: args.selectedProjectId ?? null,
+              durationMs: Date.now() - executiveBridgeStarted,
               detail,
+              diagnostic,
             }),
           );
           console.error("[handler-v2] Deep Agents executive bridge failed", {
             message: detail,
             intent: plan.intent,
+            diagnostic,
           });
           writer.write({
             type: "data-status",
@@ -3874,7 +5219,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         return;
       }
 
-      if (shouldUseDirectProjectBriefing({ plan, retrievalCtx })) {
+      if (
+        shouldUseDirectProjectBriefing({
+          plan,
+          retrievalCtx,
+          message: lastUserContent,
+          selectedProjectId: args.selectedProjectId ?? null,
+        })
+      ) {
         const content = buildDirectProjectBriefingContent({
           ctx: retrievalCtx,
           message: lastUserContent,
@@ -3994,9 +5346,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (plan.intent === "source_lookup" && retrievalCtx.semanticVectorResults) {
-        const content = buildDirectSourceLookupAnswer({
+        const content = await synthesizeDirectSourceLookupAnswer({
           message: lastUserContent,
           semanticVectorResults: retrievalCtx.semanticVectorResults,
+          synthesisModel,
         });
         if (content) {
           const plannerTrace = {
@@ -4362,13 +5715,22 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               langfuseTraceId = getActiveTraceId();
               setActiveTraceIO({ input: inputText });
 
+              // gpt-5.4 rejects reasoning_effort + function tools on
+              // /v1/chat/completions (empty-response crash traced 2026-07-09).
+              // buildAssistantOpenAiProviderOptions omits reasoningEffort when
+              // tools are attached — see that module + its tests.
               const result = streamText({
                 model: getLanguageModel(synthesisModel),
                 system: systemPrompt,
                 messages: modelMessages,
                 tools,
                 maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-                stopWhen: stepCountIs(10),
+                providerOptions: {
+                  openai: buildAssistantOpenAiProviderOptions(
+                    hasFunctionTools(tools),
+                  ),
+                },
+                stopWhen: stepCountIs(6),
                 experimental_telemetry: aiTelemetry({
                   functionId: "ai-assistant-chat-v2",
                   metadata: {
@@ -4388,9 +5750,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                   },
                 }),
                 onError: ({ error }) => {
+                  const message =
+                    error instanceof Error ? error.message : String(error);
+                  streamErrorMessage = message;
                   console.error("[handler-v2] streamText onError", {
-                    message:
-                      error instanceof Error ? error.message : String(error),
+                    message,
                     stack:
                       error instanceof Error
                         ? error.stack?.split("\n").slice(0, 5).join("\n")
@@ -4472,7 +5836,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       const assistantText = extractTextFromParts(responseMessage.parts);
       const assistantContent = assistantText.trim()
         ? assistantText
-        : "The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.";
+        : buildEmptyResponseMessage(streamErrorMessage);
 
       const dataParts = extractPersistableDataParts(responseMessage);
       const streamToolTrace =
@@ -4520,6 +5884,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           : "ai-gateway",
         finish_reason: finishMetadata?.finishReason ?? finishReason ?? null,
         empty_model_response: !assistantText.trim(),
+        stream_error: streamErrorMessage,
         usage: finishMetadata?.usage ?? null,
         tool_trace: toolTrace,
         response_quality: buildResponseQualityMetadata({
@@ -4539,7 +5904,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           })),
           outputPolicy: {
             maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-            stopWhen: "stepCountIs(10)",
+            reasoningEffort: "low",
+            textVerbosity: "low",
+            stopWhen: "stepCountIs(6)",
           },
         }),
         retrieval_plan: {
@@ -4572,6 +5939,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         user_id: args.user.id,
         role: "assistant",
         content: assistantContent,
+        sources: buildAnswerSourceCitations(
+          latestRetrievalCtx,
+          args.selectedProjectId ?? null,
+        ) as Json,
         metadata: metadata as Json,
       });
 

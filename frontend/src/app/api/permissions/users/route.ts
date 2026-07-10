@@ -1,7 +1,8 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 import { ALL_GRANULAR_FLAGS, type GranularFlag } from "@/lib/permissions-shared";
@@ -51,23 +52,7 @@ function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | und
 }
 
 async function requireAdmin(where: string) {
-  const supabase = await createClient();
-  const user = await getApiRouteUser();
-  if (!user) {
-    throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
-  }
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.is_admin) {
-    throw new GuardrailError({ code: "AUTH_FORBIDDEN", where, message: "Access denied." });
-  }
-
-  return user;
+  return requireUserManagementAccess(where);
 }
 
 /**

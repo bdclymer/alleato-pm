@@ -11,15 +11,13 @@ import {
   MapPin,
   Plus,
   RotateCcw,
-  Search,
   Star,
   StarOff,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import {
   Badge,
   Button,
@@ -28,7 +26,6 @@ import {
   DialogHeader,
   DialogTitle,
   EmptyState,
-  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -37,7 +34,7 @@ import {
   Skeleton,
   Textarea,
 } from "@/components/ds";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import {
   useDeletePhoto,
   useDeletePhotoPermanently,
@@ -60,6 +57,9 @@ export default function ProjectPhotosPage() {
   const params = useParams<{ projectId: string }>()!;
   const projectId = parseInt(params.projectId, 10);
 
+  const [activeTab, setActiveTab] = useState<
+    "photos" | "map" | "timeline" | "albums" | "recycle-bin"
+  >("photos");
   const [search, setSearch] = useState("");
   const [album, setAlbum] = useState("__all__");
   const [isStarred, setIsStarred] = useState(false);
@@ -146,34 +146,39 @@ export default function ProjectPhotosPage() {
         </Button>
       }
     >
-      <Tabs defaultValue="photos" className="space-y-4">
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-          <TabsList variant="line" className="w-max min-w-full">
-            <TabsTrigger value="photos">
-              <Image className="mr-1.5 size-4" />
-              Photos
-            </TabsTrigger>
-            <TabsTrigger value="map">
-              <MapPin className="mr-1.5 size-4" />
-              Map
-            </TabsTrigger>
-            <TabsTrigger value="timeline">
-              <Clock className="mr-1.5 size-4" />
-              Timeline
-            </TabsTrigger>
-            <TabsTrigger value="albums">
-              <FolderOpen className="mr-1.5 size-4" />
-              Albums
-            </TabsTrigger>
-            <TabsTrigger value="recycle-bin">
-              <Trash2 className="mr-1.5 size-4" />
-              Recycle Bin
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      <div className="space-y-4">
+        <PageTabs
+          tabs={[
+            { label: "Photos", href: "photos", isActive: activeTab === "photos" },
+            { label: "Map", href: "map", isActive: activeTab === "map" },
+            {
+              label: "Timeline",
+              href: "timeline",
+              isActive: activeTab === "timeline",
+            },
+            { label: "Albums", href: "albums", isActive: activeTab === "albums" },
+            {
+              label: "Recycle Bin",
+              href: "recycle-bin",
+              isActive: activeTab === "recycle-bin",
+            },
+          ]}
+          variant="inline"
+          className="mb-0"
+          onTabClick={(href) =>
+            setActiveTab(
+              href as
+                | "photos"
+                | "map"
+                | "timeline"
+                | "albums"
+                | "recycle-bin",
+            )
+          }
+        />
 
         {/* ─── Photos Tab ─────────────────────────────────────────────── */}
-        <TabsContent value="photos">
+        {activeTab === "photos" ? (
           <section
             aria-label="Photo drop zone"
             className="space-y-4"
@@ -209,26 +214,11 @@ export default function ProjectPhotosPage() {
 
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search photos..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-                {search && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
-              </div>
+              <ExpandableSearch
+                placeholder="Search photos..."
+                value={search}
+                onChange={setSearch}
+              />
 
               <Select value={album} onValueChange={setAlbum}>
                 <SelectTrigger className="w-[160px]">
@@ -311,42 +301,42 @@ export default function ProjectPhotosPage() {
               </div>
             )}
           </section>
-        </TabsContent>
+        ) : null}
 
         {/* ─── Map Tab ────────────────────────────────────────────────── */}
-        <TabsContent value="map">
+        {activeTab === "map" ? (
           <EmptyState
             icon={<MapPin />}
             title="Map View"
             description="View geotagged photos on a project map. Photos with location data will appear as pins."
           />
-        </TabsContent>
+        ) : null}
 
         {/* ─── Timeline Tab ───────────────────────────────────────────── */}
-        <TabsContent value="timeline">
+        {activeTab === "timeline" ? (
           <EmptyState
             icon={<Clock />}
             title="Timeline View"
             description="Browse photos chronologically to track project progress over time."
           />
-        </TabsContent>
+        ) : null}
 
         {/* ─── Albums Tab ─────────────────────────────────────────────── */}
-        <TabsContent value="albums">
+        {activeTab === "albums" ? (
           <AlbumsTab projectId={projectId} />
-        </TabsContent>
+        ) : null}
 
         {/* ─── Recycle Bin Tab ─────────────────────────────────────────── */}
-        <TabsContent value="recycle-bin">
+        {activeTab === "recycle-bin" ? (
           <RecycleBinTab projectId={projectId} />
-        </TabsContent>
-      </Tabs>
+        ) : null}
+      </div>
 
       {/* Mobile FAB */}
       <Button
         size="icon"
         onClick={() => setUploadOpen(true)}
-        className="fixed bottom-6 right-4 z-40 size-14 rounded-full shadow-sm sm:hidden"
+        className="fixed right-4 bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-sm sm:hidden"
         aria-label="Upload photo"
       >
         <Plus className="size-6" />

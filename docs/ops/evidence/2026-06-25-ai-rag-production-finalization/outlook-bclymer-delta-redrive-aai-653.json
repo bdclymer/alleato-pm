@@ -1,0 +1,9 @@
+{
+  "status": "succeeded",
+  "user_email": "bclymer@alleatogroup.com",
+  "items_synced": 24,
+  "persisted_delta": 24,
+  "delta_token_saved": true,
+  "error": null,
+  "reason": "aai_653_microsoft_assistant_cache_repair"
+}

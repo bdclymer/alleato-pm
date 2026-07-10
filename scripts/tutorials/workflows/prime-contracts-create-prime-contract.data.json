@@ -1,0 +1,12 @@
+{
+  "projectId": 1034,
+  "contractNumber": "PC-TRAIN-001",
+  "title": "Owner Contract - Interior Renovation",
+  "description": "Prime contract for the interior renovation owner scope, including general conditions and finish packages.",
+  "defaultRetainage": "10",
+  "sovDescription": "Interior demolition and wall framing",
+  "sovAmount": "25000",
+  "inclusions": "General conditions, demolition, framing, drywall, and finish coordination.",
+  "exclusions": "Owner-furnished equipment, loose furniture, and specialty audiovisual packages.",
+  "submitWorkflow": false
+}

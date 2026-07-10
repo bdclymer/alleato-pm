@@ -1,0 +1,806 @@
+{
+  "packetId": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+  "shouldWrite": false,
+  "tasks": [
+    {
+      "title": "Decide whether the contract schedule should show the realistic March completion path instead of the desired January completion.",
+      "description": "Decide whether the contract schedule should show the realistic March completion path instead of the desired January completion.",
+      "project_id": 876,
+      "assignee_person_id": "a2a3eaf6-b0bf-46de-b406-493289136877",
+      "assignee_name": "Brandon Clymer",
+      "assignee_email": "bclymer@alleatogroup.com",
+      "priority": "high",
+      "due_date": "2026-07-15",
+      "category": "brandon",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "brandon",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KX3ZNYZTSVYN1DXMCSC88RY6"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Brandon Clymer",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Update the warehouse tenant-improvement schedule with detailed activities, realistic durations, permit milestones, and procurement logic.",
+      "description": "Update the warehouse tenant-improvement schedule with detailed activities, realistic durations, permit milestones, and procurement logic.",
+      "project_id": 876,
+      "assignee_person_id": "dc24d10b-52f1-4796-8007-29824badddbc",
+      "assignee_name": "Parker Hollingsworth",
+      "assignee_email": "phollingsworth@alleatogroup.com",
+      "priority": "high",
+      "due_date": "2026-07-10",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KX3ZNYZTSVYN1DXMCSC88RY6"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Parker Hollingsworth",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Help review the drawings and add trade durations to the Exol Morrisville schedule.",
+      "description": "Help review the drawings and add trade durations to the Exol Morrisville schedule.",
+      "project_id": 876,
+      "assignee_person_id": "29caf1d9-f830-4a20-8537-39bd41846d71",
+      "assignee_name": "Jesse Dawson",
+      "assignee_email": "jessedawson1971@yahoo.com",
+      "priority": "high",
+      "due_date": "2026-07-10",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KX3ZNYZTSVYN1DXMCSC88RY6"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Jesse Dawson",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Review the Kamco and Wargo joint-check paperwork, sign if acceptable, and return it to Kamco.",
+      "description": "Review the Kamco and Wargo joint-check paperwork, sign if acceptable, and return it to Kamco.",
+      "project_id": 876,
+      "assignee_person_id": "c876b68b-6fd8-4563-80aa-8d053e36ccb8",
+      "assignee_name": "Bob Wright",
+      "assignee_email": "bwright@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMciIAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Bob Wright",
+        "project_assignment_method": "project_name_or_number_match"
+      }
+    },
+    {
+      "title": "Locate or have Kamco resend the missing joint-check attachment so Alleato can review it.",
+      "description": "Locate or have Kamco resend the missing joint-check attachment so Alleato can review it.",
+      "project_id": 876,
+      "assignee_person_id": "8a16d1a0-fab1-4e75-9567-867424ac2e64",
+      "assignee_name": "Misty Rogers",
+      "assignee_email": "mrogers@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMciIAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Misty Rogers",
+        "project_assignment_method": "project_name_or_number_match"
+      }
+    },
+    {
+      "title": "Approve, reject, or request an alternate path for the $35,100 fire alarm panel and Skypod change order.",
+      "description": "Approve, reject, or request an alternate path for the $35,100 fire alarm panel and Skypod change order.",
+      "project_id": 31,
+      "assignee_person_id": "3f92b11e-a06b-4bfc-b9d0-945575117fa0",
+      "assignee_name": "Yusuke Nakanishi",
+      "assignee_email": "yusuke.nakanishi@fastretailing.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEpYUDnAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Yusuke Nakanishi",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Confirm the installation plan and prepare an option-B that avoids any unacceptable Skypod disruption.",
+      "description": "Confirm the installation plan and prepare an option-B that avoids any unacceptable Skypod disruption.",
+      "project_id": 31,
+      "assignee_person_id": "1ae7d405-9cbe-4f93-b5b2-549c39d023e1",
+      "assignee_name": "Kebba Mass",
+      "assignee_email": "kmass@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEpYUDnAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Kebba Mass",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Return punch-list closeout responses with photos for the mechanical, electrical, plumbing, and architectural items.",
+      "description": "Return punch-list closeout responses with photos for the mechanical, electrical, plumbing, and architectural items.",
+      "project_id": 31,
+      "assignee_person_id": "1ae7d405-9cbe-4f93-b5b2-549c39d023e1",
+      "assignee_name": "Kebba Mass",
+      "assignee_email": "kmass@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEpYUDnAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Kebba Mass",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Revise every drawing sheet and title block to include the required blank city stamp box in the absolute top-right corner.",
+      "description": "Revise every drawing sheet and title block to include the required blank city stamp box in the absolute top-right corner.",
+      "project_id": 1008,
+      "assignee_person_id": "6ce4a38c-0209-4d07-97b4-c4be29eec20d",
+      "assignee_name": "Jerome Daksiewicz",
+      "assignee_email": "jerome.daksiewicz@dkgrar.com",
+      "priority": "high",
+      "due_date": "2026-07-09",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWWC06P2CQZRMFT70YVHYHK4"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Jerome",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Upload the full corrected drawing set as one complete file for Denise and City of Champaign review after the revisions are complete.",
+      "description": "Upload the full corrected drawing set as one complete file for Denise and City of Champaign review after the revisions are complete.",
+      "project_id": 1008,
+      "assignee_person_id": "7221e33c-a6a4-4101-992c-2312448ea2b8",
+      "assignee_name": "Douglas Franklin",
+      "assignee_email": "dfranklin@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWWC06P2CQZRMFT70YVHYHK4",
+          "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARL9tCMAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Douglas Franklin",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Track professional design firm registration and CR-number validation until Illinois approval clears.",
+      "description": "Track professional design firm registration and CR-number validation until Illinois approval clears.",
+      "project_id": 1008,
+      "assignee_person_id": "7221e33c-a6a4-4101-992c-2312448ea2b8",
+      "assignee_name": "Douglas Franklin",
+      "assignee_email": "dfranklin@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWWC06P2CQZRMFT70YVHYHK4"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Douglas Franklin",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Get Elias at VIOX to schedule the private water and sewer field-verification site visit before Patrick travels.",
+      "description": "Get Elias at VIOX to schedule the private water and sewer field-verification site visit before Patrick travels.",
+      "project_id": 1009,
+      "assignee_person_id": "459a906d-a34d-4e49-8574-33426926b60f",
+      "assignee_name": "Andrew Brannan",
+      "assignee_email": "a.brannanbuilders@gmail.com",
+      "priority": "high",
+      "due_date": "2026-07-16",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWH7GA0WM1056H4PSJ7B5PQ0"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Andrew",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Review the building-integrated photovoltaic installation guides and specifications before the technical design call.",
+      "description": "Review the building-integrated photovoltaic installation guides and specifications before the technical design call.",
+      "project_id": 1009,
+      "assignee_person_id": "ec42d768-78ed-4871-b6ac-ce934fb1e257",
+      "assignee_name": "G",
+      "assignee_email": "g@damngoodinteriors.com",
+      "priority": "high",
+      "due_date": "2026-07-10",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWH7GA0WM1056H4PSJ7B5PQ0"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Electrical and structural engineers",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Send the landscape plan to bidders and keep the bidder list expanded with the additional landscapers.",
+      "description": "Send the landscape plan to bidders and keep the bidder list expanded with the additional landscapers.",
+      "project_id": 1009,
+      "assignee_person_id": "7221e33c-a6a4-4101-992c-2312448ea2b8",
+      "assignee_name": "Douglas Franklin",
+      "assignee_email": "dfranklin@alleatogroup.com",
+      "priority": "high",
+      "due_date": "2026-07-10",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnjAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Douglas Franklin",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Reduce the vehicle-use-area landscape overage by removing islands or plantings to get closer to the required square footage.",
+      "description": "Reduce the vehicle-use-area landscape overage by removing islands or plantings to get closer to the required square footage.",
+      "project_id": 1009,
+      "assignee_person_id": null,
+      "assignee_name": "VIOX",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnjAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "VIOX",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Review and sign the revised design release before it is included in the complete Union City planning package.",
+      "description": "Review and sign the revised design release before it is included in the complete Union City planning package.",
+      "project_id": 1009,
+      "assignee_person_id": "ec42d768-78ed-4871-b6ac-ce934fb1e257",
+      "assignee_name": "G",
+      "assignee_email": "g@damngoodinteriors.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "01KWH7GA0WM1056H4PSJ7B5PQ0"
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Boone County design team",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Arrange the third-party inspection for the column support anchors.",
+      "description": "Arrange the third-party inspection for the column support anchors.",
+      "project_id": 1031,
+      "assignee_person_id": "7442c0b0-f4b7-42e4-9543-f529a625df49",
+      "assignee_name": "Bill",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnUAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Bill Logsdon",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Finish uploading the roof reinforcement third-party inspection to the permit portal and confirm it is accepted.",
+      "description": "Finish uploading the roof reinforcement third-party inspection to the permit portal and confirm it is accepted.",
+      "project_id": 1031,
+      "assignee_person_id": "7d9bd5bb-2ca1-4862-8f51-a025c3181718",
+      "assignee_name": "Andrew Cannon",
+      "assignee_email": "acannon@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnUAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Andrew Cannon",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Respond to request for information number 16 on the loading dock joists.",
+      "description": "Respond to request for information number 16 on the loading dock joists.",
+      "project_id": 754,
+      "assignee_person_id": "ec42d768-78ed-4871-b6ac-ce934fb1e257",
+      "assignee_name": "G",
+      "assignee_email": "g@damngoodinteriors.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckeAAA=",
+          "outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JC-AAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Design and engineering team",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Submit missed submittals, the one-year workmanship warranty, and operations and maintenance data for HVAC scope SC-8189-0002.",
+      "description": "Submit missed submittals, the one-year workmanship warranty, and operations and maintenance data for HVAC scope SC-8189-0002.",
+      "project_id": 754,
+      "assignee_person_id": "ec42d768-78ed-4871-b6ac-ce934fb1e257",
+      "assignee_name": "G",
+      "assignee_email": "g@damngoodinteriors.com",
+      "priority": "high",
+      "due_date": "2026-07-24",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JDGAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Performance Mechanical Contracting",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Provide a usable CAD file or alternate transmission if the updated export still does not include the needed curb geometry.",
+      "description": "Provide a usable CAD file or alternate transmission if the updated export still does not include the needed curb geometry.",
+      "project_id": 754,
+      "assignee_person_id": null,
+      "assignee_name": "Kimley-Horn",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckTAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Kimley-Horn",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Incorporate the control-point information into the existing file and send a crew to the site.",
+      "description": "Incorporate the control-point information into the existing file and send a crew to the site.",
+      "project_id": 754,
+      "assignee_person_id": null,
+      "assignee_name": "Forefront",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckPAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Forefront",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Proceed with the rear-upright mounting configuration using Exotec’s approved standard vertical support and bracket orientation.",
+      "description": "Proceed with the rear-upright mounting configuration using Exotec’s approved standard vertical support and bracket orientation.",
+      "project_id": 879,
+      "assignee_person_id": null,
+      "assignee_name": "Installation team",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEpYUDcAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Installation team",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Confirm the added sprinkler-pipe weight and connection approach with the professional-engineer-stamped company.",
+      "description": "Confirm the added sprinkler-pipe weight and connection approach with the professional-engineer-stamped company.",
+      "project_id": 879,
+      "assignee_person_id": "1ae7d405-9cbe-4f93-b5b2-549c39d023e1",
+      "assignee_name": "Kebba Mass",
+      "assignee_email": "kmass@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqnAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Kebba Mass",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Reconcile the support elevations, rear-upright-only constraint, and nine-millimeter upright holes before field installation details are treated as final.",
+      "description": "Reconcile the support elevations, rear-upright-only constraint, and nine-millimeter upright holes before field installation details are treated as final.",
+      "project_id": 879,
+      "assignee_person_id": "ec42d768-78ed-4871-b6ac-ce934fb1e257",
+      "assignee_name": "G",
+      "assignee_email": "g@damngoodinteriors.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqnAAA=",
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqoAAA=",
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqsAAA=",
+          "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqvAAA=",
+          "outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEpYUDcAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Design team",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Return the signed subcontract, certificate of insurance naming Alleato LLC as additional insured, and W-9.",
+      "description": "Return the signed subcontract, certificate of insurance naming Alleato LLC as additional insured, and W-9.",
+      "project_id": 1067,
+      "assignee_person_id": null,
+      "assignee_name": "Orion Electric",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2HAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Orion Electric",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Confirm whether he intends to self-perform added FRP textured wall panels around the bar wall.",
+      "description": "Confirm whether he intends to self-perform added FRP textured wall panels around the bar wall.",
+      "project_id": 1067,
+      "assignee_person_id": "c968ec1b-6d44-4b1e-b31e-b7768261e703",
+      "assignee_name": "Dale Robinson",
+      "assignee_email": "drobinson50@live.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_conversation_fe06b372b60667c0012693e43bb2921f",
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcijAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Dale Robinson",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Clarify the scope, finish responsibility, and warranty boundary if Dale self-performs the added FRP textured wall panel work.",
+      "description": "Clarify the scope, finish responsibility, and warranty boundary if Dale self-performs the added FRP textured wall panel work.",
+      "project_id": 1067,
+      "assignee_person_id": "04bc24fd-55d1-4b4d-be3c-ec84fb4161d2",
+      "assignee_name": "Nick Jepson",
+      "assignee_email": "njepson@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_conversation_fe06b372b60667c0012693e43bb2921f",
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcijAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Nick Jepson",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Return the signed subcontract agreement, completed W-9, current certificate of insurance meeting contract requirements, and billing contact information.",
+      "description": "Return the signed subcontract agreement, completed W-9, current certificate of insurance meeting contract requirements, and billing contact information.",
+      "project_id": 877,
+      "assignee_person_id": null,
+      "assignee_name": "JT P Excavation",
+      "assignee_email": null,
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcilAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "JT P Excavation",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Schedule work to begin on or before August 1 at 7705 Brookville Road in Indianapolis.",
+      "description": "Schedule work to begin on or before August 1 at 7705 Brookville Road in Indianapolis.",
+      "project_id": 877,
+      "assignee_person_id": null,
+      "assignee_name": "JT P Excavation",
+      "assignee_email": null,
+      "priority": "high",
+      "due_date": "2026-08-01",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMcilAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "JT P Excavation",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Upload and submit Merritt Contracting’s remaining documents for architect approval once received.",
+      "description": "Upload and submit Merritt Contracting’s remaining documents for architect approval once received.",
+      "project_id": 877,
+      "assignee_person_id": "75e90a46-1626-46ab-995f-366a7020d714",
+      "assignee_name": "Patrick Antone",
+      "assignee_email": "pantone@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMciLAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Patrick Antone",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Give Chad a heads-up on the transition and review communication style with Colin and Victor.",
+      "description": "Give Chad a heads-up on the transition and review communication style with Colin and Victor.",
+      "project_id": 865,
+      "assignee_person_id": "0fbcc56e-7a24-4166-b781-7ac2c0c4f3f1",
+      "assignee_name": "La' Kisha Green",
+      "assignee_email": "kgreen@alleatogroup.com",
+      "priority": "medium",
+      "due_date": null,
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMciaAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "La’Kisha Green",
+        "project_assignment_method": "source_set_single_project"
+      }
+    },
+    {
+      "title": "Prepare to start Illinois work on July 27 after traveling the week of July 20.",
+      "description": "Prepare to start Illinois work on July 27 after traveling the week of July 20.",
+      "project_id": 865,
+      "assignee_person_id": "8baa0426-6396-4834-b4ad-8c8bff5c33e7",
+      "assignee_name": "Colin Nicoski",
+      "assignee_email": "colin.nicoski@kimley-horn.com",
+      "priority": "high",
+      "due_date": "2026-07-27",
+      "category": "team",
+      "extraction_metadata": {
+        "business_date": "2026-07-09",
+        "category": "team",
+        "daily_packet_id": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+        "daily_packet_generated_at": "2026-07-09T21:38:32.393Z",
+        "source_ids": [
+          "outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMciaAAA="
+        ],
+        "origin": "action_item",
+        "consumer_compiler_version": "daily_deep_read_consumers_v1",
+        "owner_label": "Colin",
+        "project_assignment_method": "source_set_single_project"
+      }
+    }
+  ]
+}

@@ -1,15 +1,24 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   PageContainer,
+  PageTabs,
   ProjectPageHeader,
+  FormContainer,
 } from "@/components/layout";
-import {
-  SelectField,
-  TextField,
-  TextareaField,
-} from "@/components/forms";
+import { Form } from "@/components/ui/form";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormGrid } from "@/components/forms/FormGrid";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
 import { Input } from "@/components/ui/input";
@@ -27,15 +36,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Building2,
   Plus,
-  Save,
   Search,
-  BookOpen,
   Trash2,
   Pencil,
   FileText,
@@ -79,6 +84,10 @@ const KNOWLEDGE_CATEGORIES: { value: KnowledgeCategory; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 export default function CompanyKnowledgePage() {
+  const [activeTab, setActiveTab] = useState<"profile" | "articles" | "documents">(
+    "profile",
+  );
+
   return (
     <>
       <ProjectPageHeader
@@ -86,34 +95,36 @@ export default function CompanyKnowledgePage() {
         description="Manage company profile and knowledge articles for the AI assistant"
       />
       <PageContainer>
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList variant="line">
-            <TabsTrigger value="profile" className="gap-1.5">
-              <Building2 className="h-4 w-4" />
-              Company Profile
-            </TabsTrigger>
-            <TabsTrigger value="articles" className="gap-1.5">
-              <BookOpen className="h-4 w-4" />
-              Knowledge Articles
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1.5">
-              <FileText className="h-4 w-4" />
-              Documents
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <PageTabs
+            tabs={[
+              {
+                label: "Company Profile",
+                href: "profile",
+                isActive: activeTab === "profile",
+              },
+              {
+                label: "Knowledge Articles",
+                href: "articles",
+                isActive: activeTab === "articles",
+              },
+              {
+                label: "Documents",
+                href: "documents",
+                isActive: activeTab === "documents",
+              },
+            ]}
+            variant="inline"
+            className="mb-0"
+            onTabClick={(href) =>
+              setActiveTab(href as "profile" | "articles" | "documents")
+            }
+          />
 
-          <TabsContent value="profile">
-            <CompanyProfileTab />
-          </TabsContent>
-
-          <TabsContent value="articles">
-            <KnowledgeArticlesTab />
-          </TabsContent>
-
-          <TabsContent value="documents">
-            <DocumentsTab />
-          </TabsContent>
-        </Tabs>
+          {activeTab === "profile" ? <CompanyProfileTab /> : null}
+          {activeTab === "articles" ? <KnowledgeArticlesTab /> : null}
+          {activeTab === "documents" ? <DocumentsTab /> : null}
+        </div>
       </PageContainer>
     </>
   );
@@ -123,69 +134,121 @@ export default function CompanyKnowledgePage() {
 // Company Profile Tab
 // ---------------------------------------------------------------------------
 
+const companyProfileSchema = z.object({
+  mission: z.string(),
+  vision: z.string(),
+  company_history: z.string(),
+  founded_year: z.string(),
+  headquarters: z.string(),
+  employee_count: z.string(),
+  annual_revenue_range: z.string(),
+  core_values: z.string(),
+  key_differentiators: z.string(),
+  target_markets: z.string(),
+  service_areas: z.string(),
+  certifications: z.string(),
+  notes: z.string(),
+});
+
+type CompanyProfileValues = z.infer<typeof companyProfileSchema>;
+
+const EMPTY_COMPANY_PROFILE: CompanyProfileValues = {
+  mission: "",
+  vision: "",
+  company_history: "",
+  founded_year: "",
+  headquarters: "",
+  employee_count: "",
+  annual_revenue_range: "",
+  core_values: "",
+  key_differentiators: "",
+  target_markets: "",
+  service_areas: "",
+  certifications: "",
+  notes: "",
+};
+
 function CompanyProfileTab() {
   const { data: ctx, isLoading } = useCompanyContext();
   const updateCtx = useUpdateCompanyContext();
 
-  const [form, setForm] = useState<Record<string, unknown>>({});
-  const [initialized, setInitialized] = useState(false);
+  const form = useForm<CompanyProfileValues>({
+    resolver: zodResolver(companyProfileSchema),
+    defaultValues: EMPTY_COMPANY_PROFILE,
+  });
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = form;
 
-  // Initialize form from fetched data
-  if (ctx && !initialized) {
-    setForm({
+  // Hydrate form from fetched company context (preserves comma-joined arrays).
+  const joinArray = (val: unknown) =>
+    Array.isArray(val) ? (val as string[]).join(", ") : "";
+
+  useEffect(() => {
+    if (!ctx) return;
+    reset({
       mission: ctx.mission ?? "",
       vision: ctx.vision ?? "",
       company_history: ctx.company_history ?? "",
-      core_values: Array.isArray(ctx.core_values)
-        ? (ctx.core_values as string[]).join(", ")
-        : "",
-      key_differentiators: Array.isArray(ctx.key_differentiators)
-        ? (ctx.key_differentiators as string[]).join(", ")
-        : "",
-      target_markets: Array.isArray(ctx.target_markets)
-        ? (ctx.target_markets as string[]).join(", ")
-        : "",
-      service_areas: Array.isArray(ctx.service_areas)
-        ? (ctx.service_areas as string[]).join(", ")
-        : "",
-      certifications: Array.isArray(ctx.certifications)
-        ? (ctx.certifications as string[]).join(", ")
-        : "",
-      annual_revenue_range: ctx.annual_revenue_range ?? "",
-      employee_count: ctx.employee_count ?? "",
-      founded_year: ctx.founded_year ?? "",
+      founded_year: ctx.founded_year != null ? String(ctx.founded_year) : "",
       headquarters: ctx.headquarters ?? "",
+      employee_count:
+        ctx.employee_count != null ? String(ctx.employee_count) : "",
+      annual_revenue_range: ctx.annual_revenue_range ?? "",
+      core_values: joinArray(ctx.core_values),
+      key_differentiators: joinArray(ctx.key_differentiators),
+      target_markets: joinArray(ctx.target_markets),
+      service_areas: joinArray(ctx.service_areas),
+      certifications: joinArray(ctx.certifications),
       notes: ctx.notes ?? "",
     });
-    setInitialized(true);
-  }
+  }, [ctx, reset]);
 
-  const handleSave = () => {
+  const onSubmit = (values: CompanyProfileValues) => {
     // Convert comma-separated strings to arrays for JSON fields
-    const toArray = (val: unknown) => {
-      if (typeof val !== "string" || val.trim() === "") return [];
-      return val.split(",").map((s: string) => s.trim()).filter(Boolean);
+    const toArray = (val: string) => {
+      if (val.trim() === "") return [];
+      return val.split(",").map((s) => s.trim()).filter(Boolean);
     };
 
     updateCtx.mutate(
       {
-        mission: form.mission as string || null,
-        vision: form.vision as string || null,
-        company_history: form.company_history as string || null,
-        core_values: toArray(form.core_values),
-        key_differentiators: toArray(form.key_differentiators),
-        target_markets: toArray(form.target_markets),
-        service_areas: toArray(form.service_areas),
-        certifications: toArray(form.certifications),
-        annual_revenue_range: form.annual_revenue_range as string || null,
-        employee_count: form.employee_count ? Number(form.employee_count) : null,
-        founded_year: form.founded_year ? Number(form.founded_year) : null,
-        headquarters: form.headquarters as string || null,
-        notes: form.notes as string || null,
+        mission: values.mission || null,
+        vision: values.vision || null,
+        company_history: values.company_history || null,
+        core_values: toArray(values.core_values),
+        key_differentiators: toArray(values.key_differentiators),
+        target_markets: toArray(values.target_markets),
+        service_areas: toArray(values.service_areas),
+        certifications: toArray(values.certifications),
+        annual_revenue_range: values.annual_revenue_range || null,
+        employee_count: values.employee_count
+          ? Number(values.employee_count)
+          : null,
+        founded_year: values.founded_year ? Number(values.founded_year) : null,
+        headquarters: values.headquarters || null,
+        notes: values.notes || null,
       } as Record<string, unknown>,
       {
         onSuccess: () => toast.success("Company profile saved"),
-        onError: () => toast.error("Failed to save company profile"),
+        onError: (error) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to save company profile";
+          setError("root", { type: "server", message });
+          reportNonCriticalFailure({
+            area: "company-info",
+            operation: "save-company-profile",
+            error,
+            userVisibleFallback: "Company profile was not saved.",
+          });
+          toast.error(message);
+        },
       },
     );
   };
@@ -199,120 +262,118 @@ function CompanyProfileTab() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium text-foreground">Company Profile</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            This information helps the AI understand your company&apos;s identity and strategy.
-          </p>
-        </div>
-        <Button size="sm" onClick={handleSave} disabled={updateCtx.isPending}>
-          <Save />
-          {updateCtx.isPending ? "Saving..." : "Save"}
-        </Button>
-      </div>
+    <FormContainer maxWidth="lg" withCard={false} padding={false}>
+      <Form {...form}>
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <FormServerError message={errors.root?.message} />
 
-      <Separator />
+          <FormSection
+            title="Company Profile"
+            description="This information helps the AI understand your company's identity and strategy."
+          >
+            <RHFTextareaField
+              control={control}
+              name="mission"
+              label="Mission Statement"
+              rows={3}
+              placeholder="Our mission is to..."
+            />
+            <RHFTextareaField
+              control={control}
+              name="vision"
+              label="Vision"
+              rows={3}
+              placeholder="Our vision is to become..."
+            />
+            <RHFTextareaField
+              control={control}
+              name="company_history"
+              label="Company History"
+              rows={3}
+              placeholder="Founded in... key milestones..."
+            />
 
-      <div className="grid gap-4">
-        <TextareaField
-          label="Mission Statement"
-          value={(form.mission as string) ?? ""}
-          onChange={(e) => setForm({ ...form, mission: e.target.value })}
-          rows={3}
-          placeholder="Our mission is to..."
-        />
-        <TextareaField
-          label="Vision"
-          value={(form.vision as string) ?? ""}
-          onChange={(e) => setForm({ ...form, vision: e.target.value })}
-          rows={3}
-          placeholder="Our vision is to become..."
-        />
-        <TextareaField
-          label="Company History"
-          value={(form.company_history as string) ?? ""}
-          onChange={(e) => setForm({ ...form, company_history: e.target.value })}
-          rows={3}
-          placeholder="Founded in... key milestones..."
-        />
+            <FormGrid columns={2}>
+              <RHFTextField
+                control={control}
+                name="founded_year"
+                label="Founded Year"
+                placeholder="2015"
+              />
+              <RHFTextField
+                control={control}
+                name="headquarters"
+                label="Headquarters"
+                placeholder="City, State"
+              />
+              <RHFTextField
+                control={control}
+                name="employee_count"
+                label="Employee Count"
+                placeholder="50"
+              />
+              <RHFTextField
+                control={control}
+                name="annual_revenue_range"
+                label="Annual Revenue Range"
+                placeholder="$10M - $25M"
+              />
+            </FormGrid>
+          </FormSection>
 
-        <div className="grid grid-cols-2 gap-4">
-          <TextField
-            label="Founded Year"
-            value={String(form.founded_year ?? "")}
-            onChange={(e) => setForm({ ...form, founded_year: e.target.value })}
-            placeholder="2015"
+          <FormSection
+            title="Positioning & Notes"
+            description="Comma-separated lists are stored as individual entries."
+          >
+            <RHFTextField
+              control={control}
+              name="core_values"
+              label="Core Values (comma-separated)"
+              placeholder="Integrity, Excellence, Safety, Innovation"
+            />
+            <RHFTextField
+              control={control}
+              name="key_differentiators"
+              label="Key Differentiators (comma-separated)"
+              placeholder="In-house engineering, Data-driven approach, 98% on-time delivery"
+            />
+            <RHFTextField
+              control={control}
+              name="target_markets"
+              label="Target Markets (comma-separated)"
+              placeholder="Commercial, Healthcare, Industrial"
+            />
+            <RHFTextField
+              control={control}
+              name="service_areas"
+              label="Service Areas (comma-separated)"
+              placeholder="General Contracting, Design-Build, Construction Management"
+            />
+            <RHFTextField
+              control={control}
+              name="certifications"
+              label="Certifications (comma-separated)"
+              placeholder="LEED AP, OSHA 30, PMP, DBIA"
+            />
+            <RHFTextareaField
+              control={control}
+              name="notes"
+              label="Notes"
+              rows={3}
+              placeholder="Any other context the AI should know about the company..."
+            />
+          </FormSection>
+
+          <FormActions
+            submitLabel="Save"
+            cancelLabel="Reset"
+            onCancel={() => reset()}
+            isSubmitting={updateCtx.isPending}
+            stickyOnMobile
           />
-          <TextField
-            label="Headquarters"
-            value={(form.headquarters as string) ?? ""}
-            onChange={(e) => setForm({ ...form, headquarters: e.target.value })}
-            placeholder="City, State"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <TextField
-            label="Employee Count"
-            value={String(form.employee_count ?? "")}
-            onChange={(e) => setForm({ ...form, employee_count: e.target.value })}
-            placeholder="50"
-          />
-          <TextField
-            label="Annual Revenue Range"
-            value={(form.annual_revenue_range as string) ?? ""}
-            onChange={(e) =>
-              setForm({ ...form, annual_revenue_range: e.target.value })
-            }
-            placeholder="$10M - $25M"
-          />
-        </div>
-
-        <Separator />
-
-        <TextField
-          label="Core Values (comma-separated)"
-          value={(form.core_values as string) ?? ""}
-          onChange={(e) => setForm({ ...form, core_values: e.target.value })}
-          placeholder="Integrity, Excellence, Safety, Innovation"
-        />
-        <TextField
-          label="Key Differentiators (comma-separated)"
-          value={(form.key_differentiators as string) ?? ""}
-          onChange={(e) =>
-            setForm({ ...form, key_differentiators: e.target.value })
-          }
-          placeholder="In-house engineering, Data-driven approach, 98% on-time delivery"
-        />
-        <TextField
-          label="Target Markets (comma-separated)"
-          value={(form.target_markets as string) ?? ""}
-          onChange={(e) => setForm({ ...form, target_markets: e.target.value })}
-          placeholder="Commercial, Healthcare, Industrial"
-        />
-        <TextField
-          label="Service Areas (comma-separated)"
-          value={(form.service_areas as string) ?? ""}
-          onChange={(e) => setForm({ ...form, service_areas: e.target.value })}
-          placeholder="General Contracting, Design-Build, Construction Management"
-        />
-        <TextField
-          label="Certifications (comma-separated)"
-          value={(form.certifications as string) ?? ""}
-          onChange={(e) => setForm({ ...form, certifications: e.target.value })}
-          placeholder="LEED AP, OSHA 30, PMP, DBIA"
-        />
-        <TextareaField
-          label="Notes"
-          value={(form.notes as string) ?? ""}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          rows={3}
-          placeholder="Any other context the AI should know about the company..."
-        />
-      </div>
-    </div>
+        </form>
+      </Form>
+    </FormContainer>
   );
 }
 
@@ -398,6 +459,7 @@ function KnowledgeArticlesTab() {
                   });
                 }
               }}
+              onCancel={() => setDialogOpen(false)}
               isPending={createArticle.isPending || updateArticle.isPending}
             />
           </DialogContent>
@@ -504,9 +566,25 @@ function KnowledgeArticlesTab() {
 // Article Form
 // ---------------------------------------------------------------------------
 
+const CATEGORY_VALUES = KNOWLEDGE_CATEGORIES.map((c) => c.value) as [
+  KnowledgeCategory,
+  ...KnowledgeCategory[],
+];
+
+const articleFormSchema = z.object({
+  title: z.string().trim().min(1, "Title is required"),
+  category: z.enum(CATEGORY_VALUES),
+  content: z.string().trim().min(1, "Content is required"),
+  tags: z.string(),
+  source: z.string(),
+});
+
+type ArticleFormValues = z.infer<typeof articleFormSchema>;
+
 function ArticleForm({
   article,
   onSubmit,
+  onCancel,
   isPending,
 }: {
   article: KnowledgeArticle | null;
@@ -517,80 +595,93 @@ function ArticleForm({
     tags?: string[];
     source?: string;
   }) => void;
+  onCancel?: () => void;
   isPending: boolean;
 }) {
-  const [title, setTitle] = useState(article?.title ?? "");
-  const [content, setContent] = useState(article?.content ?? "");
-  const [category, setCategory] = useState<KnowledgeCategory>(
-    article?.category ?? "general",
-  );
-  const [tags, setTags] = useState(article?.tags?.join(", ") ?? "");
-  const [source, setSource] = useState(article?.source ?? "");
+  const form = useForm<ArticleFormValues>({
+    resolver: zodResolver(articleFormSchema),
+    defaultValues: {
+      title: article?.title ?? "",
+      content: article?.content ?? "",
+      category: article?.category ?? "general",
+      tags: article?.tags?.join(", ") ?? "",
+      source: article?.source ?? "",
+    },
+  });
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = form;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) {
-      toast.error("Title and content are required");
-      return;
-    }
+  const handleFormSubmit = (values: ArticleFormValues) => {
     onSubmit({
-      title: title.trim(),
-      content: content.trim(),
-      category,
-      tags: tags
-        ? tags
+      title: values.title.trim(),
+      content: values.content.trim(),
+      category: values.category,
+      tags: values.tags
+        ? values.tags
             .split(",")
             .map((t) => t.trim())
             .filter(Boolean)
         : undefined,
-      source: source.trim() || undefined,
+      source: values.source.trim() || undefined,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <TextField
-        label="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="e.g., Q4 2025 Strategic Priorities"
-        required
-      />
-      <SelectField
-        label="Category"
-        value={category}
-        onValueChange={(v) => setCategory(v as KnowledgeCategory)}
-        options={KNOWLEDGE_CATEGORIES.map((c) => ({
-          value: c.value,
-          label: c.label,
-        }))}
-      />
-      <TextareaField
-        label="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={8}
-        placeholder="Enter the knowledge content here. The AI will use this to answer questions about your company."
-        required
-      />
-      <TextField
-        label="Tags (comma-separated, optional)"
-        value={tags}
-        onChange={(e) => setTags(e.target.value)}
-        placeholder="hiring, growth, Q4"
-      />
-      <TextField
-        label="Source (optional)"
-        value={source}
-        onChange={(e) => setSource(e.target.value)}
-        placeholder="e.g., Board Meeting 2026-01-15, Strategy Deck"
-      />
-      <div className="flex justify-end">
-        <Button type="submit" size="sm" disabled={isPending}>
-          {isPending ? "Saving..." : article ? "Update" : "Create"}
-        </Button>
-      </div>
-    </form>
+    <Form {...form}>
+      <form
+        noValidate
+        onSubmit={handleSubmit(handleFormSubmit)}
+        className="space-y-8"
+      >
+        <FormServerError message={errors.root?.message} />
+
+        <FormSection title="Article">
+          <RHFTextField
+            control={control}
+            name="title"
+            label="Title *"
+            placeholder="e.g., Q4 2025 Strategic Priorities"
+          />
+          <RHFSelectField
+            control={control}
+            name="category"
+            label="Category"
+            options={KNOWLEDGE_CATEGORIES.map((c) => ({
+              value: c.value,
+              label: c.label,
+            }))}
+          />
+          <RHFTextareaField
+            control={control}
+            name="content"
+            label="Content *"
+            rows={8}
+            placeholder="Enter the knowledge content here. The AI will use this to answer questions about your company."
+          />
+          <RHFTextField
+            control={control}
+            name="tags"
+            label="Tags (comma-separated, optional)"
+            placeholder="hiring, growth, Q4"
+          />
+          <RHFTextField
+            control={control}
+            name="source"
+            label="Source (optional)"
+            placeholder="e.g., Board Meeting 2026-01-15, Strategy Deck"
+          />
+        </FormSection>
+
+        <FormActions
+          submitLabel={article ? "Update" : "Create"}
+          onCancel={onCancel}
+          isSubmitting={isPending}
+        />
+      </form>
+    </Form>
   );
 }
 
@@ -636,8 +727,13 @@ function DocumentsTab() {
       if (!error && data) {
         setDocuments(data as UploadedDocument[]);
       }
-    } catch {
-      // Silently handle error
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "company-info",
+        operation: "fetch-documents",
+        error,
+        userVisibleFallback: "Could not load uploaded documents.",
+      });
     } finally {
       setIsLoadingDocs(false);
     }

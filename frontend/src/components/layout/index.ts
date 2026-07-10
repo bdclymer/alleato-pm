@@ -20,6 +20,13 @@
 export { PageShell } from "./page-shell";
 export type { PageShellVariant, PageShellProps } from "./page-shell";
 
+// ── STRICT: header + width + a fixed, named content layout (no hand-rolled grids)
+export { PageScaffold } from "./page-scaffold";
+export type {
+  PageScaffoldProps,
+  PageScaffoldLayoutKind,
+} from "./page-scaffold";
+
 // ── Primitives (for incremental adoption and edge cases) ─────────────────────
 export { PageContainer } from "./PageContainer";
 export type { PageContainerProps } from "./PageContainer";
@@ -32,7 +39,6 @@ export { PageLayout } from "./PageLayout";
 export { FormContainer } from "./FormContainer";
 
 export { PageTabs } from "./PageTabs";
-export { PageTabsV2 } from "./PageTabsV2";
 export {
   ContentSectionStack,
   DetailPanel,
@@ -59,7 +65,7 @@ export type { InlineProps } from "./inline";
 
 // ── Shell-level components (not page-level, don't use inside pages) ───────────
 export { AppHeader } from "./AppHeader";
-export { default as Footer } from "./Footer";
+export { SiteFooter, SiteFooter as Footer } from "./site-footer";
 
 // ── Shared error boundary UI ─────────────────────────────────────────────────
 export { RouteErrorPage } from "./RouteErrorPage";

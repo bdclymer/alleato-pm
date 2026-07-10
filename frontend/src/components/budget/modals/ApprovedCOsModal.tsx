@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  BaseSidebar,
-  SidebarBody,
-  SidebarFooter,
-  SidebarTabs,
-} from "./BaseSidebar";
-import { Button } from "@/components/ui/button";
+import { BaseSidebar, SidebarBody, SidebarStats } from "./BaseSidebar";
 import {
   InlineTable,
   InlineTableHeader,
@@ -19,7 +13,7 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { FileText } from "lucide-react";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface ChangeOrder {
   id: string;
@@ -30,6 +24,7 @@ interface ChangeOrder {
   approvedBy: string | null;
   requestedDate: string;
   contractNumber: string;
+  detailHref?: string | null;
 }
 
 interface ApprovedCOsModalProps {
@@ -45,10 +40,8 @@ export function ApprovedCOsModal({
   onClose,
   budgetLineId,
   projectId,
+  costCode,
 }: ApprovedCOsModalProps) {
-  const [activeTab, setActiveTab] = useState<"approved" | "history">(
-    "approved",
-  );
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +82,7 @@ export function ApprovedCOsModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -99,11 +92,6 @@ export function ApprovedCOsModal({
 
   const totalAmount = changeOrders.reduce((sum, co) => sum + co.amount, 0);
 
-  const tabs = [
-    { id: "approved", label: "Approved COs" },
-    { id: "history", label: "History" },
-  ];
-
   return (
     <BaseSidebar
       open={open}
@@ -111,152 +99,101 @@ export function ApprovedCOsModal({
       title="Approved Change Orders"
       size="xl"
     >
-      <SidebarTabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as "approved" | "history")}
-      />
-
       <SidebarBody className="bg-background">
-        {activeTab === "approved" ? (
-          <div className="p-4 sm:p-6 space-y-4">
-            {/* Total Summary */}
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Total Approved Change Orders
-                  </p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(totalAmount)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Count</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {changeOrders.length}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div className="p-4 sm:p-6 space-y-3">
+          <SidebarStats
+            summary={
+              <>
+                {costCode ? `${costCode} · ` : ""}
+                {changeOrders.length} approved change order
+                {changeOrders.length === 1 ? "" : "s"}
+              </>
+            }
+            value={formatCurrency(totalAmount)}
+          />
 
-            {/* Info Box */}
-            <div className="rounded-lg bg-muted/40 border border-border p-4">
-              <div className="flex items-start gap-4">
-                <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">
-                    About Approved COs
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    These are change orders from your prime contract that have
-                    been approved and impact this budget line. Only approved
-                    change orders are included in the budget calculations.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Change Orders Table */}
-            <InlineTable variant="read">
-              <InlineTableHeader>
-                <InlineTableHeaderRow>
-                  <InlineTableHeaderCell>CO Number</InlineTableHeaderCell>
-                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
-                  <InlineTableHeaderCell>Contract</InlineTableHeaderCell>
-                  <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
-                  <InlineTableHeaderCell>Approved Date</InlineTableHeaderCell>
-                  <InlineTableHeaderCell>Approved By</InlineTableHeaderCell>
-                </InlineTableHeaderRow>
-              </InlineTableHeader>
-              <InlineTableBody>
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
-                      Loading change orders...
-                    </td>
-                  </tr>
-                ) : error ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-3 py-10 text-center text-destructive"
-                    >
-                      {error}
-                    </td>
-                  </tr>
-                ) : changeOrders.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-3 py-10 text-center text-muted-foreground"
-                    >
-                      No approved change orders found for this cost code.
-                    </td>
-                  </tr>
-                ) : (
-                  changeOrders.map((co) => (
-                    <InlineTableRow key={co.id}>
-                      <InlineTableCell className="font-medium text-primary">
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+                <InlineTableHeaderCell>CO Number</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Contract</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Approved Date</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Approved By</InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {loading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-3 py-10 text-center text-muted-foreground"
+                  >
+                    Loading change orders...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-3 py-10 text-center text-destructive"
+                  >
+                    {error}
+                  </td>
+                </tr>
+              ) : changeOrders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-3 py-10 text-center text-muted-foreground"
+                  >
+                    No approved change orders found for this cost code.
+                  </td>
+                </tr>
+              ) : (
+                changeOrders.map((co) => (
+                  <InlineTableRow key={co.id}>
+                    <InlineTableCell>
+                      <BudgetDrilldownRecordLink href={co.detailHref}>
                         {co.changeOrderNumber}
-                      </InlineTableCell>
-                      <InlineTableCell
-                        className="max-w-xs truncate"
-                        title={co.description}
-                      >
-                        {co.description}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {co.contractNumber}
-                      </InlineTableCell>
-                      <InlineTableCell
-                        align="right"
-                        numeric
-                        className={cn(
-                          "font-semibold",
-                          co.amount < 0
-                            ? "text-destructive"
-                            : "text-foreground",
-                        )}
-                      >
-                        {formatCurrency(co.amount)}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {formatDate(co.approvedDate)}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {co.approvedBy || "-"}
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  ))
-                )}
-              </InlineTableBody>
-            </InlineTable>
-          </div>
-        ) : (
-          <div className="p-4 sm:p-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              View the complete history of all change orders (approved,
-              rejected, and voided) for this cost code.
-            </p>
-
-            <div className="rounded-lg border border-border bg-muted/30 p-6 text-center">
-              <p className="text-muted-foreground">History view coming soon</p>
-            </div>
-          </div>
-        )}
+                      </BudgetDrilldownRecordLink>
+                    </InlineTableCell>
+                    <InlineTableCell
+                      className="max-w-xs truncate"
+                      title={co.description}
+                    >
+                      {co.description}
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      {co.contractNumber === "-" ? "" : co.contractNumber}
+                    </InlineTableCell>
+                    <InlineTableCell
+                      align="right"
+                      numeric
+                      className={cn(
+                        "font-semibold",
+                        co.amount < 0
+                          ? "text-destructive"
+                          : "text-foreground",
+                      )}
+                    >
+                      {formatCurrency(co.amount)}
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      {formatDate(co.approvedDate)}
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      {co.approvedBy || ""}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))
+              )}
+            </InlineTableBody>
+          </InlineTable>
+        </div>
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

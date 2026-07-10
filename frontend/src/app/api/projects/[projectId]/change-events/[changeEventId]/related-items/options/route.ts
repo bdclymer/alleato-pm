@@ -2,7 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
@@ -47,6 +47,18 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
   
     const { projectId, changeEventId } = await params;
+
+    // Auth first — before any param validation — so unauthenticated callers
+    // always get 401, never a 400 for a missing/invalid query param.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events/[changeEventId]/related-items/options#GET",
+        message: "Authentication required.",
+      });
+    }
+
     const parsedProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(parsedProjectId)) {
       return NextResponse.json({ error: "Invalid project id" }, { status: 400 });

@@ -77,7 +77,7 @@ type GroupRow = DistributionGroupWithMembers;
 // ─── Color maps ──────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: CellColorMap = {
-  active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  active: "bg-success/10 text-success",
   inactive: "bg-muted text-muted-foreground",
 };
 

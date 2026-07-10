@@ -11,14 +11,13 @@ import {
 import {
   ChevronDown,
   FileSignature,
-  MoreHorizontal,
+  MoreVertical,
   Plus,
   RefreshCw,
   RotateCcw,
   ShoppingCart,
   Trash2,
   Trash,
-  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,7 +47,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
-import { CommitmentsImportDialog } from "@/components/commitments/CommitmentsImportDialog";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import {
   DetailPanel,
   TableExpandedRow,
@@ -311,7 +310,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const queryClient = useQueryClient();
 
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -391,24 +389,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const isRecycleBinTab = activeFilters.tab === "recycle-bin";
   const isChangeOrdersTab = activeFilters.tab === "change-orders";
 
-  // Hide TYPE column when a type tab is active — it's redundant to show
-  // "Subcontract" in every row when the tab already filters to subcontracts.
-  const effectiveVisibleColumns = React.useMemo(() => {
-    const isTypeTab =
-      activeFilters.type === "subcontract" ||
-      activeFilters.type === "purchase_order";
-    if (!isTypeTab) return tableState.visibleColumns;
-    return tableState.visibleColumns.filter((c) => c !== "type");
-  }, [tableState.visibleColumns, activeFilters.type]);
+  const effectiveVisibleColumns = tableState.visibleColumns;
 
-  // Tab navigation sets type/tab in the URL — don't count those as user-applied
-  // filters in the badge. Only count filters the user set via the filter panel.
+  // Internal page modes still use the `tab` query param. Keep that state out of
+  // the filter badge and clear action so the toolbar reflects only user-applied
+  // filters.
   const toolbarActiveFilters = React.useMemo(() => {
-    const isTypeTab =
-      activeFilters.type === "subcontract" ||
-      activeFilters.type === "purchase_order";
-    const { tab: _tab, type, ...rest } = activeFilters;
-    return isTypeTab ? rest : { ...rest, type };
+    const { tab: _tab, ...rest } = activeFilters;
+    return rest;
   }, [activeFilters]);
 
   const {
@@ -911,25 +899,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.type);
 
-  const tabs = [
-    {
-      label: "Commitments",
-      href: `/${projectId}/commitments`,
-      count: totalItems,
-      isActive: !activeFilters.type && !activeFilters.tab,
-    },
-    {
-      label: "Subcontracts",
-      href: `/${projectId}/commitments?type=subcontract`,
-      isActive: activeFilters.type === "subcontract" && !activeFilters.tab,
-    },
-    {
-      label: "Purchase Orders",
-      href: `/${projectId}/commitments?type=purchase_order`,
-      isActive: activeFilters.type === "purchase_order" && !activeFilters.tab,
-    },
-  ];
-
   return (
     <>
       <UnifiedTablePage
@@ -938,47 +907,45 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
           mobileActionsInline: true,
           actions: (
-            <PermissionGate
-              projectId={projectId}
-              module="contracts"
-              level="write"
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="sm"
-                    className="max-sm:h-11 max-sm:w-11 max-sm:p-0"
-                    aria-label="Create commitment"
-                  >
-                    <Plus />
-                    <span className="max-sm:sr-only">Create</span>
-                    <ChevronDown className="max-sm:hidden" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={handleCreateSubcontract}>
-                    <FileSignature className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Subcontract
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleCreatePurchaseOrder}>
-                    <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Purchase Order
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => setIsImportDialogOpen(true)}
-                  >
-                    <Upload className="mr-2 h-4 w-4 text-muted-foreground" />
-                    Import
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </PermissionGate>
+            <div className="flex items-center gap-1">
+              <CommitmentsHelpSheet buttonVariant="ghost" />
+              <PermissionGate
+                projectId={projectId}
+                module="contracts"
+                level="write"
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      className="max-sm:h-11 max-sm:w-11 max-sm:p-0"
+                      aria-label="Create commitment"
+                    >
+                      <Plus />
+                      <span className="max-sm:sr-only">Create</span>
+                      <ChevronDown className="max-sm:hidden" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={handleCreateSubcontract}>
+                      <FileSignature className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Subcontract
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={handleCreatePurchaseOrder}>
+                      <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
+                      Purchase Order
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </PermissionGate>
+            </div>
           ),
         }}
-        tabs={tabs}
         layout={{
           fullBleedTable: true,
           hideTableBody: isChangeOrdersTab,
+          cardGridClassName:
+            "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6",
         }}
         features={{
           // Click a cell to edit title / description / executed in place.
@@ -1073,7 +1040,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     className="h-8 w-8"
                     aria-label="Row actions"
                   >
-                    <MoreHorizontal />
+                    <MoreVertical />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -1350,14 +1317,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
         selectedCommitmentIds={tableState.selectedIds}
       />
 
-      <CommitmentsImportDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-        projectId={projectId}
-        onImported={() => {
-          void refetch();
-        }}
-      />
     </>
   );
 }

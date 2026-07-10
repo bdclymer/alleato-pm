@@ -114,7 +114,7 @@ export const POST = withApiGuardrails<{ projectId: string; emailId: string }>(
 
     const { text } = await generateText({
       model: getLanguageModel("gpt-4.1-mini"),
-      system:
+      instructions:
         "You are an assistant for a construction project management team. " +
         "Summarize the email in 1-2 plain sentences capturing the key point, " +
         "any request or decision, and any deadline. No preamble, no greeting, " +

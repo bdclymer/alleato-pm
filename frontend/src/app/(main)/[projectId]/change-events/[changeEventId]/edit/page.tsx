@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api-client";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 import { FormServerError } from "@/components/forms/FormServerError";
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +88,6 @@ export default function EditChangeEventPage() {
   const changeEventId = params.changeEventId as string;
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { changeEvent, lineItems, isLoading, error } = useChangeEventDetail(
     projectId,
@@ -132,6 +131,7 @@ export default function EditChangeEventPage() {
           budgetCode: li.projectBudgetCodeId ?? "",
           description: li.description ?? "",
           vendor: li.vendorId ?? li.vendor?.id ?? li.commitment?.contract_company_id ?? "",
+          vendorName: li.vendor?.name ?? li.commitment?.company_name ?? "",
           contract: prefixedCommitmentId,
           commitmentId: prefixedCommitmentId || undefined,
             commitmentLineItemId: li.commitmentLineItemId ?? "",
@@ -155,7 +155,6 @@ export default function EditChangeEventPage() {
 
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
-    setSaveError(null);
     try {
       const normalizedScope =
         data.scope && ["In Scope", "Out of Scope", "TBD", "Allowance"].includes(data.scope)
@@ -291,18 +290,19 @@ export default function EditChangeEventPage() {
           .filter(Boolean)
           .join("; ");
         const message = `Change event saved but ${failedAttachments.length} attachment(s) failed: ${reasons}`;
-        setSaveError(message);
         toast.error(message);
-        return;
+        throw new Error(message);
       }
 
       toast.success("Change event updated");
 
       router.push(`/${projectId}/change-events/${changeEventId}`);
     } catch (err) {
+      // Re-throw so ChangeEventForm surfaces the message via FormServerError
+      // (errors.root); also toast for immediate feedback.
       const message = err instanceof Error ? err.message : "Failed to save change event";
-      setSaveError(message);
       toast.error(message);
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setIsSaving(false);
     }
@@ -315,7 +315,7 @@ export default function EditChangeEventPage() {
   if (isLoading) {
     return (
       <PageShell
-        variant="dashboard"
+        variant="form"
         title="Edit Change Event"
         onBack={handleCancel}
       >
@@ -327,7 +327,7 @@ export default function EditChangeEventPage() {
   if (error || !changeEvent) {
     return (
       <PageShell
-        variant="dashboard"
+        variant="form"
         title="Edit Change Event"
         onBack={handleCancel}
       >
@@ -338,20 +338,21 @@ export default function EditChangeEventPage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="form"
       title={`Edit ${changeEvent.title || "Change Event"}`}
       description="Update change event details and line items."
       onBack={handleCancel}
     >
-      {saveError ? <FormServerError message={saveError} /> : null}
-      <ChangeEventForm
-        initialData={initialData}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={isSaving}
-        mode="edit"
-        projectId={projectId}
-      />
+      <FormContainer maxWidth="xl" withCard={false}>
+        <ChangeEventForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          isSubmitting={isSaving}
+          mode="edit"
+          projectId={projectId}
+        />
+      </FormContainer>
     </PageShell>
   );
 }

@@ -255,6 +255,11 @@ function ReviewedRow({
                 {reviewed.reviewerNote}
               </span>
             )}
+            {reviewed.feedbackProvidedAt && (
+              <span className="text-[10px] text-muted-foreground">
+                Feedback saved
+              </span>
+            )}
           </div>
         </div>
       </div>

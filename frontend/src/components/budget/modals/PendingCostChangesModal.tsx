@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
-  SidebarTabs,
+  SidebarStats,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +18,7 @@ import {
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { AlertCircle } from "lucide-react";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface PendingCostChange {
   id: string;
@@ -30,6 +29,7 @@ interface PendingCostChange {
   type: "commitment" | "commitment_change_order";
   commitmentType?: "subcontract" | "purchase_order";
   requestedDate: string;
+  detailHref?: string | null;
 }
 
 interface PendingCostChangesModalProps {
@@ -45,8 +45,8 @@ export function PendingCostChangesModal({
   onClose,
   budgetLineId,
   projectId,
+  costCode,
 }: PendingCostChangesModalProps) {
-  const [activeTab, setActiveTab] = useState<"pending" | "summary">("pending");
   const [changes, setChanges] = useState<PendingCostChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +90,7 @@ export function PendingCostChangesModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -122,23 +122,6 @@ export function PendingCostChangesModal({
   };
 
   const totalAmount = changes.reduce((sum, c) => sum + c.amount, 0);
-  const commitmentChanges = changes.filter((c) => c.type === "commitment");
-  const changeOrderChanges = changes.filter(
-    (c) => c.type === "commitment_change_order",
-  );
-  const commitmentTotal = commitmentChanges.reduce(
-    (sum, c) => sum + c.amount,
-    0,
-  );
-  const changeOrderTotal = changeOrderChanges.reduce(
-    (sum, c) => sum + c.amount,
-    0,
-  );
-
-  const tabs = [
-    { id: "pending", label: "Pending Changes" },
-    { id: "summary", label: "Summary" },
-  ];
 
   return (
     <BaseSidebar
@@ -147,80 +130,43 @@ export function PendingCostChangesModal({
       title="Pending Cost Changes"
       size="xl"
     >
-      <SidebarTabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as "pending" | "summary")}
-      />
-
-      {/* Type Filter */}
-      <div className="px-4 sm:px-8 pb-2 flex-shrink-0">
-        <div className="flex gap-2">
-          {(["all", "commitment", "change_order"] as const).map((type) => (
-            <Button
-              key={type}
-              type="button"
-              variant={typeFilter === type ? "default" : "ghost"}
-              onClick={() => setTypeFilter(type)}
-              className={cn(
-                "px-4 py-1.5 text-xs font-medium rounded-full transition-all h-auto",
-                typeFilter === type
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground hover:bg-muted",
-              )}
-            >
-              {type === "all"
-                ? "All"
-                : type === "commitment"
-                  ? "Commitments"
-                  : "COs"}
-            </Button>
-          ))}
-        </div>
-      </div>
-
       <SidebarBody className="bg-background">
-        {activeTab === "pending" ? (
-          <div className="p-4 sm:p-6 space-y-4">
-            {/* Total Summary */}
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Total Pending Cost Changes
-                  </p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {formatCurrency(totalAmount)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Items</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
-                    {changes.length}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div className="p-4 sm:p-6 space-y-3">
+          <SidebarStats
+            summary={
+              <>
+                {costCode ? `${costCode} · ` : ""}
+                {changes.length} pending cost change
+                {changes.length === 1 ? "" : "s"}
+              </>
+            }
+            value={formatCurrency(totalAmount)}
+          />
 
-            {/* Info Box */}
-            <div className="rounded-lg bg-muted/40 border border-border p-4">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-semibold text-foreground">
-                    About Pending Cost Changes
-                  </p>
-                  <p className="mt-1 text-muted-foreground">
-                    These include pending commitments (Out For Signature,
-                    Processing, Submitted, etc.) and pending change orders on
-                    commitments. They impact projected costs but not committed
-                    costs until approved.
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Type Filter */}
+          <div className="flex gap-2">
+            {(["all", "commitment", "change_order"] as const).map((type) => (
+              <Button
+                key={type}
+                type="button"
+                variant={typeFilter === type ? "default" : "ghost"}
+                onClick={() => setTypeFilter(type)}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium rounded-full transition-all h-auto",
+                  typeFilter === type
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-muted",
+                )}
+              >
+                {type === "all"
+                  ? "All"
+                  : type === "commitment"
+                    ? "Commitments"
+                    : "COs"}
+              </Button>
+            ))}
+          </div>
 
-            {/* Changes Table */}
             <InlineTable variant="read">
               <InlineTableHeader>
                 <InlineTableHeaderRow>
@@ -263,8 +209,10 @@ export function PendingCostChangesModal({
                 ) : (
                   changes.map((change) => (
                     <InlineTableRow key={change.id}>
-                      <InlineTableCell className="font-medium text-primary">
-                        {change.number}
+                      <InlineTableCell>
+                        <BudgetDrilldownRecordLink href={change.detailHref}>
+                          {change.number}
+                        </BudgetDrilldownRecordLink>
                       </InlineTableCell>
                       <InlineTableCell>{getTypeBadge(change)}</InlineTableCell>
                       <InlineTableCell
@@ -296,59 +244,9 @@ export function PendingCostChangesModal({
                 )}
               </InlineTableBody>
             </InlineTable>
-          </div>
-        ) : (
-          <div className="p-4 sm:p-6 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Summary breakdown of pending cost changes by type.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-lg border border-border p-4 bg-muted/30">
-                <div className="mb-2">
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                    PENDING COMMITMENTS
-                  </span>
-                </div>
-                <p className="text-2xl font-bold text-foreground mt-2">
-                  {formatCurrency(commitmentTotal)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {commitmentChanges.length}{" "}
-                  {commitmentChanges.length === 1
-                    ? "commitment"
-                    : "commitments"}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border p-4 bg-muted/30">
-                <div className="mb-2">
-                  <span className="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                    CHANGE ORDERS
-                  </span>
-                </div>
-                <p className="text-2xl font-bold text-foreground mt-2">
-                  {formatCurrency(changeOrderTotal)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {changeOrderChanges.length}{" "}
-                  {changeOrderChanges.length === 1
-                    ? "change order"
-                    : "change orders"}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

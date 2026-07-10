@@ -93,16 +93,11 @@ export const GET = withApiGuardrails(
 );
 
 /**
- * Create a new company in the project.
+ * Assign an existing company to the project via `company_id`.
  *
- * Required fields:
- * - name: Company name
- *
- * Optional fields:
- * - address, city, state, zip: Address information
- * - business_phone, email_address: Contact information
- * - erp_vendor_id: Unique ERP system identifier
- * - company_type: YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER
+ * Creating a brand-new company is disabled — companies are managed
+ * exclusively in Acumatica (ERP) by Accounting. Any request without a
+ * `company_id` matching an existing company is rejected with `erp_managed`.
  */
 export const POST = withApiGuardrails(
   "projects/[projectId]/directory/companies#POST",
@@ -167,54 +162,17 @@ export const POST = withApiGuardrails(
       return NextResponse.json(pc, { status: 201 });
     }
 
-    // ── Validate required fields for new company creation ──────────
-    const validationErrors: Record<string, string[]> = {};
-
-    if (
-      !body.name ||
-      typeof body.name !== "string" ||
-      body.name.trim().length === 0
-    ) {
-      validationErrors.name = ["Name is required"];
-    }
-
-    if (Object.keys(validationErrors).length > 0) {
-      return NextResponse.json(
-        {
-          error: "validation_error",
-          message: "Validation failed",
-          errors: validationErrors,
-          code: "VALIDATION_FAILED",
-        },
-        { status: 422 },
-      );
-    }
-
-    // Create company
-    const companyService = new CompanyService(supabase);
-
-    try {
-      const company = await companyService.createCompany(projectId, body);
-      return NextResponse.json(company, { status: 201 });
-    } catch (createError) {
-      // Check for duplicate ERP vendor ID
-      if (
-        createError instanceof Error &&
-        createError.message.includes("duplicate")
-      ) {
-        return NextResponse.json(
-          {
-            error: "validation_error",
-            message: "Validation failed",
-            errors: {
-              erp_vendor_id: ["ERP Vendor ID must be unique"],
-            },
-            code: "VALIDATION_FAILED",
-          },
-          { status: 422 },
-        );
-      }
-      throw createError;
-    }
+    // ── New company creation is disabled ────────────────────────────
+    // Companies are managed exclusively in Acumatica (ERP) by Accounting, so
+    // insurance, EIN, and legal details stay accurate. Only assigning an
+    // *existing* company (via company_id above) is still supported.
+    return NextResponse.json(
+      {
+        error: "erp_managed",
+        message:
+          "Companies are managed in Acumatica (ERP) by Accounting and can no longer be created here. Ask Accounting to add the company in Acumatica — it will sync in automatically and can then be assigned to this project.",
+      },
+      { status: 403 },
+    );
     },
 );

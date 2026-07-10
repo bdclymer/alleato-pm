@@ -8,6 +8,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ToolExecutionOptions } from "ai";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -19,7 +20,7 @@ import { createOperationalTools } from "@/lib/ai/tools/operational";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
 import { createToolContext } from "@/lib/ai/tools/tool-context";
 import { createServiceClient } from "@/lib/supabase/service";
-import { generateDailyBrief } from "@/lib/executive/daily-brief";
+import { buildCanonicalOperatingPacket } from "@/lib/executive/canonical-operating-packet";
 import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
 import { buildSourceSpecificRagAnswer } from "@/lib/ai/retrieval/source-specific-rag";
 import { loadReusableBriefingContext } from "@/lib/ai/retrieval/reusable-briefing";
@@ -31,7 +32,11 @@ import type { ExternalSource } from "./types";
 
 // Minimal ToolExecutionOptions satisfying the AI SDK execute() signature when
 // called outside of a live LLM tool-calling context (direct server-side calls).
-const DIRECT_EXEC_OPTIONS = { toolCallId: "direct", messages: [] as never[] };
+export const DIRECT_EXEC_OPTIONS: ToolExecutionOptions<Record<string, never>> = {
+  toolCallId: "direct",
+  messages: [],
+  context: {},
+};
 
 // ---------------------------------------------------------------------------
 // Synthetic SourceSpecificRagRequest builder
@@ -273,9 +278,11 @@ export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutor
   };
 
   // 8. buildBrandonDaily
-  //    Compatibility executor name for the Brandon preset of the canonical Daily Brief.
+  //    Compatibility executor name for the canonical Daily Executive Brief. Reads
+  //    the single source of truth — the intelligence deep-read operating packet —
+  //    instead of the retired daily_recaps LLM generator.
   const buildBrandonDaily = async (): Promise<unknown> => {
-    return generateDailyBrief({ windowDays: 2, preset: "brandon" });
+    return buildCanonicalOperatingPacket();
   };
 
   // 9. runAppExpert

@@ -21,6 +21,7 @@ interface MessageGroupProps {
   isSelected?: boolean;
   threadReplyCount?: number;
   reactions?: Record<string, number>;
+  isReadOnly?: boolean;
   onSelect?: () => void;
   onReplyInThread?: () => void;
   onAddReaction?: (emoji: string) => void;
@@ -94,6 +95,7 @@ export function MessageGroup({
   isSelected = false,
   threadReplyCount = 0,
   reactions = {},
+  isReadOnly = false,
   onSelect,
   onReplyInThread,
   onAddReaction,
@@ -134,7 +136,7 @@ export function MessageGroup({
             {renderMentions(message.content)}
           </button>
 
-          {reactionEntries.length > 0 && (
+          {!isReadOnly && reactionEntries.length > 0 && (
             <div className="flex flex-wrap justify-end gap-1">
               {reactionEntries.map(([emoji, count]) => (
                 <Button
@@ -152,7 +154,7 @@ export function MessageGroup({
             </div>
           )}
 
-          {threadReplyCount > 0 && (
+          {!isReadOnly && threadReplyCount > 0 && (
             <Button
               type="button"
               variant="link"
@@ -165,7 +167,7 @@ export function MessageGroup({
           )}
         </div>
 
-        {isHovered && (
+        {!isReadOnly && isHovered && (
           <HoverActions align="right" onReplyInThread={onReplyInThread} onAddReaction={onAddReaction} />
         )}
       </div>
@@ -215,7 +217,7 @@ export function MessageGroup({
             {renderMentions(message.content)}
           </button>
 
-          {reactionEntries.length > 0 && (
+          {!isReadOnly && reactionEntries.length > 0 && (
             <div className="flex flex-wrap gap-1 pl-1">
               {reactionEntries.map(([emoji, count]) => (
                 <Button
@@ -233,7 +235,7 @@ export function MessageGroup({
             </div>
           )}
 
-          {threadReplyCount > 0 && (
+          {!isReadOnly && threadReplyCount > 0 && (
             <Button
               type="button"
               variant="link"
@@ -254,7 +256,7 @@ export function MessageGroup({
         </div>
       )}
 
-      {isHovered && (
+      {!isReadOnly && isHovered && (
         <HoverActions align="left" onReplyInThread={onReplyInThread} onAddReaction={onAddReaction} />
       )}
     </div>

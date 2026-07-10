@@ -1,0 +1,27 @@
+{
+  "summary": {
+    "generated_at": "2026-07-07T06:01:15.266Z",
+    "total": 306,
+    "projects": 26,
+    "by_table": {
+      "purchase_order_sov_items": 73,
+      "subcontract_sov_items": 233
+    },
+    "by_reason": {
+      "no_project_budget_code_match": 142,
+      "ambiguous_typed_matches": 128,
+      "blank_code_nonzero_amount": 29,
+      "blank_code_zero_amount": 7
+    },
+    "by_table_reason": {
+      "purchase_order_sov_items:no_project_budget_code_match": 17,
+      "purchase_order_sov_items:ambiguous_typed_matches": 49,
+      "purchase_order_sov_items:blank_code_nonzero_amount": 5,
+      "purchase_order_sov_items:blank_code_zero_amount": 2,
+      "subcontract_sov_items:no_project_budget_code_match": 125,
+      "subcontract_sov_items:ambiguous_typed_matches": 79,
+      "subcontract_sov_items:blank_code_nonzero_amount": 24,
+      "subcontract_sov_items:blank_code_zero_amount": 5
+    }
+  }
+}

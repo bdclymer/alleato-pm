@@ -2,21 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { MoneyField } from "@/components/forms/MoneyField";
+import { DateField, MoneyField, SelectField } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
-import { BarChart3, Calculator, Plus, TrendingUp, Trash2 } from "lucide-react";
-import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
-  budgetRadioCardClass,
-} from "./style-tokens";
+import { Plus, Trash2 } from "lucide-react";
+import { budgetRadioCardClass } from "./style-tokens";
+import { NumberInput } from "@/components/ui/number-input";
+import { format } from "date-fns";
 
 type ForecastMethod =
   | "automatic"
@@ -78,26 +76,27 @@ const METHODS = [
     value: "automatic" as const,
     label: "Automatic Calculation",
     description: "Projected Budget - Projected Costs.",
-    icon: TrendingUp,
   },
   {
     value: "lump_sum" as const,
     label: "Lump Sum Entry",
     description: "Fixed amount to complete.",
-    icon: Calculator,
   },
   {
     value: "manual" as const,
     label: "Manual Entry",
     description: "Build forecast from editable line items.",
-    icon: BarChart3,
   },
   {
     value: "monitored_resources" as const,
     label: "Monitored Resources",
     description: "Track time-phased resources with drawdown.",
-    icon: BarChart3,
   },
+];
+
+const UNITS_REMAINING_OPTIONS = [
+  { value: "weeks", label: "Weeks" },
+  { value: "months", label: "Months" },
 ];
 
 // Creates a stable default manual-entry row.
@@ -170,6 +169,17 @@ function computeUnitsRemaining(
   return Math.max(0, totalWeeks - Math.max(0, elapsedWeeks));
 }
 
+function parseStoredDate(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function formatStoredDate(value: Date | undefined): string | null {
+  if (!value) return null;
+  return format(value, "yyyy-MM-dd");
+}
+
 // Builds a signature string for robust unsaved-changes detection.
 function buildStateSignature(state: {
   forecastMethod: ForecastMethod;
@@ -213,6 +223,7 @@ export function ForecastToCompleteModal({
   const [initialSignature, setInitialSignature] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingFocusRowId, setPendingFocusRowId] = useState<string | null>(null);
 
   const projectedBudget = currentData?.projectedBudget || 0;
   const projectedCosts = currentData?.projectedCosts || 0;
@@ -344,6 +355,23 @@ export function ForecastToCompleteModal({
     }
   }, [forecastMethod, lineItems.length, forecastAmount]);
 
+  useEffect(() => {
+    if (!pendingFocusRowId) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLInputElement>(
+        `[data-forecast-description="${pendingFocusRowId}"]`,
+      );
+      target?.focus();
+      target?.select();
+      setPendingFocusRowId(null);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [lineItems, pendingFocusRowId]);
+
   const hasChanges =
     buildStateSignature({
       forecastMethod,
@@ -387,6 +415,7 @@ export function ForecastToCompleteModal({
         forecastMethod === "manual"
           ? createDefaultManualRow(index)
           : createDefaultMonitoredRow(index);
+      setPendingFocusRowId(next.id);
       return [...prev, next];
     });
   };
@@ -451,102 +480,103 @@ export function ForecastToCompleteModal({
 
   return (
     <BaseSidebar open={open} onClose={handleClose} title="Forecast To Complete" size="lg">
+      {/* Single view — no tabs. A "History" tab existed but led to a
+          "coming soon" placeholder (noise-gate rule 18: no destination →
+          no affordance). Restore tabs only when history ships. */}
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <div className="shrink-0 px-4 sm:px-8">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger value="forecast" className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}>
-              Forecast
-            </TabsTrigger>
-            <TabsTrigger value="history" className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}>
-              History
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
         <SidebarBody>
-          <TabsContent value="forecast" className="px-4 py-4 sm:px-8 space-y-4">
-            <div className="rounded-lg border border-border p-4 bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
+          <TabsContent value="forecast" className="space-y-6 px-4 py-4 sm:px-6">
+            <section className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                Forecast context
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Projected Budget</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
+                  <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatCurrency(projectedBudget)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Projected Costs</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">
+                  <p className="text-lg font-semibold tabular-nums text-foreground">
                     {formatCurrency(projectedCosts)}
                   </p>
                 </div>
               </div>
-            </div>
+            </section>
 
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground">
-                Forecast Method
-              </Label>
+            <section className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-sm font-medium text-foreground">
+                  Forecast Method
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Choose how this line should forecast to complete.
+                </p>
+              </div>
               <RadioGroup
                 value={forecastMethod}
                 onValueChange={(value) => setForecastMethod(value as ForecastMethod)}
-                className="mt-2 space-y-0.5"
+                className="grid gap-3 sm:grid-cols-2"
                 disabled={isLoading}
               >
-                {METHODS.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <label
-                      key={method.value}
-                      htmlFor={method.value}
-                      className={budgetRadioCardClass(forecastMethod === method.value)}
-                    >
-                      <RadioGroupItem value={method.value} id={method.value} />
-                      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium text-foreground">{method.label}</span>
-                      <span className="text-xs text-muted-foreground">{method.description}</span>
-                    </label>
-                  );
-                })}
+                {METHODS.map((method) => (
+                  <label
+                    key={method.value}
+                    htmlFor={method.value}
+                    className={budgetRadioCardClass(forecastMethod === method.value)}
+                  >
+                    <RadioGroupItem value={method.value} id={method.value} />
+                    <span className="min-w-0 space-y-0.5">
+                      <span className="block font-medium text-foreground">
+                        {method.label}
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        {method.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
               </RadioGroup>
-            </div>
+            </section>
 
             {forecastMethod === "lump_sum" && (
-              <div>
+              <section className="space-y-2">
                 <Label htmlFor="forecastAmount" className="text-sm font-medium text-foreground">
                   Forecast Amount
                 </Label>
-                <div className="mt-1">
-                  <MoneyField
-                    label="Forecast Amount"
-                    value={forecastAmount ? parseFloat(forecastAmount) : undefined}
-                    onChange={(value) => setForecastAmount(String(value ?? ""))}
-                    placeholder=""
-                    inline
-                    showCurrency={false}
-                  />
-                </div>
-              </div>
+                <MoneyField
+                  label="Forecast Amount"
+                  value={forecastAmount ? parseFloat(forecastAmount) : undefined}
+                  onChange={(value) => setForecastAmount(String(value ?? ""))}
+                  placeholder=""
+                  inline
+                  showCurrency={false}
+                />
+              </section>
             )}
 
             {(forecastMethod === "manual" || forecastMethod === "monitored_resources") && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+              <section className="space-y-3">
+                <div className="space-y-1">
                   <Label className="text-sm font-medium text-foreground">
                     {forecastMethod === "manual"
                       ? "Manual Forecast Line Items"
                       : "Monitored Resource Line Items"}
                   </Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Line Item
-                  </Button>
+                  <p className="text-sm text-muted-foreground">
+                    {forecastMethod === "manual"
+                      ? "Add the remaining scope that still needs to be completed."
+                      : "Track remaining time-phased work and its drawdown."}
+                  </p>
                 </div>
 
-                <div className="space-y-2">
+                <div className="overflow-hidden rounded-md border border-border/60">
                   {lineItems.map((item) => {
                     const unitsRemaining = computeUnitsRemaining(
                       item.startDate,
@@ -563,9 +593,13 @@ export function ForecastToCompleteModal({
                         : manualAmount;
 
                     return (
-                      <div key={item.id} className="rounded-md border border-border p-3 space-y-2">
+                      <div
+                        key={item.id}
+                        className="space-y-3 border-b border-border/60 px-3 py-3 last:border-b-0 sm:px-4"
+                      >
                         <div className="grid grid-cols-12 gap-2">
                           <Input
+                            data-forecast-description={item.id}
                             className="col-span-12 md:col-span-4"
                             placeholder="Description"
                             value={item.description}
@@ -576,8 +610,7 @@ export function ForecastToCompleteModal({
 
                           {forecastMethod === "manual" ? (
                             <>
-                              <Input
-                                type="number"
+                              <NumberInput
                                 className="col-span-4 md:col-span-2"
                                 placeholder="Qty"
                                 value={String(item.quantity)}
@@ -586,6 +619,8 @@ export function ForecastToCompleteModal({
                                     quantity: Math.max(0, Number(event.target.value) || 0),
                                   })
                                 }
+                                decimals={0}
+                                aria-label={`Quantity for ${item.description || "forecast line item"}`}
                               />
                               <Input
                                 className="col-span-4 md:col-span-2"
@@ -595,55 +630,60 @@ export function ForecastToCompleteModal({
                                   updateLineItem(item.id, { units: event.target.value })
                                 }
                               />
-                              <Input
-                                type="number"
+                              <MoneyField
                                 className="col-span-4 md:col-span-2"
-                                placeholder="Unit Cost"
-                                value={String(item.unitCost)}
-                                onChange={(event) =>
+                                label={`Unit cost for ${item.description || "forecast line item"}`}
+                                value={item.unitCost}
+                                onChange={(value) =>
                                   updateLineItem(item.id, {
-                                    unitCost: Math.max(0, Number(event.target.value) || 0),
+                                    unitCost: Math.max(0, value ?? 0),
                                   })
                                 }
+                                inline
+                                showCurrency={false}
                               />
                             </>
                           ) : (
                             <>
-                              <Input
-                                type="date"
+                              <DateField
                                 className="col-span-6 md:col-span-2"
-                                value={item.startDate ?? ""}
-                                onChange={(event) =>
+                                label="Start date"
+                                hideLabel
+                                value={parseStoredDate(item.startDate)}
+                                onChange={(value) =>
                                   updateLineItem(item.id, {
-                                    startDate: event.target.value || null,
+                                    startDate: formatStoredDate(value),
                                   })
                                 }
+                                placeholder="Start date"
                               />
-                              <Input
-                                type="date"
+                              <DateField
                                 className="col-span-6 md:col-span-2"
-                                value={item.endDate ?? ""}
-                                onChange={(event) =>
+                                label="End date"
+                                hideLabel
+                                value={parseStoredDate(item.endDate)}
+                                onChange={(value) =>
                                   updateLineItem(item.id, {
-                                    endDate: event.target.value || null,
+                                    endDate: formatStoredDate(value),
                                   })
                                 }
+                                placeholder="End date"
                               />
-                              <select
-                                className="col-span-4 md:col-span-2 h-9 rounded-md border border-input bg-background px-3 text-sm"
+                              <SelectField
+                                className="col-span-4 md:col-span-2"
+                                label="Units remaining mode"
+                                hideLabel
+                                options={UNITS_REMAINING_OPTIONS}
                                 value={item.unitsRemainingMode}
-                                onChange={(event) =>
+                                onValueChange={(value) =>
                                   updateLineItem(item.id, {
-                                    unitsRemainingMode: event.target.value as "weeks" | "months",
-                                    units: event.target.value,
+                                    unitsRemainingMode: value as "weeks" | "months",
+                                    units: value,
                                   })
                                 }
-                              >
-                                <option value="weeks">Weeks</option>
-                                <option value="months">Months</option>
-                              </select>
-                              <Input
-                                type="number"
+                                placeholder="Units"
+                              />
+                              <NumberInput
                                 className="col-span-4 md:col-span-1"
                                 placeholder="%"
                                 value={String(item.utilizationRate ?? 100)}
@@ -655,31 +695,35 @@ export function ForecastToCompleteModal({
                                     ),
                                   })
                                 }
+                                decimals={0}
+                                aria-label={`Utilization rate for ${item.description || "forecast line item"}`}
                               />
-                              <Input
-                                type="number"
+                              <MoneyField
                                 className="col-span-4 md:col-span-1"
-                                placeholder="Unit Cost"
-                                value={String(item.unitCost)}
-                                onChange={(event) =>
+                                label={`Unit cost for ${item.description || "forecast line item"}`}
+                                value={item.unitCost}
+                                onChange={(value) =>
                                   updateLineItem(item.id, {
-                                    unitCost: Math.max(0, Number(event.target.value) || 0),
+                                    unitCost: Math.max(0, value ?? 0),
                                   })
                                 }
+                                inline
+                                showCurrency={false}
                               />
                               <div className="col-span-12 md:col-span-2 text-xs text-muted-foreground flex items-center">
                                 {unitsRemaining} units remaining
                               </div>
                             </>
                           )}
-
-                          <div className="col-span-10 text-sm text-muted-foreground">
-                            Line Total:{" "}
-                            <span className="font-semibold text-foreground">
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm text-muted-foreground">
+                            Line Total{" "}
+                            <span className="ml-2 font-semibold text-foreground">
                               {formatCurrency(rowAmount)}
                             </span>
                           </div>
-                          <div className="col-span-2 flex justify-end">
+                          <div className="flex justify-end">
                             <Button
                               type="button"
                               variant="ghost"
@@ -694,10 +738,15 @@ export function ForecastToCompleteModal({
                     );
                   })}
                 </div>
-              </div>
+
+                <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Line Item
+                </Button>
+              </section>
             )}
 
-            <div>
+            <section className="space-y-2">
               <Label htmlFor="forecastNotes" className="text-sm font-medium text-foreground">
                 Notes
               </Label>
@@ -705,50 +754,52 @@ export function ForecastToCompleteModal({
                 id="forecastNotes"
                 value={forecastNotes}
                 onChange={(event) => setForecastNotes(event.target.value)}
-                className="mt-1 min-h-[88px]"
+                className="mt-1 min-h-24"
                 placeholder="Add context for this forecast."
               />
-            </div>
+            </section>
 
-            <div className="rounded-lg bg-muted/40 border border-border p-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Forecast To Complete</span>
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {formatCurrency(calculatedForecast)}
-                </span>
+            <section className="space-y-2">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">Forecast impact</p>
+                <p className="text-sm text-muted-foreground">
+                  Review the resulting total before saving.
+                </p>
               </div>
-              <div className="border-t border-border" />
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Est. Cost at Completion</span>
-                <span className="text-sm font-semibold text-foreground tabular-nums">
-                  {formatCurrency(estimatedCostAtCompletion)}
-                </span>
+              <div className="overflow-hidden rounded-md border border-border/60">
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Forecast To Complete</span>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
+                    {formatCurrency(calculatedForecast)}
+                  </span>
+                </div>
+                <div className="border-t border-border/60" />
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm text-muted-foreground">Est. Cost at Completion</span>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
+                    {formatCurrency(estimatedCostAtCompletion)}
+                  </span>
+                </div>
+                <div className="border-t border-border/60" />
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm font-medium text-foreground">Projected Over / Under</span>
+                  <span
+                    className={cn(
+                      "text-sm font-semibold tabular-nums",
+                      projectedOverUnder < 0 ? "text-destructive" : "text-foreground",
+                    )}
+                  >
+                    {formatCurrency(projectedOverUnder)}
+                  </span>
+                </div>
               </div>
-              <div className="border-t border-border" />
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-foreground">Projected Over / Under</span>
-                <span
-                  className={cn(
-                    "text-sm font-bold tabular-nums",
-                    projectedOverUnder < 0 ? "text-destructive" : "text-foreground",
-                  )}
-                >
-                  {formatCurrency(projectedOverUnder)}
-                </span>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="history" className="px-4 py-5 sm:px-8">
-            <p className="text-sm text-muted-foreground text-center py-12">
-              Forecast history coming soon.
-            </p>
+            </section>
           </TabsContent>
         </SidebarBody>
       </Tabs>
 
       <SidebarFooter>
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex w-full items-center justify-end gap-2">
           <Button variant="outline" onClick={handleClose} disabled={isSaving}>
             Cancel
           </Button>

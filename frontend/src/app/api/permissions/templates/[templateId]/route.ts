@@ -1,8 +1,8 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import {
+  getPermissionTemplateById,
   updatePermissionTemplate,
   deletePermissionTemplate,
 } from "@/lib/permissions";
@@ -12,19 +12,43 @@ interface RouteParams {
 }
 
 async function requireAdmin(): Promise<{ ok: true } | { error: string; status: number }> {
-  const supabase = await createClient();
-  const user = await getApiRouteUser();
-  if (!user) return { error: "Unauthorized", status: 401 };
-
-  const { data: profile } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile?.is_admin) return { error: "Forbidden", status: 403 };
-  return { ok: true };
+  try {
+    await requireUserManagementAccess("permissions/templates/[templateId]");
+    return { ok: true };
+  } catch (error) {
+    const status =
+      error instanceof Error && "status" in error && typeof error.status === "number"
+        ? error.status
+        : 403;
+    return { error: status === 401 ? "Unauthorized" : "Forbidden", status };
+  }
 }
+
+/**
+ * GET /api/permissions/templates/[templateId]
+ * Load one permission template (admin only)
+ */
+export const GET = withApiGuardrails(
+  "permissions/templates/[templateId]#GET",
+  async ({ params }) => {
+    const auth = await requireAdmin();
+    if ("error" in auth) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    const { templateId } = await params;
+    const template = await getPermissionTemplateById(templateId);
+
+    if (!template) {
+      return NextResponse.json(
+        { error: "Permission template not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ data: template });
+  },
+);
 
 /**
  * PUT /api/permissions/templates/[templateId]
@@ -51,10 +75,13 @@ export const PUT = withApiGuardrails(
     });
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      return NextResponse.json(
+        { error: result.error ?? "Template update failed." },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ data: result.data });
     },
 );
 

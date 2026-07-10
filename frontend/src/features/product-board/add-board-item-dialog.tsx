@@ -15,6 +15,10 @@ import {
   BOARD_STATUS_LABELS,
   type BoardStatus,
 } from "@/lib/admin-feedback/constants";
+import {
+  BOARD_CAPTURE_TOPICS,
+  type BoardCaptureTopicKey,
+} from "./topics";
 
 const SEVERITY_OPTIONS = [
   { value: "low", label: "Low" },
@@ -27,6 +31,7 @@ const STATUS_COLORS: Record<BoardStatus, string> = {
 
   planned: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  leadership_review: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   shipped: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
 };
 
@@ -36,6 +41,10 @@ export function AddBoardItemButton() {
   const [description, setDescription] = useState("");
   const [boardStatus, setBoardStatus] = useState<BoardStatus>("submitted");
   const [severity, setSeverity] = useState<"low" | "medium" | "high">("medium");
+  const [topics, setTopics] = useState<BoardCaptureTopicKey[]>([]);
+  const [tool, setTool] = useState("");
+  const [category, setCategory] = useState("");
+  const [itemType, setItemType] = useState("");
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
 
@@ -44,6 +53,10 @@ export function AddBoardItemButton() {
     setDescription("");
     setBoardStatus("submitted");
     setSeverity("medium");
+    setTopics([]);
+    setTool("");
+    setCategory("");
+    setItemType("");
     setOpen(false);
   }
 
@@ -53,13 +66,17 @@ export function AddBoardItemButton() {
     try {
       await apiFetch("/api/admin/feedback/board/create", {
         method: "POST",
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
-          board_status: boardStatus,
-          severity,
-        }),
-      });
+          body: JSON.stringify({
+            title: title.trim(),
+            description: description.trim(),
+            board_status: boardStatus,
+            severity,
+            topics,
+            tool: tool.trim() || undefined,
+            category: category.trim() || undefined,
+            type: itemType.trim() || undefined,
+          }),
+        });
       queryClient.invalidateQueries({ queryKey: ["product-board"] });
       reset();
     } finally {
@@ -166,6 +183,70 @@ export function AddBoardItemButton() {
                         {opt.label}
                       </Button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Tool</p>
+                    <Input
+                      placeholder="Optional"
+                      value={tool}
+                      onChange={(e) => setTool(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Category</p>
+                    <Input
+                      placeholder="Optional"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Type</p>
+                  <Input
+                    placeholder="Optional"
+                    value={itemType}
+                    onChange={(e) => setItemType(e.target.value)}
+                    className="text-sm"
+                  />
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Topic tags</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(BOARD_CAPTURE_TOPICS).map(([key, topic]) => {
+                      const active = topics.includes(key as BoardCaptureTopicKey);
+                      return (
+                        <Button
+                          key={key}
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setTopics((current) =>
+                              active
+                                ? current.filter((item) => item !== key)
+                                : [...current, key as BoardCaptureTopicKey],
+                            )
+                          }
+                          className={cn(
+                            "h-7 rounded-full px-3 text-xs font-medium transition-all",
+                            active
+                              ? "bg-muted text-foreground ring-1 ring-border"
+                              : "text-muted-foreground hover:bg-muted",
+                          )}
+                        >
+                          <span className={cn("mr-1.5 h-1.5 w-1.5 rounded-full", topic.color)} />
+                          {topic.label}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

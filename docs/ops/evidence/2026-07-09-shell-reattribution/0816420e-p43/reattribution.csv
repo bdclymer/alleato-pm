@@ -1,0 +1,7 @@
+invoice_id,invoice_number,amount,vendor_id,tier,target_number,dom_code,reason,description
+694,002145,124027.6,MERCON,AUTO,SC-2403-0009,,"token SC-2403-0009 == commitment SC-2403-0009","SC-2403-0009 Westfield Collective PayApp2"
+209,002898,8550,BESTEQUIP,FLAG,,05-5823,"no commitment (vendor BESTEQUIP, code 05-5823) — likely direct cost","PO-2403-0009 Westfield Collective"
+147,002550,22586.36,MERCON,AUTO,SC-2403-0009,,"token SC-2403-0009 == commitment SC-2403-0009","SC-2403-0009 Westfield Collective PayApp5"
+119,002259,82273.31,MERCON,AUTO,SC-2403-0009,,"token SC-2403-0009 == commitment SC-2403-0009","SC-2403-0009 Westfield Collective PayApp3"
+388,003146,950,BESTEQUIP,FLAG,,,"no commitment (vendor BESTEQUIP, code {} only) — likely direct cost","PO-2403-0009 Westfield Collective"
+318,003081,200,MERCON,AUTO,SC-2403-0009,,"token SC-2403-0009 == commitment SC-2403-0009","SC-2403-0009-3058"

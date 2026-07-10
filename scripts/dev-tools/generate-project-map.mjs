@@ -210,13 +210,21 @@ function buildApi() {
 
 // Returns structured tool rows: { name, description, file }.
 function getToolsData() {
-  const files = readdirSync(TOOLS_DIR)
-    .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
-    .sort();
+  // Recurse the whole tools tree — tools now live in subfolders too (e.g.
+  // tools/write/*.ts factories), not just top-level tools/*.ts. Reading only
+  // the top level silently dropped every write-tool from the map.
+  const files = walk(
+    TOOLS_DIR,
+    (f) =>
+      f.endsWith(".ts") &&
+      !f.endsWith(".test.ts") &&
+      !f.includes(`${sep}__tests__${sep}`),
+  ).sort();
   const all = [];
   for (const f of files) {
-    for (const t of extractTools(join(TOOLS_DIR, f))) {
-      all.push({ name: t.name, description: t.description || "", file: f });
+    const relFile = relative(TOOLS_DIR, f).split(sep).join("/");
+    for (const t of extractTools(f)) {
+      all.push({ name: t.name, description: t.description || "", file: relFile });
     }
   }
   return all;

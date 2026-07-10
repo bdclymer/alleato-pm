@@ -30,6 +30,7 @@ from ..ops.db_pressure_guard import (
     enforce_no_pm_app_high_churn_writes,
     enforce_pm_app_final_projection_guard,
 )
+from .compiler import is_synthesized_signal
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ HIGH_CHURN_PM_APP_TABLES = [
 ]
 DEFAULT_LOOKBACK_DAYS = int(os.getenv("DOMAIN_PACKET_LOOKBACK_DAYS", "60"))
 DEFAULT_DOC_LIMIT = int(os.getenv("DOMAIN_PACKET_DOC_LIMIT", "150"))
+# Ceiling on how many of a target's insight_cards one compile run reads.
+MAX_TARGET_CARDS = int(os.getenv("DOMAIN_PACKET_MAX_TARGET_CARDS", "1000"))
 DEFAULT_MODEL = os.getenv("DOMAIN_PACKET_MODEL", "gpt-5.5")
 DOC_SNIPPET_CHARS = 1800
 TOTAL_PROMPT_DOC_CHARS = 80_000
@@ -138,10 +141,18 @@ def _fetch_domain_documents(
     )
 
     # Postgrest .or_() requires a string of comma-separated filters. Each keyword
-    # contributes `summary.ilike.*kw*,content.ilike.*kw*,title.ilike.*kw*,...`.
-    # We OR everything into a single query for efficiency.
+    # contributes `title.ilike.*kw*,summary.ilike.*kw*,...` OR-ed into one query.
+    #
+    # `content` is deliberately NOT ilike-searched: a multi-keyword OR over
+    # content forces Postgres to detoast and scan megabytes of raw text per
+    # candidate row — pg_stat_statements traced the biggest legitimate load of
+    # the 2026-07-02 PM APP saturation (2.4s avg, 46.8s max — now above the 30s
+    # service_role statement_timeout) to exactly this query. PM-APP
+    # document_metadata.content has also been stale since the 2026-05-15 RAG
+    # migration (raw text lives in the AI DB), so content matches added little.
+    # content IS still selected for snippet-building on the <=150 matched rows.
     or_clauses: List[str] = []
-    fields = ("title", "summary", "overview", "content", "action_items")
+    fields = ("title", "summary", "overview", "action_items")
     for kw in keywords:
         safe = kw.replace(",", " ").replace("%", " ")
         for field in fields:
@@ -363,22 +374,30 @@ def _call_synthesis(prompt: str, learnings_block: str = "") -> Dict[str, Any]:
 # Card upsert (recurring-issue tracking)
 # ---------------------------------------------------------------------------
 
-def _find_existing_card_by_key(
+def _load_cards_by_finding_key(
     supabase: Any,
     target_id: str,
-    finding_key: str,
-) -> Optional[Dict[str, Any]]:
+) -> Dict[str, Dict[str, Any]]:
+    """One bounded read of the target's cards keyed by metadata.finding_key.
+
+    The old shape re-read EVERY insight_cards row for the target with SELECT *
+    once per finding; this loads the id/metadata/source_count triple once per
+    compile run. Newest card wins when a finding_key is duplicated.
+    """
     rows = _rows(
         supabase.table("insight_cards")
-        .select("*")
+        .select("id,metadata,source_count")
         .eq("primary_target_id", target_id)
+        .order("updated_at", desc=True)
+        .limit(MAX_TARGET_CARDS)
         .execute()
     )
+    by_key: Dict[str, Dict[str, Any]] = {}
     for row in rows:
-        meta = _coerce_metadata(row.get("metadata"))
-        if meta.get("finding_key") == finding_key:
-            return row
-    return None
+        key = _coerce_metadata(row.get("metadata")).get("finding_key")
+        if key and str(key) not in by_key:
+            by_key[str(key)] = row
+    return by_key
 
 
 def _normalize_card_type(value: Optional[str]) -> str:
@@ -398,10 +417,30 @@ def _upsert_finding(
     target_id: str,
     finding: Dict[str, Any],
     docs_by_id: Dict[str, Dict[str, Any]],
+    cards_by_key: Dict[str, Dict[str, Any]],
 ) -> Dict[str, Any]:
     finding_key = (finding.get("finding_key") or "").strip().lower()
     if not finding_key:
         raise ValueError("finding is missing finding_key")
+
+    # Defense-in-depth: a domain finding is LLM-synthesized, but if it ever
+    # echoes a raw email title/summary or the deterministic placeholder
+    # why_it_matters, it must not be written as an insight_card. Drop it loudly
+    # rather than projecting raw source into the user-facing surface.
+    candidate_signal = {
+        "title": finding.get("title") or finding_key,
+        "summary": finding.get("summary"),
+        "why_it_matters": finding.get("why_it_matters"),
+    }
+    if not is_synthesized_signal(candidate_signal):
+        logger.warning(
+            "[domain_compiler] dropping un-synthesized finding finding_key=%s target_id=%s "
+            "(raw source title/summary or placeholder why_it_matters)",
+            finding_key,
+            target_id,
+        )
+        return {"card": None, "evidence_doc_ids": [], "was_new": False, "dropped": True}
+
     now_iso = _iso(_utc_now())
 
     evidence_ids: List[str] = []
@@ -410,7 +449,7 @@ def _upsert_finding(
             evidence_ids.append(did)
     source_count = len(evidence_ids)
 
-    existing = _find_existing_card_by_key(supabase, target_id, finding_key)
+    existing = cards_by_key.get(finding_key)
     base_payload = {
         "primary_target_id": target_id,
         "title": finding.get("title") or finding_key,
@@ -479,9 +518,10 @@ def _resolve_stale_cards(
     """
     rows = _rows(
         supabase.table("insight_cards")
-        .select("id, metadata, current_status")
+        .select("id,metadata,current_status")
         .eq("primary_target_id", target_id)
         .in_("current_status", ["open", "needs_review", "blocked"])
+        .limit(MAX_TARGET_CARDS)
         .execute()
     )
     stale = 0
@@ -701,13 +741,16 @@ def compile_domain_packet(
         },
     )
 
+    cards_by_key = _load_cards_by_finding_key(supabase, target["id"])
     seen_keys: set[str] = set()
     card_results: List[Dict[str, Any]] = []
     for finding in findings:
         if not isinstance(finding, dict):
             continue
         try:
-            result = _upsert_finding(supabase, target["id"], finding, docs_by_id)
+            result = _upsert_finding(
+                supabase, target["id"], finding, docs_by_id, cards_by_key
+            )
         except ValueError as exc:
             logger.warning("[domain_compiler] skipping finding: %s", exc)
             continue
@@ -715,11 +758,17 @@ def compile_domain_packet(
         key = (finding.get("finding_key") or "").strip().lower()
         if key:
             seen_keys.add(key)
+            if result.get("card"):
+                # Keep the in-run index fresh so a duplicated finding_key in one
+                # synthesis updates the card it just created instead of inserting twice.
+                cards_by_key[key] = result["card"]
 
     evidence_written = 0
     card_rows: List[Dict[str, Any]] = []
     for result in card_results:
         card = result["card"]
+        if not card:  # dropped un-synthesized finding — never persisted
+            continue
         card_rows.append(card)
         evidence_written += _write_evidence(
             supabase,

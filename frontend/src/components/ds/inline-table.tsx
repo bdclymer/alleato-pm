@@ -57,6 +57,8 @@ export function InlineTable({
   children,
   ...props
 }: InlineTableProps) {
+  const tableRef = React.useRef<HTMLTableElement>(null);
+  useColumnIntegrityGuard(tableRef);
   return (
     <InlineTableContext.Provider value={{ variant }}>
       <div
@@ -64,6 +66,7 @@ export function InlineTable({
         {...props}
       >
         <table
+          ref={tableRef}
           className={cn(
             "w-full",
             variant === "edit" ? "text-sm" : "text-xs",
@@ -75,6 +78,61 @@ export function InlineTable({
       </div>
     </InlineTableContext.Provider>
   );
+}
+
+/* ---- Dev-time column integrity guard ---------------------------------- */
+
+/** Sum the colSpans of every cell in a row (colSpan defaults to 1). */
+function sumColSpan(row: HTMLTableRowElement): number {
+  let total = 0;
+  for (const cell of Array.from(row.cells)) total += cell.colSpan || 1;
+  return total;
+}
+
+/**
+ * In development and tests, verify every body/footer row spans exactly as many
+ * columns as the header. A mismatch is *the* cause of "the totals row doesn't
+ * line up with its columns" bugs — the footer's `colSpan` math drifted from the
+ * header. This surfaces it loudly at render time (console.error) instead of
+ * waiting for someone to eyeball the page. Production is a no-op.
+ *
+ * The check reads the rendered DOM (not React children) so it is immune to
+ * conditional cells, fragments, and `.map()` rows.
+ */
+function useColumnIntegrityGuard(
+  ref: React.RefObject<HTMLTableElement | null>,
+) {
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const table = ref.current;
+    if (!table?.tHead || table.tHead.rows.length === 0) return;
+
+    // Header column count = widest header row (skips narrower group super-headers).
+    const headerCols = Math.max(
+      ...Array.from(table.tHead.rows).map((row) => sumColSpan(row)),
+    );
+    if (!headerCols) return;
+
+    const sections = [
+      ...Array.from(table.tBodies).map((b) => ["body", b] as const),
+      ...(table.tFoot ? [["footer", table.tFoot] as const] : []),
+    ];
+
+    for (const [name, section] of sections) {
+      Array.from(section.rows).forEach((row, index) => {
+        if (row.cells.length === 0) return; // spacer rows
+        const span = sumColSpan(row);
+        if (span !== headerCols) {
+          console.error(
+            `[InlineTable] ${name} row ${index} spans ${span} column(s) but ` +
+              `the header has ${headerCols}. This misaligns the row with its ` +
+              `columns — fix the cell/colSpan count so they match.`,
+            row,
+          );
+        }
+      });
+    }
+  });
 }
 
 /* ---- Header (thead) ---- */

@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-07-09T05:08:02.024Z",
+  "jpProjectId": 4493,
+  "appProjectId": 795,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 9,
+    "adopt": 0,
+    "create": 9,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 8,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 2,
+    "pccoWithExecutedTwin": 1
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1278,
+      "number": "CR-4493-0001",
+      "title": "In Rack Sprinkler Permit  #250472 Fee",
+      "statusId": 8,
+      "cost": 29916.95,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1502,
+      "number": "CR-4493-0002",
+      "title": "Additional Loose Material",
+      "statusId": 8,
+      "cost": 7556.14,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2368,
+      "number": "CR-4493-0003",
+      "title": "Additional Material - Reducing Couplings",
+      "statusId": 8,
+      "cost": 8240.13,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2369,
+      "number": "CR-4493-0004",
+      "title": "Static Rack Sprinklers",
+      "statusId": 8,
+      "cost": 6000,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2488,
+      "number": "CR-4493-0006",
+      "title": "Hazmat Room Fire Sprinkler Installation & Fire Alarm Connections",
+      "statusId": 8,
+      "cost": 125345,
+      "lineItems": 5,
+      "fork": {
+        "prime": 4,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2372,
+      "number": "CR-4493-0005",
+      "title": "STAMP - Sprinkler Rack Design Change",
+      "statusId": 8,
+      "cost": 1000,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2557,
+      "number": "CR-4493-0007",
+      "title": "Additional Material - System 1 &2 Design Revision",
+      "statusId": 8,
+      "cost": 40872.44,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2587,
+      "number": "CR-4493-0008",
+      "title": "Re-Fabricate Tunnel Piping Systems 3&4",
+      "statusId": 8,
+      "cost": 6240,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2748,
+      "number": "CR-4493-0009",
+      "title": "Hazmat Room Material ",
+      "statusId": 8,
+      "cost": 11148.27,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-4493-0001",
+        "commitmentNumber": "PO-4493-0001",
+        "amount": 7556.14,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0002",
+        "commitmentNumber": "PO-4493-0001",
+        "amount": 5242.89,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0003",
+        "commitmentNumber": "PO-4493-0001",
+        "amount": 8240.13,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0004",
+        "commitmentNumber": "SC-4493-0002",
+        "amount": 6000,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0005",
+        "commitmentNumber": "PO-4493-0002",
+        "amount": 1000,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0007",
+        "commitmentNumber": "PO-4493-0001",
+        "amount": 40872.44,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0008",
+        "commitmentNumber": "SC-4493-0002",
+        "amount": 6240,
+        "twin": null
+      },
+      {
+        "number": "CCO-4493-0009",
+        "commitmentNumber": "PO-4493-0001",
+        "amount": 11148.27,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-4493-0001",
+        "amount": 33312.53,
+        "twin": null
+      },
+      {
+        "number": "PCCO-4493-0002",
+        "amount": 139571.66,
+        "twin": {
+          "id": 2384,
+          "number": "002175",
+          "amount": 139571.66
+        }
+      }
+    ]
+  }
+}

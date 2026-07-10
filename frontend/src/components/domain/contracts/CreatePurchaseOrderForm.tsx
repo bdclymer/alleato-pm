@@ -167,6 +167,12 @@ const UNIT_OF_MEASURES = [
   { value: "LS", label: "Lump Sum" },
 ];
 
+export function getInitialPurchaseOrderAccountingMethod(
+  initialAccountingMethod?: "unit-quantity" | "amount",
+): "unit-quantity" | "amount" {
+  return initialAccountingMethod || "amount";
+}
+
 export function CreatePurchaseOrderForm({
   projectId,
   onSubmit,
@@ -185,7 +191,7 @@ export function CreatePurchaseOrderForm({
   );
   const [accountingMethod, setAccountingMethod] = React.useState<
     "unit-quantity" | "amount"
-  >((initialData?.accountingMethod as "unit-quantity" | "amount") || "unit-quantity");
+  >(getInitialPurchaseOrderAccountingMethod(initialData?.accountingMethod as "unit-quantity" | "amount" | undefined));
   const [attachments, setAttachments] = React.useState<File[]>([]);
   // Project directory contacts — no form dependency, fetch immediately
   const { options: projectContactOptions, isLoading: loadingProjectContacts } = useContacts({
@@ -259,7 +265,7 @@ export function CreatePurchaseOrderForm({
         (mode === "create" ? generatedContractNumberRef.current : ""),
       status: initialData?.status || "Draft",
       executed: initialData?.executed || false,
-      accountingMethod: initialData?.accountingMethod || "unit-quantity",
+      accountingMethod: getInitialPurchaseOrderAccountingMethod(initialData?.accountingMethod),
       sov: initialData?.sov || [],
       privacy: initialData?.privacy || {
         isPrivate: true,
@@ -994,7 +1000,13 @@ export function CreatePurchaseOrderForm({
           </DropdownMenu>
         </div>
 
-        <InlineTable>
+        <InlineTable
+          tableClassName={
+            accountingMethod === "unit-quantity"
+              ? "min-w-[84rem]"
+              : "min-w-[68rem]"
+          }
+        >
           <InlineTableHeader>
             <InlineTableHeaderRow>
               <InlineTableHeaderCell className="w-12">#</InlineTableHeaderCell>
@@ -1060,14 +1072,20 @@ export function CreatePurchaseOrderForm({
                     <InlineTableCell>
                       <Input
                         type="number"
-                        step="0.01"
                         min="0"
+                        step="0.01"
+                        inputMode="decimal"
                         placeholder="1"
                         value={line.quantity || ""}
                         onChange={(e) =>
-                          updateSOVLine(index, "quantity", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
+                          updateSOVLine(
+                            index,
+                            "quantity",
+                            e.target.value === "" ? 0 : parseFloat(e.target.value) || 0,
+                          )
                         }
-                        className="h-10 text-right"
+                        className="h-10 min-w-20"
+                        aria-label={`Quantity for line item ${index + 1}`}
                       />
                     </InlineTableCell>
                     <InlineTableCell>
@@ -1088,33 +1106,27 @@ export function CreatePurchaseOrderForm({
                       </Select>
                     </InlineTableCell>
                     <InlineTableCell className="w-48">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">
-                          $
-                        </span>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder=""
-                          value={line.unitCost || ""}
-                          onChange={(e) =>
-                            updateSOVLine(index, "unitCost", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
-                          }
-                          className="h-10 pl-8 text-right"
-                        />
-                      </div>
+                      <MoneyField
+                        inline
+                        label={`Unit cost for line item ${index + 1}`}
+                        value={line.unitCost || undefined}
+                        onChange={(value) =>
+                          updateSOVLine(index, "unitCost", value ?? 0)
+                        }
+                        showCurrency={false}
+                        className="h-10 min-w-36"
+                      />
                     </InlineTableCell>
                   </>
                 )}
                 <InlineTableCell className="w-48">
                   <MoneyField
                     inline
-                    label="Amount"
+                    label={`Amount for line item ${index + 1}`}
                     value={line.amount || undefined}
                     onChange={(val) => updateSOVLine(index, "amount", val ?? 0)}
                     showCurrency={false}
-                    className="h-10"
+                    className="h-10 min-w-36"
                     disabled={accountingMethod === "unit-quantity"}
                     readOnly={accountingMethod === "unit-quantity"}
                   />

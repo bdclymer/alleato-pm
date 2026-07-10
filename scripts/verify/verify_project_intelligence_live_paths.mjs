@@ -71,15 +71,15 @@ const forbiddenLiveTerms = [
 
 const requiredLiveTerms = [
   {
-    file: "docs/alleato-os-docs/project-intelligence/index.mdx",
+    file: "docs/architecture/AI-RAG-ARCHITECTURE.md",
     term: "backend/src/services/intelligence/project_intelligence.py",
   },
   {
-    file: "docs/alleato-os-docs/project-intelligence/index.mdx",
+    file: "docs/architecture/AI-RAG-ARCHITECTURE.md",
     term: "project_intelligence_synthesis_v1",
   },
   {
-    file: "docs/alleato-os-docs/project-intelligence/activation-runbook.mdx",
+    file: "docs/architecture/AI-RAG-ARCHITECTURE.md",
     term: "refresh_project_intelligence",
   },
 ];

@@ -3,6 +3,10 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
+import {
+  TASK_PRIORITY_VALUES,
+  TASK_STATUS_VALUES,
+} from "@/features/tasks/task-values";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 
@@ -222,10 +226,13 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
   }
 
   const taskClient = scope === "all" ? serviceClient : supabase;
+  // Legacy tasks are document-linked (metadata_id not null). Manual tasks and
+  // tasks the daily deep read creates are legitimately metadata_id-null, so
+  // include them by source_system instead of filtering them out.
   let query = taskClient
     .from("tasks")
     .select(TASK_SELECT)
-    .not("metadata_id", "is", null)
+    .or("metadata_id.not.is.null,source_system.in.(manual,daily_deep_read)")
     .order("created_at", { ascending: false })
     .limit(1000);
 
@@ -259,4 +266,156 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
   );
 
   return NextResponse.json({ data: tasks, scope });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks — create a manual (ad-hoc) task.
+//
+// Every existing task is AI-extracted from a source document, so `metadata_id`
+// is set and `source_system` names the extractor. A manual task has no source
+// document: it inserts with `metadata_id: null` and `source_system: 'manual'`.
+// The 20260709 migration drops the NOT NULL on `metadata_id` to allow this.
+//
+// FK contract (see FORM-FK-VALIDATION-GATE.md): the assignee picker returns a
+// `people.id`, so we write `assignee_person_id` and resolve the durable
+// `assignee_name` / `assignee_email` from that person row — never trust
+// client-supplied name/email. `project_id` comes from the project picker
+// (projects.id is INTEGER).
+// ---------------------------------------------------------------------------
+
+const CreateTaskBodySchema = z.object({
+  description: z.string().trim().min(1, "A task description is required."),
+  title: z.string().trim().min(1).max(200).optional(),
+  project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
+  assignee_person_id: z.union([z.string().uuid(), z.null()]).optional(),
+  due_date: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
+    .optional(),
+  priority: z.union([z.enum(TASK_PRIORITY_VALUES), z.null()]).optional(),
+  status: z.enum(TASK_STATUS_VALUES).optional(),
+});
+
+// The insert trigger (tasks_enforce_quality_on_insert) requires a non-empty
+// title on every row. When the user leaves the title blank, derive a short
+// imperative-ish heading from the description so the insert never trips the
+// guardrail.
+function deriveTitleFromDescription(description: string): string {
+  const normalized = description.replace(/\s+/g, " ").trim();
+  if (normalized.length <= 80) return normalized;
+  const truncated = normalized.slice(0, 80);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? truncated.slice(0, lastSpace) : truncated).trim()}…`;
+}
+
+async function resolveManualAssignee(personId: string | null | undefined) {
+  if (!personId) {
+    return {
+      assignee_person_id: null as string | null,
+      assignee_name: null as string | null,
+      assignee_email: null as string | null,
+    };
+  }
+
+  const serviceClient = createServiceClient();
+  const { data: person, error } = await serviceClient
+    .from("people")
+    .select("id, first_name, last_name, email")
+    .eq("id", personId)
+    .in("person_type", ["employee", "user"])
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/tasks#POST",
+      message: "Failed to resolve the selected assignee.",
+      details: { reason: error.message, personId },
+      cause: error,
+    });
+  }
+
+  if (!person) {
+    throw new GuardrailError({
+      code: "VALIDATION_ERROR",
+      where: "/api/tasks#POST",
+      message: "Selected assignee was not found in active employees.",
+      status: 400,
+      details: { personId },
+    });
+  }
+
+  return {
+    assignee_person_id: person.id,
+    assignee_email: person.email ?? null,
+    assignee_name:
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      person.email ||
+      null,
+  };
+}
+
+export const POST = withApiGuardrails("/api/tasks#POST", async ({ request }) => {
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/tasks#POST",
+      message: "Not authenticated.",
+      details: { reason: "No valid session cookie" },
+    });
+  }
+
+  const rawBody = await request.json().catch(() => null);
+  const parsed = CreateTaskBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    throw new GuardrailError({
+      code: "VALIDATION_ERROR",
+      where: "/api/tasks#POST",
+      message: "Invalid task payload.",
+      status: 400,
+      details: { issues: parsed.error.flatten() },
+    });
+  }
+
+  const { description, title, project_id, assignee_person_id, due_date, priority, status } =
+    parsed.data;
+
+  const assignee = await resolveManualAssignee(assignee_person_id);
+
+  const projectId = project_id ?? null;
+  const dueDate = due_date && due_date.length > 0 ? due_date : null;
+
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient
+    .from("tasks")
+    .insert({
+      metadata_id: null,
+      source_system: "manual",
+      status: status ?? "open",
+      description,
+      title: title?.trim() || deriveTitleFromDescription(description),
+      project_id: projectId,
+      project_ids: projectId === null ? [] : [projectId],
+      due_date: dueDate,
+      priority: priority ?? null,
+      assignee_person_id: assignee.assignee_person_id,
+      assignee_name: assignee.assignee_name,
+      assignee_email: assignee.assignee_email,
+      assigned_by: user.id,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/tasks#POST",
+      message: `Failed to create task: ${error.message}`,
+      details: { reason: error.message },
+      cause: error,
+    });
+  }
+
+  return NextResponse.json({ task: data }, { status: 201 });
 });

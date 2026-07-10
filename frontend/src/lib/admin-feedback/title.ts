@@ -86,3 +86,20 @@ export function displayAdminFeedbackTitle({
     pageTitle,
   });
 }
+
+/**
+ * When no explicit title was submitted, the display title falls back to a
+ * truncated copy of the comment — showing both in a list row just repeats
+ * the same text twice. True when the comment adds nothing the title doesn't
+ * already show.
+ */
+export function isCommentRedundantWithTitle(
+  displayTitle: string,
+  comment: string | null | undefined,
+): boolean {
+  const normalizedComment = compactText(comment);
+  if (!normalizedComment) return true;
+
+  const normalizedTitle = compactText(displayTitle).replace(/\.\.\.$/, "");
+  return normalizedComment.startsWith(normalizedTitle);
+}

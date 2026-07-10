@@ -51,9 +51,22 @@ const pdfjsBrowserEntry = resolvePdfjsDistPath("build/pdf.min.mjs");
 // Brotli-compressed Chromium blobs read at runtime by @sparticuz/chromium's
 // executablePath(). Force-traced into every PDF-rendering route (see
 // outputFileTracingIncludes below). The version glob survives package bumps;
-// Trace the real pnpm store path rather than the hoisted @sparticuz/chromium
-// symlink; Vercel rejects serverless packages that include symlinked dirs.
+// trace the real pnpm store path rather than the hoisted @sparticuz/chromium
+// symlink (Vercel rejects serverless packages that include symlinked dirs).
+//
+// outputFileTracingIncludes globs resolve relative to outputFileTracingRoot,
+// which here is the repo root (../) — but pnpm installs the package under
+// frontend/node_modules. The bare "./node_modules/..." glob therefore resolved
+// to <repo-root>/node_modules (nonexistent) and silently traced nothing, so the
+// binary was missing at runtime and every PDF route 500'd with
+// "input directory .../bin does not exist". Include BOTH the frontend-relative
+// and repo-root-relative paths so the glob is correct regardless of how Next
+// resolves the base; a glob that matches nothing is ignored. This is the fast
+// path — renderPdfFromHtml() falls back to a remote Chromium pack if tracing
+// still misses (see lib/documents/pdf.ts), so a regression here degrades to a
+// slower cold start instead of a hard failure.
 const CHROMIUM_TRACE_GLOBS = [
+  "./frontend/node_modules/.pnpm/@sparticuz+chromium@*/node_modules/@sparticuz/chromium/bin/**",
   "./node_modules/.pnpm/@sparticuz+chromium@*/node_modules/@sparticuz/chromium/bin/**",
 ];
 
@@ -194,7 +207,15 @@ const nextConfig: NextConfig = {
   // the binary into exactly the routes that render PDFs (every caller of
   // renderPdfFromHtml). Scoped per-route so the 64 MB blob is not duplicated
   // into every API function. The pnpm version glob keeps this working across
-  // @sparticuz/chromium upgrades. If you add a new PDF/email route, add it here.
+  // @sparticuz/chromium upgrades.
+  //
+  // Adding a new PDF/email route here is now an OPTIMIZATION, not a requirement:
+  // renderPdfFromHtml() falls back to downloading the Chromium pack at runtime
+  // if the bundled binary is missing (see lib/documents/pdf.ts). Listing a route
+  // keeps its first cold start fast (no ~50 MB download); forgetting one only
+  // makes that route's first render slower, it no longer 500s. Prefer the shared
+  // /api/document-center/[recordType]/[recordId]/pdf route for new documents so
+  // there is nothing to add here at all.
   outputFileTracingIncludes: {
     "/**/*": ["../docs/archive/2026-06-22-docs-migration/help/**"],
     // The site-map (Page Access) page is force-dynamic and reads this CSV via a
@@ -205,6 +226,8 @@ const nextConfig: NextConfig = {
     "/site-map": ["../docs/reports/route-inventory.csv"],
     "/api/commitments/[commitmentId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/commitments/[commitmentId]/export": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/email": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/estimates/[estimateId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/change-events/[changeEventId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/change-events/[changeEventId]/email": CHROMIUM_TRACE_GLOBS,
@@ -212,6 +235,14 @@ const nextConfig: NextConfig = {
     "/api/projects/[projectId]/progress-reports/[reportId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/document-center/[recordType]/[recordId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/document-center/[recordType]/[recordId]/email": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/budget/export": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/budget/export/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/drawings/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/rfis/[rfiId]/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/rfis/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/submittals/[submittalId]/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/projects/[projectId]/submittals/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/executive/daily-brief/[briefId]/pdf": CHROMIUM_TRACE_GLOBS,
   },
   outputFileTracingExcludes: {
     // Exclude ALL non-runtime artifact directories from every serverless function.

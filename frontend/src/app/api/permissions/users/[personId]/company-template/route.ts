@@ -1,7 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import { createServiceClient } from "@/lib/supabase/service";
 import { assignCompanyTemplate, removeCompanyTemplate } from "@/lib/permissions";
 import { z } from "zod";
@@ -11,12 +10,7 @@ interface RouteParams {
 }
 
 async function requireAdmin() {
-  const supabase = await createClient();
-  const user = await getApiRouteUser();
-  if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/users/company-template", message: "Authentication required." });
-
-  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).maybeSingle();
-  if (!profile?.is_admin) throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/users/company-template", message: "Access denied." });
+  await requireUserManagementAccess("permissions/users/company-template");
 }
 
 const AssignBody = z.object({ template_id: z.string().uuid() });

@@ -6,7 +6,7 @@ import {
   Eye,
   FolderOpen,
   Link,
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
   DOCUMENT_TYPE_OPTIONS,
   documentTypeLabel,
 } from "@/features/documents/document-types";
+import { TABLE_LINK_CLASSNAME } from "@/components/tables/unified";
 import type {
   ColumnConfig,
   FilterConfig,
@@ -80,6 +81,18 @@ const SOURCE_FILTER_OPTIONS = [
   { value: "knowledge_upload", label: "Knowledge Upload" },
   { value: "Zapier", label: "Zapier" },
 ];
+
+const SOURCE_LABELS: Record<string, string> = Object.fromEntries(
+  SOURCE_FILTER_OPTIONS.map((option) => [option.value.toLowerCase(), option.label]),
+);
+
+/** Human-readable label for a document's `source`/`source_system` value. */
+export function documentSourceLabel(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  return SOURCE_LABELS[value.toLowerCase()] ?? value.replace(/_/g, " ");
+}
 
 const TYPE_FILTER_OPTIONS = [
   { value: "document", label: "Document" },
@@ -226,10 +239,18 @@ export function buildDocumentTableColumns(opts?: {
   projectNames?: Map<number, string>;
   projects?: Array<{ id: number; name: string | null }>;
   onEditField?: (docId: string, field: string, value: string) => void;
+  onTitleClick?: (item: PipelineDoc) => void;
   getTitleHref?: (item: PipelineDoc) => string | null;
   isTitleExternal?: (item: PipelineDoc) => boolean;
 }): TableColumn<PipelineDoc>[] {
-  const { projectNames, projects, onEditField, getTitleHref, isTitleExternal } = opts ?? {};
+  const {
+    projectNames,
+    projects,
+    onEditField,
+    onTitleClick,
+    getTitleHref,
+    isTitleExternal,
+  } = opts ?? {};
   const handleEdit = (field: string) =>
     onEditField
       ? (item: PipelineDoc, value: string) => onEditField(item.id, field, value)
@@ -260,6 +281,22 @@ export function buildDocumentTableColumns(opts?: {
     {
       ...documentColumns[1],
       render: (item) => {
+        if (onTitleClick) {
+          return (
+            <Button
+              type="button"
+              variant="link"
+              onClick={(event) => {
+                event.stopPropagation();
+                onTitleClick(item);
+              }}
+              className={`h-auto max-w-full truncate p-0 text-left font-medium ${TABLE_LINK_CLASSNAME}`}
+            >
+              {item.title || "Untitled Document"}
+            </Button>
+          );
+        }
+
         const href = getTitleHref?.(item) ?? null;
         const external = isTitleExternal?.(item) ?? false;
 
@@ -273,7 +310,7 @@ export function buildDocumentTableColumns(opts?: {
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
-            className="font-medium text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
+            className={`font-medium ${TABLE_LINK_CLASSNAME}`}
           >
             {item.title || "Untitled Document"}
           </a>
@@ -426,7 +463,7 @@ export function buildDocumentTableColumns(opts?: {
       ...documentColumns[6],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {item.source || "-"}
+          {documentSourceLabel(item.source ?? item.source_system) || "-"}
         </span>
       ),
       sortValue: (item) => item.source,
@@ -508,7 +545,11 @@ export function renderDocumentCard(
       <div className="flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {item.type && <span className="truncate">{item.type}</span>}
         {item.category && <span className="truncate">{item.category}</span>}
-        {item.source && <span className="truncate">{item.source}</span>}
+        {documentSourceLabel(item.source ?? item.source_system) && (
+          <span className="truncate">
+            {documentSourceLabel(item.source ?? item.source_system)}
+          </span>
+        )}
         {item.created_at && <span>{formatDate(item.created_at)}</span>}
       </div>
       {item.error_message && (
@@ -536,7 +577,12 @@ export function renderDocumentList(
           {item.title || "Untitled Document"}
         </span>
         <span className="text-xs text-muted-foreground">
-          {[item.type, item.category, item.source, formatDate(item.created_at)]
+          {[
+            item.type,
+            item.category,
+            documentSourceLabel(item.source ?? item.source_system),
+            formatDate(item.created_at),
+          ]
             .filter(Boolean)
             .join(" · ")}
         </span>
@@ -567,7 +613,7 @@ export function renderDocumentRowActions(
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

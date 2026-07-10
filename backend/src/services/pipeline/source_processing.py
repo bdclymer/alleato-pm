@@ -17,7 +17,19 @@ from ..supabase_helpers import get_rag_write_client
 logger = logging.getLogger(__name__)
 
 
-FINAL_STATUSES = {"complete", "failed_permanent", "skipped_unchanged"}
+# Terminal status for documents the pipeline *deliberately* does not embed
+# (interview-title meetings, sub-minimum low-content docs). This is NOT a
+# failure: the source-sync health map and /pipeline-health must render these as
+# a clean, terminal outcome, not a critical error. Kept distinct from
+# `failed_permanent` (which means "we tried and could not, do not retry").
+INTENTIONALLY_EXCLUDED_STATUS = "intentionally_excluded"
+
+FINAL_STATUSES = {
+    "complete",
+    "failed_permanent",
+    "skipped_unchanged",
+    INTENTIONALLY_EXCLUDED_STATUS,
+}
 PROJECT_ASSIGNED_STATUSES = {
     "project_assigned",
     "text_extracted",

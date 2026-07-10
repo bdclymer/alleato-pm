@@ -26,6 +26,12 @@ const budgetLinePatchSchema = z
       .trim()
       .max(1000, "Description must be at most 1000 characters")
       .optional(),
+    unit_of_measure: z
+      .string()
+      .trim()
+      .max(50, "unit_of_measure must be at most 50 characters")
+      .nullable()
+      .optional(),
     original_amount: z
       .union([z.number(), z.string()])
       .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
@@ -39,11 +45,12 @@ const budgetLinePatchSchema = z
     (data) =>
       data.quantity !== undefined ||
       data.unit_cost !== undefined ||
+      data.unit_of_measure !== undefined ||
       data.description !== undefined ||
       data.original_amount !== undefined,
     {
       message:
-        "At least one field (quantity, unit_cost, description, original_amount) must be provided",
+        "At least one field (quantity, unit_cost, unit_of_measure, description, original_amount) must be provided",
     },
   );
 
@@ -217,7 +224,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
       });
     }
 
-    const { quantity, unit_cost, description, original_amount } =
+    const { quantity, unit_cost, unit_of_measure, description, original_amount } =
       validation.data;
 
     // TODO: Add project membership validation when project_team_members table exists
@@ -246,7 +253,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
     const { data: existingLine, error: lineError } = await supabase
       .from("budget_lines")
       .select(
-        "id, project_id, quantity, unit_cost, description, original_amount",
+        "id, project_id, quantity, unit_cost, unit_of_measure, description, original_amount",
       )
       .eq("id", lineId)
       .single();
@@ -273,6 +280,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
     const updateData: {
       quantity?: number;
       unit_cost?: number;
+      unit_of_measure?: string | null;
       description?: string;
       original_amount?: number;
       updated_by: string;
@@ -288,6 +296,10 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
 
     if (unit_cost !== undefined) {
       updateData.unit_cost = unit_cost;
+    }
+
+    if (unit_of_measure !== undefined) {
+      updateData.unit_of_measure = unit_of_measure;
     }
 
     if (description !== undefined) {
@@ -322,6 +334,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
         id,
         quantity,
         unit_cost,
+        unit_of_measure,
         description,
         original_amount,
         updated_at,
@@ -340,6 +353,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
         id: updatedLine.id,
         quantity: updatedLine.quantity,
         unit_cost: updatedLine.unit_cost,
+        unit_of_measure: updatedLine.unit_of_measure,
         description: updatedLine.description,
         amount: updatedLine.original_amount,
         updated_at: updatedLine.updated_at,
@@ -454,6 +468,38 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
             id: m.id,
             number: m.number,
             status: m.status,
+          })),
+        },
+        status: 409,
+      });
+    }
+
+    // Fail loudly before the delete when downstream change-event line items
+    // still point at this budget line. The DB FK is ON DELETE SET NULL, but
+    // the live workflow may still block on triggers/legacy alias sync, so the
+    // user needs a budget-specific explanation instead of a generic FK error.
+    const { data: blockingChangeEventLines, error: changeEventLineError } =
+      await supabase
+        .from("change_event_line_items")
+        .select("id, change_event_id, budget_line_id, budget_code_id")
+        .eq("budget_line_id", lineId);
+
+    if (changeEventLineError) {
+      return apiErrorResponse(changeEventLineError);
+    }
+
+    if (blockingChangeEventLines && blockingChangeEventLines.length > 0) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message:
+          `Budget line cannot be deleted because ${blockingChangeEventLines.length} change event line item${blockingChangeEventLines.length === 1 ? "" : "s"} still reference${blockingChangeEventLines.length === 1 ? "s" : ""} it. ` +
+          "Remove or reassign those change event line items first.",
+        details: {
+          code: "LINE_HAS_CHANGE_EVENT_REFERENCES",
+          references: blockingChangeEventLines.map((line) => ({
+            id: line.id,
+            change_event_id: line.change_event_id,
           })),
         },
         status: 409,

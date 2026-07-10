@@ -1,65 +1,50 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { requirePermission } from "@/lib/permissions-guard";
+import { resolveBudgetDrilldownTargets } from "@/lib/budget/drilldown-matching";
+import { logger } from "@/lib/logger";
 
 type ChangeOrderStatusFilter = "approved" | "pending" | "all";
-const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
 const PENDING_PRIME_CO_STATUSES = ["proposed", "pending", "submitted", "under_review", "revised"];
 
-interface RuntimePrimeChangeOrderLinesClient {
-  from: (tableName: string) => {
-    select: (selectedColumns: string) => {
-      eq: (column: string, value: number | string) => {
-        eq: (column: string, value: string) => {
-          like: (
-            column: string,
-            pattern: string,
-          ) => Promise<{
-            data: Array<Record<string, unknown>> | null;
-            error: unknown;
-          }>;
-        };
-      };
-    };
-  };
-}
-
-type RuntimePrimeChangeOrderLineRow = Record<string, unknown>;
-
 /**
- * Resolve a budget cost code for filtering from explicit query param or budget line id.
+ * Resolve display names for approver user ids. A lookup failure is reported
+ * via structured logging and the rows fall back to showing no approver name.
  */
-async function resolveCostCodeId(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  projectIdNum: number,
-  budgetLineId: string | null,
-  costCodeParam: string | null,
-): Promise<string | null> {
-  if (costCodeParam && costCodeParam.trim().length > 0) {
-    return costCodeParam;
-  }
-  if (!budgetLineId) {
-    return null;
-  }
+async function resolveUserNames(
+  userIds: string[],
+): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
+  if (uniqueIds.length === 0) return names;
 
-  const { data: budgetLine, error } = await supabase
-    .from("budget_lines")
-    .select("cost_code_id")
-    .eq("id", budgetLineId)
-    .eq("project_id", projectIdNum)
-    .single();
-
-  if (error || !budgetLine) {
-    return null;
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient
+    .from("user_profiles")
+    .select("id, full_name, email")
+    .in("id", uniqueIds);
+  if (error) {
+    logger.warn({
+      msg: "Failed to resolve approver display names for budget change-order drilldown",
+      data: { userIds: uniqueIds, error: error.message },
+    });
+    return names;
   }
-
-  return budgetLine.cost_code_id ?? null;
+  for (const profile of data ?? []) {
+    const display = profile.full_name?.trim() || profile.email?.trim();
+    if (display) names.set(profile.id, display);
+  }
+  return names;
 }
 
 /**
  * GET /api/projects/[projectId]/budget/change-orders
- * Returns budget-related prime change orders scoped by cost code.
+ * Returns budget-related prime change orders scoped to a budget line or
+ * division group. The "approved" filter mirrors v_budget_lines.approved_co_total:
+ * pco_line_items joined to approved + promoted prime_contract_pcos, keyed by
+ * budget line id.
  */
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/change-orders#GET",
@@ -82,100 +67,109 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       statusParam === "approved" || statusParam === "pending" ? statusParam : "all";
 
     const supabase = await createClient();
-    const costCodeId = await resolveCostCodeId(
+    const targets = await resolveBudgetDrilldownTargets(
       supabase,
       projectIdNum,
       budgetLineId,
       costCodeParam,
     );
 
-    if (!costCodeId) {
+    if (targets.budgetLineIds.length === 0 && targets.costCodeIds.length === 0) {
       return NextResponse.json({ changeOrders: [] });
     }
 
-    // Query runtime table with an untyped client because this table is missing in generated TS types.
-    const runtimeSupabase =
-      supabase as unknown as RuntimePrimeChangeOrderLinesClient;
-    const query = runtimeSupabase
-      .from(PRIME_CHANGE_ORDER_LINES_TABLE)
+    // ---- Source 1: prime contract PCO lines (feeds the Approved COs column) ----
+    // v_budget_lines counts pco_line_items where the parent PCO is approved and
+    // promoted to a change order, keyed by budget_code_id = budget_lines.id.
+    // pco_line_items.pco_id is polymorphic (pco_type discriminates), so there is
+    // no FK for PostgREST embedding — fetch parents first, then lines.
+    let pcoParentQuery = supabase
+      .from("prime_contract_pcos")
       .select(
-        `
-        id,
-        amount,
-        description,
-        cost_code_id,
-        change_orders!inner(
-          id,
-          change_order_number,
-          title,
-          status,
-          submitted_by,
-          submitted_at,
-          approved_by,
-          approved_at,
-          created_at,
-          project_id
-        )
-      `,
+        "id, pco_number, title, status, approved_at, approved_by, promoted_to_co_id, prime_contract_id, created_at",
       )
-      .eq("change_orders.project_id", projectIdNum)
-      .eq("cost_code_id", costCodeId);
+      .eq("project_id", projectIdNum);
 
-    const statusPattern =
-      statusFilter === "approved"
-        ? "approved"
-        : statusFilter === "pending"
-          ? "Pending%"
-          : "%";
-    const result = await query.like("change_orders.status", statusPattern);
+    if (statusFilter === "approved") {
+      pcoParentQuery = pcoParentQuery
+        .eq("status", "approved")
+        .not("promoted_to_co_id", "is", null);
+    } else if (statusFilter === "pending") {
+      pcoParentQuery = pcoParentQuery.in("status", PENDING_PRIME_CO_STATUSES);
+    }
 
-    const errStr = JSON.stringify(result.error);
-    const isMissingTable =
-      errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
-      errStr.includes("PGRST205") ||
-      errStr.includes("schema cache");
-
-    const { data, error } = result;
-    if (error && !isMissingTable) {
+    const pcoParentResult = await pcoParentQuery;
+    if (pcoParentResult.error) {
       return NextResponse.json(
-        { error: "Failed to fetch change orders", details: String(error) },
+        { error: "Failed to fetch change orders", details: pcoParentResult.error.message },
         { status: 500 },
       );
     }
 
-    const rows = isMissingTable ? [] : ((data ?? []) as RuntimePrimeChangeOrderLineRow[]);
-    const legacyChangeOrders = rows.map((rawLine) => {
-      const line = rawLine as Record<string, unknown>;
-      const coRaw = Array.isArray(line.change_orders)
-        ? line.change_orders[0]
-        : line.change_orders;
-      const co =
-        (coRaw as {
-          id?: string;
-          change_order_number?: string;
-          title?: string;
-          status?: string;
-          submitted_by?: string;
-          submitted_at?: string;
-          approved_by?: string;
-          approved_at?: string;
-          created_at?: string;
-        } | null) ?? null;
+    const pcoParents = pcoParentResult.data ?? [];
+    const pcoParentById = new Map(pcoParents.map((pco) => [pco.id, pco]));
 
+    const pcoLinesResult =
+      pcoParents.length > 0 && targets.budgetLineIds.length > 0
+        ? await supabase
+            .from("pco_line_items")
+            .select("id, amount, description, budget_code_id, pco_id")
+            .eq("pco_type", "prime")
+            .in("pco_id", Array.from(pcoParentById.keys()))
+            .in("budget_code_id", targets.budgetLineIds)
+        : { data: [], error: null };
+
+    if (pcoLinesResult.error) {
+      return NextResponse.json(
+        { error: "Failed to fetch change orders", details: pcoLinesResult.error.message },
+        { status: 500 },
+      );
+    }
+
+    const pcoRows = pcoLinesResult.data ?? [];
+    const approverIds = pcoRows
+      .map((row) => pcoParentById.get(row.pco_id ?? "")?.approved_by ?? null)
+      .filter((id): id is string => Boolean(id));
+    const approverNames = await resolveUserNames(approverIds);
+
+    const promotedCoIds = new Set<number>();
+    const pcoChangeOrders = pcoRows.map((row) => {
+      const pco = row.pco_id ? pcoParentById.get(row.pco_id) : undefined;
+      if (pco?.promoted_to_co_id != null) {
+        promotedCoIds.add(Number(pco.promoted_to_co_id));
+      }
       return {
-        id: String(line.id ?? ""),
-        changeOrderNumber: co?.change_order_number || co?.id || "",
-        description: String(line.description ?? co?.title ?? ""),
-        amount: Number(line.amount ?? 0) || 0,
-        status: co?.status || "unknown",
-        requestedDate: co?.submitted_at || co?.created_at || null,
-        requestedBy: co?.submitted_by || null,
-        approvedDate: co?.approved_at || null,
-        approvedBy: co?.approved_by || null,
+        id: String(row.id ?? ""),
+        changeOrderNumber: pco?.pco_number || String(pco?.id ?? ""),
+        description: row.description || pco?.title || "",
+        amount: Number(row.amount ?? 0) || 0,
+        status: pco?.status || "unknown",
+        requestedDate: pco?.created_at || null,
+        requestedBy: null,
+        approvedDate: pco?.approved_at || null,
+        approvedBy: pco?.approved_by
+          ? (approverNames.get(pco.approved_by) ?? null)
+          : null,
         contractNumber: "-",
+        detailHref:
+          pco?.promoted_to_co_id != null
+            ? `/${projectIdNum}/change-orders/prime/${pco.promoted_to_co_id}`
+            : pco?.prime_contract_id
+              ? `/${projectIdNum}/prime-contracts/${pco.prime_contract_id}/change-orders/pcos/${pco.id}`
+              : null,
       };
     });
 
+    // NOTE: the legacy `change_order_lines` table no longer exists in the
+    // database (verified 2026-07-01) — the old legacy source was dead code
+    // and has been removed.
+
+    // ---- Source 2: prime contract change order (PCCO) lines ----
+    // pcco_line_items.cost_code has stored both cost code strings and budget
+    // line UUIDs across imports, so match against both target sets.
+    const pccoMatchKeys = Array.from(
+      new Set([...targets.costCodeIds, ...targets.budgetLineIds]),
+    );
     let pccoQuery = supabase
       .from("pcco_line_items")
       .select(
@@ -184,6 +178,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         line_amount,
         description,
         cost_code,
+        pcco_id,
         prime_contract_change_orders!inner(
           id,
           pcco_number,
@@ -192,14 +187,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           submitted_at,
           approved_at,
           created_at,
-          project_id,
-          prime_contract_id,
-          contract_id
+          project_id
         )
       `,
       )
       .eq("prime_contract_change_orders.project_id", projectIdNum)
-      .eq("cost_code", costCodeId);
+      .in("cost_code", pccoMatchKeys);
 
     if (statusFilter === "approved") {
       pccoQuery = pccoQuery.in("prime_contract_change_orders.status", ["approved", "Approved"]);
@@ -207,7 +200,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       pccoQuery = pccoQuery.in("prime_contract_change_orders.status", PENDING_PRIME_CO_STATUSES);
     }
 
-    const pccoResult = await pccoQuery;
+    const pccoResult = pccoMatchKeys.length > 0 ? await pccoQuery : { data: [], error: null };
     const pccoError = pccoResult.error;
     const pccoSerializedError = JSON.stringify(pccoError);
     const isMissingPccoTable =
@@ -222,26 +215,37 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const pccoChangeOrders = (pccoResult.data ?? []).map((line) => {
-      const coRaw = Array.isArray(line.prime_contract_change_orders)
-        ? line.prime_contract_change_orders[0]
-        : line.prime_contract_change_orders;
-      const co = coRaw ?? null;
+    const pccoChangeOrders = (isMissingPccoTable ? [] : (pccoResult.data ?? []))
+      // A PCCO created by promoting a PCO would duplicate the PCO row above.
+      .filter((line) => {
+        const coRaw = Array.isArray(line.prime_contract_change_orders)
+          ? line.prime_contract_change_orders[0]
+          : line.prime_contract_change_orders;
+        return !promotedCoIds.has(Number(coRaw?.id));
+      })
+      .map((line) => {
+        const coRaw = Array.isArray(line.prime_contract_change_orders)
+          ? line.prime_contract_change_orders[0]
+          : line.prime_contract_change_orders;
+        const co = coRaw ?? null;
 
-      return {
-        id: String(line.id ?? ""),
-        changeOrderNumber: co?.pcco_number || String(co?.id ?? ""),
-        description: line.description || co?.title || "",
-        amount: Number(line.line_amount ?? 0) || 0,
-        status: co?.status || "unknown",
-        requestedDate: co?.submitted_at || co?.created_at || null,
-        requestedBy: null,
-        approvedDate: co?.approved_at || null,
-        approvedBy: null,
-        contractNumber: "-",
-      };
+        return {
+          id: String(line.id ?? ""),
+          changeOrderNumber: co?.pcco_number || String(co?.id ?? ""),
+          description: line.description || co?.title || "",
+          amount: Number(line.line_amount ?? 0) || 0,
+          status: co?.status || "unknown",
+          requestedDate: co?.submitted_at || co?.created_at || null,
+          requestedBy: null,
+          approvedDate: co?.approved_at || null,
+          approvedBy: null,
+          contractNumber: "-",
+          detailHref: co?.id != null ? `/${projectIdNum}/change-orders/prime/${co.id}` : null,
+        };
+      });
+
+    return NextResponse.json({
+      changeOrders: [...pcoChangeOrders, ...pccoChangeOrders],
     });
-
-    return NextResponse.json({ changeOrders: [...legacyChangeOrders, ...pccoChangeOrders] });
   },
 );

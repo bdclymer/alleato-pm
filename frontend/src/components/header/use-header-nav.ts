@@ -70,7 +70,10 @@ const TABLE_ROUTE_ALIASES: Record<string, string> = {
   projects: "projects",
 };
 
-function getCreateRouteBreadcrumbLabel(segments: string[], index: number): string | null {
+function getCreateRouteBreadcrumbLabel(
+  segments: string[],
+  index: number,
+): string | null {
   if (segments[index] !== "new") return null;
 
   if (segments[index - 1] === "prime-contracts") {
@@ -78,7 +81,7 @@ function getCreateRouteBreadcrumbLabel(segments: string[], index: number): strin
   }
 
   if (segments[index - 1] === "prime-contract-pcos") {
-    return "New Prime Contract PCO";
+    return "New Prime Contract Potential Change Order";
   }
 
   if (
@@ -86,7 +89,7 @@ function getCreateRouteBreadcrumbLabel(segments: string[], index: number): strin
     segments[index - 2] === "change-orders" &&
     segments[index - 4] === "prime-contracts"
   ) {
-    return "New Prime Contract PCO";
+    return "New Prime Contract Potential Change Order";
   }
 
   return null;
@@ -103,7 +106,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         area: "header-nav",
         operation,
         error,
-        userVisibleFallback: "Header breadcrumb label fell back to the route label.",
+        userVisibleFallback:
+          "Header breadcrumb label fell back to the route label.",
         metadata: { pathname, ...metadata },
       });
     },
@@ -117,7 +121,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const projectsLoadedRef = useRef(false);
   const projectsFetchPromiseRef = useRef<Promise<void> | null>(null);
   const [meetingTitle, setMeetingTitle] = useState<string | null>(null);
-  const [globalMeetingTitle, setGlobalMeetingTitle] = useState<string | null>(null);
+  const [globalMeetingTitle, setGlobalMeetingTitle] = useState<string | null>(
+    null,
+  );
   const [primeContractTitle, setPrimeContractTitle] = useState<string | null>(
     null,
   );
@@ -128,14 +134,22 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [primePcoTitle, setPrimePcoTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
-  const [commitmentCoTitle, setCommitmentCoTitle] = useState<string | null>(null);
+  const [commitmentCoTitle, setCommitmentCoTitle] = useState<string | null>(
+    null,
+  );
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
   const [submittalTitle, setSubmittalTitle] = useState<string | null>(null);
-  const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
+  const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{
+    commitmentLabel: string;
+    invoiceLabel: string;
+  } | null>(null);
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
   const [testRunTitle, setTestRunTitle] = useState<string | null>(null);
-  const [progressReportTitle, setProgressReportTitle] = useState<string | null>(null);
+  const [progressReportTitle, setProgressReportTitle] = useState<string | null>(
+    null,
+  );
+  const [dailyBriefTitle, setDailyBriefTitle] = useState<string | null>(null);
 
   // Title caches scoped to this component instance — cleared on unmount
   const meetingTitleCache = useRef(new Map<string, string>()).current;
@@ -152,10 +166,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const invoiceTitleCache = useRef(new Map<string, string>()).current;
   const rfiTitleCache = useRef(new Map<string, string>()).current;
   const submittalTitleCache = useRef(new Map<string, string>()).current;
-  const subcontractorInvoiceTitleCache = useRef(new Map<string, { commitmentLabel: string; invoiceLabel: string }>()).current;
+  const subcontractorInvoiceTitleCache = useRef(
+    new Map<string, { commitmentLabel: string; invoiceLabel: string }>(),
+  ).current;
   const drawingTitleCache = useRef(new Map<string, string>()).current;
   const testRunTitleCache = useRef(new Map<string, string>()).current;
   const progressReportTitleCache = useRef(new Map<string, string>()).current;
+  const dailyBriefTitleCache = useRef(new Map<string, string>()).current;
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -171,7 +188,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return null;
   }, [pathname, searchParams]);
   const contextProject = useMemo(() => {
-    const normalizedProject = normalizeProject(selectedProject as Project | null);
+    const normalizedProject = normalizeProject(
+      selectedProject as Project | null,
+    );
     if (!normalizedProject || normalizedProject.id !== projectId) return null;
     return normalizedProject;
   }, [projectId, selectedProject]);
@@ -201,7 +220,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
           (tool) =>
             tool.path === scopedPath ||
             scopedPath.startsWith(`${tool.path}/`) ||
-            tool.path === scopedFirstSegment
+            tool.path === scopedFirstSegment,
         );
       return matchingTool?.name || "Home";
     }
@@ -213,7 +232,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
       const globalPath = segments.join("/");
 
       // Non-project URLs should resolve against non-project tools first.
-      const globalTools = allTools.filter((tool) => tool.requiresProject === false);
+      const globalTools = allTools.filter(
+        (tool) => tool.requiresProject === false,
+      );
 
       // Prefer exact full-path matches before first-segment fallbacks.
       const matchingTool = globalTools
@@ -224,7 +245,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
             (aliasedPath ? tool.path === aliasedPath : false) ||
             globalPath.startsWith(`${tool.path}/`) ||
             tool.path === firstSegment ||
-            tool.path.split("/")[0] === firstSegment
+            tool.path.split("/")[0] === firstSegment,
         );
       if (matchingTool) return matchingTool.name;
     }
@@ -262,8 +283,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
       /^\d+$/.test(segments[0]) &&
       segments[1] === "meetings";
     const isGlobalMeetingDetailRoute =
-      segments.length === 2 &&
-      segments[0] === "meetings";
+      segments.length === 2 && segments[0] === "meetings";
     const isPrimeContractDetailRoute =
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
@@ -290,6 +310,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[3] === "change-orders" &&
       segments[4] === "pcos" &&
       segments[5] !== "new";
+    const isNestedPrimePcoCreateRoute =
+      segments.length >= 6 &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "change-orders" &&
+      segments[4] === "pcos" &&
+      segments[5] === "new";
     const isPrimeCoDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -374,6 +400,14 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[0] === "testing" &&
       segments[1] === "runs" &&
       /^[0-9a-f-]{36}$/i.test(segments[2]);
+    const isDailyBriefDetailRoute =
+      segments.length >= 2 &&
+      segments[0] === "daily-briefs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[1]);
+    const isUserManagementUserDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "user-management" &&
+      segments[1] === "users";
 
     // Always start with the company-level home label.
     crumbs.push({ label: COMPANY_HOME_LABEL, href: "/" });
@@ -386,18 +420,25 @@ export function useHeaderNav(): UseHeaderNavReturn {
       let label: string;
 
       // Keep nested prime-contract PCO breadcrumbs on valid routes.
-      if (isNestedPrimePcoDetailRoute) {
+      if (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) {
         const nestedProjectId = segments[0];
         const nestedContractId = segments[2];
         const nestedPcoId = segments[5];
 
         if (index === 3) {
-          href = `/${nestedProjectId}/prime-contracts/change-orders`;
+          href = `/${nestedProjectId}/prime-contracts/${nestedContractId}`;
         } else if (index === 4) {
           href = `/${nestedProjectId}/prime-contracts/${nestedContractId}`;
-        } else if (index === 5) {
+        } else if (index === 5 && isNestedPrimePcoDetailRoute) {
           href = `/${nestedProjectId}/prime-contracts/${nestedContractId}/change-orders/pcos/${nestedPcoId}`;
         }
+      }
+
+      if (isUserManagementUserDetailRoute && index === 1) {
+        label = "Users";
+        href = "/user-management";
+        crumbs.push({ label, href });
+        return;
       }
 
       if (index === 0 && !/^\d+$/.test(segment)) {
@@ -413,7 +454,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
           href = `/${globalMultiSegmentTool.path}`;
 
           const toolDepth = globalMultiSegmentTool.path.split("/").length;
-          for (let skippedIndex = 1; skippedIndex < toolDepth; skippedIndex += 1) {
+          for (
+            let skippedIndex = 1;
+            skippedIndex < toolDepth;
+            skippedIndex += 1
+          ) {
             skippedIndexes.add(skippedIndex);
           }
 
@@ -438,6 +483,16 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = primePcoTitle || "Prime PCO";
       } else if (isNestedPrimePcoDetailRoute && index === 5) {
         label = primePcoTitle || "Prime PCO";
+      } else if (
+        (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) &&
+        index === 3
+      ) {
+        label = "Prime Contract";
+      } else if (
+        (isNestedPrimePcoDetailRoute || isNestedPrimePcoCreateRoute) &&
+        index === 4
+      ) {
+        label = "Potential Change Orders";
       } else if (isChangeEventDetailRoute && index === 2) {
         label = changeEventTitle || "Change Event";
       } else if (isPrimeCoDetailRoute && index === 3) {
@@ -470,6 +525,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = testRunTitle || "Run";
       } else if (isProgressReportDetailRoute && index === 2) {
         label = progressReportTitle || "Progress Report";
+      } else if (isDailyBriefDetailRoute && index === 1) {
+        label = dailyBriefTitle || "Daily Brief";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -479,7 +536,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const matchingTool = allTools.find((tool) => tool.path === segment);
         const aliasMatchingTool =
           index === 0 && TABLE_ROUTE_ALIASES[segment]
-            ? allTools.find((tool) => tool.path === TABLE_ROUTE_ALIASES[segment])
+            ? allTools.find(
+                (tool) => tool.path === TABLE_ROUTE_ALIASES[segment],
+              )
             : null;
 
         if (matchingTool || aliasMatchingTool) {
@@ -522,7 +581,29 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, breadcrumbProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle, progressReportTitle]);
+  }, [
+    pathname,
+    companyTitle,
+    vendorTitle,
+    contactTitle,
+    breadcrumbProject,
+    meetingTitle,
+    globalMeetingTitle,
+    primeContractTitle,
+    commitmentTitle,
+    primePcoTitle,
+    changeEventTitle,
+    primeCoTitle,
+    commitmentCoTitle,
+    invoiceTitle,
+    rfiTitle,
+    submittalTitle,
+    subcontractorInvoiceInfo,
+    drawingTitle,
+    testRunTitle,
+    progressReportTitle,
+    dailyBriefTitle,
+  ]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -551,7 +632,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const fetchMeetingTitle = async () => {
       try {
         const data = await apiFetch<{ data?: { title?: unknown } }>(
-          `/api/projects/${segments[0]}/meetings/${meetingId}`
+          `/api/projects/${segments[0]}/meetings/${meetingId}`,
         );
         const title = data?.data?.title;
         if (isActive) {
@@ -618,9 +699,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchDrawingTitle = async () => {
       try {
-        const data = await apiFetch<{ title?: unknown; drawing_number?: unknown }>(
-          `/api/projects/${projectId}/drawings/${drawingId}`,
-        );
+        const data = await apiFetch<{
+          title?: unknown;
+          drawing_number?: unknown;
+        }>(`/api/projects/${projectId}/drawings/${drawingId}`);
         const resolvedTitle =
           (typeof data?.title === "string" && data.title.trim().length > 0
             ? data.title.trim()
@@ -674,9 +756,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const data = await apiFetch<{ run?: { suite?: { display_name?: unknown } } }>(
-          `/api/testing/runs/${runId}`,
-        );
+        const data = await apiFetch<{
+          run?: { suite?: { display_name?: unknown } };
+        }>(`/api/testing/runs/${runId}`);
         const title: string | null =
           typeof data?.run?.suite?.display_name === "string" &&
           data.run.suite.display_name.length > 0
@@ -692,7 +774,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchTitle();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -721,9 +805,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const data = await apiFetch<{ report?: { title?: unknown } }>(
           `/api/projects/${segments[0]}/progress-reports/${reportId}`,
         );
-        const title = typeof data?.report?.title === "string" && data.report.title.length > 0
-          ? data.report.title
-          : null;
+        const title =
+          typeof data?.report?.title === "string" &&
+          data.report.title.length > 0
+            ? data.report.title
+            : null;
         if (isActive && title) {
           progressReportTitleCache.set(reportId, title);
           setProgressReportTitle(title);
@@ -736,7 +822,59 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchTitle();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  // Fetch business date for the global Daily Brief detail route
+  // (/daily-briefs/[briefId]) so the crumb reads the date, not a raw UUID.
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isDailyBriefDetailRoute =
+      segments.length >= 2 &&
+      segments[0] === "daily-briefs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[1]);
+
+    if (!isDailyBriefDetailRoute) {
+      setDailyBriefTitle(null);
+      return;
+    }
+
+    const briefId = segments[1];
+    const cached = dailyBriefTitleCache.get(briefId);
+    if (cached) {
+      setDailyBriefTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const data = await apiFetch<{
+          businessDate?: unknown;
+          title?: unknown;
+        }>(`/api/executive/daily-brief/${briefId}`);
+        const label =
+          typeof data?.businessDate === "string" &&
+          data.businessDate.length > 0
+            ? data.businessDate
+            : typeof data?.title === "string" && data.title.length > 0
+              ? data.title
+              : null;
+        if (isActive && label) {
+          dailyBriefTitleCache.set(briefId, label);
+          setDailyBriefTitle(label);
+        }
+      } catch (error) {
+        reportHeaderNavFailure("resolve-daily-brief-title", error, { briefId });
+      }
+    };
+
+    fetchTitle();
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -767,9 +905,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchVendorTitle = async () => {
       try {
-        const data = await apiFetch<{ name?: unknown }>(`/api/directory/vendors/${vendorId}`);
+        const data = await apiFetch<{ name?: unknown }>(
+          `/api/directory/vendors/${vendorId}`,
+        );
         const title =
-          (typeof data?.name === "string" && data.name.length > 0 ? data.name : null);
+          typeof data?.name === "string" && data.name.length > 0
+            ? data.name
+            : null;
 
         if (isActive) {
           if (title) {
@@ -827,10 +969,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
         if (error || !isActive) return;
 
-        const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+        const fullName =
+          `${data.first_name || ""} ${data.last_name || ""}`.trim();
         const title =
           (fullName.length > 0 ? fullName : null) ||
-          (typeof data.email === "string" && data.email.length > 0 ? data.email : null);
+          (typeof data.email === "string" && data.email.length > 0
+            ? data.email
+            : null);
 
         if (title) {
           contactTitleCache.set(contactId, title);
@@ -870,8 +1015,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const data = await apiFetch<{ title?: unknown }>(`/api/meetings/${meetingId}`);
-        const title = typeof data?.title === "string" && data.title.length > 0 ? data.title : null;
+        const data = await apiFetch<{ title?: unknown }>(
+          `/api/meetings/${meetingId}`,
+        );
+        const title =
+          typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : null;
         if (isActive && title) {
           globalMeetingTitleCache.set(meetingId, title);
           setGlobalMeetingTitle(title);
@@ -884,7 +1034,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchTitle();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -975,8 +1127,16 @@ export function useHeaderNav(): UseHeaderNavReturn {
           data?: { contract_number?: unknown; title?: unknown };
         }>(`/api/commitments/${commitmentId}`);
         const record = json?.data;
-        const titlePart = typeof record?.title === "string" && record.title.length > 0 ? record.title : null;
-        const number = typeof record?.contract_number === "string" && record.contract_number.length > 0 && !/^[0-9a-f-]{36}$/i.test(record.contract_number) ? record.contract_number : null;
+        const titlePart =
+          typeof record?.title === "string" && record.title.length > 0
+            ? record.title
+            : null;
+        const number =
+          typeof record?.contract_number === "string" &&
+          record.contract_number.length > 0 &&
+          !/^[0-9a-f-]{36}$/i.test(record.contract_number)
+            ? record.contract_number
+            : null;
         const title = titlePart ?? number;
 
         if (isActive) {
@@ -1169,7 +1329,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchTitle();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   // Fetch title for commitment CO detail routes ([projectId]/change-orders/commitment/[commitmentCoId])
@@ -1268,7 +1430,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const data = await apiFetch<{ application_number?: unknown; title?: unknown }>(
+        const data = await apiFetch<{
+          application_number?: unknown;
+          title?: unknown;
+        }>(
           `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}`,
         );
         // Note: page URL uses "invoices/[id]" but API route uses "payment-applications/[id]"
@@ -1396,9 +1561,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const fetchSubmittalTitle = async () => {
       // Resolve breadcrumb label from submittal number + title to avoid raw UUID crumbs.
       try {
-        const data = await apiFetch<{ submittal_number?: unknown; title?: unknown }>(
-          `/api/projects/${projectId}/submittals/${submittalId}`,
-        );
+        const data = await apiFetch<{
+          submittal_number?: unknown;
+          title?: unknown;
+        }>(`/api/projects/${projectId}/submittals/${submittalId}`);
         const number =
           typeof data?.submittal_number === "string" &&
           data.submittal_number.trim().length > 0
@@ -1408,7 +1574,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
           typeof data?.title === "string" && data.title.trim().length > 0
             ? data.title.trim()
             : null;
-        const resolvedTitle = number && title ? `${number} — ${title}` : (title ?? number);
+        const resolvedTitle =
+          number && title ? `${number} — ${title}` : (title ?? number);
 
         if (!isActive) return;
         if (resolvedTitle) {
@@ -1470,7 +1637,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const endpoint = projectId
           ? `/api/projects/${projectId}/directory/companies/${companyId}`
           : `/api/directory/companies/${companyId}`;
-        const data = await apiFetch<{ name?: unknown; company?: { name?: unknown } }>(endpoint);
+        const data = await apiFetch<{
+          name?: unknown;
+          company?: { name?: unknown };
+        }>(endpoint);
         const title =
           (typeof data?.name === "string" && data.name.length > 0
             ? data.name
@@ -1530,8 +1700,14 @@ export function useHeaderNav(): UseHeaderNavReturn {
       try {
         const data = await apiFetch<{
           data?: {
-            subcontracts?: { contract_number?: string | null; title?: string | null } | null;
-            purchase_orders?: { contract_number?: string | null; title?: string | null } | null;
+            subcontracts?: {
+              contract_number?: string | null;
+              title?: string | null;
+            } | null;
+            purchase_orders?: {
+              contract_number?: string | null;
+              title?: string | null;
+            } | null;
             invoice_number?: unknown;
             id?: unknown;
           };
@@ -1543,14 +1719,15 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
         const sc = invoice.subcontracts ?? null;
         const po = invoice.purchase_orders ?? null;
-        const contractNumber = sc?.contract_number ?? po?.contract_number ?? null;
+        const contractNumber =
+          sc?.contract_number ?? po?.contract_number ?? null;
         const contractTitle = sc?.title ?? po?.title ?? null;
 
         const commitmentLabel = contractNumber
           ? contractTitle
             ? `${contractNumber} — ${contractTitle}`
             : contractNumber
-          : contractTitle ?? "Subcontractor Invoice";
+          : (contractTitle ?? "Subcontractor Invoice");
 
         const invoiceLabel = invoice.invoice_number
           ? `Invoice #${invoice.invoice_number}`
@@ -1568,7 +1745,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchInfo();
-    return () => { isActive = false; };
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   // Auto-close panels on route change
@@ -1679,7 +1858,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
         router.push(`/${newProjectId}/home`);
       }
     },
-    [pathname, router]
+    [pathname, router],
   );
 
   const togglePanel = useCallback((id: string) => {

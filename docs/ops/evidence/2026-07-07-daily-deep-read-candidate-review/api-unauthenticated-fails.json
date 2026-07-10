@@ -1,0 +1,11 @@
+{
+  "status": 401,
+  "body": {
+    "success": false,
+    "error_code": "UNAUTHORIZED",
+    "error_message": "Unauthorized",
+    "where_it_failed": "projects/[projectId]/intelligence/daily-deep-read-candidates/[candidateId]#PATCH",
+    "request_id": "8346e5c9-f509-4588-9363-72ece4d2e746",
+    "timestamp": "2026-07-07T18:30:15.218Z"
+  }
+}

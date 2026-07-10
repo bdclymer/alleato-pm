@@ -228,6 +228,29 @@ export async function getPermissionTemplates(
   return (data ?? []).map(parsePermissionTemplate);
 }
 
+export async function getPermissionTemplateById(
+  templateId: string,
+): Promise<PermissionTemplate | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("permission_templates")
+    .select("*")
+    .eq("id", templateId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error loading permission template:", error);
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return parsePermissionTemplate(data as PermissionTemplateDbRow);
+}
+
 export async function createPermissionTemplate(
   template: Omit<PermissionTemplate, "id">
 ): Promise<{ data?: PermissionTemplate; error?: string }> {
@@ -254,17 +277,28 @@ export async function createPermissionTemplate(
 export async function updatePermissionTemplate(
   templateId: string,
   updates: Partial<Omit<PermissionTemplate, "id" | "is_system">>
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; data?: PermissionTemplate; error?: string }> {
   const supabase = await createClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("permission_templates")
     .update(updates)
     .eq("id", templateId)
-    .eq("is_system", false);
+    .eq("is_system", false)
+    .select();
 
   if (error) return { success: false, error: error.message };
-  return { success: true };
+  if (!data || data.length === 0) {
+    return {
+      success: false,
+      error:
+        "This template could not be updated. System templates are read only.",
+    };
+  }
+  return {
+    success: true,
+    data: parsePermissionTemplate(data[0] as PermissionTemplateDbRow),
+  };
 }
 
 export async function deletePermissionTemplate(

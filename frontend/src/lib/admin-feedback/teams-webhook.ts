@@ -142,6 +142,83 @@ function buildAdaptiveCardPayload(input: NotifyInput) {
   };
 }
 
+/**
+ * Sends a plain operational alert to the feedback Teams channel. Used by the
+ * feedback-github-health cron to shout when the GitHub feedback pipeline is
+ * broken (e.g. the token lost Issues:write) so it is caught proactively
+ * instead of by a user hitting the form. Never throws.
+ */
+export async function notifyTeamsFeedbackAlert(input: {
+  requestId: string;
+  title: string;
+  detail: string;
+  inboxUrl?: string;
+}): Promise<NotifyResult> {
+  const webhookUrl = process.env.TEAMS_FEEDBACK_WEBHOOK_URL?.trim();
+  if (!webhookUrl) {
+    return { ok: false, reason: "not_configured" };
+  }
+
+  const actions = input.inboxUrl
+    ? [{ type: "Action.OpenUrl", title: "Open feedback inbox", url: input.inboxUrl }]
+    : [];
+
+  const payload = {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+          type: "AdaptiveCard",
+          version: "1.4",
+          body: [
+            {
+              type: "TextBlock",
+              size: "Large",
+              weight: "Bolder",
+              color: "Attention",
+              text: truncate(input.title, 140),
+              wrap: true,
+            },
+            {
+              type: "TextBlock",
+              text: truncate(input.detail, 600),
+              wrap: true,
+              spacing: "Small",
+            },
+          ],
+          actions,
+        },
+      },
+    ],
+  };
+
+  try {
+    const response = await fetchWithGuardrails(webhookUrl, {
+      method: "POST",
+      requestId: input.requestId,
+      where: "admin-feedback/teams-webhook-alert",
+      dependency: "teams-webhook",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      timeoutMs: WRITE_POLICY.timeoutMs,
+      retries: 0,
+    });
+    if (!response.ok) {
+      return { ok: false, reason: "send_failed", details: `HTTP ${response.status}` };
+    }
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: "send_failed",
+      details: error instanceof Error ? error.message : "unknown",
+    };
+  }
+}
+
 export async function notifyTeamsWebhook(input: NotifyInput): Promise<NotifyResult> {
   const webhookUrl = process.env.TEAMS_FEEDBACK_WEBHOOK_URL?.trim();
   if (!webhookUrl) {

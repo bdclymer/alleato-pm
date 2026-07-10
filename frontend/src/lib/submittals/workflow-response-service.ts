@@ -455,7 +455,7 @@ async function createWorkflowHandoffNotification({
         submittalTitle ?? "Untitled"
       }`,
       react: SubmittalWorkflowHandoffNotification({
-        recipientName: displayName(targetProfile),
+        recipientName: displayName(targetProfile ?? {}),
         projectName: project?.name ?? `Project #${projectId}`,
         submittalNumber: submittalNumber ?? "Submittal",
         submittalTitle: submittalTitle ?? "Untitled",

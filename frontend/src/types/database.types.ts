@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       __drizzle_migrations: {
@@ -173,6 +178,7 @@ export type Database = {
           {
             foreignKeyName: "acumatica_ap_bill_lines_bill_id_fkey"
             columns: ["bill_id"]
+            isOneToOne: false
             referencedRelation: "acumatica_ap_bills"
             referencedColumns: ["id"]
           },
@@ -270,42 +276,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_ap_bills_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ap_bills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -367,6 +380,7 @@ export type Database = {
           {
             foreignKeyName: "acumatica_ar_invoice_lines_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "acumatica_ar_invoices"
             referencedColumns: ["id"]
           },
@@ -464,42 +478,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_ar_invoices_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -603,42 +624,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_change_orders_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -718,6 +746,7 @@ export type Database = {
           {
             foreignKeyName: "acumatica_checks_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -842,36 +871,42 @@ export type Database = {
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_outbound_audit_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -1008,42 +1043,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_payments_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -1165,42 +1207,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_project_budgets_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -1319,36 +1368,42 @@ export type Database = {
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_projects_local_project_id_fkey"
             columns: ["local_project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -1446,42 +1501,49 @@ export type Database = {
           {
             foreignKeyName: "acumatica_purchase_orders_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -1588,48 +1650,56 @@ export type Database = {
           {
             foreignKeyName: "acumatica_subcontracts_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "acumatica_subcontracts_vendor_uuid_fkey"
             columns: ["vendor_uuid"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -1719,6 +1789,66 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_feedback_assistant_threads: {
+        Row: {
+          assistant_session_id: string
+          created_at: string
+          created_by: string
+          feedback_item_id: string
+          id: string
+          last_error: string | null
+          last_message_at: string | null
+          metadata: Json
+          relay_comments: boolean
+          runtime: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assistant_session_id: string
+          created_at?: string
+          created_by: string
+          feedback_item_id: string
+          id?: string
+          last_error?: string | null
+          last_message_at?: string | null
+          metadata?: Json
+          relay_comments?: boolean
+          runtime?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assistant_session_id?: string
+          created_at?: string
+          created_by?: string
+          feedback_item_id?: string
+          id?: string
+          last_error?: string | null
+          last_message_at?: string | null
+          metadata?: Json
+          relay_comments?: boolean
+          runtime?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_assistant_threads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_assistant_threads_feedback_item_id_fkey"
+            columns: ["feedback_item_id"]
+            isOneToOne: true
+            referencedRelation: "admin_feedback_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_feedback_comments: {
         Row: {
           author_id: string
@@ -1757,12 +1887,14 @@ export type Database = {
           {
             foreignKeyName: "admin_feedback_comments_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_comments_feedback_item_id_fkey"
             columns: ["feedback_item_id"]
+            isOneToOne: false
             referencedRelation: "admin_feedback_items"
             referencedColumns: ["id"]
           },
@@ -1773,6 +1905,7 @@ export type Database = {
           agent_context: Json | null
           assignee_id: string | null
           board_status: string
+          category: string | null
           comment: string
           created_at: string
           created_by: string
@@ -1806,6 +1939,7 @@ export type Database = {
           agent_context?: Json | null
           assignee_id?: string | null
           board_status?: string
+          category?: string | null
           comment: string
           created_at?: string
           created_by: string
@@ -1839,6 +1973,7 @@ export type Database = {
           agent_context?: Json | null
           assignee_id?: string | null
           board_status?: string
+          category?: string | null
           comment?: string
           created_at?: string
           created_by?: string
@@ -1872,54 +2007,63 @@ export type Database = {
           {
             foreignKeyName: "admin_feedback_items_assignee_id_fkey"
             columns: ["assignee_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "admin_feedback_items_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -1981,6 +2125,7 @@ export type Database = {
           {
             foreignKeyName: "agent_learning_usages_learning_id_fkey"
             columns: ["learning_id"]
+            isOneToOne: false
             referencedRelation: "agent_learnings"
             referencedColumns: ["id"]
           },
@@ -2063,42 +2208,49 @@ export type Database = {
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agent_learnings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "agent_learnings_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -2151,42 +2303,49 @@ export type Database = {
           {
             foreignKeyName: "ai_agent_runs_agent_id_fkey"
             columns: ["agent_id"]
+            isOneToOne: false
             referencedRelation: "ai_agents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_agent_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -2347,42 +2506,49 @@ export type Database = {
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_feedback_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_feedback_events_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
@@ -2453,48 +2619,56 @@ export type Database = {
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_superseded_by_fkey"
             columns: ["superseded_by"]
+            isOneToOne: false
             referencedRelation: "ai_learning_promotions"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_learning_promotions_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
@@ -2562,90 +2736,105 @@ export type Database = {
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_memories_superseded_by_fkey"
             columns: ["superseded_by"]
+            isOneToOne: false
             referencedRelation: "ai_memories"
             referencedColumns: ["id"]
           },
@@ -2722,36 +2911,42 @@ export type Database = {
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_operation_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -2819,90 +3014,105 @@ export type Database = {
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_feedback_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
@@ -2961,90 +3171,105 @@ export type Database = {
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_promotion_id_fkey"
             columns: ["promotion_id"]
+            isOneToOne: true
             referencedRelation: "ai_learning_promotions"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_retrieval_weights_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -3112,36 +3337,42 @@ export type Database = {
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_review_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -3185,42 +3416,49 @@ export type Database = {
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skill_usage_events_skill_id_fkey"
             columns: ["skill_id"]
+            isOneToOne: false
             referencedRelation: "ai_skills"
             referencedColumns: ["id"]
           },
@@ -3309,42 +3547,49 @@ export type Database = {
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skills_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_skills_supersedes_skill_id_fkey"
             columns: ["supersedes_skill_id"]
+            isOneToOne: false
             referencedRelation: "ai_skills"
             referencedColumns: ["id"]
           },
@@ -3400,48 +3645,56 @@ export type Database = {
           {
             foreignKeyName: "ai_task_feedback_generated_task_id_fkey"
             columns: ["generated_task_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_task_feedback_task_id_fkey"
             columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
@@ -3527,6 +3780,7 @@ export type Database = {
           {
             foreignKeyName: "ai_work_run_artifacts_work_run_id_fkey"
             columns: ["work_run_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_runs"
             referencedColumns: ["id"]
           },
@@ -3585,12 +3839,14 @@ export type Database = {
           {
             foreignKeyName: "ai_work_run_delivery_attempts_artifact_id_fkey"
             columns: ["artifact_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_run_artifacts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_work_run_delivery_attempts_work_run_id_fkey"
             columns: ["work_run_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_runs"
             referencedColumns: ["id"]
           },
@@ -3640,6 +3896,7 @@ export type Database = {
           {
             foreignKeyName: "ai_work_run_sources_work_run_id_fkey"
             columns: ["work_run_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_runs"
             referencedColumns: ["id"]
           },
@@ -3689,6 +3946,7 @@ export type Database = {
           {
             foreignKeyName: "ai_work_run_steps_work_run_id_fkey"
             columns: ["work_run_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_runs"
             referencedColumns: ["id"]
           },
@@ -3798,18 +4056,21 @@ export type Database = {
           {
             foreignKeyName: "ai_work_runs_daily_recap_id_fkey"
             columns: ["daily_recap_id"]
+            isOneToOne: false
             referencedRelation: "daily_recaps"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_work_runs_event_id_fkey"
             columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "ai_operation_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ai_work_runs_source_sync_run_id_fkey"
             columns: ["source_sync_run_id"]
+            isOneToOne: false
             referencedRelation: "source_sync_runs"
             referencedColumns: ["id"]
           },
@@ -3925,48 +4186,56 @@ export type Database = {
           {
             foreignKeyName: "app_error_events_group_id_fkey"
             columns: ["group_id"]
+            isOneToOne: false
             referencedRelation: "app_error_groups"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_events_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -4052,48 +4321,56 @@ export type Database = {
           {
             foreignKeyName: "app_error_groups_latest_event_fkey"
             columns: ["latest_event_id"]
+            isOneToOne: false
             referencedRelation: "app_error_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_project_id_fkey"
             columns: ["latest_project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "app_error_groups_latest_user_id_fkey"
             columns: ["latest_user_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -4124,6 +4401,125 @@ export type Database = {
           notes?: string | null
           permission_module?: string | null
           route?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      app_page_role_access_policies: {
+        Row: {
+          created_at: string
+          enforcement_mode: string
+          notes: string | null
+          route: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          enforcement_mode?: string
+          notes?: string | null
+          route: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          enforcement_mode?: string
+          notes?: string | null
+          route?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      app_page_role_access_policy_templates: {
+        Row: {
+          created_at: string
+          permission_template_id: string
+          route: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          permission_template_id: string
+          route: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          permission_template_id?: string
+          route?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_page_role_access_policy_templat_permission_template_id_fkey"
+            columns: ["permission_template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_page_role_access_policy_templates_route_fkey"
+            columns: ["route"]
+            isOneToOne: false
+            referencedRelation: "app_page_role_access_policies"
+            referencedColumns: ["route"]
+          },
+        ]
+      }
+      app_page_tag_assignments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          route: string
+          tag_slug: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          route: string
+          tag_slug: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          route?: string
+          tag_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_page_tag_assignments_tag_slug_fkey"
+            columns: ["tag_slug"]
+            isOneToOne: false
+            referencedRelation: "app_page_tags"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      app_page_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          label: string
+          slug: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          label: string
+          slug: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          label?: string
+          slug?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -4173,6 +4569,7 @@ export type Database = {
           {
             foreignKeyName: "app_pages_crawl_session_id_fkey"
             columns: ["crawl_session_id"]
+            isOneToOne: false
             referencedRelation: "app_crawl_sessions"
             referencedColumns: ["id"]
           },
@@ -4213,6 +4610,7 @@ export type Database = {
           {
             foreignKeyName: "app_parity_checks_crawl_session_id_fkey"
             columns: ["crawl_session_id"]
+            isOneToOne: false
             referencedRelation: "app_crawl_sessions"
             referencedColumns: ["id"]
           },
@@ -4328,6 +4726,7 @@ export type Database = {
           {
             foreignKeyName: "app_system_actions_page_id_fkey"
             columns: ["page_id"]
+            isOneToOne: false
             referencedRelation: "app_pages"
             referencedColumns: ["id"]
           },
@@ -4395,6 +4794,7 @@ export type Database = {
           {
             foreignKeyName: "app_ui_components_page_id_fkey"
             columns: ["page_id"]
+            isOneToOne: false
             referencedRelation: "app_pages"
             referencedColumns: ["id"]
           },
@@ -4435,6 +4835,7 @@ export type Database = {
           {
             foreignKeyName: "app_ui_table_columns_ui_table_id_fkey"
             columns: ["ui_table_id"]
+            isOneToOne: false
             referencedRelation: "app_ui_tables"
             referencedColumns: ["id"]
           },
@@ -4472,6 +4873,7 @@ export type Database = {
           {
             foreignKeyName: "app_ui_tables_page_id_fkey"
             columns: ["page_id"]
+            isOneToOne: false
             referencedRelation: "app_pages"
             referencedColumns: ["id"]
           },
@@ -4509,6 +4911,7 @@ export type Database = {
           {
             foreignKeyName: "asrs_blocks_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "asrs_sections"
             referencedColumns: ["id"]
           },
@@ -4651,6 +5054,7 @@ export type Database = {
           {
             foreignKeyName: "asrs_logic_cards_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "asrs_sections"
             referencedColumns: ["id"]
           },
@@ -4712,6 +5116,7 @@ export type Database = {
           {
             foreignKeyName: "asrs_protection_rules_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "asrs_sections"
             referencedColumns: ["id"]
           },
@@ -4746,6 +5151,7 @@ export type Database = {
           {
             foreignKeyName: "asrs_sections_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
             referencedRelation: "asrs_sections"
             referencedColumns: ["id"]
           },
@@ -4786,42 +5192,49 @@ export type Database = {
           {
             foreignKeyName: "billing_invitations_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_invitations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -4874,36 +5287,42 @@ export type Database = {
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "billing_periods_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -4926,6 +5345,7 @@ export type Database = {
           {
             foreignKeyName: "block_embeddings_block_id_fkey"
             columns: ["block_id"]
+            isOneToOne: true
             referencedRelation: "asrs_blocks"
             referencedColumns: ["id"]
           },
@@ -5035,6 +5455,7 @@ export type Database = {
           {
             foreignKeyName: "briefing_runs_briefing_id_fkey"
             columns: ["briefing_id"]
+            isOneToOne: false
             referencedRelation: "project_briefings"
             referencedColumns: ["id"]
           },
@@ -5084,48 +5505,56 @@ export type Database = {
           {
             foreignKeyName: "budget_changes_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_changes_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_changes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -5196,48 +5625,56 @@ export type Database = {
           {
             foreignKeyName: "budget_forecast_line_items_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_forecast_line_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -5299,18 +5736,21 @@ export type Database = {
           {
             foreignKeyName: "budget_line_forecasts_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_forecasts_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_forecasts_curve_id_fkey"
             columns: ["curve_id"]
+            isOneToOne: false
             referencedRelation: "forecasting_curves"
             referencedColumns: ["id"]
           },
@@ -5357,48 +5797,56 @@ export type Database = {
           {
             foreignKeyName: "budget_line_history_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_history_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_line_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -5529,84 +5977,98 @@ export type Database = {
           {
             foreignKeyName: "budget_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_cost_type_id_fkey"
             columns: ["cost_type_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_types"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_default_curve_id_fkey"
             columns: ["default_curve_id"]
+            isOneToOne: false
             referencedRelation: "forecasting_curves"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
           {
             foreignKeyName: "budget_lines_project_budget_code_id_fkey"
             columns: ["project_budget_code_id"]
+            isOneToOne: false
             referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_source_contract_line_item_id_fkey"
             columns: ["source_contract_line_item_id"]
+            isOneToOne: false
             referencedRelation: "contract_line_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_sub_job_id_fkey"
             columns: ["sub_job_id"]
+            isOneToOne: false
             referencedRelation: "sub_jobs"
             referencedColumns: ["id"]
           },
@@ -5659,78 +6121,91 @@ export type Database = {
           {
             foreignKeyName: "budget_mod_lines_budget_modification_id_fkey"
             columns: ["budget_modification_id"]
+            isOneToOne: false
             referencedRelation: "budget_modifications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_cost_type_id_fkey"
             columns: ["cost_type_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_types"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_mod_lines_sub_job_id_fkey"
             columns: ["sub_job_id"]
+            isOneToOne: false
             referencedRelation: "sub_jobs"
             referencedColumns: ["id"]
           },
@@ -5771,18 +6246,21 @@ export type Database = {
           {
             foreignKeyName: "budget_modification_lines_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_modification_lines_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_modification_lines_budget_modification_id_fkey"
             columns: ["budget_modification_id"]
+            isOneToOne: false
             referencedRelation: "budget_modifications"
             referencedColumns: ["id"]
           },
@@ -5829,36 +6307,42 @@ export type Database = {
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_modifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -5908,36 +6392,42 @@ export type Database = {
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -5984,6 +6474,7 @@ export type Database = {
           {
             foreignKeyName: "budget_view_columns_view_id_fkey"
             columns: ["view_id"]
+            isOneToOne: false
             referencedRelation: "budget_views"
             referencedColumns: ["id"]
           },
@@ -6027,36 +6518,42 @@ export type Database = {
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_views_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -6094,12 +6591,14 @@ export type Database = {
           {
             foreignKeyName: "change_event_approvals_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_approvals_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
@@ -6164,36 +6663,42 @@ export type Database = {
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_candidates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -6225,66 +6730,77 @@ export type Database = {
           {
             foreignKeyName: "change_event_documents_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
@@ -6325,12 +6841,14 @@ export type Database = {
           {
             foreignKeyName: "change_event_history_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_history_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
@@ -6349,6 +6867,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          jobplanner_id: number | null
           latest_price: number | null
           non_committed_cost: number | null
           quantity: number | null
@@ -6371,6 +6890,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
@@ -6393,6 +6913,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
@@ -6407,54 +6928,63 @@ export type Database = {
           {
             foreignKeyName: "change_event_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "change_event_line_items_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_line_items_vendor_id_fkey"
             columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -6464,6 +6994,7 @@ export type Database = {
         Row: {
           change_event_id: string
           id: string
+          jobplanner_id: number | null
           linked_at: string
           linked_by: string | null
           pco_id: string
@@ -6472,6 +7003,7 @@ export type Database = {
         Insert: {
           change_event_id: string
           id?: string
+          jobplanner_id?: number | null
           linked_at?: string
           linked_by?: string | null
           pco_id: string
@@ -6480,6 +7012,7 @@ export type Database = {
         Update: {
           change_event_id?: string
           id?: string
+          jobplanner_id?: number | null
           linked_at?: string
           linked_by?: string | null
           pco_id?: string
@@ -6489,13 +7022,112 @@ export type Database = {
           {
             foreignKeyName: "change_event_pco_links_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_pco_links_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      change_event_project_settings: {
+        Row: {
+          allow_line_item_autopopulation: boolean
+          always_create_commitment_cos_using_latest_cost: boolean
+          budget_rom_in_scope: string
+          budget_rom_out_of_scope: string
+          budget_rom_tbd_scope: string
+          copy_attachments_to_commitment_cos: boolean
+          copy_attachments_to_prime_pcos: boolean
+          created_at: string
+          display_revenue_rom_columns: boolean
+          display_unit_columns: boolean
+          maintain_budget_codes_in_sync: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item: boolean
+          project_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_line_item_autopopulation?: boolean
+          always_create_commitment_cos_using_latest_cost?: boolean
+          budget_rom_in_scope?: string
+          budget_rom_out_of_scope?: string
+          budget_rom_tbd_scope?: string
+          copy_attachments_to_commitment_cos?: boolean
+          copy_attachments_to_prime_pcos?: boolean
+          created_at?: string
+          display_revenue_rom_columns?: boolean
+          display_unit_columns?: boolean
+          maintain_budget_codes_in_sync?: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item?: boolean
+          project_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_line_item_autopopulation?: boolean
+          always_create_commitment_cos_using_latest_cost?: boolean
+          budget_rom_in_scope?: string
+          budget_rom_out_of_scope?: string
+          budget_rom_tbd_scope?: string
+          copy_attachments_to_commitment_cos?: boolean
+          copy_attachments_to_prime_pcos?: boolean
+          created_at?: string
+          display_revenue_rom_columns?: boolean
+          display_unit_columns?: boolean
+          maintain_budget_codes_in_sync?: boolean
+          prevent_budget_changes_and_prime_pcos_on_same_line_item?: boolean
+          project_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -6547,48 +7179,56 @@ export type Database = {
           {
             foreignKeyName: "change_event_related_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_related_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -6647,18 +7287,21 @@ export type Database = {
           {
             foreignKeyName: "change_event_rfq_responses_line_item_id_fkey"
             columns: ["line_item_id"]
+            isOneToOne: false
             referencedRelation: "change_event_line_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfq_responses_responder_company_id_fkey"
             columns: ["responder_company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfq_responses_rfq_id_fkey"
             columns: ["rfq_id"]
+            isOneToOne: false
             referencedRelation: "change_event_rfqs"
             referencedColumns: ["id"]
           },
@@ -6729,60 +7372,70 @@ export type Database = {
           {
             foreignKeyName: "change_event_rfqs_assigned_company_id_fkey"
             columns: ["assigned_company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_assigned_contact_id_fkey"
             columns: ["assigned_contact_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_event_rfqs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -6797,6 +7450,7 @@ export type Database = {
           expecting_revenue: boolean
           id: string
           internal_subtype: string | null
+          jobplanner_id: number | null
           line_item_revenue_source: string | null
           number: string
           origin: string | null
@@ -6824,6 +7478,7 @@ export type Database = {
           expecting_revenue?: boolean
           id?: string
           internal_subtype?: string | null
+          jobplanner_id?: number | null
           line_item_revenue_source?: string | null
           number: string
           origin?: string | null
@@ -6851,6 +7506,7 @@ export type Database = {
           expecting_revenue?: boolean
           id?: string
           internal_subtype?: string | null
+          jobplanner_id?: number | null
           line_item_revenue_source?: string | null
           number?: string
           origin?: string | null
@@ -6874,54 +7530,63 @@ export type Database = {
           {
             foreignKeyName: "change_events_potential_change_order_id_fkey"
             columns: ["potential_change_order_id"]
+            isOneToOne: false
             referencedRelation: "potential_change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "change_events_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -6962,54 +7627,63 @@ export type Database = {
           {
             foreignKeyName: "change_events_documents_links_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_document_id_fkey"
             columns: ["project_document_id"]
+            isOneToOne: false
             referencedRelation: "project_documents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_documents_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -7041,60 +7715,70 @@ export type Database = {
           {
             foreignKeyName: "change_order_documents_change_order_id_fkey"
             columns: ["change_order_id"]
+            isOneToOne: false
             referencedRelation: "change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_order_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
@@ -7162,36 +7846,42 @@ export type Database = {
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -7274,36 +7964,42 @@ export type Database = {
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_workflow_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -7383,42 +8079,49 @@ export type Database = {
           {
             foreignKeyName: "collaboration_comments_parent_comment_id_fkey"
             columns: ["parent_comment_id"]
+            isOneToOne: false
             referencedRelation: "collaboration_comments"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -7477,42 +8180,49 @@ export type Database = {
           {
             foreignKeyName: "collaboration_notifications_comment_id_fkey"
             columns: ["comment_id"]
+            isOneToOne: false
             referencedRelation: "collaboration_comments"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "collaboration_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -7574,66 +8284,77 @@ export type Database = {
           {
             foreignKeyName: "commitment_change_order_documen_commitment_change_order_id_fkey"
             columns: ["commitment_change_order_id"]
+            isOneToOne: false
             referencedRelation: "commitment_change_orders_with_scope"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documen_commitment_change_order_id_fkey"
             columns: ["commitment_change_order_id"]
+            isOneToOne: false
             referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
@@ -7677,30 +8398,35 @@ export type Database = {
           {
             foreignKeyName: "commitment_change_order_lines_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_lines_budget_line_id_fkey"
             columns: ["budget_line_id"]
+            isOneToOne: false
             referencedRelation: "v_budget_lines"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_change_order_lines_cost_type_id_fkey"
             columns: ["cost_type_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_types"
             referencedColumns: ["id"]
           },
@@ -7780,78 +8506,98 @@ export type Database = {
           {
             foreignKeyName: "commitment_payments_acumatica_ap_bill_id_fkey"
             columns: ["acumatica_ap_bill_id"]
+            isOneToOne: false
             referencedRelation: "acumatica_ap_bills"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_acumatica_check_id_fkey"
             columns: ["acumatica_check_id"]
+            isOneToOne: false
             referencedRelation: "acumatica_checks"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders_with_totals"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_payments_subcontractor_invoice_id_fkey"
             columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -7874,6 +8620,7 @@ export type Database = {
           field_change: boolean | null
           id: string
           is_private: boolean | null
+          jobplanner_id: number | null
           location: string | null
           paid_in_full: boolean | null
           pco_number: string | null
@@ -7907,6 +8654,7 @@ export type Database = {
           field_change?: boolean | null
           id?: string
           is_private?: boolean | null
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean | null
           pco_number?: string | null
@@ -7940,6 +8688,7 @@ export type Database = {
           field_change?: boolean | null
           id?: string
           is_private?: boolean | null
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean | null
           pco_number?: string | null
@@ -7961,48 +8710,56 @@ export type Database = {
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_pcos_promoted_to_co_id_fkey"
             columns: ["promoted_to_co_id"]
+            isOneToOne: false
             referencedRelation: "commitment_change_orders_with_scope"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_pcos_promoted_to_co_id_fkey"
             columns: ["promoted_to_co_id"]
+            isOneToOne: false
             referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
@@ -8058,36 +8815,42 @@ export type Database = {
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "commitment_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -8218,6 +8981,7 @@ export type Database = {
           {
             foreignKeyName: "companies_primary_contact_id_fkey"
             columns: ["primary_contact_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -8327,60 +9091,70 @@ export type Database = {
           {
             foreignKeyName: "company_documents_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "company_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
@@ -8445,12 +9219,14 @@ export type Database = {
           {
             foreignKeyName: "contract_billing_periods_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "contract_billing_periods_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -8575,36 +9351,42 @@ export type Database = {
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -8663,12 +9445,14 @@ export type Database = {
           {
             foreignKeyName: "contract_documents_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "contract_documents_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -8724,18 +9508,21 @@ export type Database = {
           {
             foreignKeyName: "contract_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
             referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_line_items_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "contract_line_items_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -8800,18 +9587,21 @@ export type Database = {
           {
             foreignKeyName: "contract_payments_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "contract_billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_payments_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "contract_payments_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -8852,12 +9642,14 @@ export type Database = {
           {
             foreignKeyName: "contract_snapshots_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "contract_snapshots_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -8910,6 +9702,7 @@ export type Database = {
           {
             foreignKeyName: "contract_views_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -8950,6 +9743,7 @@ export type Database = {
           {
             foreignKeyName: "conversations_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -9065,6 +9859,7 @@ export type Database = {
           {
             foreignKeyName: "cost_codes_division_id_fkey"
             columns: ["division_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_divisions"
             referencedColumns: ["id"]
           },
@@ -9130,6 +9925,80 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_corpus_syntheses: {
+        Row: {
+          ai_work_run_id: string | null
+          artifact_version: string
+          briefing_date: string
+          compiler_version: string | null
+          confidence_summary: Json
+          covered_end_at: string
+          covered_start_at: string
+          created_at: string
+          derived_brief_packet: Json
+          executive_summary: string
+          freshness_status: string
+          generated_at: string
+          id: string
+          source_coverage: Json
+          source_manifest: Json
+          status: string
+          synthesis_json: Json
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          ai_work_run_id?: string | null
+          artifact_version: string
+          briefing_date: string
+          compiler_version?: string | null
+          confidence_summary?: Json
+          covered_end_at: string
+          covered_start_at: string
+          created_at?: string
+          derived_brief_packet?: Json
+          executive_summary: string
+          freshness_status: string
+          generated_at?: string
+          id?: string
+          source_coverage?: Json
+          source_manifest?: Json
+          status: string
+          synthesis_json?: Json
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          ai_work_run_id?: string | null
+          artifact_version?: string
+          briefing_date?: string
+          compiler_version?: string | null
+          confidence_summary?: Json
+          covered_end_at?: string
+          covered_start_at?: string
+          created_at?: string
+          derived_brief_packet?: Json
+          executive_summary?: string
+          freshness_status?: string
+          generated_at?: string
+          id?: string
+          source_coverage?: Json
+          source_manifest?: Json
+          status?: string
+          synthesis_json?: Json
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_corpus_syntheses_ai_work_run_id_fkey"
+            columns: ["ai_work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_log_equipment: {
         Row: {
           area: string | null
@@ -9186,6 +10055,7 @@ export type Database = {
           {
             foreignKeyName: "daily_log_equipment_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
@@ -9253,12 +10123,14 @@ export type Database = {
           {
             foreignKeyName: "daily_log_manpower_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_manpower_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
@@ -9317,6 +10189,7 @@ export type Database = {
           {
             foreignKeyName: "daily_log_notes_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
@@ -9387,48 +10260,56 @@ export type Database = {
           {
             foreignKeyName: "daily_log_photos_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_photos_paired_note_id_fkey"
             columns: ["paired_note_id"]
+            isOneToOne: false
             referencedRelation: "daily_log_notes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_log_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -9496,6 +10377,7 @@ export type Database = {
           {
             foreignKeyName: "daily_log_weather_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
@@ -9563,36 +10445,42 @@ export type Database = {
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -9633,48 +10521,56 @@ export type Database = {
           {
             foreignKeyName: "daily_logs_project_photos_links_daily_log_id_fkey"
             columns: ["daily_log_id"]
+            isOneToOne: false
             referencedRelation: "daily_logs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "daily_logs_project_photos_links_project_photo_id_fkey"
             columns: ["project_photo_id"]
+            isOneToOne: false
             referencedRelation: "project_photos"
             referencedColumns: ["id"]
           },
@@ -9775,6 +10671,7 @@ export type Database = {
           {
             foreignKeyName: "daily_recaps_ai_work_run_id_fkey"
             columns: ["ai_work_run_id"]
+            isOneToOne: false
             referencedRelation: "ai_work_runs"
             referencedColumns: ["id"]
           },
@@ -10097,6 +10994,7 @@ export type Database = {
           {
             foreignKeyName: "fk_project_id"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "user_projects"
             referencedColumns: ["id"]
           },
@@ -10209,6 +11107,7 @@ export type Database = {
           {
             foreignKeyName: "dev_annotations_tool_fkey"
             columns: ["tool"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -10261,6 +11160,7 @@ export type Database = {
           {
             foreignKeyName: "dev_panel_comments_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
             referencedRelation: "dev_panel_comments"
             referencedColumns: ["id"]
           },
@@ -10310,18 +11210,21 @@ export type Database = {
           {
             foreignKeyName: "direct_cost_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
             referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_cost_line_items_direct_cost_id_fkey"
             columns: ["direct_cost_id"]
+            isOneToOne: false
             referencedRelation: "direct_costs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_cost_line_items_direct_cost_id_fkey"
             columns: ["direct_cost_id"]
+            isOneToOne: false
             referencedRelation: "direct_costs_with_project"
             referencedColumns: ["id"]
           },
@@ -10407,48 +11310,56 @@ export type Database = {
           {
             foreignKeyName: "direct_costs_employee_id_fkey"
             columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_vendor_id_fkey"
             columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -10519,18 +11430,21 @@ export type Database = {
           {
             foreignKeyName: "discrepancies_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "submittal_documents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "discrepancies_specification_id_fkey"
             columns: ["specification_id"]
+            isOneToOne: false
             referencedRelation: "specifications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "discrepancies_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -10559,12 +11473,14 @@ export type Database = {
           {
             foreignKeyName: "distribution_group_members_group_id_fkey"
             columns: ["group_id"]
+            isOneToOne: false
             referencedRelation: "distribution_groups"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "distribution_group_members_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -10602,36 +11518,42 @@ export type Database = {
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "distribution_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -10705,90 +11627,105 @@ export type Database = {
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_project_id_fkey"
             columns: ["candidate_project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_candidate_target_id_fkey"
             columns: ["candidate_target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -10814,54 +11751,63 @@ export type Database = {
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_group_access_group_id_fkey"
             columns: ["group_id"]
+            isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
@@ -10959,48 +11905,56 @@ export type Database = {
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -11233,42 +12187,49 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -11327,48 +12288,56 @@ export type Database = {
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_page_intelligence_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -11394,48 +12363,56 @@ export type Database = {
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -11500,48 +12477,56 @@ export type Database = {
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -11585,42 +12570,49 @@ export type Database = {
           {
             foreignKeyName: "drawing_areas_parent_area_id_fkey"
             columns: ["parent_area_id"]
+            isOneToOne: false
             referencedRelation: "drawing_areas"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -11664,54 +12656,63 @@ export type Database = {
           {
             foreignKeyName: "drawing_change_history_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -11746,18 +12747,21 @@ export type Database = {
           {
             foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -11819,54 +12823,63 @@ export type Database = {
           {
             foreignKeyName: "drawing_markup_pins_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_markup_pins_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -11901,18 +12914,21 @@ export type Database = {
           {
             foreignKeyName: "drawing_related_items_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_related_items_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_related_items_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
@@ -11998,72 +13014,84 @@ export type Database = {
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_revisions_drawing_set_id_fkey"
             columns: ["drawing_set_id"]
+            isOneToOne: false
             referencedRelation: "drawing_sets"
             referencedColumns: ["id"]
           },
@@ -12107,36 +13135,42 @@ export type Database = {
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawing_sets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -12180,18 +13214,21 @@ export type Database = {
           {
             foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
             columns: ["drawing_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -12259,126 +13296,147 @@ export type Database = {
           {
             foreignKeyName: "drawings_area_id_fkey"
             columns: ["area_id"]
+            isOneToOne: false
             referencedRelation: "drawing_areas"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_drawings_current_revision"
             columns: ["current_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_current_revision"
             columns: ["current_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_current_revision"
             columns: ["current_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -12419,60 +13477,70 @@ export type Database = {
           {
             foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_rfis_links_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
@@ -12531,12 +13599,14 @@ export type Database = {
           {
             foreignKeyName: "email_attachments_email_id_fkey"
             columns: ["email_id"]
+            isOneToOne: false
             referencedRelation: "project_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "email_attachments_project_sync_fkey"
             columns: ["project_sync_id"]
+            isOneToOne: false
             referencedRelation: "projects_sync"
             referencedColumns: ["id"]
           },
@@ -12700,6 +13770,7 @@ export type Database = {
           {
             foreignKeyName: "email_messages_project_sync_id_fkey"
             columns: ["project_sync_id"]
+            isOneToOne: false
             referencedRelation: "projects_sync"
             referencedColumns: ["id"]
           },
@@ -12740,36 +13811,42 @@ export type Database = {
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "erp_sync_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -12810,6 +13887,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_allowances_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -12850,6 +13928,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_alternates_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -12905,6 +13984,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_detail_items_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -12960,6 +14040,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_gc_items_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -13096,6 +14177,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_line_items_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -13139,12 +14221,14 @@ export type Database = {
           {
             foreignKeyName: "estimate_sublist_bid_items_scope_item_id_fkey"
             columns: ["scope_item_id"]
+            isOneToOne: false
             referencedRelation: "estimate_sublist_scope_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "estimate_sublist_bid_items_sub_id_fkey"
             columns: ["sub_id"]
+            isOneToOne: false
             referencedRelation: "estimate_sublist_subs"
             referencedColumns: ["id"]
           },
@@ -13179,6 +14263,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_sublist_call_logs_sub_id_fkey"
             columns: ["sub_id"]
+            isOneToOne: false
             referencedRelation: "estimate_sublist_subs"
             referencedColumns: ["id"]
           },
@@ -13225,6 +14310,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_sublist_scope_items_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -13328,12 +14414,14 @@ export type Database = {
           {
             foreignKeyName: "estimate_sublist_subs_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "estimate_sublist_subs_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -13410,36 +14498,42 @@ export type Database = {
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "estimates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -13486,12 +14580,14 @@ export type Database = {
           {
             foreignKeyName: "execution_handoffs_feature_request_id_fkey"
             columns: ["feature_request_id"]
+            isOneToOne: false
             referencedRelation: "feature_requests"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "execution_handoffs_implementation_plan_id_fkey"
             columns: ["implementation_plan_id"]
+            isOneToOne: false
             referencedRelation: "implementation_plans"
             referencedColumns: ["id"]
           },
@@ -13589,12 +14685,14 @@ export type Database = {
           {
             foreignKeyName: "executive_briefing_follow_ups_first_seen_recap_id_fkey"
             columns: ["first_seen_recap_id"]
+            isOneToOne: false
             referencedRelation: "daily_recaps"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "executive_briefing_follow_ups_last_seen_recap_id_fkey"
             columns: ["last_seen_recap_id"]
+            isOneToOne: false
             referencedRelation: "daily_recaps"
             referencedColumns: ["id"]
           },
@@ -13635,6 +14733,7 @@ export type Database = {
           {
             foreignKeyName: "feature_request_events_feature_request_id_fkey"
             columns: ["feature_request_id"]
+            isOneToOne: false
             referencedRelation: "feature_requests"
             referencedColumns: ["id"]
           },
@@ -13681,12 +14780,14 @@ export type Database = {
           {
             foreignKeyName: "feature_request_linear_events_feature_request_id_fkey"
             columns: ["feature_request_id"]
+            isOneToOne: false
             referencedRelation: "feature_requests"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_request_linear_events_sub_issue_id_fkey"
             columns: ["sub_issue_id"]
+            isOneToOne: false
             referencedRelation: "feature_request_linear_sub_issues"
             referencedColumns: ["id"]
           },
@@ -13751,12 +14852,14 @@ export type Database = {
           {
             foreignKeyName: "feature_request_linear_sub_issues_feature_request_id_fkey"
             columns: ["feature_request_id"]
+            isOneToOne: false
             referencedRelation: "feature_requests"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_request_linear_sub_issues_implementation_plan_id_fkey"
             columns: ["implementation_plan_id"]
+            isOneToOne: false
             referencedRelation: "implementation_plans"
             referencedColumns: ["id"]
           },
@@ -13902,42 +15005,49 @@ export type Database = {
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_requests_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "feature_requests_requester_person_id_fkey"
             columns: ["requester_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -13987,36 +15097,42 @@ export type Database = {
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "files_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -14123,42 +15239,49 @@ export type Database = {
           {
             foreignKeyName: "financial_contracts_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "financial_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -14202,48 +15325,56 @@ export type Database = {
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -14296,6 +15427,7 @@ export type Database = {
           {
             foreignKeyName: "fm_blocks_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "fm_sections"
             referencedColumns: ["id"]
           },
@@ -14630,6 +15762,7 @@ export type Database = {
           {
             foreignKeyName: "fm_global_tables_figures_fkey"
             columns: ["figures"]
+            isOneToOne: false
             referencedRelation: "fm_global_figures"
             referencedColumns: ["id"]
           },
@@ -14727,6 +15860,7 @@ export type Database = {
           {
             foreignKeyName: "fm_optimization_suggestions_form_submission_id_fkey"
             columns: ["form_submission_id"]
+            isOneToOne: false
             referencedRelation: "fm_form_submissions"
             referencedColumns: ["id"]
           },
@@ -14785,6 +15919,7 @@ export type Database = {
           {
             foreignKeyName: "fm_sections_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
             referencedRelation: "fm_sections"
             referencedColumns: ["id"]
           },
@@ -14858,6 +15993,7 @@ export type Database = {
           {
             foreignKeyName: "fm_sprinkler_configs_table_id_fkey"
             columns: ["table_id"]
+            isOneToOne: false
             referencedRelation: "fm_global_tables"
             referencedColumns: ["table_id"]
           },
@@ -14895,6 +16031,7 @@ export type Database = {
           {
             foreignKeyName: "fm_table_vectors_table_id_fkey"
             columns: ["table_id"]
+            isOneToOne: false
             referencedRelation: "fm_global_tables"
             referencedColumns: ["table_id"]
           },
@@ -15055,6 +16192,7 @@ export type Database = {
           {
             foreignKeyName: "forecasting_curves_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -15188,6 +16326,7 @@ export type Database = {
           {
             foreignKeyName: "group_members_group_id_fkey"
             columns: ["group_id"]
+            isOneToOne: false
             referencedRelation: "groups"
             referencedColumns: ["id"]
           },
@@ -15282,42 +16421,49 @@ export type Database = {
           {
             foreignKeyName: "idea_items_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "idea_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -15379,6 +16525,7 @@ export type Database = {
           {
             foreignKeyName: "implementation_plans_feature_request_id_fkey"
             columns: ["feature_request_id"]
+            isOneToOne: false
             referencedRelation: "feature_requests"
             referencedColumns: ["id"]
           },
@@ -15440,48 +16587,56 @@ export type Database = {
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -15555,6 +16710,7 @@ export type Database = {
           {
             foreignKeyName: "initiative_cards_assignee_id_fkey"
             columns: ["assignee_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -15691,54 +16847,63 @@ export type Database = {
           {
             foreignKeyName: "insight_card_evidence_insight_card_id_fkey"
             columns: ["insight_card_id"]
+            isOneToOne: false
             referencedRelation: "insight_cards"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -15791,12 +16956,14 @@ export type Database = {
           {
             foreignKeyName: "insight_card_targets_insight_card_id_fkey"
             columns: ["insight_card_id"]
+            isOneToOne: false
             referencedRelation: "insight_cards"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_card_targets_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
@@ -15882,12 +17049,14 @@ export type Database = {
           {
             foreignKeyName: "insight_cards_primary_target_id_fkey"
             columns: ["primary_target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "insight_cards_suggested_owner_person_id_fkey"
             columns: ["suggested_owner_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -15961,36 +17130,42 @@ export type Database = {
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "inspections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16028,12 +17203,14 @@ export type Database = {
           {
             foreignKeyName: "intelligence_packet_cards_insight_card_id_fkey"
             columns: ["insight_card_id"]
+            isOneToOne: false
             referencedRelation: "insight_cards"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_packet_cards_packet_id_fkey"
             columns: ["packet_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_packets"
             referencedColumns: ["id"]
           },
@@ -16110,6 +17287,7 @@ export type Database = {
           {
             foreignKeyName: "intelligence_packets_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
             referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
@@ -16165,18 +17343,21 @@ export type Database = {
           {
             foreignKeyName: "intelligence_reviews_evidence_id_fkey"
             columns: ["evidence_id"]
+            isOneToOne: false
             referencedRelation: "insight_card_evidence"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_reviews_insight_card_id_fkey"
             columns: ["insight_card_id"]
+            isOneToOne: false
             referencedRelation: "insight_cards"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_reviews_target_link_id_fkey"
             columns: ["target_link_id"]
+            isOneToOne: false
             referencedRelation: "insight_card_targets"
             referencedColumns: ["id"]
           },
@@ -16232,42 +17413,49 @@ export type Database = {
           {
             foreignKeyName: "intelligence_targets_owner_person_id_fkey"
             columns: ["owner_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "intelligence_targets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16320,48 +17508,56 @@ export type Database = {
           {
             foreignKeyName: "invoice_payments_owner_invoice_id_fkey"
             columns: ["owner_invoice_id"]
+            isOneToOne: false
             referencedRelation: "owner_invoices"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoice_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoice_payments_subcontractor_invoice_id_fkey"
             columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -16420,36 +17616,42 @@ export type Database = {
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "invoicing_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16511,36 +17713,42 @@ export type Database = {
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "issues_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16614,18 +17822,21 @@ export type Database = {
           {
             foreignKeyName: "manpower_assignments_assignee_person_id_fkey"
             columns: ["assignee_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_assignments_manpower_project_id_fkey"
             columns: ["manpower_project_id"]
+            isOneToOne: false
             referencedRelation: "manpower_projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_assignments_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "manpower_plans"
             referencedColumns: ["id"]
           },
@@ -16666,6 +17877,7 @@ export type Database = {
           {
             foreignKeyName: "manpower_plans_imported_by_person_id_fkey"
             columns: ["imported_by_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -16733,42 +17945,49 @@ export type Database = {
           {
             foreignKeyName: "manpower_projects_plan_id_fkey"
             columns: ["plan_id"]
+            isOneToOne: false
             referencedRelation: "manpower_plans"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16818,6 +18037,7 @@ export type Database = {
           {
             foreignKeyName: "marketing_content_assets_calendar_item_id_fkey"
             columns: ["calendar_item_id"]
+            isOneToOne: false
             referencedRelation: "marketing_content_calendar_items"
             referencedColumns: ["id"]
           },
@@ -16888,42 +18108,49 @@ export type Database = {
           {
             foreignKeyName: "marketing_content_calendar_items_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_content_calendar_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -16997,42 +18224,49 @@ export type Database = {
           {
             foreignKeyName: "marketing_intelligence_items_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_intelligence_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17085,13 +18319,355 @@ export type Database = {
           {
             foreignKeyName: "marketing_performance_snapshots_asset_id_fkey"
             columns: ["asset_id"]
+            isOneToOne: false
             referencedRelation: "marketing_content_assets"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "marketing_performance_snapshots_calendar_item_id_fkey"
             columns: ["calendar_item_id"]
+            isOneToOne: false
             referencedRelation: "marketing_content_calendar_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_attendees: {
+        Row: {
+          attended: boolean | null
+          created_at: string
+          id: string
+          is_required: boolean
+          meeting_id: string
+          person_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          meeting_id: string
+          person_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          meeting_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_attendees_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_attendees_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_categories: {
+        Row: {
+          created_at: string
+          id: string
+          meeting_id: string
+          name: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meeting_id: string
+          name: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meeting_id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_categories_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_metadata_id: string
+          id: string
+          meeting_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_metadata_id: string
+          id?: string
+          meeting_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_metadata_id?: string
+          id?: string
+          meeting_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_documents_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_item_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_metadata_id: string
+          id: string
+          meeting_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_metadata_id: string
+          id?: string
+          meeting_item_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_metadata_id?: string
+          id?: string
+          meeting_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_document_metadata_id_fkey"
+            columns: ["document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_item_documents_meeting_item_id_fkey"
+            columns: ["meeting_item_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_items: {
+        Row: {
+          assignee_person_id: string | null
+          carried_from_item_id: string | null
+          category_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          meeting_id: string
+          official_minutes: string | null
+          origin_meeting_id: string | null
+          position: number
+          priority: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_person_id?: string | null
+          carried_from_item_id?: string | null
+          category_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id: string
+          official_minutes?: string | null
+          origin_meeting_id?: string | null
+          position?: number
+          priority?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_person_id?: string | null
+          carried_from_item_id?: string | null
+          category_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id?: string
+          official_minutes?: string | null
+          origin_meeting_id?: string | null
+          position?: number
+          priority?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_items_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_items_carried_from_item_id_fkey"
+            columns: ["carried_from_item_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_items_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_items_origin_meeting_id_fkey"
+            columns: ["origin_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
             referencedColumns: ["id"]
           },
         ]
@@ -17137,84 +18713,98 @@ export type Database = {
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_preps_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17291,48 +18881,402 @@ export type Database = {
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_series: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          project_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          project_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_series_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_template_categories: {
+        Row: {
+          id: string
+          name: string
+          position: number
+          template_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          position?: number
+          template_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          position?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_template_categories_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_template_items: {
+        Row: {
+          description: string | null
+          id: string
+          position: number
+          priority: string | null
+          template_category_id: string
+          title: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          position?: number
+          priority?: string | null
+          template_category_id: string
+          title: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          position?: number
+          priority?: string | null
+          template_category_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_template_items_template_category_id_fkey"
+            columns: ["template_category_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_private: boolean
+          name: string
+          overview: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_private?: boolean
+          name: string
+          overview?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_private?: boolean
+          name?: string
+          overview?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      meetings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          end_time: string | null
+          id: string
+          is_draft: boolean
+          is_private: boolean
+          location: string | null
+          meeting_date: string | null
+          meeting_link: string | null
+          mode: string
+          name: string
+          number: number
+          overview: string | null
+          project_id: number
+          series_id: string
+          start_time: string | null
+          template_id: string | null
+          timezone: string
+          transcript_document_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_draft?: boolean
+          is_private?: boolean
+          location?: string | null
+          meeting_date?: string | null
+          meeting_link?: string | null
+          mode?: string
+          name: string
+          number?: number
+          overview?: string | null
+          project_id: number
+          series_id: string
+          start_time?: string | null
+          template_id?: string | null
+          timezone?: string
+          transcript_document_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          end_time?: string | null
+          id?: string
+          is_draft?: boolean
+          is_private?: boolean
+          location?: string | null
+          meeting_date?: string | null
+          meeting_link?: string | null
+          mode?: string
+          name?: string
+          number?: number
+          overview?: string | null
+          project_id?: number
+          series_id?: string
+          start_time?: string | null
+          template_id?: string | null
+          timezone?: string
+          transcript_document_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_series"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_template_fk"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meetings_transcript_document_id_fkey"
+            columns: ["transcript_document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -17403,6 +19347,7 @@ export type Database = {
           {
             foreignKeyName: "nods_page_parent_page_id_fkey"
             columns: ["parent_page_id"]
+            isOneToOne: false
             referencedRelation: "nods_page"
             referencedColumns: ["id"]
           },
@@ -17440,6 +19385,7 @@ export type Database = {
           {
             foreignKeyName: "nods_page_section_page_id_fkey"
             columns: ["page_id"]
+            isOneToOne: false
             referencedRelation: "nods_page"
             referencedColumns: ["id"]
           },
@@ -17480,36 +19426,42 @@ export type Database = {
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "notes_project_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17577,48 +19529,56 @@ export type Database = {
           {
             foreignKeyName: "observation_comments_observation_id_fkey"
             columns: ["observation_id"]
+            isOneToOne: false
             referencedRelation: "observations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_comments_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
             referencedRelation: "observation_comments"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17659,6 +19619,7 @@ export type Database = {
           {
             foreignKeyName: "observation_history_observation_id_fkey"
             columns: ["observation_id"]
+            isOneToOne: false
             referencedRelation: "observations"
             referencedColumns: ["id"]
           },
@@ -17705,42 +19666,49 @@ export type Database = {
           {
             foreignKeyName: "observation_photos_observation_id_fkey"
             columns: ["observation_id"]
+            isOneToOne: false
             referencedRelation: "observations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17781,36 +19749,42 @@ export type Database = {
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observation_types_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -17902,42 +19876,49 @@ export type Database = {
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_type_id_fkey"
             columns: ["type_id"]
+            isOneToOne: false
             referencedRelation: "observation_types"
             referencedColumns: ["id"]
           },
@@ -17978,48 +19959,56 @@ export type Database = {
           {
             foreignKeyName: "observations_project_photos_links_observation_id_fkey"
             columns: ["observation_id"]
+            isOneToOne: false
             referencedRelation: "observations"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "observations_project_photos_links_project_photo_id_fkey"
             columns: ["project_photo_id"]
+            isOneToOne: false
             referencedRelation: "project_photos"
             referencedColumns: ["id"]
           },
@@ -18081,6 +20070,7 @@ export type Database = {
           {
             foreignKeyName: "organization_members_organizationId_fkey"
             columns: ["organizationId"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
@@ -18283,90 +20273,105 @@ export type Database = {
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_email_id_fkey"
             columns: ["project_email_id"]
+            isOneToOne: false
             referencedRelation: "project_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -18449,102 +20454,119 @@ export type Database = {
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_email_attachment_id_fkey"
             columns: ["email_attachment_id"]
+            isOneToOne: false
             referencedRelation: "email_attachments"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_intake_email_id_fkey"
             columns: ["intake_email_id"]
+            isOneToOne: false
             referencedRelation: "outlook_email_intake"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_document_id_fkey"
             columns: ["project_document_id"]
+            isOneToOne: false
             referencedRelation: "project_documents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "outlook_email_intake_attachments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -18622,6 +20644,54 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_inbox_rules: {
+        Row: {
+          action: string
+          action_value: string | null
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          enabled: boolean
+          id: string
+          mailbox_user_id: string
+          match_field: string
+          match_operator: string
+          match_value: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          action_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          enabled?: boolean
+          id?: string
+          mailbox_user_id: string
+          match_field: string
+          match_operator: string
+          match_value: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          action_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          enabled?: boolean
+          id?: string
+          mailbox_user_id?: string
+          match_field?: string
+          match_operator?: string
+          match_value?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_invoice_documents: {
         Row: {
           attached_at: string
@@ -18648,60 +20718,70 @@ export type Database = {
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoice_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "owner_invoice_documents_owner_invoice_id_fkey"
             columns: ["owner_invoice_id"]
+            isOneToOne: false
             referencedRelation: "owner_invoices"
             referencedColumns: ["id"]
           },
@@ -18778,6 +20858,7 @@ export type Database = {
           {
             foreignKeyName: "owner_invoice_line_items_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "owner_invoices"
             referencedColumns: ["id"]
           },
@@ -18860,24 +20941,28 @@ export type Database = {
           {
             foreignKeyName: "owner_invoices_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoices_payment_application_id_fkey"
             columns: ["payment_application_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_payment_applications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "owner_invoices_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "owner_invoices_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -19065,24 +21150,28 @@ export type Database = {
           {
             foreignKeyName: "payment_application_line_items_change_order_id_fkey"
             columns: ["change_order_id"]
+            isOneToOne: false
             referencedRelation: "commitment_change_orders_with_scope"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_application_line_items_change_order_id_fkey"
             columns: ["change_order_id"]
+            isOneToOne: false
             referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_application_line_items_payment_application_id_fkey"
             columns: ["payment_application_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_payment_applications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_application_line_items_sov_item_id_fkey"
             columns: ["sov_item_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_sovs"
             referencedColumns: ["id"]
           },
@@ -19123,18 +21212,21 @@ export type Database = {
           {
             foreignKeyName: "payment_transactions_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "payment_transactions_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "payment_transactions_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "owner_invoices"
             referencedColumns: ["id"]
           },
@@ -19181,6 +21273,7 @@ export type Database = {
           {
             foreignKeyName: "pcco_line_items_pcco_id_fkey"
             columns: ["pcco_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_change_orders"
             referencedColumns: ["id"]
           },
@@ -19218,18 +21311,21 @@ export type Database = {
           {
             foreignKeyName: "pco_change_events_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pco_change_events_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pco_change_events_pco_id_fkey"
             columns: ["pco_id"]
+            isOneToOne: false
             referencedRelation: "potential_change_orders"
             referencedColumns: ["id"]
           },
@@ -19244,6 +21340,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          jobplanner_id: number | null
           pco_id: string
           pco_type: string
           quantity: number | null
@@ -19260,6 +21357,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           pco_id: string
           pco_type: string
           quantity?: number | null
@@ -19276,6 +21374,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           pco_id?: string
           pco_type?: string
           quantity?: number | null
@@ -19288,18 +21387,21 @@ export type Database = {
           {
             foreignKeyName: "pco_line_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pco_line_items_change_event_id_fkey"
             columns: ["change_event_id"]
+            isOneToOne: false
             referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "pco_line_items_change_event_line_item_id_fkey"
             columns: ["change_event_line_item_id"]
+            isOneToOne: false
             referencedRelation: "change_event_line_items"
             referencedColumns: ["id"]
           },
@@ -19346,6 +21448,7 @@ export type Database = {
           {
             foreignKeyName: "pco_versions_pco_id_fkey"
             columns: ["pco_id"]
+            isOneToOne: false
             referencedRelation: "potential_change_orders"
             referencedColumns: ["id"]
           },
@@ -19443,10 +21546,104 @@ export type Database = {
           {
             foreignKeyName: "people_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
+      }
+      people_junk_backup: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          auth_user_id: string | null
+          backed_up_at: string | null
+          business_unit: string | null
+          city: string | null
+          company: string | null
+          company_id: string | null
+          country: string | null
+          created_at: string | null
+          email: string | null
+          facebook: string | null
+          first_name: string | null
+          id: string | null
+          job_title: string | null
+          last_name: string | null
+          linkedin: string | null
+          metadata: Json | null
+          notes: string | null
+          person_type: string | null
+          phone_business: string | null
+          phone_mobile: string | null
+          profile_photo_url: string | null
+          state: string | null
+          status: string | null
+          updated_at: string | null
+          x_handle: string | null
+          zip: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          auth_user_id?: string | null
+          backed_up_at?: string | null
+          business_unit?: string | null
+          city?: string | null
+          company?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook?: string | null
+          first_name?: string | null
+          id?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          person_type?: string | null
+          phone_business?: string | null
+          phone_mobile?: string | null
+          profile_photo_url?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          x_handle?: string | null
+          zip?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          auth_user_id?: string | null
+          backed_up_at?: string | null
+          business_unit?: string | null
+          city?: string | null
+          company?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          facebook?: string | null
+          first_name?: string | null
+          id?: string | null
+          job_title?: string | null
+          last_name?: string | null
+          linkedin?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          person_type?: string | null
+          phone_business?: string | null
+          phone_mobile?: string | null
+          profile_photo_url?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string | null
+          x_handle?: string | null
+          zip?: string | null
+        }
+        Relationships: []
       }
       permission_audit_log: {
         Row: {
@@ -19489,48 +21686,56 @@ export type Database = {
           {
             foreignKeyName: "permission_audit_log_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permission_audit_log_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permission_audit_log_template_id_fkey"
             columns: ["template_id"]
+            isOneToOne: false
             referencedRelation: "permission_templates"
             referencedColumns: ["id"]
           },
@@ -19598,12 +21803,14 @@ export type Database = {
           {
             foreignKeyName: "person_company_templates_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: true
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "person_company_templates_template_id_fkey"
             columns: ["template_id"]
+            isOneToOne: false
             referencedRelation: "permission_templates"
             referencedColumns: ["id"]
           },
@@ -19644,36 +21851,42 @@ export type Database = {
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photo_albums_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -19711,6 +21924,7 @@ export type Database = {
           {
             foreignKeyName: "photo_links_photo_id_fkey"
             columns: ["photo_id"]
+            isOneToOne: false
             referencedRelation: "photos"
             referencedColumns: ["id"]
           },
@@ -19790,42 +22004,49 @@ export type Database = {
           {
             foreignKeyName: "photos_album_id_fkey"
             columns: ["album_id"]
+            isOneToOne: false
             referencedRelation: "photo_albums"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -19893,12 +22114,14 @@ export type Database = {
           {
             foreignKeyName: "potential_change_order_line_item_change_event_line_item_id_fkey"
             columns: ["change_event_line_item_id"]
+            isOneToOne: false
             referencedRelation: "change_event_line_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "potential_change_order_line_items_pco_id_fkey"
             columns: ["pco_id"]
+            isOneToOne: false
             referencedRelation: "potential_change_orders"
             referencedColumns: ["id"]
           },
@@ -20011,36 +22234,42 @@ export type Database = {
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "potential_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -20072,60 +22301,70 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_change_order_d_prime_contract_change_order__fkey"
             columns: ["prime_contract_change_order_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
@@ -20178,42 +22417,49 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_change_order_related_items_prime_co_id_fkey"
             columns: ["prime_co_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_change_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -20332,60 +22578,70 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -20417,66 +22673,77 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "prime_contract_documents_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_documents_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -20553,54 +22820,63 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_payment_applications_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payment_applications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -20662,54 +22938,63 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_payments_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_payments_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payments_payment_application_id_fkey"
             columns: ["payment_application_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_payment_applications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_payments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -20741,60 +23026,70 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "prime_contract_pco_documents_pco_id_fkey"
             columns: ["pco_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_pcos"
             referencedColumns: ["id"]
           },
@@ -20814,6 +23109,7 @@ export type Database = {
           field_change: boolean
           id: string
           is_private: boolean
+          jobplanner_id: number | null
           location: string | null
           paid_in_full: boolean
           pco_number: string | null
@@ -20845,6 +23141,7 @@ export type Database = {
           field_change?: boolean
           id?: string
           is_private?: boolean
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean
           pco_number?: string | null
@@ -20876,6 +23173,7 @@ export type Database = {
           field_change?: boolean
           id?: string
           is_private?: boolean
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean
           pco_number?: string | null
@@ -20898,54 +23196,63 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_pcos_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_pcos_promoted_to_co_id_fkey"
             columns: ["promoted_to_co_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_change_orders"
             referencedColumns: ["id"]
           },
@@ -21010,36 +23317,42 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -21089,30 +23402,35 @@ export type Database = {
           {
             foreignKeyName: "prime_contract_sovs_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
             referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_cost_code_fkey"
             columns: ["cost_code"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_cost_code_fkey"
             columns: ["cost_code"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
@@ -21237,72 +23555,84 @@ export type Database = {
           {
             foreignKeyName: "prime_contracts_architect_engineer_id_fkey"
             columns: ["architect_engineer_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_client_company_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_contract_company_id_fkey"
             columns: ["contract_company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_contractor_id_fkey"
             columns: ["contractor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_vendor_id_fkey"
             columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -21439,6 +23769,7 @@ export type Database = {
           {
             foreignKeyName: "procore_components_screenshot_id_fkey"
             columns: ["screenshot_id"]
+            isOneToOne: false
             referencedRelation: "procore_screenshots"
             referencedColumns: ["id"]
           },
@@ -21491,24 +23822,28 @@ export type Database = {
           {
             foreignKeyName: "procore_feature_implementations_feature_id_fkey"
             columns: ["feature_id"]
+            isOneToOne: true
             referencedRelation: "procore_feature_mapping_gaps"
             referencedColumns: ["feature_id"]
           },
           {
             foreignKeyName: "procore_feature_implementations_feature_id_fkey"
             columns: ["feature_id"]
+            isOneToOne: true
             referencedRelation: "procore_features"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "procore_feature_implementations_linked_test_case_id_fkey"
             columns: ["linked_test_case_id"]
+            isOneToOne: false
             referencedRelation: "test_cases"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "procore_feature_implementations_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -21585,6 +23920,7 @@ export type Database = {
           {
             foreignKeyName: "procore_features_module_id_fkey"
             columns: ["module_id"]
+            isOneToOne: false
             referencedRelation: "procore_modules"
             referencedColumns: ["id"]
           },
@@ -21718,18 +24054,21 @@ export type Database = {
           {
             foreignKeyName: "procore_pages_feature_id_fkey"
             columns: ["feature_id"]
+            isOneToOne: false
             referencedRelation: "procore_feature_mapping_gaps"
             referencedColumns: ["feature_id"]
           },
           {
             foreignKeyName: "procore_pages_feature_id_fkey"
             columns: ["feature_id"]
+            isOneToOne: false
             referencedRelation: "procore_features"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "procore_pages_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -21815,6 +24154,7 @@ export type Database = {
           {
             foreignKeyName: "procore_screenshots_session_id_fkey"
             columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "procore_capture_sessions"
             referencedColumns: ["id"]
           },
@@ -21933,36 +24273,42 @@ export type Database = {
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_attribution_rules_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22006,36 +24352,42 @@ export type Database = {
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_briefings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22088,60 +24440,70 @@ export type Database = {
           {
             foreignKeyName: "project_budget_codes_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_cost_type_id_fkey"
             columns: ["cost_type_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_types"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_codes_sub_job_id_fkey"
             columns: ["sub_job_id"]
+            isOneToOne: false
             referencedRelation: "sub_jobs"
             referencedColumns: ["id"]
           },
@@ -22182,36 +24544,42 @@ export type Database = {
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_budget_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22261,48 +24629,56 @@ export type Database = {
           {
             foreignKeyName: "project_companies_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_companies_primary_contact_id_fkey"
             columns: ["primary_contact_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22355,48 +24731,56 @@ export type Database = {
           {
             foreignKeyName: "project_contact_references_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_contact_references_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_contact_references_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22455,42 +24839,49 @@ export type Database = {
           {
             foreignKeyName: "project_current_state_last_snapshot_id_fkey"
             columns: ["last_snapshot_id"]
+            isOneToOne: false
             referencedRelation: "project_operating_snapshots"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_current_state_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22561,48 +24952,56 @@ export type Database = {
           {
             foreignKeyName: "project_directory_memberships_permission_template_id_fkey"
             columns: ["permission_template_id"]
+            isOneToOne: false
             referencedRelation: "permission_templates"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_directory_memberships_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_directory_memberships_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22739,36 +25138,42 @@ export type Database = {
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22800,90 +25205,105 @@ export type Database = {
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_documents_v2_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -22987,42 +25407,49 @@ export type Database = {
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_emails_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_emails_project_sync_fkey"
             columns: ["project_sync_id"]
+            isOneToOne: false
             referencedRelation: "projects_sync"
             referencedColumns: ["id"]
           },
@@ -23075,6 +25502,7 @@ export type Database = {
           {
             foreignKeyName: "project_intelligence_timeline_event_sour_timeline_event_id_fkey"
             columns: ["timeline_event_id"]
+            isOneToOne: false
             referencedRelation: "project_intelligence_timeline_events"
             referencedColumns: ["id"]
           },
@@ -23148,36 +25576,42 @@ export type Database = {
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23209,36 +25643,42 @@ export type Database = {
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23297,36 +25737,42 @@ export type Database = {
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23347,6 +25793,7 @@ export type Database = {
           height: number | null
           id: number
           is_private: boolean | null
+          jobplanner_photo_guid: string | null
           location: string | null
           project_id: number
           starred: boolean | null
@@ -23371,6 +25818,7 @@ export type Database = {
           height?: number | null
           id?: never
           is_private?: boolean | null
+          jobplanner_photo_guid?: string | null
           location?: string | null
           project_id: number
           starred?: boolean | null
@@ -23395,6 +25843,7 @@ export type Database = {
           height?: number | null
           id?: never
           is_private?: boolean | null
+          jobplanner_photo_guid?: string | null
           location?: string | null
           project_id?: number
           starred?: boolean | null
@@ -23409,36 +25858,42 @@ export type Database = {
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23479,48 +25934,56 @@ export type Database = {
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_project_photo_id_fkey"
             columns: ["project_photo_id"]
+            isOneToOne: false
             referencedRelation: "project_photos"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_photos_punch_items_links_punch_item_id_fkey"
             columns: ["punch_item_id"]
+            isOneToOne: false
             referencedRelation: "punch_items"
             referencedColumns: ["id"]
           },
@@ -23561,48 +26024,56 @@ export type Database = {
           {
             foreignKeyName: "project_progress_report_photos_progress_report_id_fkey"
             columns: ["progress_report_id"]
+            isOneToOne: false
             referencedRelation: "project_progress_reports"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_report_photos_project_photo_id_fkey"
             columns: ["project_photo_id"]
+            isOneToOne: false
             referencedRelation: "project_photos"
             referencedColumns: ["id"]
           },
@@ -23616,6 +26087,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          internal_notes: string | null
           open_items: string
           past_week_highlights: string
           project_id: number
@@ -23639,6 +26111,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          internal_notes?: string | null
           open_items?: string
           past_week_highlights?: string
           project_id: number
@@ -23662,6 +26135,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          internal_notes?: string | null
           open_items?: string
           past_week_highlights?: string
           project_id?: number
@@ -23682,36 +26156,42 @@ export type Database = {
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_progress_reports_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23785,48 +26265,56 @@ export type Database = {
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_report_suggestions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_report_suggestions_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_report_suggestions_source_snapshot_id_fkey"
             columns: ["source_snapshot_id"]
+            isOneToOne: false
             referencedRelation: "project_operating_snapshots"
             referencedColumns: ["id"]
           },
@@ -23861,36 +26349,42 @@ export type Database = {
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_resources_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -23922,18 +26416,21 @@ export type Database = {
           {
             foreignKeyName: "project_role_members_assigned_by_fkey"
             columns: ["assigned_by"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_role_members_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_role_members_project_role_id_fkey"
             columns: ["project_role_id"]
+            isOneToOne: false
             referencedRelation: "project_roles"
             referencedColumns: ["id"]
           },
@@ -23971,36 +26468,42 @@ export type Database = {
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24080,36 +26583,42 @@ export type Database = {
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24144,48 +26653,56 @@ export type Database = {
           {
             foreignKeyName: "project_vendors_added_by_fkey"
             columns: ["added_by"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_vendors_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "project_vendors_vendor_id_fkey"
             columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -24340,6 +26857,7 @@ export type Database = {
           {
             foreignKeyName: "projects_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -24491,48 +27009,56 @@ export type Database = {
           {
             foreignKeyName: "prospects_client_company_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prospects_client_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prospects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24573,36 +27099,42 @@ export type Database = {
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "psr_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24643,42 +27175,49 @@ export type Database = {
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_comments_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_comments_punch_item_id_fkey"
             columns: ["punch_item_id"]
+            isOneToOne: false
             referencedRelation: "punch_items"
             referencedColumns: ["id"]
           },
@@ -24719,36 +27258,42 @@ export type Database = {
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_template_categories_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24819,42 +27364,49 @@ export type Database = {
           {
             foreignKeyName: "punch_item_templates_category_id_fkey"
             columns: ["category_id"]
+            isOneToOne: false
             referencedRelation: "punch_item_template_categories"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_item_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -24967,36 +27519,42 @@ export type Database = {
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "punch_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -25028,66 +27586,77 @@ export type Database = {
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "purchase_order_documents_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_documents_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders_with_totals"
             referencedColumns: ["id"]
           },
@@ -25104,6 +27673,7 @@ export type Database = {
           description: string | null
           id: string
           line_number: number
+          project_budget_code_id: string | null
           purchase_order_id: string
           quantity: number | null
           sort_order: number | null
@@ -25121,6 +27691,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number: number
+          project_budget_code_id?: string | null
           purchase_order_id: string
           quantity?: number | null
           sort_order?: number | null
@@ -25138,6 +27709,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number
+          project_budget_code_id?: string | null
           purchase_order_id?: string
           quantity?: number | null
           sort_order?: number | null
@@ -25147,14 +27719,23 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "purchase_order_sov_items_project_budget_code_id_fkey"
+            columns: ["project_budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_order_sov_items_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_order_sov_items_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders_with_totals"
             referencedColumns: ["id"]
           },
@@ -25315,72 +27896,84 @@ export type Database = {
           {
             foreignKeyName: "purchase_orders_bill_to_company_id_fkey"
             columns: ["bill_to_company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_bill_to_contact_id_fkey"
             columns: ["bill_to_contact_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "purchase_orders_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_ship_to_company_id_fkey"
             columns: ["ship_to_company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_ship_to_contact_id_fkey"
             columns: ["ship_to_contact_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -25502,42 +28095,49 @@ export type Database = {
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qto_items_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qto_items_qto_id_fkey"
             columns: ["qto_id"]
+            isOneToOne: false
             referencedRelation: "qtos"
             referencedColumns: ["id"]
           },
@@ -25578,36 +28178,42 @@ export type Database = {
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "qtos_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -25705,6 +28311,7 @@ export type Database = {
           {
             foreignKeyName: "reconciliation_findings_last_run_id_fkey"
             columns: ["last_run_id"]
+            isOneToOne: false
             referencedRelation: "reconciliation_runs"
             referencedColumns: ["id"]
           },
@@ -25805,42 +28412,49 @@ export type Database = {
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_evidence_recurring_issue_id_fkey"
             columns: ["recurring_issue_id"]
+            isOneToOne: false
             referencedRelation: "recurring_issues"
             referencedColumns: ["id"]
           },
@@ -25866,42 +28480,49 @@ export type Database = {
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "recurring_issue_projects_recurring_issue_id_fkey"
             columns: ["recurring_issue_id"]
+            isOneToOne: false
             referencedRelation: "recurring_issues"
             referencedColumns: ["id"]
           },
@@ -25990,6 +28611,7 @@ export type Database = {
           {
             foreignKeyName: "requests_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -26039,18 +28661,21 @@ export type Database = {
           {
             foreignKeyName: "review_comments_discrepancy_id_fkey"
             columns: ["discrepancy_id"]
+            isOneToOne: false
             referencedRelation: "discrepancies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_comments_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "submittal_documents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "review_comments_review_id_fkey"
             columns: ["review_id"]
+            isOneToOne: false
             referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
@@ -26103,6 +28728,7 @@ export type Database = {
           {
             foreignKeyName: "reviews_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -26131,6 +28757,7 @@ export type Database = {
           {
             foreignKeyName: "rfi_assignees_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
@@ -26162,60 +28789,70 @@ export type Database = {
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "rfi_documents_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
@@ -26259,12 +28896,14 @@ export type Database = {
           {
             foreignKeyName: "rfi_response_tokens_recipient_person_id_fkey"
             columns: ["recipient_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_response_tokens_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
@@ -26314,12 +28953,14 @@ export type Database = {
           {
             foreignKeyName: "rfi_responses_responder_person_id_fkey"
             columns: ["responder_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfi_responses_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
@@ -26447,144 +29088,168 @@ export type Database = {
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_response_project_document_id_fkey"
             columns: ["response_project_document_id"]
+            isOneToOne: false
             referencedRelation: "project_documents"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_source_project_document_id_fkey"
             columns: ["source_project_document_id"]
+            isOneToOne: false
             referencedRelation: "project_documents"
             referencedColumns: ["id"]
           },
@@ -26625,48 +29290,56 @@ export type Database = {
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_rfi_id_fkey"
             columns: ["rfi_id"]
+            isOneToOne: false
             referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "rfis_submittals_links_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -26731,6 +29404,7 @@ export type Database = {
           {
             foreignKeyName: "schedule_deadlines_task_id_fkey"
             columns: ["task_id"]
+            isOneToOne: true
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
@@ -26765,12 +29439,14 @@ export type Database = {
           {
             foreignKeyName: "schedule_dependencies_predecessor_task_id_fkey"
             columns: ["predecessor_task_id"]
+            isOneToOne: false
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_dependencies_task_id_fkey"
             columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
@@ -26814,12 +29490,14 @@ export type Database = {
           {
             foreignKeyName: "schedule_of_values_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "schedule_of_values_contract_id_fkey"
             columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
@@ -26893,48 +29571,56 @@ export type Database = {
           {
             foreignKeyName: "schedule_tasks_assignee_person_id_fkey"
             columns: ["assignee_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
+            isOneToOne: false
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "schedule_tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -26993,84 +29679,98 @@ export type Database = {
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_linked_document_metadata_id_fkey"
             columns: ["linked_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sop_backlog_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27204,6 +29904,7 @@ export type Database = {
           {
             foreignKeyName: "sov_line_items_sov_id_fkey"
             columns: ["sov_id"]
+            isOneToOne: false
             referencedRelation: "schedule_of_values"
             referencedColumns: ["id"]
           },
@@ -27244,24 +29945,28 @@ export type Database = {
           {
             foreignKeyName: "spec_drawing_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "spec_drawing_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "spec_drawing_links_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "spec_drawing_links_specification_id_fkey"
             columns: ["specification_id"]
+            isOneToOne: false
             referencedRelation: "specifications"
             referencedColumns: ["id"]
           },
@@ -27290,12 +29995,14 @@ export type Database = {
           {
             foreignKeyName: "specification_area_sections_area_id_fkey"
             columns: ["area_id"]
+            isOneToOne: false
             referencedRelation: "specification_areas"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_area_sections_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "specification_sections"
             referencedColumns: ["id"]
           },
@@ -27333,36 +30040,42 @@ export type Database = {
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_areas_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27406,36 +30119,42 @@ export type Database = {
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_divisions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27485,6 +30204,7 @@ export type Database = {
           {
             foreignKeyName: "specification_section_revisions_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "specification_sections"
             referencedColumns: ["id"]
           },
@@ -27534,42 +30254,49 @@ export type Database = {
           {
             foreignKeyName: "fk_sections_current_revision"
             columns: ["current_revision_id"]
+            isOneToOne: false
             referencedRelation: "specification_section_revisions"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specification_sections_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27598,6 +30325,7 @@ export type Database = {
           {
             foreignKeyName: "specification_subscribers_section_id_fkey"
             columns: ["section_id"]
+            isOneToOne: false
             referencedRelation: "specification_sections"
             referencedColumns: ["id"]
           },
@@ -27659,36 +30387,42 @@ export type Database = {
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "specifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27729,36 +30463,42 @@ export type Database = {
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "sub_jobs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -27790,66 +30530,84 @@ export type Database = {
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "subcontract_documents_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_documents_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_documents_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -27866,6 +30624,7 @@ export type Database = {
           description: string | null
           id: string
           line_number: number | null
+          project_budget_code_id: string | null
           quantity: number | null
           retainage_percent: number | null
           sort_order: number | null
@@ -27884,6 +30643,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          project_budget_code_id?: string | null
           quantity?: number | null
           retainage_percent?: number | null
           sort_order?: number | null
@@ -27902,6 +30662,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          project_budget_code_id?: string | null
           quantity?: number | null
           retainage_percent?: number | null
           sort_order?: number | null
@@ -27912,14 +30673,30 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "subcontract_sov_items_project_budget_code_id_fkey"
+            columns: ["project_budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "subcontract_sov_items_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontract_sov_items_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_sov_items_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -27966,6 +30743,7 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoice_audit_log_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -27997,60 +30775,70 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "subcontractor_invoice_documents_subcontractor_invoice_id_fkey"
             columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -28100,6 +30888,7 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoice_emails_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -28200,6 +30989,7 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoice_line_items_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -28237,6 +31027,7 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoice_related_items_invoice_id_fkey"
             columns: ["invoice_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_invoices"
             referencedColumns: ["id"]
           },
@@ -28255,6 +31046,7 @@ export type Database = {
           id: number
           invoice_number: string | null
           is_retainage_release: boolean
+          jobplanner_pay_app_number: string | null
           notes: string | null
           period_end: string | null
           period_start: string | null
@@ -28277,6 +31069,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           is_retainage_release?: boolean
+          jobplanner_pay_app_number?: string | null
           notes?: string | null
           period_end?: string | null
           period_start?: string | null
@@ -28299,6 +31092,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           is_retainage_release?: boolean
+          jobplanner_pay_app_number?: string | null
           notes?: string | null
           period_end?: string | null
           period_start?: string | null
@@ -28313,72 +31107,91 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_invoices_acumatica_ap_bill_id_fkey"
             columns: ["acumatica_ap_bill_id"]
+            isOneToOne: false
             referencedRelation: "acumatica_ap_bills"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_billing_period_id_fkey"
             columns: ["billing_period_id"]
+            isOneToOne: false
             referencedRelation: "billing_periods"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_purchase_order_id_fkey"
             columns: ["purchase_order_id"]
+            isOneToOne: false
             referencedRelation: "purchase_orders_with_totals"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
             columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
@@ -28425,12 +31238,14 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_sov_items_source_sov_item_id_fkey"
             columns: ["source_sov_item_id"]
+            isOneToOne: false
             referencedRelation: "subcontract_sov_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_items_submission_id_fkey"
             columns: ["submission_id"]
+            isOneToOne: false
             referencedRelation: "subcontractor_sov_submissions"
             referencedColumns: ["id"]
           },
@@ -28483,60 +31298,77 @@ export type Database = {
           {
             foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
             columns: ["commitment_id"]
+            isOneToOne: true
             referencedRelation: "subcontracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
             columns: ["commitment_id"]
+            isOneToOne: true
+            referencedRelation: "subcontracts_with_invoice_stats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: true
             referencedRelation: "subcontracts_with_totals"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_reviewed_by_fkey"
             columns: ["reviewed_by"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontractor_sov_submissions_submitted_by_fkey"
             columns: ["submitted_by"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -28637,48 +31469,56 @@ export type Database = {
           {
             foreignKeyName: "subcontracts_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "subcontracts_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
+            isOneToOne: false
             referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -28755,48 +31595,56 @@ export type Database = {
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_run_id_fkey"
             columns: ["run_id"]
+            isOneToOne: false
             referencedRelation: "submittal_ai_review_runs"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_checks_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -28867,42 +31715,49 @@ export type Database = {
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_ai_review_runs_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -28949,42 +31804,49 @@ export type Database = {
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_analytics_events_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29010,6 +31872,7 @@ export type Database = {
           {
             foreignKeyName: "submittal_distribution_recipients_distribution_id_fkey"
             columns: ["distribution_id"]
+            isOneToOne: false
             referencedRelation: "submittal_distributions"
             referencedColumns: ["id"]
           },
@@ -29041,6 +31904,7 @@ export type Database = {
           {
             foreignKeyName: "submittal_distributions_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29072,60 +31936,70 @@ export type Database = {
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_metadata_id_fkey"
             columns: ["document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_doc_links_document_type_fkey"
             columns: ["document_type"]
+            isOneToOne: false
             referencedRelation: "document_type_taxonomy"
             referencedColumns: ["type_key"]
           },
           {
             foreignKeyName: "submittal_doc_links_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29181,6 +32055,7 @@ export type Database = {
           {
             foreignKeyName: "submittal_documents_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29230,6 +32105,7 @@ export type Database = {
           {
             foreignKeyName: "submittal_history_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29255,24 +32131,28 @@ export type Database = {
           {
             foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_linked_drawings_drawing_id_fkey"
             columns: ["drawing_id"]
+            isOneToOne: false
             referencedRelation: "drawings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_linked_drawings_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29328,42 +32208,49 @@ export type Database = {
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_notifications_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29401,36 +32288,42 @@ export type Database = {
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_packages_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -29477,36 +32370,42 @@ export type Database = {
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_performance_metrics_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -29589,36 +32488,42 @@ export type Database = {
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_project_settings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: true
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -29662,12 +32567,14 @@ export type Database = {
           {
             foreignKeyName: "submittal_responses_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_responses_workflow_step_id_fkey"
             columns: ["workflow_step_id"]
+            isOneToOne: false
             referencedRelation: "submittal_workflow_steps"
             referencedColumns: ["id"]
           },
@@ -29732,6 +32639,7 @@ export type Database = {
           {
             foreignKeyName: "submittal_workflow_steps_submittal_id_fkey"
             columns: ["submittal_id"]
+            isOneToOne: false
             referencedRelation: "submittals"
             referencedColumns: ["id"]
           },
@@ -29772,36 +32680,42 @@ export type Database = {
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittal_workflow_templates_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -29935,54 +32849,63 @@ export type Database = {
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_specification_id_fkey"
             columns: ["specification_id"]
+            isOneToOne: false
             referencedRelation: "specifications"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_submittal_package_id_fkey"
             columns: ["submittal_package_id"]
+            isOneToOne: false
             referencedRelation: "submittal_packages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "submittals_submittal_type_id_fkey"
             columns: ["submittal_type_id"]
+            isOneToOne: false
             referencedRelation: "submittal_types"
             referencedColumns: ["id"]
           },
@@ -30023,6 +32946,7 @@ export type Database = {
           {
             foreignKeyName: "support_article_chunks_article_id_fkey"
             columns: ["article_id"]
+            isOneToOne: false
             referencedRelation: "support_articles"
             referencedColumns: ["id"]
           },
@@ -30186,36 +33110,42 @@ export type Database = {
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "system_alerts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -30295,6 +33225,7 @@ export type Database = {
           {
             foreignKeyName: "task_comments_task_id_fkey"
             columns: ["task_id"]
+            isOneToOne: false
             referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
@@ -30317,7 +33248,8 @@ export type Database = {
           extraction_source: string | null
           file_name: string | null
           id: string
-          metadata_id: string
+          meeting_item_id: string | null
+          metadata_id: string | null
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
@@ -30345,7 +33277,8 @@ export type Database = {
           extraction_source?: string | null
           file_name?: string | null
           id?: string
-          metadata_id: string
+          meeting_item_id?: string | null
+          metadata_id?: string | null
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
@@ -30373,7 +33306,8 @@ export type Database = {
           extraction_source?: string | null
           file_name?: string | null
           id?: string
-          metadata_id?: string
+          meeting_item_id?: string | null
+          metadata_id?: string | null
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
@@ -30389,102 +33323,126 @@ export type Database = {
           {
             foreignKeyName: "tasks_assignee_person_id_fkey"
             columns: ["assignee_person_id"]
+            isOneToOne: false
             referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_meeting_item_id_fkey"
+            columns: ["meeting_item_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_items"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_schedule_task_id_fkey"
             columns: ["schedule_task_id"]
+            isOneToOne: false
             referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tasks_segment_id_fkey"
             columns: ["segment_id"]
+            isOneToOne: false
             referencedRelation: "meeting_segments"
             referencedColumns: ["id"]
           },
@@ -30543,6 +33501,7 @@ export type Database = {
           {
             foreignKeyName: "team_chat_messages_channel_id_fkey"
             columns: ["channel_id"]
+            isOneToOne: false
             referencedRelation: "team_chat_channels"
             referencedColumns: ["id"]
           },
@@ -30577,6 +33536,7 @@ export type Database = {
           {
             foreignKeyName: "teams_conversation_refs_supabase_user_id_fkey"
             columns: ["supabase_user_id"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -30716,12 +33676,14 @@ export type Database = {
           {
             foreignKeyName: "test_cases_suite_id_fkey"
             columns: ["suite_id"]
+            isOneToOne: false
             referencedRelation: "test_suites"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "test_cases_tool_fkey"
             columns: ["tool"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -30774,12 +33736,14 @@ export type Database = {
           {
             foreignKeyName: "test_results_case_id_fkey"
             columns: ["case_id"]
+            isOneToOne: false
             referencedRelation: "test_cases"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "test_results_run_id_fkey"
             columns: ["run_id"]
+            isOneToOne: false
             referencedRelation: "test_runs"
             referencedColumns: ["id"]
           },
@@ -30823,6 +33787,7 @@ export type Database = {
           {
             foreignKeyName: "test_runs_suite_id_fkey"
             columns: ["suite_id"]
+            isOneToOne: false
             referencedRelation: "test_suites"
             referencedColumns: ["id"]
           },
@@ -30857,6 +33822,7 @@ export type Database = {
           {
             foreignKeyName: "test_screenshots_result_id_fkey"
             columns: ["result_id"]
+            isOneToOne: false
             referencedRelation: "test_results"
             referencedColumns: ["id"]
           },
@@ -30900,6 +33866,7 @@ export type Database = {
           {
             foreignKeyName: "test_suites_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -30946,36 +33913,42 @@ export type Database = {
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timeline_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31031,36 +34004,42 @@ export type Database = {
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "timesheets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31128,6 +34107,7 @@ export type Database = {
           {
             foreignKeyName: "tool_features_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -31171,6 +34151,7 @@ export type Database = {
           {
             foreignKeyName: "tool_form_fields_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -31229,12 +34210,133 @@ export type Database = {
           {
             foreignKeyName: "training_doc_assets_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "training_doc_assets_training_doc_id_fkey"
             columns: ["training_doc_id"]
+            isOneToOne: false
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_doc_relations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          relation_type: string
+          sort_order: number
+          source_doc_id: string
+          target_doc_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relation_type?: string
+          sort_order?: number
+          source_doc_id: string
+          target_doc_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          relation_type?: string
+          sort_order?: number
+          source_doc_id?: string
+          target_doc_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_doc_relations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_relations_source_doc_id_fkey"
+            columns: ["source_doc_id"]
+            isOneToOne: false
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_relations_target_doc_id_fkey"
+            columns: ["target_doc_id"]
+            isOneToOne: false
+            referencedRelation: "training_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_doc_steps: {
+        Row: {
+          action_metadata: Json
+          created_at: string
+          created_by: string | null
+          expected_result: string | null
+          id: string
+          instruction_markdown: string
+          screenshot_asset_id: string | null
+          source_url: string | null
+          step_order: number
+          title: string
+          training_doc_id: string
+          updated_at: string
+        }
+        Insert: {
+          action_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          expected_result?: string | null
+          id?: string
+          instruction_markdown?: string
+          screenshot_asset_id?: string | null
+          source_url?: string | null
+          step_order?: number
+          title: string
+          training_doc_id: string
+          updated_at?: string
+        }
+        Update: {
+          action_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          expected_result?: string | null
+          id?: string
+          instruction_markdown?: string
+          screenshot_asset_id?: string | null
+          source_url?: string | null
+          step_order?: number
+          title?: string
+          training_doc_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_doc_steps_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_steps_screenshot_asset_id_fkey"
+            columns: ["screenshot_asset_id"]
+            isOneToOne: false
+            referencedRelation: "training_doc_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_doc_steps_training_doc_id_fkey"
+            columns: ["training_doc_id"]
+            isOneToOne: false
             referencedRelation: "training_docs"
             referencedColumns: ["id"]
           },
@@ -31251,13 +34353,19 @@ export type Database = {
           last_published_at: string | null
           metadata: Json
           published_doc_path: string | null
+          qa_last_run_at: string | null
+          qa_notes: string | null
+          qa_status: string
           review_notes: string | null
           slug: string
           source_route: string | null
           status: string
           summary: string | null
           target_collection: string
+          task_key: string | null
           title: string
+          tool_category: string | null
+          tool_module: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -31271,13 +34379,19 @@ export type Database = {
           last_published_at?: string | null
           metadata?: Json
           published_doc_path?: string | null
+          qa_last_run_at?: string | null
+          qa_notes?: string | null
+          qa_status?: string
           review_notes?: string | null
           slug: string
           source_route?: string | null
           status?: string
           summary?: string | null
           target_collection?: string
+          task_key?: string | null
           title: string
+          tool_category?: string | null
+          tool_module?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -31291,13 +34405,19 @@ export type Database = {
           last_published_at?: string | null
           metadata?: Json
           published_doc_path?: string | null
+          qa_last_run_at?: string | null
+          qa_notes?: string | null
+          qa_status?: string
           review_notes?: string | null
           slug?: string
           source_route?: string | null
           status?: string
           summary?: string | null
           target_collection?: string
+          task_key?: string | null
           title?: string
+          tool_category?: string | null
+          tool_module?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -31305,12 +34425,14 @@ export type Database = {
           {
             foreignKeyName: "training_docs_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "training_docs_updated_by_fkey"
             columns: ["updated_by"]
+            isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
@@ -31351,6 +34473,7 @@ export type Database = {
           {
             foreignKeyName: "transmittal_items_transmittal_id_fkey"
             columns: ["transmittal_id"]
+            isOneToOne: false
             referencedRelation: "project_transmittals"
             referencedColumns: ["id"]
           },
@@ -31385,42 +34508,49 @@ export type Database = {
           {
             foreignKeyName: "user_directory_permissions_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_directory_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31479,42 +34609,49 @@ export type Database = {
           {
             foreignKeyName: "user_email_notifications_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31552,42 +34689,49 @@ export type Database = {
           {
             foreignKeyName: "user_granular_permission_overrides_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31625,42 +34769,49 @@ export type Database = {
           {
             foreignKeyName: "user_module_permissions_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31734,36 +34885,42 @@ export type Database = {
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_project_preferences_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -31792,6 +34949,7 @@ export type Database = {
           {
             foreignKeyName: "user_project_roles_membership_id_fkey"
             columns: ["membership_id"]
+            isOneToOne: false
             referencedRelation: "project_directory_memberships"
             referencedColumns: ["id"]
           },
@@ -31880,48 +35038,56 @@ export type Database = {
           {
             foreignKeyName: "user_schedule_notifications_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "user_schedule_notifications_resource_tasks_assigned_to_id_fkey"
             columns: ["resource_tasks_assigned_to_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -31995,6 +35161,7 @@ export type Database = {
           {
             foreignKeyName: "users_auth_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: true
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -32023,12 +35190,14 @@ export type Database = {
           {
             foreignKeyName: "vendor_contacts_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vendor_contacts_person_id_fkey"
             columns: ["person_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
@@ -32069,36 +35238,42 @@ export type Database = {
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "vertical_markup_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -32163,36 +35338,42 @@ export type Database = {
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "workspace_artifacts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -32236,48 +35417,56 @@ export type Database = {
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_brandon_to_friday"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_meetings"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_team_messages"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_typed"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
@@ -32316,36 +35505,42 @@ export type Database = {
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -32397,36 +35592,42 @@ export type Database = {
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -32481,6 +35682,7 @@ export type Database = {
           {
             foreignKeyName: "cost_codes_division_id_fkey"
             columns: ["division_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_divisions"
             referencedColumns: ["id"]
           },
@@ -32517,48 +35719,56 @@ export type Database = {
           {
             foreignKeyName: "direct_costs_employee_id_fkey"
             columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "people"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "direct_costs_vendor_id_fkey"
             columns: ["vendor_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -32785,36 +35995,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -32897,36 +36113,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33033,36 +36255,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33289,36 +36517,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33383,36 +36617,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33642,36 +36882,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33706,36 +36952,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -33794,60 +37046,70 @@ export type Database = {
           {
             foreignKeyName: "drawings_area_id_fkey"
             columns: ["area_id"]
+            isOneToOne: false
             referencedRelation: "drawing_areas"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -33892,60 +37154,70 @@ export type Database = {
           {
             foreignKeyName: "drawings_area_id_fkey"
             columns: ["area_id"]
+            isOneToOne: false
             referencedRelation: "drawing_areas"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_log_review"
             referencedColumns: ["revision_id"]
           },
           {
             foreignKeyName: "fk_drawings_review_revision"
             columns: ["review_revision_id"]
+            isOneToOne: false
             referencedRelation: "drawing_revisions"
             referencedColumns: ["id"]
           },
@@ -34045,42 +37317,49 @@ export type Database = {
           {
             foreignKeyName: "prime_contracts_client_company_id_fkey"
             columns: ["client_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "prime_contracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -34112,6 +37391,7 @@ export type Database = {
           {
             foreignKeyName: "procore_feature_implementations_tool_id_fkey"
             columns: ["tool_id"]
+            isOneToOne: false
             referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
@@ -34144,36 +37424,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -34301,6 +37587,7 @@ export type Database = {
           {
             foreignKeyName: "projects_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
@@ -34345,36 +37632,42 @@ export type Database = {
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -34396,7 +37689,101 @@ export type Database = {
           {
             foreignKeyName: "sov_line_items_sov_id_fkey"
             columns: ["sov_id"]
+            isOneToOne: false
             referencedRelation: "schedule_of_values"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontracts_with_invoice_stats: {
+        Row: {
+          actual_completion_date: string | null
+          acumatica_external_key: string | null
+          allow_non_admin_view_sov_items: boolean | null
+          contract_company_id: string | null
+          contract_date: string | null
+          contract_number: string | null
+          created_at: string | null
+          created_by: string | null
+          default_retainage_percent: number | null
+          deleted_at: string | null
+          description: string | null
+          estimated_completion_date: string | null
+          exclusions: string | null
+          executed: boolean | null
+          id: string | null
+          inclusions: string | null
+          invoice_contact_ids: string[] | null
+          invoice_count: number | null
+          is_private: boolean | null
+          issued_on_date: string | null
+          latest_invoice_created_at: string | null
+          non_admin_user_ids: string[] | null
+          prime_contract_id: string | null
+          project: string | null
+          project_id: number | null
+          signed_contract_received_date: string | null
+          start_date: string | null
+          status: string | null
+          title: string | null
+          total_billed_from_line_items: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -34439,36 +37826,42 @@ export type Database = {
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -34510,60 +37903,70 @@ export type Database = {
           {
             foreignKeyName: "budget_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_cost_code_id_fkey"
             columns: ["cost_code_id"]
+            isOneToOne: false
             referencedRelation: "cost_codes_with_division_title"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_cost_type_id_fkey"
             columns: ["cost_type_id"]
+            isOneToOne: false
             referencedRelation: "cost_code_types"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "budget_lines_sub_job_id_fkey"
             columns: ["sub_job_id"]
+            isOneToOne: false
             referencedRelation: "sub_jobs"
             referencedColumns: ["id"]
           },
@@ -34585,6 +37988,7 @@ export type Database = {
           {
             foreignKeyName: "estimate_line_items_estimate_id_fkey"
             columns: ["estimate_id"]
+            isOneToOne: false
             referencedRelation: "estimates"
             referencedColumns: ["estimate_id"]
           },
@@ -34619,36 +38023,42 @@ export type Database = {
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_activity_view"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_health_dashboard"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "project_issue_summary"
             referencedColumns: ["project_id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects_with_counts"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "document_metadata_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
@@ -34755,7 +38165,8 @@ export type Database = {
           extraction_source: string | null
           file_name: string | null
           id: string
-          metadata_id: string
+          meeting_item_id: string | null
+          metadata_id: string | null
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
@@ -36486,7 +39897,11 @@ export type Database = {
       commitment_type: "subcontract" | "purchase_order" | "service_order"
       company_type: "vendor" | "subcontractor" | "owner" | "architect" | "other"
       contract_status:
-        "draft" | "pending" | "executed" | "closed" | "terminated"
+        | "draft"
+        | "pending"
+        | "executed"
+        | "closed"
+        | "terminated"
       contract_type: "prime_contract" | "commitment"
       erp_sync_status: "pending" | "synced" | "failed" | "resyncing"
       invoice_status:
@@ -36514,12 +39929,25 @@ export type Database = {
       issue_status: "Open" | "In Progress" | "Resolved" | "Pending Verification"
       payment_status: "received" | "void"
       prime_contract_co_status:
-        "draft" | "pending" | "approved" | "rejected" | "void"
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "void"
       prime_contract_sov_status: "draft" | "approved" | "locked"
       prime_contract_status:
-        "draft" | "approved" | "complete" | "void" | "closed" | "not_ready"
+        | "draft"
+        | "approved"
+        | "complete"
+        | "void"
+        | "closed"
+        | "not_ready"
       prime_contract_status_v2:
-        "draft" | "out_for_signature" | "approved" | "complete" | "terminated"
+        | "draft"
+        | "out_for_signature"
+        | "approved"
+        | "complete"
+        | "terminated"
       project_status: "active" | "inactive" | "complete"
       task_status: "todo" | "doing" | "review" | "done"
     }
@@ -36537,12 +39965,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36564,12 +39992,13 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36588,12 +40017,13 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36612,12 +40042,13 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -36630,11 +40061,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

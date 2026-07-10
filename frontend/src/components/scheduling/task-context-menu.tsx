@@ -43,7 +43,7 @@ import {
   Download,
   Upload,
   CheckSquare,
-  MoreHorizontal,
+  MoreVertical,
   ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -432,7 +432,7 @@ export function TaskContextMenu({
         {/* Import/Export Submenu */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
-            <MoreHorizontal className="mr-2 h-4 w-4" />
+            <MoreVertical className="mr-2 h-4 w-4" />
             <span>More Actions</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48">

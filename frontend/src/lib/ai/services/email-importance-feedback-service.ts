@@ -1,10 +1,11 @@
 import { recordAiFeedbackEvent } from "@/lib/ai/services/feedback-event-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database.types";
-import type {
-  EmailImportanceFeedbackState,
-  EmailImportanceReasonCategory,
-  EmailImportanceSignal,
+import {
+  EMAIL_IMPORTANCE_CLEARED_SIGNAL,
+  type EmailImportanceFeedbackState,
+  type EmailImportanceReasonCategory,
+  type EmailImportanceSignal,
 } from "@/lib/ai/email-importance-feedback-types";
 
 export interface RecordEmailImportanceFeedbackParams {
@@ -17,12 +18,31 @@ export interface RecordEmailImportanceFeedbackParams {
   emailSnapshot: Json;
 }
 
+export interface ClearEmailImportanceFeedbackParams {
+  userId: string;
+  emailId: number;
+  projectId?: number | null;
+  emailSnapshot?: Json;
+}
+
 const EVENT_TYPE = "email_importance_feedback_recorded";
 const SOURCE_TABLE = "project_emails";
 const SUBJECT_TYPE = "project_email";
 
 function signalToFeedbackSignal(signal: EmailImportanceSignal) {
   return signal === "important" ? "positive" : "negative";
+}
+
+function metadataSignal(
+  value: Json,
+): EmailImportanceSignal | typeof EMAIL_IMPORTANCE_CLEARED_SIGNAL | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const signal = (value as Record<string, unknown>).emailImportanceSignal;
+  return signal === "important" ||
+    signal === "not_important" ||
+    signal === EMAIL_IMPORTANCE_CLEARED_SIGNAL
+    ? signal
+    : null;
 }
 
 export async function recordEmailImportanceFeedback(
@@ -45,6 +65,31 @@ export async function recordEmailImportanceFeedback(
     metadata: {
       emailId: params.emailId,
       emailImportanceSignal: params.signal,
+      visibility: "team",
+    },
+  });
+}
+
+export async function clearEmailImportanceFeedback(
+  params: ClearEmailImportanceFeedbackParams,
+) {
+  return recordAiFeedbackEvent({
+    userId: params.userId,
+    projectId: params.projectId ?? null,
+    sourceTable: SOURCE_TABLE,
+    sourceRecordId: String(params.emailId),
+    eventType: EVENT_TYPE,
+    eventFamily: "user_preference",
+    surface: "outlook_emails",
+    subjectType: SUBJECT_TYPE,
+    subjectId: String(params.emailId),
+    signal: "ignored",
+    reasonCategory: "reverted",
+    freeText: null,
+    afterSnapshot: params.emailSnapshot ?? null,
+    metadata: {
+      emailId: params.emailId,
+      emailImportanceSignal: EMAIL_IMPORTANCE_CLEARED_SIGNAL,
       visibility: "team",
     },
   });
@@ -84,15 +129,16 @@ export async function getLatestEmailImportanceFeedback(
 
   const results: Record<string, EmailImportanceFeedbackState> = {};
 
+  const seen = new Set<string>();
+
   for (const row of data ?? []) {
     const emailId = row.source_record_id;
-    if (!emailId || results[emailId]) continue;
+    if (!emailId || seen.has(emailId)) continue;
+    seen.add(emailId);
 
-    const signalFromMetadata =
-      typeof (row.metadata as Record<string, unknown> | null)
-        ?.emailImportanceSignal === "string"
-        ? ((row.metadata as Record<string, unknown>).emailImportanceSignal as EmailImportanceSignal)
-        : null;
+    const signalFromMetadata = metadataSignal(row.metadata);
+
+    if (signalFromMetadata === EMAIL_IMPORTANCE_CLEARED_SIGNAL) continue;
 
     const signal: EmailImportanceSignal =
       signalFromMetadata ??

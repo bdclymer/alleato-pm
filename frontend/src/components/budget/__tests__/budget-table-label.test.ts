@@ -27,7 +27,9 @@ function makeLine(overrides: Partial<BudgetLineItem>): BudgetLineItem {
 }
 
 describe("getBudgetLineLabel", () => {
-  it("keeps division or cost-code descriptions out of the compact budget-code label", () => {
+  // Client requirement (2026-07-01 budget feedback): line rows always show
+  // the cost code, then the cost code name, then the cost type.
+  it("includes the cost code name and cost type in the budget-code label", () => {
     const label = getBudgetLineLabel(
       makeLine({
         costCode: "02-0000",
@@ -37,8 +39,7 @@ describe("getBudgetLineLabel", () => {
       }),
     );
 
-    expect(label.codeLabel).toBe("02-0000.R");
-    expect(label.codeLabel).not.toContain("Existing Conditions");
+    expect(label.codeLabel).toBe("02-0000 - Existing Conditions.R");
     expect(label.description).toBe("");
   });
 
@@ -52,7 +53,7 @@ describe("getBudgetLineLabel", () => {
       }),
     );
 
-    expect(label.codeLabel).toBe("09-9123.R");
+    expect(label.codeLabel).toBe("09-9123 - Painting.R");
     expect(label.description).toBe("PC-001 SOV (6 rows)");
   });
 

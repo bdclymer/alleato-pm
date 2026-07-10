@@ -35,6 +35,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.pool import NullPool
 
+from ._retry import is_connection_error
+from .db_health import degraded_db_banner, format_db_tool_error
+
 
 @lru_cache(maxsize=1)
 def _engine() -> Engine:
@@ -167,23 +170,25 @@ def _query_one_table(
     days_back: int,
     project_id: int | None,
     per_table_limit: int,
-) -> tuple[str, list[dict[str, Any]] | None, str | None]:
+) -> tuple[str, list[dict[str, Any]] | None, str | None, bool]:
     """Run the recent-activity query for one table.
 
-    Returns (label, rows or None on error, error_message or None).
+    Returns (label, rows or None on error, error_message or None,
+    is_connectivity_error). The connectivity flag lets the caller tell a real
+    outage (every table unreachable) apart from a benign per-table skip.
     """
     label, table, ts_candidates, label_candidates, status_candidates = spec
 
     if not available:
-        return label, None, "table not present in schema"
+        return label, None, "table not present in schema", False
 
     ts_col = _pick(ts_candidates, available)
     if ts_col is None:
-        return label, None, f"no recognized timestamp column in {table}"
+        return label, None, f"no recognized timestamp column in {table}", False
 
     fk_col = _pick(_PROJECT_FK_CANDIDATES, available) if project_id is not None else None
     if project_id is not None and fk_col is None:
-        return label, None, f"no project FK column in {table}"
+        return label, None, f"no project FK column in {table}", False
 
     label_col = _pick(label_candidates, available)
     status_col = _pick(status_candidates, available)
@@ -221,9 +226,9 @@ def _query_one_table(
         with eng.connect() as conn:
             conn.execute(text("SET LOCAL statement_timeout = 10000"))
             rows = [dict(r._mapping) for r in conn.execute(sql, params)]
-        return label, rows, None
+        return label, rows, None, False
     except Exception as exc:  # noqa: BLE001
-        return label, None, str(exc)
+        return label, None, str(exc), is_connection_error(exc)
 
 
 def _format_section(
@@ -304,18 +309,28 @@ def recent_activity(
     try:
         schema = _table_columns()
     except Exception as exc:  # noqa: BLE001
-        return f"Error introspecting schema: {exc}"
+        # First DB touch — a connectivity failure here means the whole digest is
+        # bogus. Surface it loudly instead of an "Error introspecting schema".
+        return format_db_tool_error(exc, tool_hint="recent_activity")
 
     section_data: list[tuple[str, list[dict[str, Any]] | None, str | None]] = []
     referenced_pids: set[int] = set()
+    attempted = 0
+    connectivity_failures = 0
     for spec in _TABLE_SPEC:
-        label, rows, err = _query_one_table(
+        label, rows, err, is_conn = _query_one_table(
             spec=spec,
             available=schema.get(spec[1], set()),
             days_back=days_back,
             project_id=pid,
             per_table_limit=per_category_limit,
         )
+        # Only count sections that actually ran a query (a present table with a
+        # usable timestamp column), so schema-shape skips don't look like an outage.
+        if rows is not None or is_conn or (err and "not present" not in err and "no " not in err):
+            attempted += 1
+        if is_conn:
+            connectivity_failures += 1
         section_data.append((label, rows, err))
         if rows and pid is None:
             for r in rows:
@@ -326,6 +341,15 @@ def recent_activity(
                     referenced_pids.add(int(raw))
                 except (TypeError, ValueError):
                     pass
+
+    # Every table that actually ran failed with a connectivity error → this is a
+    # database outage, not a quiet week. Never render an all-empty digest here.
+    if attempted > 0 and connectivity_failures == attempted:
+        return (
+            degraded_db_banner()
+            + "\nRecent-activity digest is unavailable because the project database "
+            "is unreachable. This is NOT an indication that nothing happened."
+        )
 
     # Resolve raw project_id → name once across all sections, then format.
     from .db import get_project_names

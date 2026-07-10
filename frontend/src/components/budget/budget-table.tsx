@@ -13,7 +13,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2, Columns3 } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreVertical, Pencil, Trash2, Columns3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -65,8 +65,8 @@ const columnTooltips: Record<string, ColumnTooltip> = {
     formula: "Original Budget Amount entered for this line item",
   },
   budgetModifications: {
-    title: "Budget Modifications",
-    formula: "Sum of all budget transfers to/from this line item",
+    title: "Budget Changes",
+    formula: "Sum of all approved budget changes to/from this line item",
   },
   approvedCOs: {
     title: "Approved COs",
@@ -78,7 +78,7 @@ const columnTooltips: Record<string, ColumnTooltip> = {
     title: "Revised Budget",
     type: "Calculated Column",
     formula:
-      "Original Budget Amount + Budget Modifications + Approved COs = Revised Budget",
+      "Original Budget Amount + Budget Changes + Approved COs = Revised Budget",
   },
   jobToDateCostDetail: {
     title: "Job to Date Cost Detail",
@@ -171,9 +171,16 @@ type ColumnTooltipKey = keyof typeof columnTooltips;
 interface ColumnHeaderProps {
   lines: string[];
   columnKey?: ColumnTooltipKey;
+  align?: "left" | "right";
 }
 
-function TruncatedHeaderLabel({ text }: { text: string }) {
+function TruncatedHeaderLabel({
+  text,
+  align = "left",
+}: {
+  text: string;
+  align?: "left" | "right";
+}) {
   const labelRef = React.useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = React.useState(false);
 
@@ -204,7 +211,10 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   const label = (
     <div
       ref={labelRef}
-      className="truncate whitespace-nowrap text-left text-xs leading-tight"
+      className={cn(
+        "block w-full truncate whitespace-nowrap text-xs leading-tight",
+        align === "right" ? "text-right" : "text-left",
+      )}
     >
       {text}
     </div>
@@ -226,10 +236,14 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   );
 }
 
-function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
+function ColumnHeader({
+  lines,
+  columnKey,
+  align = "left",
+}: ColumnHeaderProps) {
   const labelText = lines.join(" ");
 
-  const label = <TruncatedHeaderLabel text={labelText} />;
+  const label = <TruncatedHeaderLabel text={labelText} align={align} />;
 
   if (!columnKey) {
     return label;
@@ -243,7 +257,12 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="cursor-help whitespace-nowrap text-left text-xs leading-tight text-foreground transition-colors hover:text-foreground">
+        <div
+          className={cn(
+            "block w-full cursor-help whitespace-nowrap text-xs leading-tight text-foreground transition-colors hover:text-foreground",
+            align === "right" ? "text-right" : "text-left",
+          )}
+        >
           {labelText}
         </div>
       </TooltipTrigger>
@@ -336,10 +355,165 @@ function CurrencyCell({ value }: { value: number }) {
   );
 }
 
+type FormulaLine = {
+  label: string;
+  value: number;
+  operator?: "+" | "-";
+};
+
+function FormulaTooltip({
+  title,
+  formula,
+  lines,
+  resultLabel,
+  resultValue,
+}: {
+  title: string;
+  formula: string;
+  lines: FormulaLine[];
+  resultLabel: string;
+  resultValue: number;
+}) {
+  return (
+    <div className="w-72 space-y-2 text-xs">
+      <div>
+        <p className="font-medium text-foreground">{title}</p>
+        <p className="text-muted-foreground">{formula}</p>
+      </div>
+      <div className="space-y-1">
+        {lines.map((line, index) => (
+          <div key={line.label} className="flex items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-muted-foreground">
+              {index > 0 && line.operator ? `${line.operator} ` : ""}
+              {line.label}
+            </span>
+            <span className="shrink-0 tabular-nums text-foreground">
+              {formatCurrency(line.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-border/70 pt-1.5">
+        <div className="flex items-center justify-between gap-3 font-medium">
+          <span>{resultLabel}</span>
+          <span className="tabular-nums">{formatCurrency(resultValue)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function getCalculatedColumnTooltip(
+  columnId: keyof Pick<
+    BudgetLineItem,
+    | "revisedBudget"
+    | "projectedBudget"
+    | "projectedCosts"
+    | "forecastToComplete"
+    | "estimatedCostAtCompletion"
+    | "projectedOverUnder"
+  >,
+  lineItem: BudgetLineItem,
+) {
+  switch (columnId) {
+    case "revisedBudget":
+      return (
+        <FormulaTooltip
+          title="Revised Budget"
+          formula="Original Budget + Budget Changes + Approved COs"
+          lines={[
+            { label: "Original Budget", value: lineItem.originalBudgetAmount },
+            {
+              label: "Budget Changes",
+              value: lineItem.budgetModifications,
+              operator: "+",
+            },
+            { label: "Approved COs", value: lineItem.approvedCOs, operator: "+" },
+          ]}
+          resultLabel="Revised Budget"
+          resultValue={lineItem.revisedBudget}
+        />
+      );
+    case "projectedBudget":
+      return (
+        <FormulaTooltip
+          title="Projected Budget"
+          formula="Revised Budget + Pending COs"
+          lines={[
+            { label: "Revised Budget", value: lineItem.revisedBudget },
+            { label: "Pending COs", value: lineItem.pendingChanges, operator: "+" },
+          ]}
+          resultLabel="Projected Budget"
+          resultValue={lineItem.projectedBudget}
+        />
+      );
+    case "projectedCosts":
+      return (
+        <FormulaTooltip
+          title="Projected Costs"
+          formula="Committed Costs + Direct Costs + Pending Cost Changes"
+          lines={[
+            { label: "Committed Costs", value: lineItem.committedCosts },
+            { label: "Direct Costs", value: lineItem.directCosts, operator: "+" },
+            { label: "Pending Cost Changes", value: lineItem.pendingCostChanges, operator: "+" },
+          ]}
+          resultLabel="Projected Costs"
+          resultValue={lineItem.projectedCosts}
+        />
+      );
+    case "forecastToComplete":
+      return (
+        <FormulaTooltip
+          title="Forecast To Complete"
+          formula="Projected Budget - Projected Costs, floored at $0.00"
+          lines={[
+            { label: "Projected Budget", value: lineItem.projectedBudget },
+            { label: "Projected Costs", value: lineItem.projectedCosts, operator: "-" },
+          ]}
+          resultLabel="Forecast To Complete"
+          resultValue={lineItem.forecastToComplete}
+        />
+      );
+    case "estimatedCostAtCompletion":
+      return (
+        <FormulaTooltip
+          title="Estimated Cost at Completion"
+          formula="Projected Costs + Forecast To Complete"
+          lines={[
+            { label: "Projected Costs", value: lineItem.projectedCosts },
+            { label: "Forecast To Complete", value: lineItem.forecastToComplete, operator: "+" },
+          ]}
+          resultLabel="Est. Cost at Completion"
+          resultValue={lineItem.estimatedCostAtCompletion}
+        />
+      );
+    case "projectedOverUnder":
+      return (
+        <FormulaTooltip
+          title="Projected +/-"
+          formula="Projected Budget - Estimated Cost at Completion"
+          lines={[
+            { label: "Projected Budget", value: lineItem.projectedBudget },
+            {
+              label: "Est. Cost at Completion",
+              value: lineItem.estimatedCostAtCompletion,
+              operator: "-",
+            },
+          ]}
+          resultLabel="Projected +/-"
+          resultValue={lineItem.projectedOverUnder}
+        />
+      );
+  }
+}
+
 export function getBudgetLineLabel(lineItem: BudgetLineItem) {
   const { costCode, costCodeDescription, costType, description } = lineItem;
-  const codeLabel = costCode
-    ? `${costCode}${costType ? `.${costType}` : ""}`
+  const codeLabelBase = costCode
+    ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
+    : costCodeDescription || "";
+  const codeLabel = codeLabelBase
+    ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
     : null;
   const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
   const normalizedDescription = description.trim();
@@ -372,9 +546,12 @@ function createSafeClickHandler(
   isLocked: boolean,
   action: string,
   originalHandler?: () => void,
-  options: { allowWhenLocked?: boolean } = {},
+  options: { allowWhenLocked?: boolean; hideWhenLocked?: boolean } = {},
 ): (() => void) | undefined {
   if (!originalHandler) return undefined;
+  // Locked budgets hide edit affordances entirely instead of showing a
+  // clickable control that only produces an error toast.
+  if (isLocked && options.hideWhenLocked) return undefined;
 
   return () => {
     if (isLocked && !options.allowWhenLocked) {
@@ -389,36 +566,47 @@ function EditableCurrencyCell({
   value,
   onEdit,
   editable = false,
+  tooltip,
 }: {
   value: number;
   hasChildren?: boolean;
   onEdit?: () => void;
   editable?: boolean;
+  tooltip?: React.ReactNode;
 }) {
   // Allow clicking on both parent and child rows when onEdit is provided
   const isClickable = onEdit && editable;
 
-  if (isClickable) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        aria-label={`Edit ${formatCurrency(value)}`}
-        className={cn(
-          "flex h-auto w-full cursor-pointer justify-end rounded px-1 py-0.5 text-right font-normal transition-colors",
-          "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
-        )}
-        onClick={onEdit}
-      >
-        <CurrencyCell value={value} />
-      </Button>
-    );
+  const cell = isClickable ? (
+    <Button
+      type="button"
+      variant="ghost"
+      aria-label={`Edit ${formatCurrency(value)}`}
+      className={cn(
+        "flex h-auto w-full cursor-pointer justify-end rounded px-1 py-0.5 text-right font-normal transition-colors",
+        "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
+      )}
+      onClick={onEdit}
+    >
+      <CurrencyCell value={value} />
+    </Button>
+  ) : (
+    <div className={cn("text-right", tooltip && "cursor-help")}>
+      <CurrencyCell value={value} />
+    </div>
+  );
+
+  if (!tooltip) {
+    return cell;
   }
 
   return (
-    <div className="text-right">
-      <CurrencyCell value={value} />
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>{cell}</TooltipTrigger>
+      <TooltipContent side="top" align="end" className="max-w-none">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -468,7 +656,7 @@ function getDepthPadding(depth: number) {
 const columnLabels: Record<string, string> = {
   description: "Description",
   originalBudgetAmount: "Original Budget",
-  budgetModifications: "Budget Mods",
+  budgetModifications: "Budget Changes",
   approvedCOs: "Approved COs",
   revisedBudget: "Revised Budget",
   pendingChanges: "Pending COs",
@@ -711,6 +899,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="originalBudgetAmount"
           lines={["original"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -725,9 +914,10 @@ export function BudgetTable({
             onEdit={createSafeClickHandler(
               isLocked,
               "edit line items",
-              onEditLineItem ? () => onEditLineItem(row.original) : undefined
+              onEditLineItem ? () => onEditLineItem(row.original) : undefined,
+              { hideWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -736,7 +926,11 @@ export function BudgetTable({
     {
       accessorKey: "budgetModifications",
       header: () => (
-        <ColumnHeader columnKey="budgetModifications" lines={["Budget Mods"]} />
+        <ColumnHeader
+          columnKey="budgetModifications"
+          lines={["Budget Changes"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -753,7 +947,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -762,7 +956,11 @@ export function BudgetTable({
     {
       accessorKey: "approvedCOs",
       header: () => (
-        <ColumnHeader columnKey="approvedCOs" lines={["Approved COs"]} />
+        <ColumnHeader
+          columnKey="approvedCOs"
+          lines={["Approved COs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -779,7 +977,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -788,7 +986,11 @@ export function BudgetTable({
     {
       accessorKey: "revisedBudget",
       header: () => (
-        <ColumnHeader columnKey="revisedBudget" lines={["Revised Budget"]} />
+        <ColumnHeader
+          columnKey="revisedBudget"
+          lines={["Revised Budget"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -802,6 +1004,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("revisedBudget", row.original)}
           />
         );
       },
@@ -813,6 +1016,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="pendingChanges"
           lines={["Pending COs"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -830,7 +1034,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -842,6 +1046,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="projectedBudget"
           lines={["Projected Budget"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -856,6 +1061,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedBudget", row.original)}
           />
         );
       },
@@ -864,7 +1070,11 @@ export function BudgetTable({
     {
       accessorKey: "committedCosts",
       header: () => (
-        <ColumnHeader columnKey="committedCosts" lines={["Committed Costs"]} />
+        <ColumnHeader
+          columnKey="committedCosts"
+          lines={["Committed Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -881,7 +1091,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -893,6 +1103,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="jobToDateCostDetail"
           lines={["JTD Cost Detail"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -910,7 +1121,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -919,7 +1130,11 @@ export function BudgetTable({
     {
       accessorKey: "directCosts",
       header: () => (
-        <ColumnHeader columnKey="directCosts" lines={["Direct Costs"]} />
+        <ColumnHeader
+          columnKey="directCosts"
+          lines={["Direct Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -936,7 +1151,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -948,6 +1163,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="pendingCostChanges"
           lines={["Pending Cost Changes"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -965,7 +1181,7 @@ export function BudgetTable({
                 : undefined,
               { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
           />
         );
       },
@@ -974,7 +1190,11 @@ export function BudgetTable({
     {
       accessorKey: "projectedCosts",
       header: () => (
-        <ColumnHeader columnKey="projectedCosts" lines={["Projected Costs"]} />
+        <ColumnHeader
+          columnKey="projectedCosts"
+          lines={["Projected Costs"]}
+          align="right"
+        />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -988,6 +1208,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedCosts", row.original)}
           />
         );
       },
@@ -999,11 +1220,20 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="forecastToComplete"
           lines={["Forecast To Complete"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
+        // Divisions / rollup rows do not carry a forecast (feedback #560).
+        // Forecast to Complete is a leaf-level cost projection you enter per
+        // line item, so parent rows render blank rather than an aggregated
+        // value the user cannot act on. Matches Procore, where only detail
+        // rows show a forecast.
+        if (hasChildren) {
+          return <div className="text-right" data-testid="forecast-blank" />;
+        }
         return (
           <EditableCurrencyCell
             value={row.getValue("forecastToComplete")}
@@ -1013,9 +1243,15 @@ export function BudgetTable({
               "edit forecast",
               onForecastToCompleteClick
                 ? () => onForecastToCompleteClick(row.original)
-                : undefined
+                : undefined,
+              // Procore parity: forecasting stays editable after budget lock —
+              // the lock freezes the budget, not the forecast. Forecast to
+              // Complete is a forward-looking cost projection, not a committed
+              // budget dollar.
+              { allowWhenLocked: true },
             )}
-            editable={true}
+            editable={!hasChildren}
+            tooltip={getCalculatedColumnTooltip("forecastToComplete", row.original)}
           />
         );
       },
@@ -1027,6 +1263,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="estimatedCostAtCompletion"
           lines={["Est. Cost at Completion"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1041,6 +1278,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("estimatedCostAtCompletion", row.original)}
           />
         );
       },
@@ -1052,6 +1290,7 @@ export function BudgetTable({
         <ColumnHeader
           columnKey="projectedOverUnder"
           lines={["Projected +/-"]}
+          align="right"
         />
       ),
       cell: ({ row }) => {
@@ -1066,6 +1305,7 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+            tooltip={getCalculatedColumnTooltip("projectedOverUnder", row.original)}
           />
         );
       },
@@ -1078,7 +1318,9 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0
         );
-        if (hasChildren || !onEditLineItem) {
+        // Locked budgets do not allow line edits or deletes, so show no
+        // row actions at all instead of disabled/toasting controls.
+        if (hasChildren || !onEditLineItem || isLocked) {
           return null;
         }
 
@@ -1088,19 +1330,15 @@ export function BudgetTable({
           () => onEditLineItem(row.original)
         );
 
-        // Procore-parity delete rules (tests 1.3.1–1.3.4):
-        //  • Allowed only when original budget is $0
-        //  • Blocked when budget is locked
-        //  • Server also blocks when active budget modifications reference
-        //    the line's cost code (LINE_HAS_ACTIVE_MODIFICATIONS)
+        // Procore-parity delete rule (tests 1.3.1–1.3.4): allowed only when
+        // original budget is $0. Server also blocks when active budget
+        // modifications reference the line's cost code (LINE_HAS_ACTIVE_MODIFICATIONS).
         const originalAmount = Number(row.original.originalBudgetAmount ?? 0);
         const hasOriginalBudget = originalAmount !== 0;
-        const deleteDisabled = isLocked || hasOriginalBudget;
-        const deleteDisabledReason = isLocked
-          ? "Budget is locked. Unlock the budget to delete line items."
-          : hasOriginalBudget
-            ? "Cannot delete a line with an original budget. Use a budget modification to remove or zero out funded lines."
-            : "";
+        const deleteDisabled = hasOriginalBudget;
+        const deleteDisabledReason = hasOriginalBudget
+          ? "Cannot delete a line with an original budget. Use a budget modification to remove or zero out funded lines."
+          : "";
 
         return (
           <div className="flex items-center justify-end gap-0.5">
@@ -1389,7 +1627,7 @@ export function BudgetTable({
                   </p>
                 </div>
 
-                {!hasChildren && (onEditLineItem || canDelete) ? (
+                {!hasChildren && !isLocked && (onEditLineItem || canDelete) ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -1399,7 +1637,7 @@ export function BudgetTable({
                         className="h-11 w-11 shrink-0"
                         aria-label={`Actions for ${fullLabel}`}
                       >
-                        <MoreHorizontal />
+                        <MoreVertical />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -1428,26 +1666,30 @@ export function BudgetTable({
                 <MobileMetricButton
                   label="Original"
                   value={lineItem.originalBudgetAmount}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
                 <MobileMetricButton
                   label="Revised"
                   value={lineItem.revisedBudget}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
                 <MobileMetricButton
                   label="Committed"
                   value={lineItem.committedCosts}
-                  onClick={createSafeClickHandler(
-                    isLocked,
-                    "view committed costs",
-                    onCommittedCostsClick ? () => onCommittedCostsClick(lineItem) : undefined,
-                  )}
+                  onClick={
+                    hasChildren
+                      ? undefined
+                      : createSafeClickHandler(
+                          isLocked,
+                          "view committed costs",
+                          onCommittedCostsClick ? () => onCommittedCostsClick(lineItem) : undefined,
+                        )
+                  }
                 />
                 <MobileMetricButton
                   label="Projected cost"
                   value={lineItem.projectedCosts}
-                  onClick={handleEdit}
+                  onClick={hasChildren ? undefined : handleEdit}
                 />
               </div>
 

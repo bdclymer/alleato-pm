@@ -38,23 +38,25 @@ export const GET = withApiGuardrails(
     },
 );
 
+// Companies (including clients) are managed exclusively in Acumatica (ERP) by
+// Accounting, so insurance, EIN, and legal details stay accurate. Creation
+// from the PM app is disabled — records sync in automatically via
+// `backend/src/services/acumatica_sync.py`.
 export const POST = withApiGuardrails(
   "clients#POST",
-  async ({ request }) => {
+  async () => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "clients#POST", message: "Authentication required." });
     }
-    const body = await request.json();
 
-    const supabase = createServiceClient();
-    const { data, error } = await supabase
-      .from("companies")
-      .insert({ name: body.name, type: "client", status: body.status || "active" })
-      .select("id, name, type, status, website, address, city, state, created_at")
-      .single();
-
-    if (error) return apiErrorResponse(error);
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(
+      {
+        error: "erp_managed",
+        message:
+          "Companies are managed in Acumatica (ERP) by Accounting and can no longer be created here. Ask Accounting to add the client in Acumatica — it will sync in automatically.",
+      },
+      { status: 403 },
+    );
     },
 );

@@ -42,6 +42,10 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createClient();
+  const user = await getApiRouteUser();
+  if (!user) {
+    return validationError('Unauthorized', 401);
+  }
   const serviceClient = createServiceClient();
 
   const resolved = await resolvePatternCEntity(supabase, entityType, entityId);

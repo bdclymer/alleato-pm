@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOptionalProject } from "@/contexts/project-context";
@@ -19,16 +18,12 @@ import { Eyebrow } from "@/components/ds/eyebrow";
 import { Heading } from "@/components/ds/heading";
 import { Text } from "@/components/ds/text";
 import {
-  Breadcrumb,
-  BreadcrumbItem as UiBreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { PageTabsV2 } from "@/components/layout/PageTabsV2";
+  BreadcrumbTrail,
+  type BreadcrumbTrailItem,
+} from "@/components/ui/breadcrumb-trail";
+import { PageTabs } from "@/components/layout/PageTabs";
 
-interface BreadcrumbItem {
+interface BreadcrumbItem extends BreadcrumbTrailItem {
   label: string;
   href?: string;
 }
@@ -42,6 +37,7 @@ interface PageHeaderProps {
 
   // Layout options
   variant?: "default" | "executive" | "compact" | "budget";
+  headerLayout?: "default" | "balanced";
   actions?: React.ReactNode;
   mobileActionsInline?: boolean;
   className?: string;
@@ -102,6 +98,7 @@ export function PageHeader({
   eyebrow,
   description,
   variant = "default",
+  headerLayout = "default",
   actions,
   mobileActionsInline = false,
   className,
@@ -118,6 +115,8 @@ export function PageHeader({
   const projectContext = useOptionalProject();
   const selectedProject = projectContext?.selectedProject ?? null;
   const isLoading = projectContext?.isLoading ?? false;
+  const useBudgetLayout = variant === "budget";
+  const useBalancedLayout = headerLayout === "balanced" && !useBudgetLayout;
 
   // Only show project name when explicitly requested
   const shouldShowProjectName = showProjectName && selectedProject;
@@ -174,27 +173,16 @@ export function PageHeader({
     <div className={cn(className)}>
       <div>
         {breadcrumbs && breadcrumbs.length > 0 ? (
-          <Breadcrumb className="pb-2">
-            <BreadcrumbList>
-              {breadcrumbs.map((crumb, index) => {
-                const isLast = index === breadcrumbs.length - 1;
-                return (
-                  <React.Fragment key={`${crumb.label}-${index}`}>
-                    <UiBreadcrumbItem>
-                      {isLast || !crumb.href ? (
-                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink asChild>
-                          <Link href={crumb.href}>{crumb.label}</Link>
-                        </BreadcrumbLink>
-                      )}
-                    </UiBreadcrumbItem>
-                    {!isLast ? <BreadcrumbSeparator /> : null}
-                  </React.Fragment>
-                );
-              })}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <BreadcrumbTrail
+            items={breadcrumbs}
+            className="pb-2"
+            listClassName="text-sm"
+            linkClassName="max-w-[16rem]"
+            currentClassName="max-w-[18rem]"
+            maxVisibleItems={6}
+            leadingItems={2}
+            trailingItems={2}
+          />
         ) : null}
 
         {/* Title and Actions */}
@@ -203,11 +191,20 @@ export function PageHeader({
             "min-w-0 pt-4 pb-1",
             mobileActionsInline
               ? "flex items-center justify-between gap-3"
-              : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
+              : useBudgetLayout
+                ? "flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-4"
+                : useBalancedLayout
+                  ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+                  : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
           )}
         >
           {/* Left: title + badges (desktop only) */}
-          <div className="min-w-0 flex-1">
+          <div
+            className={cn(
+              "min-w-0 flex-1",
+              useBalancedLayout && "sm:flex-[0_1_72%] lg:max-w-[760px] xl:max-w-[880px]",
+            )}
+          >
             {/* Project Name */}
             {shouldShowProjectName && (
               <div className="mb-1">
@@ -249,7 +246,12 @@ export function PageHeader({
 
             {/* Status badges — desktop: below title */}
             {statusBadge && (
-              <div className="hidden sm:flex flex-wrap items-center gap-2 mt-2">
+              <div
+                className={cn(
+                  "mt-2 flex-wrap items-center gap-2",
+                  useBudgetLayout ? "hidden lg:flex" : "hidden sm:flex",
+                )}
+              >
                 {statusBadge}
               </div>
             )}
@@ -262,14 +264,20 @@ export function PageHeader({
                 "shrink-0",
                 mobileActionsInline
                   ? "flex items-center justify-end"
-                  : "flex w-full flex-col gap-2 sm:w-auto sm:items-end",
+                  : useBudgetLayout
+                    ? "flex w-full flex-col gap-2 lg:w-auto lg:items-end"
+                    : "flex w-full flex-col gap-2 sm:w-auto sm:items-end",
               )}
             >
               {(actions || showExportButton) && (
                 <div
                   className={cn(
                     "flex items-center gap-2 max-sm:[&_button]:min-h-11",
-                    mobileActionsInline ? "justify-end" : "w-full flex-wrap sm:w-auto",
+                    mobileActionsInline
+                      ? "justify-end"
+                      : useBudgetLayout
+                        ? "w-full flex-wrap lg:w-auto"
+                        : "w-full flex-wrap sm:w-auto",
                   )}
                 >
                   {showExportButton && (onExportCSV || onExportPDF) && (
@@ -299,7 +307,12 @@ export function PageHeader({
               )}
               {/* Status badges — mobile: below actions */}
               {statusBadge && (
-                <div className="flex sm:hidden flex-wrap items-center gap-2">
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center gap-2",
+                    useBudgetLayout ? "lg:hidden" : "sm:hidden",
+                  )}
+                >
                   {statusBadge}
                 </div>
               )}
@@ -309,7 +322,7 @@ export function PageHeader({
 
         {/* Tabs — rendered below title/actions, flush with the header bottom */}
         {tabs && tabs.length > 0 && (
-          <PageTabsV2 tabs={tabs} />
+          <PageTabs tabs={tabs} variant="inline" className="mb-0" />
         )}
       </div>
     </div>

@@ -1,0 +1,27 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-54-43-570Z-ac6ed759
+
+[1/5] realworld-last-five-emails … ✓ pass (17012ms, 1 tools)
+[2/5] realworld-urgent-inbox … ✗ fail (15199ms, 1 tools)
+    ! judge email_operator score 3 < 4: Good triage structure, but it misses the prompt’s core question because it says no true urgent/critical email was identified while also surfacing security and project-risk items that could be urgent depending on ownership. It is careful about not inventing sends, but several items are mislabeled as replies/watch items without enough evidence of ownership or urgency.
+[3/5] realworld-important-emails-this-morning … [auth] Token refreshed, expires 2026-06-27T05:55:24.000Z
+✓ pass (9947ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✗ fail (14604ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer is partially useful but does not meet the rubric’s minimum bar. It identifies a few likely important emails and avoids claiming anything was sent, but it overstates certainty about urgency/ownership, includes weak evidence handling, and misses a clear separation between confirmed user-owned action items and mere inbox items.
+[5/5] realworld-email-reply-triage … ✗ fail (10972ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer partially separates reply candidates from watch/no-reply items, but it does not provide enough evidence-backed judgment for urgency or ownership, and it contains a confidence gap around who actually needs the response. It also mixes in generic guidance and does not clearly distinguish confirmed inbox items from user-owned actions.
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-54-43-570Z-ac6ed759/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-54-43-570Z-ac6ed759/summary.md
+Pass: 2/5

@@ -48,6 +48,7 @@ export type SourceRow = {
   created_at: string | null;
   date: string | null;
   source_last_modified_at: string | null;
+  source_web_url?: string | null;
 };
 
 export type RagEmailSourceRow = {
@@ -139,6 +140,77 @@ export function coverageStatus(count: number, total: number): LifecycleStatus {
   return "critical";
 }
 
+/**
+ * Per-stage grace window (minutes) a freshly-synced document is allowed to sit
+ * before NOT having cleared that downstream stage counts against health. The
+ * crons that feed each stage run behind sync, so the newest cohort is normally
+ * "in flight", not stuck. Without this, `coverageStatus` paints every stage
+ * amber/red permanently on a rolling window. Values mirror the backend health
+ * thresholds (source_sync_health.py: STALE_SYNC_MINUTES=120,
+ * STALE_EXTRACTION_MINUTES=1440, packet freshness=36h) so the map and the
+ * backend agree on what "behind" vs "stuck" means. `synced` has no grace — it
+ * is the sync itself.
+ */
+export const STAGE_GRACE_MINUTES: Record<LifecycleStageKey, number> = {
+  synced: 0,
+  vectorized: 120,
+  projectAssigned: 120,
+  tasksExtracted: 1440,
+  projectIntelligenceUpdated: 2160,
+};
+
+/** Age of an ISO timestamp in minutes, or null when unparseable/absent. */
+export function ageMinutes(iso: string | null | undefined, nowMs: number): number | null {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  return (nowMs - then) / 60000;
+}
+
+/**
+ * Coverage status computed over only the *mature* cohort — documents older than
+ * the stage's grace window. Documents still within the window are in flight
+ * (the feeding cron simply has not run yet) and never drag a stage red. Returns
+ * "healthy" when nothing is mature yet: an all-fresh cohort is flowing, not
+ * broken. Real stalls — mature documents that never cleared — still surface.
+ */
+export function maturityCoverageStatus(
+  clearedMature: number,
+  totalMature: number,
+): LifecycleStatus {
+  if (totalMature === 0) return "healthy";
+  return coverageStatus(clearedMature, totalMature);
+}
+
+/**
+ * Error codes the ingestion pipeline uses for documents it *deliberately* did
+ * not embed — not failures. The backend records these with
+ * `status="failed_permanent"` (see fireflies_pipeline / embedder /
+ * document_parser) but marks them `intentional: true` and clears the error
+ * message. They must NOT be surfaced as critical pipeline failures, or the
+ * health map paints red for documents that were correctly skipped.
+ */
+export const INTENTIONAL_SKIP_ERROR_CODES = new Set<string>([
+  "interview_title_excluded",
+  "skipped_low_content",
+]);
+
+/**
+ * True when a source-processing job represents an intentional skip rather than
+ * a real failure. Matches by known skip error codes and by the backend's
+ * `INTENTIONALLY_EXCLUDED:` error-message marker (belt and suspenders — the
+ * message prefix survives even if a new skip code is added upstream).
+ */
+export function isIntentionalSkipJob(job: {
+  error_code?: string | null;
+  error_message?: string | null;
+  status?: string | null;
+}): boolean {
+  if (job.status === "intentionally_excluded") return true;
+  if (job.error_code && INTENTIONAL_SKIP_ERROR_CODES.has(job.error_code)) return true;
+  return Boolean(job.error_message?.startsWith("INTENTIONALLY_EXCLUDED:"));
+}
+
 export function isTransientSupabaseReadError(error: { message?: string } | null | undefined) {
   return String(error?.message ?? "").toLowerCase().includes("fetch failed");
 }
@@ -205,11 +277,27 @@ export function hasTaskExtractionOutcome(
   taskIds: Set<string>,
   jobMetadataByDocumentId: Map<string, Record<string, unknown>>,
 ) {
-  if (taskIds.has(documentId)) return true;
+  return getTaskExtractionOutcome(documentId, taskIds, jobMetadataByDocumentId) !== "not_extracted";
+}
+
+export type TaskExtractionOutcome =
+  | "tasks_created"
+  | "no_actionable_tasks"
+  | "task_signal_staged"
+  | "not_extracted";
+
+export function getTaskExtractionOutcome(
+  documentId: string,
+  taskIds: Set<string>,
+  jobMetadataByDocumentId: Map<string, Record<string, unknown>>,
+): TaskExtractionOutcome {
+  if (taskIds.has(documentId)) return "tasks_created";
   const status = String(
     jobMetadataByDocumentId.get(documentId)?.task_extraction_status ?? "",
   ).toLowerCase();
-  return status === "tasks_created" || status === "no_actionable_tasks" || status === "task_signal_staged";
+  if (status === "no_actionable_tasks") return "no_actionable_tasks";
+  if (status === "task_signal_staged") return "task_signal_staged";
+  return "not_extracted";
 }
 
 export function hasFullTranscriptReadProof(

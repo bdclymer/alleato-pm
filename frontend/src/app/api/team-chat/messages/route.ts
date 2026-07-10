@@ -1,5 +1,10 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { fetchAllComments } from "@/lib/comments/all-comments";
+import {
+  buildCommentInboxMessages,
+  isCommentInboxChannel,
+} from "@/lib/team-chat/comment-dm";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -54,6 +59,21 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "channel is required" }, { status: 400 });
     }
 
+    if (isCommentInboxChannel(channelId)) {
+      try {
+        const comments = await fetchAllComments();
+        return NextResponse.json(buildCommentInboxMessages(comments));
+      } catch (error) {
+        return NextResponse.json(
+          {
+            error: "Failed to load comments inbox.",
+            detail: error instanceof Error ? error.message : String(error),
+          },
+          { status: 502 },
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from("team_chat_messages")
       .select("id, channel_id, user_name, content, created_at")
@@ -86,6 +106,13 @@ export const POST = withApiGuardrails(
       return NextResponse.json(
         { error: "channelId and content are required" },
         { status: 400 },
+      );
+    }
+
+    if (isCommentInboxChannel(channelId)) {
+      return NextResponse.json(
+        { error: "Comments inbox is read-only." },
+        { status: 403 },
       );
     }
 

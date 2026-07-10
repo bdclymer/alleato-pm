@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { MoreVertical, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -17,7 +17,9 @@ import {
   CellBadge,
   CellLink,
   CellText,
-  InlineSelectEditor,
+  createInlinePatchHandler,
+  editableSelectColumn,
+  editableTextColumn,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
@@ -39,8 +41,8 @@ import {
 } from "@/features/contacts/directory-contacts-table-definition";
 
 const CONTACT_TYPE_COLORS: CellColorMap = {
-  user: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  employee: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  user: "bg-primary/10 text-primary",
+  employee: "bg-success/10 text-success",
   contact: "bg-muted text-muted-foreground",
 };
 
@@ -51,6 +53,7 @@ const CONTACT_TYPE_OPTIONS = [
 ];
 
 const NO_COMPANY_VALUE = "__no_company__";
+type ContactEditableField = "email" | "type" | "company_id" | "phone";
 
 interface CompanyOption {
   id: string;
@@ -67,9 +70,9 @@ function escapeCsvValue(value: string): string {
 function buildContactTableColumns(
   onInlineEdit: (
     contact: ContactTableRow,
-    field: string,
+    field: ContactEditableField,
     value: string,
-  ) => Promise<void>,
+  ) => void | Promise<void>,
   companyOptions: CompanyOption[],
 ): TableColumn<ContactTableRow>[] {
   return [
@@ -85,90 +88,91 @@ function buildContactTableColumns(
       sortValue: (item) => item.full_name,
       csvValue: (item) => item.full_name,
     },
-    {
-      ...contactColumns[1],
-      render: (item) => <CellText value={item.email} emptyLabel="-" />,
-      sortValue: (item) => item.email || "",
-      csvValue: (item) => item.email || "",
-      editable: true,
-      editInputType: "email",
-      editValue: (item) => item.email || "",
-      onEdit: (item, value) => onInlineEdit(item, "email", value),
-    },
-    {
-      ...contactColumns[2],
-      render: (item) => (
-        <CellBadge
-          value={item.type}
-          colorMap={CONTACT_TYPE_COLORS}
-          emptyLabel="-"
-        />
-      ),
-      sortValue: (item) => item.type || "",
-      csvValue: (item) => item.type || "",
-      editable: true,
-      editValue: (item) => item.type || "contact",
-      onEdit: (item, value) => onInlineEdit(item, "type", value),
-      renderEditor: ({ value, onChange, onCommit }) => (
-        <InlineSelectEditor
-          value={value || "contact"}
-          options={CONTACT_TYPE_OPTIONS}
-          placeholder="Select contact type"
-          onChange={onChange}
-          onCommit={onCommit}
-        />
-      ),
-    },
-    {
-      ...contactColumns[3],
-      render: (item) => <CellText value={item.company} emptyLabel="-" />,
-      sortValue: (item) => item.company || "",
-      csvValue: (item) => item.company || "",
-      editable: true,
-      editValue: (item) => item.company_id || NO_COMPANY_VALUE,
-      onEdit: (item, value) =>
-        onInlineEdit(
-          item,
-          "company_id",
-          value === NO_COMPANY_VALUE ? "" : value,
-        ),
-      renderEditor: ({ item, value, onChange, onCommit }) => {
-        const options = [
-          { value: NO_COMPANY_VALUE, label: "No company" },
-          ...companyOptions.map((company) => ({
-            value: company.id,
-            label: company.name,
-          })),
-        ];
-        const currentOptionMissing =
-          item.company_id &&
-          item.company &&
-          !options.some((option) => option.value === item.company_id);
-        const resolvedOptions = currentOptionMissing
-          ? [...options, { value: item.company_id || "", label: item.company || "" }]
-          : options;
-
-        return (
-          <InlineSelectEditor
-            value={value || NO_COMPANY_VALUE}
-            options={resolvedOptions}
-            placeholder="Select company"
-            onChange={onChange}
-            onCommit={onCommit}
-          />
-        );
+    editableTextColumn(
+      {
+        ...contactColumns[1],
+        render: (item) => <CellText value={item.email} emptyLabel="-" />,
+        sortValue: (item) => item.email || "",
+        csvValue: (item) => item.email || "",
       },
-    },
-    {
-      ...contactColumns[4],
-      render: (item) => <CellText value={item.phone} emptyLabel="-" />,
-      sortValue: (item) => item.phone || "",
-      csvValue: (item) => item.phone || "",
-      editable: true,
-      editInputType: "tel",
-      editValue: (item) => item.phone || "",
-      onEdit: (item, value) => onInlineEdit(item, "phone", value),
-    },
+      {
+        inputType: "email",
+        getValue: (item) => item.email,
+        onEdit: (item, value) => onInlineEdit(item, "email", value),
+      },
+    ),
+    editableSelectColumn(
+      {
+        ...contactColumns[2],
+        render: (item) => (
+          <CellBadge
+            value={item.type}
+            colorMap={CONTACT_TYPE_COLORS}
+            emptyLabel="-"
+          />
+        ),
+        sortValue: (item) => item.type || "",
+        csvValue: (item) => item.type || "",
+      },
+      {
+        getValue: (item) => item.type || "contact",
+        onEdit: (item, value) => onInlineEdit(item, "type", value),
+        options: CONTACT_TYPE_OPTIONS,
+        emptyLabel: "Select contact type",
+      },
+    ),
+    editableSelectColumn(
+      {
+        ...contactColumns[3],
+        render: (item) => <CellText value={item.company} emptyLabel="-" />,
+        sortValue: (item) => item.company || "",
+        csvValue: (item) => item.company || "",
+      },
+      {
+        getValue: (item) => item.company_id || NO_COMPANY_VALUE,
+        onEdit: (item, value) =>
+          onInlineEdit(
+            item,
+            "company_id",
+            value === NO_COMPANY_VALUE ? "" : value,
+          ),
+        emptyLabel: "Select company",
+        options: (item) => {
+          const options = [
+            { value: NO_COMPANY_VALUE, label: "No company" },
+            ...companyOptions.map((company) => ({
+              value: company.id,
+              label: company.name,
+            })),
+          ];
+          const currentOptionMissing =
+            item.company_id &&
+            item.company &&
+            !options.some((option) => option.value === item.company_id);
+          const resolvedOptions = currentOptionMissing
+            ? [
+                ...options,
+                { value: item.company_id || "", label: item.company || "" },
+              ]
+            : options;
+
+          return resolvedOptions;
+        },
+      },
+    ),
+    editableTextColumn(
+      {
+        ...contactColumns[4],
+        render: (item) => <CellText value={item.phone} emptyLabel="-" />,
+        sortValue: (item) => item.phone || "",
+        csvValue: (item) => item.phone || "",
+      },
+      {
+        inputType: "tel",
+        getValue: (item) => item.phone,
+        onEdit: (item, value) => onInlineEdit(item, "phone", value),
+      },
+    ),
     {
       ...contactColumns[5],
       render: (item) =>
@@ -257,13 +261,15 @@ export default function DirectoryContactsPage(): ReactElement {
   }, []);
 
   const handleInlineContactEdit = React.useCallback(
-    async (contact: ContactTableRow, field: string, value: string) => {
-      await apiFetch(`/api/directory/contacts/${contact.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ [field]: value || null }),
-      });
-      await refresh();
-    },
+    createInlinePatchHandler<ContactTableRow, ContactEditableField>({
+      update: async (contact, patch) => {
+        await apiFetch(`/api/directory/contacts/${contact.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(patch),
+        });
+        await refresh();
+      },
+    }),
     [refresh],
   );
 
@@ -392,7 +398,7 @@ export default function DirectoryContactsPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

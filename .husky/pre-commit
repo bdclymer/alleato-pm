@@ -15,7 +15,7 @@ fi
 # ── Root file guard ──────────────────────────────────────────────
 # Only these files are allowed at the project root. Everything else
 # (especially .md, .js, .ts, .py, .sh) must go in docs/, scripts/, etc.
-ALLOWED_ROOT="README.md|CLAUDE.md|AGENTS.md|CONTRIBUTING.md|WORKING_CONTEXT.md|DESIGN.md|CHANGELOG.md|LICENSE|LICENSE.md|.lintstagedrc.js"
+ALLOWED_ROOT="README.md|CLAUDE.md|AGENTS.md|CONTRIBUTING.md|CONTEXT.md|WORKING_CONTEXT.md|PRODUCT.md|DESIGN.md|CHANGELOG.md|LICENSE|LICENSE.md|.lintstagedrc.js"
 
 STRAY_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^[^/]+\.(md|js|jsx|ts|tsx|mjs|cjs|py|sh|html)$" | grep -Ev "^($ALLOWED_ROOT)$" || true)
 
@@ -104,6 +104,16 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Cron route method guard ──────────────────────────────────────
+# Vercel triggers cron jobs with HTTP GET. A cron route that only exports
+# POST 405s on every scheduled run — silently (the request never reaches app
+# telemetry). Every path in frontend/vercel.json "crons" must export GET.
+node scripts/audits/check-cron-route-methods.mjs
+if [ $? -ne 0 ]; then
+  echo "Registered cron route missing GET export. Add 'export const GET = POST;'."
+  exit 1
+fi
+
 # ── Build crash guards ───────────────────────────────────────────
 # Prevent the two patterns that have caused production build failures:
 #   1. Server pages calling createServiceClient() without force-dynamic
@@ -122,6 +132,17 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Intelligence SELECT * guard ──────────────────────────────────
+# Block .select("*") anywhere in backend/src/services/intelligence.
+# Unbounded compiler reads were the biggest legitimate load in the
+# 2026-07-02 PM APP saturation incident, and service_role now enforces
+# statement_timeout=30s. See scripts/audits/check-no-select-star-intelligence.mjs.
+node scripts/audits/check-no-select-star-intelligence.mjs
+if [ $? -ne 0 ]; then
+  echo "SELECT * in intelligence services. Use an explicit column list before committing."
+  exit 1
+fi
+
 # ── Broken symlink guard ─────────────────────────────────────────
 # Block staged symlinks that are dangling or use absolute paths.
 # These have repeatedly crashed the Claude Code Action skill scanner
@@ -132,10 +153,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# ── RAG architecture docs freshness gate ─────────────────────────
-# If staged changes touch RAG code or RAG-table migrations, the two
-# architecture docs (AI-RAG-ARCHITECTURE.md + TABLE-INVENTORY.md) must
-# be updated in the same commit. See .claude/rules/RAG-DOCS-GATE.md.
+# ── RAG architecture docs freshness gate (structural half only) ──
+# Checks tables.yaml/TABLE-LIST.md consistency, which doesn't depend on the
+# commit message. The RAG-path + [skip-rag-docs] check lives in
+# .husky/commit-msg, since that's the only hook stage with the final
+# message on disk. See .claude/rules/RAG-DOCS-GATE.md.
 sh .husky/pre-commit-rag-docs
 if [ $? -ne 0 ]; then
   exit 1

@@ -11,6 +11,19 @@ export type FinanceSpendCategory =
   | "finance_legal_compliance"
   | "other_finance_overhead";
 
+export type OperatingDirectCostArea =
+  | "software_subscriptions"
+  | "payroll"
+  | "travel_hotels"
+  | "travel_flights"
+  | "travel_other"
+  | "office_supplies"
+  | "executive_ceo"
+  | "accounting_services"
+  | "audit_tax"
+  | "legal_compliance"
+  | "other_overhead";
+
 export type FinanceSpendExclusionReason =
   | "project_cost"
   | "customer_refund"
@@ -22,6 +35,7 @@ export type FinanceSpendExclusionReason =
 export type FinanceSpendBill = {
   id: number;
   referenceNbr: string;
+  documentType: string | null;
   vendorId: string | null;
   vendorRef: string | null;
   date: string | null;
@@ -34,6 +48,9 @@ export type FinanceSpendBill = {
   categoryLabel: string | null;
   confidence: number;
   classificationSource: string;
+  operatingArea: OperatingDirectCostArea;
+  operatingAreaLabel: string;
+  operatingAreaSource: string;
   included: boolean;
   exclusionReason: FinanceSpendExclusionReason | null;
   flags: string[];
@@ -121,6 +138,20 @@ const CATEGORY_LABELS: Record<FinanceSpendCategory, string> = {
   other_finance_overhead: "Other finance overhead",
 };
 
+const OPERATING_AREA_LABELS: Record<OperatingDirectCostArea, string> = {
+  software_subscriptions: "Software subscriptions",
+  payroll: "Payroll",
+  travel_hotels: "Travel, hotels",
+  travel_flights: "Travel, flights",
+  travel_other: "Travel, other",
+  office_supplies: "Office supplies",
+  executive_ceo: "Executive / CEO",
+  accounting_services: "Accounting services",
+  audit_tax: "Audit / tax",
+  legal_compliance: "Legal / compliance",
+  other_overhead: "Other overhead",
+};
+
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -175,6 +206,108 @@ function duplicateSignature(row: ApBillRow): string {
     roundMoney(Number(row.amount ?? 0)).toFixed(2),
     (row.description ?? "").trim().toUpperCase(),
   ].join("|");
+}
+
+function inferOperatingArea(
+  row: ApBillRow,
+  category: FinanceSpendCategory | null,
+): {
+  area: OperatingDirectCostArea;
+  label: string;
+  source: string;
+} {
+  const searchable = normalizedText(row);
+
+  const keywordAreas: Array<{
+    area: OperatingDirectCostArea;
+    source: string;
+    pattern: RegExp;
+  }> = [
+    {
+      area: "travel_hotels",
+      source: "keyword:travel_hotels",
+      pattern: /\b(HOTEL|MOTEL|MARRIOTT|HILTON|HYATT|AIRBNB|LODGE|LODGING|SUITES|RESORT|INN)\b/i,
+    },
+    {
+      area: "travel_flights",
+      source: "keyword:travel_flights",
+      pattern: /\b(FLIGHT|AIRFARE|AIR FARE|AIRLINES|DELTA|SOUTHWEST|UNITED|AMERICAN AIRLINES|JETBLUE|SPIRIT|FRONTIER)\b/i,
+    },
+    {
+      area: "travel_other",
+      source: "keyword:travel_other",
+      pattern: /\b(TRAVEL|UBER|LYFT|HERTZ|AVIS|NATIONAL CAR|ENTERPRISE RENT|RENTAL CAR|TAXI|PARKING|PER DIEM)\b/i,
+    },
+    {
+      area: "office_supplies",
+      source: "keyword:office_supplies",
+      pattern: /\b(OFFICE DEPOT|STAPLES|OFFICE SUPPLY|OFFICE SUPPLIES|TONER|PRINTER|AMAZON BUSINESS|SHIPPING SUPPLIES)\b/i,
+    },
+    {
+      area: "executive_ceo",
+      source: "keyword:executive_ceo",
+      pattern: /\b(CEO|BRANDON|BCLYMER|EXECUTIVE)\b/i,
+    },
+    {
+      area: "software_subscriptions",
+      source: "keyword:software_subscriptions",
+      pattern: /\b(SOFTWARE|SUBSCRIPTION|SAAS|MICROSOFT|GOOGLE WORKSPACE|ADOBE|SLACK|ZOOM|OPENAI|CHATGPT|NOTION|DROPBOX)\b/i,
+    },
+    {
+      area: "payroll",
+      source: "keyword:payroll",
+      pattern: /\b(PAYROLL|TIMEKEEPING|TIMECO|GUSTO|ADP|PAYCHEX|TIME CLOCK)\b/i,
+    },
+  ];
+
+  for (const candidate of keywordAreas) {
+    if (candidate.pattern.test(searchable)) {
+      return {
+        area: candidate.area,
+        label: OPERATING_AREA_LABELS[candidate.area],
+        source: candidate.source,
+      };
+    }
+  }
+
+  const categoryAreaMap: Record<
+    FinanceSpendCategory,
+    { area: OperatingDirectCostArea; source: string }
+  > = {
+    audit_tax: { area: "audit_tax", source: "category:audit_tax" },
+    controller_accounting_services: {
+      area: "accounting_services",
+      source: "category:controller_accounting_services",
+    },
+    erp_accounting_software: {
+      area: "software_subscriptions",
+      source: "category:erp_accounting_software",
+    },
+    payroll_timekeeping: { area: "payroll", source: "category:payroll_timekeeping" },
+    finance_legal_compliance: {
+      area: "legal_compliance",
+      source: "category:finance_legal_compliance",
+    },
+    other_finance_overhead: {
+      area: "other_overhead",
+      source: "category:other_finance_overhead",
+    },
+  };
+
+  if (category) {
+    const mapped = categoryAreaMap[category];
+    return {
+      area: mapped.area,
+      label: OPERATING_AREA_LABELS[mapped.area],
+      source: mapped.source,
+    };
+  }
+
+  return {
+    area: "other_overhead",
+    label: OPERATING_AREA_LABELS.other_overhead,
+    source: "fallback:other_overhead",
+  };
 }
 
 function classifyBill(row: ApBillRow, rules: RuleRow[], seenSignatures: Set<string>): FinanceSpendBill {
@@ -248,9 +381,12 @@ function classifyBill(row: ApBillRow, rules: RuleRow[], seenSignatures: Set<stri
     flags.push("Classification confidence is below review threshold.");
   }
 
+  const operatingArea = inferOperatingArea(row, category);
+
   return {
     id: row.id,
     referenceNbr: row.reference_nbr,
+    documentType: row.document_type,
     vendorId: row.vendor_id,
     vendorRef: row.vendor_ref,
     date: row.date,
@@ -263,6 +399,9 @@ function classifyBill(row: ApBillRow, rules: RuleRow[], seenSignatures: Set<stri
     categoryLabel: category ? CATEGORY_LABELS[category] : null,
     confidence,
     classificationSource,
+    operatingArea: operatingArea.area,
+    operatingAreaLabel: operatingArea.label,
+    operatingAreaSource: operatingArea.source,
     included,
     exclusionReason,
     flags,
@@ -283,6 +422,10 @@ function pushSum<TKey extends string>(
 export async function buildFinanceSpendRollup(
   supabase: Supabase,
   months = 12,
+  options?: {
+    includedBillLimit?: number;
+    exceptionLimit?: number;
+  },
 ): Promise<FinanceSpendRollup> {
   const startDate = startDateForTrailingMonths(months);
   const endDate = new Date().toISOString().slice(0, 10);
@@ -365,10 +508,10 @@ export async function buildFinanceSpendRollup(
     }),
     exceptions: exceptions
       .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
-      .slice(0, 200),
+      .slice(0, options?.exceptionLimit ?? 200),
     includedBills: includedBills
       .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""))
-      .slice(0, 200),
+      .slice(0, options?.includedBillLimit ?? 200),
   };
 }
 

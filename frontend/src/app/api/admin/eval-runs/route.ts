@@ -51,11 +51,32 @@ interface RawRun {
   results?: RawCase[];
 }
 
-// Eval runs are written to repo-root docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ by the CLI runner
-// (gitignored — local only). The API route process runs from frontend/, so the
-// directory is one level up. We check both locations to stay robust.
+// Eval runs are written to repo-root
+// docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/ by the CLI runner
+// (gitignored — local only). The API route process usually runs from frontend/,
+// so the directory is one level up. We keep the non-archived path as a legacy
+// fallback in case older local runs still exist there.
 async function findRunsDir(): Promise<string | null> {
   const candidates = [
+    path.resolve(
+      process.cwd(),
+      "..",
+      "docs",
+      "archive",
+      "2026-06-22-docs-migration",
+      "ai-plan",
+      "evals",
+      "runs",
+    ),
+    path.resolve(
+      process.cwd(),
+      "docs",
+      "archive",
+      "2026-06-22-docs-migration",
+      "ai-plan",
+      "evals",
+      "runs",
+    ),
     path.resolve(process.cwd(), "..", "docs", "ai-plan", "evals", "runs"),
     path.resolve(process.cwd(), "docs", "ai-plan", "evals", "runs"),
   ];

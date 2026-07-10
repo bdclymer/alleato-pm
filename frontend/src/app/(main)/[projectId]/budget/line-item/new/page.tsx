@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Plus, Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
-import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-client";
-import {
-  type ProjectBudgetCode,
-  useProjectBudgetCodes,
-} from "@/hooks/use-project-budget-codes";
+import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -30,21 +29,15 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
-import { BudgetItemDeleteDialog } from "@/components/budget/BudgetItemDeleteDialog";
-import { PageShell } from "@/components/layout";
-import { FormSection } from "@/components/forms";
+import { PageShell, FormContainer } from "@/components/layout";
+import { Form } from "@/components/ui/form";
+import { FormSection } from "@/components/forms/FormSection";
 import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFFieldArrayTable } from "@/components/forms/fields/RHFFieldArrayTable";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
-
-interface BudgetLineItemRow {
-  id: string;
-  budgetCodeId: string;
-  budgetCodeLabel: string;
-  qty: string;
-  uom: string;
-  unitCost: string;
-  amount: string;
-}
 
 type CostCodeOption = {
   id: string;
@@ -55,6 +48,62 @@ type CostCodeOption = {
   division_title: string;
 };
 
+type BudgetLineRow = {
+  budgetCodeId: string;
+  budgetCodeLabel: string;
+  qty: string;
+  uom: string;
+  unitCost: string;
+  amount: string;
+};
+
+type BudgetLineFormValues = {
+  rows: BudgetLineRow[];
+};
+
+const UOM_OPTIONS = [
+  { value: "EA", label: "EA" },
+  { value: "HR", label: "HR" },
+  { value: "SF", label: "SF" },
+  { value: "LF", label: "LF" },
+  { value: "LS", label: "LS" },
+  { value: "CY", label: "CY" },
+  { value: "TON", label: "TON" },
+  { value: "DAY", label: "DAY" },
+];
+
+// Permissive shape schema — the real "budget code + non-zero amount" checks stay
+// imperative in onSubmit so the exact toast UX and POST payload are preserved.
+const rowSchema = z.object({
+  budgetCodeId: z.string(),
+  budgetCodeLabel: z.string(),
+  qty: z.string(),
+  uom: z.string(),
+  unitCost: z.string(),
+  amount: z.string(),
+});
+
+const formSchema = z.object({
+  rows: z.array(rowSchema).min(1, "At least one line item is required"),
+});
+
+function createBudgetLineRow(): BudgetLineRow {
+  return {
+    budgetCodeId: "",
+    budgetCodeLabel: "",
+    qty: "1",
+    uom: "",
+    unitCost: "",
+    amount: "0.00",
+  };
+}
+
+function calculateAmount(qty: string, unitCost: string): string {
+  const qtyNum = parseFloat(qty) || 0;
+  const costNum = parseFloat(unitCost) || 0;
+  return (qtyNum * costNum).toFixed(2);
+}
+
 export default function NewBudgetLineItemPage() {
   const router = useRouter();
   const params = useParams()! ?? {};
@@ -63,6 +112,60 @@ export default function NewBudgetLineItemPage() {
   const [loading, setLoading] = useState(false);
   const { budgetCodes, loadingCodes, createBudgetCode } =
     useProjectBudgetCodes(projectId);
+
+  const form = useForm<BudgetLineFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      rows: [createBudgetLineRow()],
+    },
+  });
+
+  const {
+    control,
+    handleSubmit,
+    setError,
+    reset,
+    getValues,
+    setValue,
+    watch,
+    formState: { errors },
+  } = form;
+
+  const watchedRows = watch("rows");
+  const rowCount = watchedRows?.length ?? 0;
+
+  // Auto-calculate amount when qty or unitCost changes (matches the original
+  // handleRowChange behavior). Manual edits to amount are left untouched, and
+  // add/remove of rows never triggers a recompute (so an existing manual amount
+  // is not clobbered when indices shift).
+  const prevRowsRef = useRef<Record<number, { qty: string; unitCost: string }>>(
+    {},
+  );
+  const prevRowCountRef = useRef<number>(watchedRows?.length ?? 0);
+  useEffect(() => {
+    const rows = watchedRows ?? [];
+
+    if (rows.length !== prevRowCountRef.current) {
+      prevRowCountRef.current = rows.length;
+      const rebuilt: Record<number, { qty: string; unitCost: string }> = {};
+      rows.forEach((row, index) => {
+        rebuilt[index] = { qty: row.qty, unitCost: row.unitCost };
+      });
+      prevRowsRef.current = rebuilt;
+      return;
+    }
+
+    rows.forEach((row, index) => {
+      const prev = prevRowsRef.current[index];
+      if (prev && (prev.qty !== row.qty || prev.unitCost !== row.unitCost)) {
+        const nextAmount = calculateAmount(row.qty, row.unitCost);
+        if (row.amount !== nextAmount) {
+          setValue(`rows.${index}.amount`, nextAmount, { shouldDirty: true });
+        }
+      }
+      prevRowsRef.current[index] = { qty: row.qty, unitCost: row.unitCost };
+    });
+  }, [watchedRows, setValue]);
 
   // Cost codes from Supabase
   const [availableCostCodes, setAvailableCostCodes] = useState<
@@ -73,22 +176,9 @@ export default function NewBudgetLineItemPage() {
     Record<string, CostCodeOption[]>
   >({});
 
-  // Multiple rows state
-  const [rows, setRows] = useState<BudgetLineItemRow[]>([
-    {
-      id: "1",
-      budgetCodeId: "",
-      budgetCodeLabel: "",
-      qty: "1",
-      uom: "",
-      unitCost: "",
-      amount: "0.00",
-    },
-  ]);
-
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
-  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
+  const [pendingRowIndex, setPendingRowIndex] = useState<number | null>(null);
   const [newCodeData, setNewCodeData] = useState({
     costCodeId: "", // ID from cost_codes table
     costType: "L",
@@ -96,10 +186,6 @@ export default function NewBudgetLineItemPage() {
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set(),
   );
-
-  // Delete confirmation dialog state
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [rowToDelete, setRowToDelete] = useState<string | null>(null);
 
   // Fetch cost codes from Supabase when modal opens
   useEffect(() => {
@@ -171,11 +257,11 @@ export default function NewBudgetLineItemPage() {
 
         setGroupedCostCodes(grouped);
       } catch (error) {
-
         console.error("Failed to load budget data:", error);
 
-        toast.error("Failed to load budget data", { description: "Please try again." });
-
+        toast.error("Failed to load budget data", {
+          description: "Please try again.",
+        });
       } finally {
         setLoadingCostCodes(false);
       }
@@ -226,27 +312,27 @@ export default function NewBudgetLineItemPage() {
         description: selectedCostCode.title,
       });
 
-      setRows((prev) => {
-        const targetRow =
-          (pendingRowId && prev.find((row) => row.id === pendingRowId)) ||
-          prev.find((row) => !row.budgetCodeId);
+      const currentRows = getValues("rows");
+      let targetIndex =
+        pendingRowIndex != null && currentRows[pendingRowIndex]
+          ? pendingRowIndex
+          : -1;
+      if (targetIndex === -1) {
+        targetIndex = currentRows.findIndex((row) => !row.budgetCodeId);
+      }
 
-        if (!targetRow) return prev;
-
-        return prev.map((row) =>
-          row.id === targetRow.id
-            ? {
-                ...row,
-                budgetCodeId: createdCode.id,
-                budgetCodeLabel: createdCode.fullLabel,
-              }
-            : row,
-        );
-      });
+      if (targetIndex !== -1) {
+        setValue(`rows.${targetIndex}.budgetCodeId`, createdCode.id, {
+          shouldDirty: true,
+        });
+        setValue(`rows.${targetIndex}.budgetCodeLabel`, createdCode.fullLabel, {
+          shouldDirty: true,
+        });
+      }
 
       // Reset modal
       setShowCreateCodeModal(false);
-      setPendingRowId(null);
+      setPendingRowIndex(null);
       setNewCodeData({ costCodeId: "", costType: "L" });
     } catch (error) {
       // apiFetch throws ApiError with the real server message — surface it
@@ -261,80 +347,12 @@ export default function NewBudgetLineItemPage() {
     }
   };
 
-  const handleBudgetCodeSelect = (rowId: string, code: ProjectBudgetCode) => {
-    setRows(
-      rows.map((row) =>
-        row.id === rowId
-          ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
-          : row,
-      ),
-    );
-  };
-
-  const calculateAmount = (qty: string, unitCost: string): string => {
-    const qtyNum = parseFloat(qty) || 0;
-    const costNum = parseFloat(unitCost) || 0;
-    return (qtyNum * costNum).toFixed(2);
-  };
-
-  const handleRowChange = (
-    rowId: string,
-    field: keyof BudgetLineItemRow,
-    value: string,
-  ) => {
-    setRows(
-      rows.map((row) => {
-        if (row.id !== rowId) return row;
-
-        const updatedRow = { ...row, [field]: value };
-
-        // Auto-calculate amount when qty or unitCost changes
-        if (field === "qty" || field === "unitCost") {
-          updatedRow.amount = calculateAmount(
-            updatedRow.qty,
-            updatedRow.unitCost,
-          );
-        }
-
-        return updatedRow;
-      }),
-    );
-  };
-
-  const addRow = () => {
-    const newRow: BudgetLineItemRow = {
-      id: Date.now().toString(),
-      budgetCodeId: "",
-      budgetCodeLabel: "",
-      qty: "1",
-      uom: "",
-      unitCost: "",
-      amount: "0.00",
-    };
-    setRows([...rows, newRow]);
-  };
-
-  const handleDeleteClick = (rowId: string) => {
-    if (rows.length === 1) return; // Keep at least one row
-    setRowToDelete(rowId);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmRemoveRow = () => {
-    if (rowToDelete) {
-      setRows(rows.filter((row) => row.id !== rowToDelete));
-      setRowToDelete(null);
-    }
-    setShowDeleteDialog(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: BudgetLineFormValues) => {
     setLoading(true);
 
     try {
       // Validate: all rows must have a budget code and amount
-      const invalidRows = rows.filter(
+      const invalidRows = data.rows.filter(
         (row) => !row.budgetCodeId || parseFloat(row.amount) === 0,
       );
 
@@ -344,7 +362,7 @@ export default function NewBudgetLineItemPage() {
         return;
       }
 
-      const lineItemsToSubmit = rows.map((row) => {
+      const lineItemsToSubmit = data.rows.map((row) => {
         const budgetCode = budgetCodes.find(
           (code) => code.id === row.budgetCodeId,
         );
@@ -371,11 +389,11 @@ export default function NewBudgetLineItemPage() {
     } catch (error) {
       // apiFetch throws ApiError with the real server message — surface it
       // to the user instead of a generic fallback (Rule 2).
-      toast.error(
-        `Failed to create budget line items: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-      );
+      const message = `Failed to create budget line items: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`;
+      setError("root", { type: "server", message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -397,208 +415,161 @@ export default function NewBudgetLineItemPage() {
       onBack={() => router.push(`/${projectId}/budget`)}
       backLabel="Back to Budget"
     >
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <FormSection
-          title="Line Items"
-          description="Add budget code, quantity, UOM, unit cost, and amount for each row."
-          actions={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addRow}
-              className="gap-2"
+      <FormContainer maxWidth="lg" withCard={false}>
+        <Form {...form}>
+          <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <FormSection
+              title="Line Items"
+              description="Add budget code, quantity, UOM, unit cost, and amount for each row."
             >
-              <Plus />
-              Add Row
-            </Button>
-          }
-        >
-          <div className="overflow-hidden rounded-lg border bg-background">
-          {/* Table Header */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted border-b">
-                <tr>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-12">
-                    #
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-80">
-                    Budget Code*
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-24">
-                    Qty
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-28">
-                    UOM
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
-                    Unit Cost
-                  </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
-                    Amount*
-                  </th>
-                  <th className="px-4 py-4 w-12">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {rows.map((row, index) => (
-                  <tr key={row.id} className="hover:bg-muted">
-                    <td className="px-4 py-4 text-sm text-foreground">
-                      {index + 1}
-                    </td>
-
-                    {/* Budget Code Selector */}
-                    <td className="px-4 py-4">
-                      <BudgetCodeSelector
-                        value={row.budgetCodeId}
-                        onValueChange={(_, code) =>
-                          handleBudgetCodeSelect(row.id, code)
-                        }
-                        budgetCodes={budgetCodes}
-                        loading={loadingCodes}
-                        onCreateNew={() => {
-                          setPendingRowId(row.id);
-                          setShowCreateCodeModal(true);
-                        }}
-                        placeholder="Select budget code..."
-                        className="h-9"
+              <RHFFieldArrayTable
+                control={control}
+                name="rows"
+                addLabel="Add Row"
+                createRow={createBudgetLineRow}
+                columns={[
+                  {
+                    key: "budgetCode",
+                    header: "Budget Code*",
+                    mobileLabel: "Budget Code*",
+                    className: "min-w-[320px]",
+                    cell: ({ index, rowName }) => (
+                      <Controller
+                        control={control}
+                        name={`${rowName}.budgetCodeId`}
+                        render={({ field }) => (
+                          <BudgetCodeSelector
+                            value={field.value}
+                            onValueChange={(id, code) => {
+                              field.onChange(id);
+                              setValue(
+                                `${rowName}.budgetCodeLabel`,
+                                code.fullLabel,
+                                { shouldDirty: true },
+                              );
+                            }}
+                            budgetCodes={budgetCodes}
+                            loading={loadingCodes}
+                            onCreateNew={() => {
+                              setPendingRowIndex(index);
+                              setShowCreateCodeModal(true);
+                            }}
+                            placeholder="Select budget code..."
+                            className="h-9"
+                          />
+                        )}
                       />
-                    </td>
-
-                    {/* Quantity */}
-                    <td className="px-4 py-4">
-                      <Input
-                        type="number"
-                        step="0.001"
-                        value={row.qty}
-                        onChange={(e) =>
-                          handleRowChange(row.id, "qty", e.target.value)
-                        }
-                        placeholder=""
-                        className="h-9"
-                      />
-                    </td>
-
-                    {/* UOM */}
-                    <td className="px-4 py-4">
-                      <Select
-                        value={row.uom}
-                        onValueChange={(value) =>
-                          handleRowChange(row.id, "uom", value)
-                        }
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="EA">EA</SelectItem>
-                          <SelectItem value="HR">HR</SelectItem>
-                          <SelectItem value="SF">SF</SelectItem>
-                          <SelectItem value="LF">LF</SelectItem>
-                          <SelectItem value="LS">LS</SelectItem>
-                          <SelectItem value="CY">CY</SelectItem>
-                          <SelectItem value="TON">TON</SelectItem>
-                          <SelectItem value="DAY">DAY</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-
-                    {/* Unit Cost */}
-                    <td className="px-4 py-4">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={row.unitCost}
-                        onChange={(e) =>
-                          handleRowChange(row.id, "unitCost", e.target.value)
-                        }
-                        placeholder=""
-                        className="h-9"
-                      />
-                    </td>
-
-                    {/* Amount */}
-                    <td className="px-4 py-4">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={row.amount}
-                        onChange={(e) =>
-                          handleRowChange(row.id, "amount", e.target.value)
-                        }
-                        placeholder=""
-                        className="h-9 font-medium"
-                      />
-                    </td>
-
-                    {/* Delete */}
-                    <td className="px-4 py-4">
-                      {rows.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteClick(row.id)}
-                          className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          </div>
-        </FormSection>
-
-        <FormActions
-          submitLabel={`Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`}
-          onCancel={handleCancel}
-          isSubmitting={loading}
-          align="between"
-        >
-          <DevAutoFillButton
-            formType="budgetLineItem"
-            onAutoFill={(data) => {
-              const autoFillData = data as {
-                amount?: number;
-                quantity?: number;
-                unit?: string;
-                unit_cost?: number;
-              };
-              const firstBudgetCode = budgetCodes[0];
-              setRows([
-                {
-                  id: "1",
-                  budgetCodeId: firstBudgetCode?.id || "",
-                  budgetCodeLabel: firstBudgetCode?.fullLabel || "",
-                  qty: autoFillData.quantity?.toString() || "1",
-                  uom: autoFillData.unit || "EA",
-                  unitCost: autoFillData.unit_cost?.toString() || "",
-                  amount:
-                    autoFillData.amount?.toString() ||
-                    calculateAmount(
-                      autoFillData.quantity?.toString() || "1",
-                      autoFillData.unit_cost?.toString() || "0",
                     ),
-                },
-              ]);
-            }}
-          />
-        </FormActions>
-      </form>
+                  },
+                  {
+                    key: "qty",
+                    header: "Qty",
+                    mobileLabel: "Qty",
+                    className: "w-24",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.qty`}
+                        label="Qty"
+                        type="number"
+                      />
+                    ),
+                  },
+                  {
+                    key: "uom",
+                    header: "UOM",
+                    mobileLabel: "UOM",
+                    className: "w-28",
+                    cell: ({ rowName }) => (
+                      <RHFSelectField
+                        control={control}
+                        name={`${rowName}.uom`}
+                        label="UOM"
+                        placeholder="Select"
+                        options={UOM_OPTIONS}
+                      />
+                    ),
+                  },
+                  {
+                    key: "unitCost",
+                    header: "Unit Cost",
+                    mobileLabel: "Unit Cost",
+                    className: "w-32",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.unitCost`}
+                        label="Unit Cost"
+                        type="number"
+                      />
+                    ),
+                  },
+                  {
+                    key: "amount",
+                    header: "Amount*",
+                    mobileLabel: "Amount*",
+                    className: "w-32",
+                    cell: ({ rowName }) => (
+                      <RHFTextField
+                        control={control}
+                        name={`${rowName}.amount`}
+                        label="Amount*"
+                        type="number"
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </FormSection>
+
+            <FormServerError message={errors.root?.message} />
+
+            <FormActions
+              submitLabel={`Create ${rowCount} Line Item${rowCount > 1 ? "s" : ""}`}
+              onCancel={handleCancel}
+              isSubmitting={loading}
+              align="between"
+            >
+              <DevAutoFillButton
+                formType="budgetLineItem"
+                onAutoFill={(data) => {
+                  const autoFillData = data as {
+                    amount?: number;
+                    quantity?: number;
+                    unit?: string;
+                    unit_cost?: number;
+                  };
+                  const firstBudgetCode = budgetCodes[0];
+                  reset({
+                    rows: [
+                      {
+                        budgetCodeId: firstBudgetCode?.id || "",
+                        budgetCodeLabel: firstBudgetCode?.fullLabel || "",
+                        qty: autoFillData.quantity?.toString() || "1",
+                        uom: autoFillData.unit || "EA",
+                        unitCost: autoFillData.unit_cost?.toString() || "",
+                        amount:
+                          autoFillData.amount?.toString() ||
+                          calculateAmount(
+                            autoFillData.quantity?.toString() || "1",
+                            autoFillData.unit_cost?.toString() || "0",
+                          ),
+                      },
+                    ],
+                  });
+                }}
+              />
+            </FormActions>
+          </form>
+        </Form>
+      </FormContainer>
 
       {/* Create Budget Code Modal */}
       <Modal
         open={showCreateCodeModal}
         onOpenChange={(open) => {
           setShowCreateCodeModal(open);
-          if (!open) setPendingRowId(null);
+          if (!open) setPendingRowIndex(null);
         }}
       >
         <ModalContent className="sm:max-w-lg">
@@ -727,18 +698,6 @@ export default function NewBudgetLineItemPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      {/* Delete Confirmation Dialog */}
-      <BudgetItemDeleteDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={confirmRemoveRow}
-        itemDescription={
-          rowToDelete
-            ? `Line ${rows.findIndex((r) => r.id === rowToDelete) + 1}`
-            : "this line item"
-        }
-      />
     </PageShell>
   );
 }

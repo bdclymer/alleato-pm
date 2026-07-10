@@ -3,6 +3,7 @@ export { BudgetTabs } from "./budget-tabs";
 export { BudgetStatusBanner } from "./budget-status-banner";
 export { BudgetFilters } from "./budget-filters";
 export { BudgetTable } from "./budget-table";
+export { BudgetChangesTab } from "./budget-changes-tab";
 export { BudgetDetailsTable } from "./budget-details-table";
 export { BudgetModificationModal } from "./budget-modification-modal";
 export { OriginalBudgetEditModal } from "./original-budget-edit-modal";

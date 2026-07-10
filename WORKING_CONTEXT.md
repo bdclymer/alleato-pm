@@ -5,11 +5,153 @@
 
 ---
 
+## AI assistant trace audit + outbound-send routing fix (2026-07-10)
+
+- Audited the last ~25 `/ai` conversations (chat_history + Langfuse traces) after Megan
+  reported the assistant felt low-value. Verdict: **the deep-read routing is healthy
+  post-PR #921** (merged 19:00 UTC) — the two garbage "anything important today?" answers
+  from earlier that day (May results, score 0.57) were pre-fix. Verified live twice in
+  production: broad catch-up → `latest_status` + `backendDeepAgentExecutiveBriefing` with
+  today-dated content; "tell me more" drill-down → `decision_lookup` with honest
+  can't-confirm caveats.
+- **Real remaining bug found + fixed: outbound send requests were hijacked into
+  source-lookup RAG** — "Send a Teams message on my behalf … to Brandon Clymer" (session
+  `8e5919ad`) got semantic-search excerpts; `sendTeamsMessage` was never reached. Fix =
+  new `teams_message_action` intent + `isOutboundSendRequest` planner guard — **PR #928
+  (open, needs review/merge)**.
+- Filed: #925 (every deep-read answer lacks source citations — quality scorer flags 100%
+  of latest-status-intent traces), #926 (leaked "I treated this as a source lookup"
+  narration in handler-v2:5463).
+
+## Master AI Roadmap created (2026-07-10)
+
+- **`docs/roadmap/AI-ROADMAP.md`** is now the single ranked map for all AI work — PR #900
+  (branch `claude/elito-ai-roadmap-ea3054`). Visual version published as a Claude artifact
+  (link in PR conversation). `.gitignore` now allowlists `docs/roadmap/`.
+- Built from a full audit of every AI surface's real maturity. Headline: **4 complete
+  systems default OFF** (`EXECUTIVE_DAILY_BRIEF_ENABLED`,
+  `MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED`, `AUTONOMOUS_TRIAGE_ENABLED`,
+  `AI_ASSISTANT_LEARNING_PROPOSALS_ENABLED`); AI Submittal Review is the most complete
+  non-chat AI feature (needs real-world validation, not building); AI estimating is the
+  only true quarter-scale build (crawl/walk/run split in the doc; takeoff = buy not build).
+- Structure: 4 horizons (activate → AI PM v1 → drafting → estimating/prediction),
+  L0–L4 maturity ladder + Definition of Done, effort ratings with reasons, one-initiative-
+  in-flight rule, status ledger (update it whenever an item's level changes).
+- Stale-plan findings: old `AI-MASTER-PLAN.md` tree is DELETED (memory was stale);
+  `/ai-vision` admin page is the phase framework of record; meetings AI phases 2–5 are
+  architecture-locked in `docs/superpowers/plans/2026-07-01-meetings-tool.md`.
+- Next action per roadmap: **H1 item 1 — flip `EXECUTIVE_DAILY_BRIEF_ENABLED` + verify.**
+
+## AI Email Feedback panel redesign — "Confirm & Correct" (2026-07-08)
+
+- Replaced the confusing "AI Classification" verdict list on
+  `/outlook-draft-feedback` with the **Confirm & Correct** panel (design option 1a):
+  a plain-English summary of the AI's plan (What to do / Priority / Project /
+  Category) where one tap saves feedback and any line can be corrected inline.
+  Branch `claude/option-1a-design-ktb8gg`.
+- New component `frontend/src/features/emails/ai-review-panel.tsx` (`AiReviewPanel`).
+  Wired into both the mail-view right rail (`project-emails-workspace.tsx`) and the
+  table-view side panel (`emails-client.tsx`).
+- **Easy revert:** the old `EmailTrainingFeedbackPanel` is kept intact behind the
+  flag `AI_REVIEW_PANEL_ENABLED` (in `ai-review-panel.tsx`). Flip to `false` to
+  restore the previous panel at every call site.
+- Maps to the existing assistant-review contract (`fieldFeedback` verdicts +
+  `projectAssignment`) — confirmed→correct, corrected→incorrect; a still-unreviewed
+  decision is confirmed on save. Project stays `unreviewed` unless explicitly
+  reassigned so the one-tap save is never blocked by the reason requirement.
+- Legacy panel POST body: added an explanatory comment where duplicate
+  `assistantAction`/`assistantPriority` keys used to sit. (That TS2783 class was
+  already fixed on `main` before the rebase, so on this branch it's a comment
+  only — no behavior change.)
+- **Refinements (post-review):** status chip hidden until a decision is reviewed
+  (calmer default); **Corrected uses blue `status-info`, not brand orange**, so a
+  completed correction stands out; per-row "Change"/"Why" links replaced by a
+  tappable value + chevron and one section-level "Show AI reasoning" toggle;
+  reply block fixed ("Generate" vs "Regenerate", no pre-selected verdict, hidden
+  when the action needs no reply); footer helper dropped; added "Save & next" +
+  Enter shortcut (`onRequestNext`) for fast keyboard review of the pending queue.
+- **Post-review fixes (reviewer feedback):** payload logic extracted to pure,
+  unit-tested `ai-review-payload.ts` (+ `.unit.test.ts` covering the
+  projectAssignment-omission + verdict mapping); "Save & next" on the last email
+  now falls back to the success card (no silent no-op); the "over-flagged"
+  priority hint only shows for urgent/high picks.
+
 ## Current focus
 
-**Status:** RFI subcontractor response system fully deployed. DB migrated. Fresh CRON_SECRET set. Awaiting first cron fire confirmation.
-**Last updated:** 2026-06-24
-**Last worked on by:** Claude Code (RFI email response system + cron auth fix)
+**Status:** Daily Deep Read — Teams window bug fixed, July 7 workday packet rerun live, central review queue built (branch `feat/daily-deep-read-teams-fix-central-review`, PR pending merge).
+**Last updated:** 2026-07-07
+**Last worked on by:** Claude Code
+
+## Daily Deep Read Teams fix + central review (2026-07-07)
+
+- **Teams inclusion bug fixed** in `scripts/intelligence/daily-executive-brief.mjs`: Teams
+  per-message timestamps `[YYYY-MM-DD HH:mm:ss]` are **UTC** (proven from
+  `microsoft_graph/teams.py` — Graph `createdDateTime`); date-only `Date:` headers never
+  exclude rows from sub-day windows; `assertLaneCoverage` throws before live writes when a
+  lane has in-window rows but zero included; `--sources-only` = cheap inclusion preflight.
+- **July 7 workday packet rerun live**: current packet `95317ddb-8ae4-4cc6-a80d-5fa34d93e36f`
+  (meetings 11 / emails 98 / **teams 15** / documents 20); old teams=0 packet
+  `e081fd85…` demoted to snapshot. Consumers auto-ran via new orchestrator (brief runner
+  chains `daily-deep-read-consumers.mjs` after a live write; `--skip-consumers` opts out;
+  backfill passes it since it owns its own consumer step) → **31 candidates, all
+  `needs_review`, awaiting Megan's review**.
+- **Central review queue** at `/executive/daily-deep-read-review` (linked from the
+  executive brief footer): every current-packet candidate incl. unassigned; project picker
+  on unassigned rows so promotion has a target; PATCH
+  `/api/executive/daily-deep-read-candidates/[candidateId]` (capability
+  `view_executive_briefing`). Human gate intact — hourly cron
+  `daily-deep-read-promote-accepted` still only drains accepted (`status='candidate'`) rows.
+- Ledger: `docs/ops/tasks/2026-07-07-daily-deep-read-teams-fix-and-central-review.md`;
+  handoff `docs/ops/handoffs/2026-07-07-teams-daily-deep-read-window-bug.md` RESOLVED.
+
+## Previous focus
+
+**Status:** Meetings tool shipped to PR #641 (feat/meetings-tool) — awaiting preview-deploy test + review + merge.
+**Last updated:** 2026-07-02
+**Last worked on by:** Claude Code (orchestrated 17-task subagent build)
+
+## Procore-style Meetings tool (2026-07-01 → 07-02)
+
+PR: https://github.com/MeganHarrison/alleato-pm/pull/641 — plan at docs/superpowers/plans/2026-07-01-meetings-tool.md, execution ledger at .superpowers/sdd/progress.md (read it for per-task review outcomes + follow-up tickets).
+
+- New PM-APP tables (meetings/series/attendees/categories/items/templates + Pattern C junctions), backfilled live: 652 series / 1,346 meetings from existing transcripts.
+- Full API (all writes behind project-scoped gates), hooks, list/detail/agenda/admin-template UI, Fireflies auto-link, PDF export.
+- e2e 9/9 green; build passes; full-jest failure set identical to origin/main (zero regressions).
+- Phases 2–5 (AI layers) architecture-locked in the plan doc — each becomes its own plan when started.
+- Follow-up tickets listed in the PR body (transcript UNIQUE index, prep/generate hardening, reorder RPC, is_private, project TZ, PDF series name).
+
+**⚠️ SECURITY, still open:** commit 78ab97384 (pushed to origin/main by a parallel session) contains agents/project-intelligence-maintainer/.env.vercel.production with LIVE Linear keys (LINEAR_API_KEY, LINEAR_AGENT_ACCESS_TOKEN, LINEAR_WEBHOOK_SECRET). Rotate + remove + gitignore. Task chip task_20e19b26 exists.
+
+
+## Current focus
+
+**Status:** Budget page feedback fixes (Exol Morrisville review) shipped as PR #621 — all six items browser-verified; awaiting preview check + merge.
+**Last updated:** 2026-07-01
+**Last worked on by:** Claude Code (budget sidebars/PDF export/division titles/labels/forecast edit/lock gating)
+
+## Budget page feedback fixes (2026-07-01) — PR #621
+
+All six items from Megan's Exol Morrisville (`/876/budget`) budget review fixed on
+branch `fix/budget-page-feedback` (worktree), browser-verified against project 876:
+
+1. **Approved COs sidebar** — column comes from `v_budget_lines.approved_co_total`
+   = `pco_line_items` × approved+promoted `prime_contract_pcos`, keyed by
+   `pco_line_items.budget_code_id = budget_lines.id`. Sidebar route now queries that
+   source (two-step — `pco_id` is polymorphic, no FK for PostgREST embed), supports
+   `division-XX` group rows, dedupes promoted PCOs vs PCCOs.
+2. **Committed Costs sidebar** — SOV `budget_code` is stored in mixed formats
+   (`"50-5500.S"`, `"505500"`, project_budget_codes UUIDs); match by
+   `normalizeBudgetCodeLookupKey` like the aggregation, plus approved commitment COs.
+3. **Budget PDF export** — `GET /api/projects/[projectId]/budget/export/pdf`
+   (landscape via new `renderPdfFromHtml({landscape})`), builder `lib/budget-pdf.ts`.
+4. **Division titles** — resolved from `cost_code_divisions` via nested embed on the
+   budget-row fetch (`divisionTitle` on line items); hardcoded map is fallback only.
+5. **Cost code labels** — restored `code - name.type` (regression from ea7b0c5a0).
+6. **Locked budget** — FTC editable when locked (Procore parity; verified save +
+   DB read-back + revert); edit/delete affordances hidden when locked.
+
+**Data issue found, NOT fixed:** project 876 PO 000112 has duplicate SOV rows
+($117,000 under both `522000` and `52-2000.M`) — inflates Committed Costs.
 
 ## RFI Subcontractor Response System (2026-06-24)
 

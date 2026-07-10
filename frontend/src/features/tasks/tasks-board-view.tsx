@@ -5,15 +5,9 @@ import { CalendarClock, UserRound } from "lucide-react";
 import {
   BoardView,
   type BoardColumnDefinition,
-  TableTagBadge,
 } from "@/components/tables/unified";
-import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { cn } from "@/lib/utils";
 import { type TasksRow, getTaskSourceLabel } from "@/features/tasks/task-utils";
-import {
-  buildTaskFeedbackSnapshot,
-  isAiGeneratedTask,
-} from "@/features/tasks/tasks-table-config";
 
 type TaskBoardStatus = "open" | "in_progress" | "done";
 
@@ -24,25 +18,22 @@ const TASK_BOARD_COLUMNS: BoardColumnDefinition[] = [
   {
     id: "open",
     label: "Open",
-    laneClassName: "bg-slate-50/80 dark:bg-slate-950/20",
-    countClassName:
-      "bg-slate-100 text-slate-700 dark:bg-slate-900/60 dark:text-slate-200",
+    laneClassName: "bg-background",
+    countClassName: "bg-muted text-muted-foreground",
     emptyLabel: "No open tasks",
   },
   {
     id: "in_progress",
     label: "In Progress",
-    laneClassName: "bg-amber-50/80 dark:bg-amber-950/20",
-    countClassName:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    laneClassName: "bg-background",
+    countClassName: "bg-muted text-muted-foreground",
     emptyLabel: "Nothing in progress",
   },
   {
     id: "done",
     label: "Done",
-    laneClassName: "bg-emerald-50/80 dark:bg-emerald-950/20",
-    countClassName:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    laneClassName: "bg-background",
+    countClassName: "bg-muted text-muted-foreground",
     emptyLabel: "Nothing done yet",
   },
 ];
@@ -89,10 +80,9 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
   const dueLabel = formatShortDate(item.due_date);
   const overdue =
     isOverdue(item.due_date) && toBoardStatus(item.status) !== "done";
-  const priorityKey = (item.priority ?? "").toLowerCase();
-  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
-  const taskSnapshot = showFeedback ? buildTaskFeedbackSnapshot(item) : null;
-
+  const priorityLabel = item.priority
+    ? `${item.priority.charAt(0).toUpperCase()}${item.priority.slice(1).toLowerCase()}`
+    : null;
   return (
     <div
       data-task-board-card
@@ -105,7 +95,7 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
           onOpen(item);
         }
       }}
-      className="h-auto w-full justify-start rounded-md border border-border/60 bg-background p-3 text-left font-normal transition-colors hover:bg-muted/30"
+      className="h-auto w-full justify-start rounded-md bg-muted/35 p-3 text-left font-normal transition-colors hover:bg-muted/55"
     >
       <p
         className={cn(
@@ -138,30 +128,8 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
             {dueLabel}
           </span>
         ) : null}
-        {item.priority ? (
-          <TableTagBadge
-            label={item.priority}
-            variant={priorityKey === "high" ? "default" : "secondary"}
-          />
-        ) : null}
-        {sourceLabel ? (
-          <TableTagBadge label={sourceLabel} variant="outline" />
-        ) : null}
-        {showFeedback && item.id && taskSnapshot ? (
-          <div
-            className="ml-auto flex items-center"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <TaskFeedbackButtons
-              projectId={taskSnapshot.projectId}
-              taskId={item.id}
-              taskSnapshot={taskSnapshot}
-              compact
-              className="text-[11px]"
-            />
-          </div>
-        ) : null}
+        {priorityLabel ? <span>{priorityLabel}</span> : null}
+        {sourceLabel ? <span>{sourceLabel}</span> : null}
       </div>
     </div>
   );

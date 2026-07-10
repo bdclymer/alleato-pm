@@ -1,9 +1,11 @@
+import * as React from "react";
+
 import {
   buildCommitmentTableColumns,
   commitmentColumns,
   commitmentDefaultVisibleColumns,
-  type Commitment,
 } from "../commitments-table-config";
+import type { CommitmentListItem } from "@/lib/validation/commitments";
 
 describe("commitments table configuration", () => {
   it("keeps secondary metadata columns hidden by default", () => {
@@ -27,6 +29,12 @@ describe("commitments table configuration", () => {
         defaultVisible: false,
       });
     }
+  });
+
+  it("keeps creation metadata visible by default", () => {
+    expect(commitmentDefaultVisibleColumns).toEqual(
+      expect.arrayContaining(["created_at", "created_by_name"]),
+    );
   });
 
   it("left-aligns cost codes because they are identifiers, not amounts", () => {
@@ -99,19 +107,57 @@ describe("commitments table configuration", () => {
     ]);
   });
 
-  it("lets title values inherit the standard table field color", () => {
+  it("renders title cells through the shared link primitive without injecting primary color", () => {
     const titleColumn = buildCommitmentTableColumns("25125").find(
       (column) => column.id === "title",
     );
     const rendered = titleColumn?.render({
       id: "commitment-1",
       title: "Ceiling Demo",
-    } as Commitment);
+    } as CommitmentListItem);
 
-    expect(rendered).toMatchObject({
-      props: {
-        className: "font-medium",
-      },
-    });
+    expect(rendered?.props.className).toContain("font-medium");
+    expect(rendered?.props.className).not.toContain("text-primary");
+    expect(rendered?.props.href).toBe("/25125/commitments/commitment-1");
+  });
+
+  it("hides the expand chevron when a commitment has no change orders", () => {
+    const toggleExpand = jest.fn();
+    const numberColumn = buildCommitmentTableColumns(
+      "25125",
+      new Set<string>(),
+      toggleExpand,
+    ).find((column) => column.id === "number");
+
+    const rendered = numberColumn?.render({
+      id: "commitment-1",
+      number: "SC-1001",
+      change_order_count: 0,
+      approved_change_orders: 0,
+      pending_change_orders: 0,
+      draft_change_orders: 0,
+    } as CommitmentListItem);
+
+    expect(React.Children.toArray(rendered?.props.children)).toHaveLength(1);
+  });
+
+  it("shows the expand chevron when a commitment has change orders", () => {
+    const toggleExpand = jest.fn();
+    const numberColumn = buildCommitmentTableColumns(
+      "25125",
+      new Set<string>(),
+      toggleExpand,
+    ).find((column) => column.id === "number");
+
+    const rendered = numberColumn?.render({
+      id: "commitment-1",
+      number: "SC-1001",
+      change_order_count: 2,
+      approved_change_orders: 0,
+      pending_change_orders: 0,
+      draft_change_orders: 0,
+    } as CommitmentListItem);
+
+    expect(React.Children.toArray(rendered?.props.children)).toHaveLength(2);
   });
 });

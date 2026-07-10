@@ -17,6 +17,7 @@ from sqlalchemy import text
 
 from ._retry import with_db_retry
 from .db import _engine
+from .db_health import format_db_tool_error
 
 _CLOSED_STATUSES = {
     "approved",
@@ -299,7 +300,7 @@ def project_budget_summary(project_id: int | None = None, project_name: str | No
         budget = _budget_totals(resolved_id)
         contract = _contract_totals(resolved_id)
     except Exception as exc:  # noqa: BLE001
-        return f"Error: {exc}"
+        return format_db_tool_error(exc)
 
     original = budget.get("original_budget", 0)
     revised = budget.get("revised_budget", 0)
@@ -349,7 +350,7 @@ def project_briefing_snapshot(project_id: int | None = None, project_name: str |
         docs = _recent_docs(resolved_id)
         items = _latest_open_items(resolved_id)
     except Exception as exc:  # noqa: BLE001
-        return f"Error: {exc}"
+        return format_db_tool_error(exc)
 
     lines = [
         _header(project),
@@ -419,7 +420,7 @@ def project_risk_snapshot(project_id: int | None = None, project_name: str | Non
             {"project_id": resolved_id},
         )
     except Exception as exc:  # noqa: BLE001
-        return f"Error: {exc}"
+        return format_db_tool_error(exc)
 
     lines = [
         _header(project),
@@ -521,7 +522,7 @@ def portfolio_overview(phase: str = "Current", max_projects: int = 25) -> str:
             {"project_ids": project_ids},
         )
     except Exception as exc:  # noqa: BLE001
-        return f"Error: {exc}"
+        return format_db_tool_error(exc)
 
     financial_by_project = {int(row["project_id"]): row for row in financials}
     issue_by_project = {int(row["project_id"]): row for row in issues}

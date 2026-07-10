@@ -38,11 +38,10 @@ import {
 } from "@/hooks/use-emails";
 import {
   buildEmailTableColumns,
+  buildEmailVisibleColumns,
   buildEmailFilters,
   emailColumns,
-  emailDefaultVisibleColumns,
   globalEmailColumns,
-  globalEmailDefaultVisibleColumns,
   renderEmailCard,
   renderEmailList,
   renderEmailRowActions,
@@ -52,13 +51,32 @@ import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importanc
 import { MarkAsJunkDialog } from "@/features/emails/mark-as-junk-dialog";
 import {
   EmailReadingPanel,
+  EmailTrainingFeedbackPanel,
   ProjectEmailsWorkspace,
 } from "@/features/emails/project-emails-workspace";
 import {
   EmailViewSwitcher,
   type EmailViewMode,
 } from "@/features/emails/email-view-switcher";
+import {
+  AiReviewPanel,
+  AI_REVIEW_PANEL_ENABLED,
+} from "@/features/emails/ai-review-panel";
 import { EmailFilterPopover } from "@/features/emails/email-filter-popover";
+import {
+  buildMailboxWorkflowTabs,
+  countMailboxEmailsByWorkflow,
+  matchesMailboxWorkflowFilter,
+  normalizeMailboxWorkflowFilter,
+} from "@/features/emails/mailbox-workflow-tabs";
+import {
+  chunkImportanceFeedbackEmailIds,
+  EMAIL_IMPORTANCE_DEFAULT_FILTER,
+  getEmailsRefreshInterval,
+  matchesEmailImportanceVisibility,
+  normalizeEmailImportanceVisibilityFilter,
+  reconcileSelectedEmail,
+} from "./emails-client.helpers";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
 const EMAIL_STATUS_OPTIONS = [
@@ -75,6 +93,7 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
   to: undefined,
   has_attachments: undefined,
   is_starred: undefined,
+  importance: undefined,
   sent_at_from: undefined,
   sent_at_to: undefined,
 };
@@ -88,18 +107,21 @@ interface EmailClientTab {
   isActive?: boolean;
   testId?: string;
   countTestId?: string;
+  compact?: boolean;
 }
 
 interface EmailsClientProps {
   embedded?: boolean;
   navigationTabs?: EmailClientTab[];
   projectId?: number;
+  mailboxUserId?: string;
   scope?: "project" | "global";
   source?: EmailSource;
 }
 
 export function EmailsClient({
   projectId,
+  mailboxUserId,
   navigationTabs,
   scope = "project",
   source = "app",
@@ -110,6 +132,7 @@ export function EmailsClient({
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";
+  const isMailboxReviewMode = Boolean(mailboxUserId);
   const activeTab =
     isOutlook && searchParams.get("tab") === "attachments"
       ? "attachments"
@@ -131,8 +154,11 @@ export function EmailsClient({
         },
       ]
     : undefined;
-  const tabs = navigationTabs ?? outlookTabs;
-  const title = isOutlook ? "Outlook Emails" : "Emails";
+  const title = isMailboxReviewMode
+    ? "Feedback inbox"
+    : isOutlook
+      ? "Outlook Emails"
+      : "Emails";
   const description = isOutlook
     ? isGlobal
       ? "All Microsoft Outlook emails synced across projects."
@@ -151,6 +177,9 @@ export function EmailsClient({
   const initialIsStarred = searchParams.get("is_starred") === "true";
   const initialSentAtFrom = searchParams.get("sent_at_from") ?? "";
   const initialSentAtTo = searchParams.get("sent_at_to") ?? "";
+  const initialImportance = normalizeEmailImportanceVisibilityFilter(
+    searchParams.get("importance"),
+  );
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
     project_id: initialProjectId || undefined,
@@ -158,6 +187,10 @@ export function EmailsClient({
     to: initialTo || undefined,
     has_attachments: initialHasAttachments || undefined,
     is_starred: initialIsStarred || undefined,
+    importance:
+      initialImportance === EMAIL_IMPORTANCE_DEFAULT_FILTER
+        ? undefined
+        : initialImportance,
     sent_at_from: initialSentAtFrom || undefined,
     sent_at_to: initialSentAtTo || undefined,
   };
@@ -175,19 +208,34 @@ export function EmailsClient({
       sortBy: "sent_at",
       sortDirection: "desc",
       visibleColumns: isGlobal
-        ? globalEmailDefaultVisibleColumns
-        : emailDefaultVisibleColumns,
+        ? buildEmailVisibleColumns({
+            showProject: true,
+            showAssistantReview: isMailboxReviewMode,
+          })
+        : buildEmailVisibleColumns({
+            showProject: false,
+            showAssistantReview: false,
+          }),
       filters: initialFilters,
     },
   });
 
   const projectEmailsQuery = useEmails(projectId ?? 0, undefined, source);
-  const globalEmailsQuery = useAllEmails(undefined, isGlobal, source);
+  const globalEmailsQuery = useAllEmails(
+    undefined,
+    isGlobal,
+    source,
+    mailboxUserId,
+    {
+      refetchInterval: getEmailsRefreshInterval(isMailboxReviewMode),
+    },
+  );
   const activeQuery = isGlobal ? globalEmailsQuery : projectEmailsQuery;
   const {
     data: emails = [],
     isLoading,
     error: fetchError,
+    refetch: refetchEmails,
   } = activeQuery;
   const deleteEmail = useDeleteEmail(projectId ?? 0);
 
@@ -267,6 +315,13 @@ export function EmailsClient({
 
   // Sync URL status filter
   React.useEffect(() => {
+    setSelectedEmail((current) => reconcileSelectedEmail(emails, current));
+  }, [emails]);
+
+  React.useEffect(() => {
+    const nextImportance = normalizeEmailImportanceVisibilityFilter(
+      searchParams.get("importance"),
+    );
     const nextFilters: FilterState = {
       status: searchParams.get("status") || undefined,
       project_id: searchParams.get("project_id") || undefined,
@@ -275,6 +330,10 @@ export function EmailsClient({
       has_attachments:
         searchParams.get("has_attachments") === "true" ? true : undefined,
       is_starred: searchParams.get("is_starred") === "true" ? true : undefined,
+      importance:
+        nextImportance === EMAIL_IMPORTANCE_DEFAULT_FILTER
+          ? undefined
+          : nextImportance,
       sent_at_from: searchParams.get("sent_at_from") || undefined,
       sent_at_to: searchParams.get("sent_at_to") || undefined,
     };
@@ -292,10 +351,18 @@ export function EmailsClient({
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
-        isGlobal ? globalEmailDefaultVisibleColumns : emailDefaultVisibleColumns,
+        isGlobal
+          ? buildEmailVisibleColumns({
+              showProject: true,
+              showAssistantReview: isMailboxReviewMode,
+            })
+          : buildEmailVisibleColumns({
+              showProject: false,
+              showAssistantReview: false,
+            }),
       );
     }
-  }, [isGlobal, tableState.visibleColumns.length, tableState.setVisibleColumns]);
+  }, [isGlobal, isMailboxReviewMode, tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
   // Auto-switch to list view on mobile
   React.useEffect(() => {
@@ -316,9 +383,42 @@ export function EmailsClient({
   const isStarredFilter = activeFilters.is_starred === true;
   const sentAtFromFilter = activeFilters.sent_at_from as string | undefined;
   const sentAtToFilter = activeFilters.sent_at_to as string | undefined;
+  const importanceFilter = normalizeEmailImportanceVisibilityFilter(
+    activeFilters.importance as string | undefined,
+  );
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
+  const workflowFilter = normalizeMailboxWorkflowFilter(
+    searchParams.get("workflow"),
+  );
+  const mailboxWorkflowCounts = React.useMemo(
+    () => countMailboxEmailsByWorkflow(emails, importanceFeedbackByEmailId),
+    [emails, importanceFeedbackByEmailId],
+  );
+  const mailboxWorkflowTabs = React.useMemo(
+    () =>
+      isMailboxReviewMode
+        ? buildMailboxWorkflowTabs({
+            pathname,
+            searchParams: new URLSearchParams(searchParams.toString()),
+            counts: mailboxWorkflowCounts,
+            activeWorkflow: workflowFilter,
+          })
+        : null,
+    [isMailboxReviewMode, mailboxWorkflowCounts, pathname, workflowFilter, searchParams],
+  );
+  const tabs = mailboxWorkflowTabs ?? navigationTabs ?? outlookTabs;
 
   const filteredEmails = emails.filter((email) => {
+    if (
+      isMailboxReviewMode &&
+      !matchesMailboxWorkflowFilter(
+        email,
+        workflowFilter,
+        importanceFeedbackByEmailId,
+      )
+    ) {
+      return false;
+    }
     if (isMerged && sourceFilter !== "all") {
       const outlook = isOutlookSourced(email);
       if (sourceFilter === "outlook" && !outlook) return false;
@@ -337,6 +437,15 @@ export function EmailsClient({
     }
     if (hasAttachmentsFilter && !email.has_attachments) return false;
     if (isStarredFilter && !email.is_starred) return false;
+    if (
+      !matchesEmailImportanceVisibility(
+        email,
+        importanceFeedbackByEmailId,
+        importanceFilter,
+      )
+    ) {
+      return false;
+    }
     if (sentAtFromFilter || sentAtToFilter) {
       const emailDateRaw = email.sent_at || email.received_at || email.created_at;
       if (!emailDateRaw) return false;
@@ -366,7 +475,10 @@ export function EmailsClient({
     return fields.some((field) => field.toLowerCase().includes(searchTerm));
   });
 
-  const tableColumns = buildEmailTableColumns({ showProject: isGlobal });
+  const tableColumns = buildEmailTableColumns({
+    showProject: isGlobal,
+    showAssistantReview: isMailboxReviewMode,
+  });
   const sortedEmails = React.useMemo(() => {
     if (!tableState.sortBy) return filteredEmails;
     const sortColumn = tableColumns.find((col) => col.id === tableState.sortBy);
@@ -404,12 +516,10 @@ export function EmailsClient({
     () =>
       Array.from(
         new Set(
-          [selectedEmail, ...pagedEmails]
-            .filter((email): email is ProjectEmail => Boolean(email))
-            .map((email) => String(email.id)),
+          emails.map((email) => String(email.id)),
         ),
       ),
-    [pagedEmails, selectedEmail],
+    [emails],
   );
 
   React.useEffect(() => {
@@ -420,31 +530,51 @@ export function EmailsClient({
   }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
   React.useEffect(() => {
-    if (!isOutlook) return;
     if (importanceFeedbackEmailIds.length === 0) return;
 
     const controller = new AbortController();
-    const params = new URLSearchParams();
-    for (const emailId of importanceFeedbackEmailIds) {
-      params.append("emailId", emailId);
-    }
+
+    // The importance-feedback endpoint takes one `emailId` query param per email.
+    // A large mailbox (Brandon's has ~1000) overflows the request URL/header size
+    // limit → HTTP 431, silently dropping the training state for the whole inbox.
+    // Chunk the ids so every request URL stays well under that limit.
+    const batches = chunkImportanceFeedbackEmailIds(importanceFeedbackEmailIds);
 
     void (async () => {
       try {
-        const response = await apiFetch<{
-          feedbackByEmailId?: Record<string, EmailImportanceFeedbackState>;
-        }>(
-          `/api/ai-assistant/email-importance-feedback?${params.toString()}`,
-          {
-            signal: controller.signal,
-          },
+        const responses = await Promise.all(
+          batches.map((batch) => {
+            const params = new URLSearchParams();
+            for (const emailId of batch) {
+              params.append("emailId", emailId);
+            }
+            return apiFetch<{
+              feedbackByEmailId?: Record<string, EmailImportanceFeedbackState>;
+            }>(
+              `/api/ai-assistant/email-importance-feedback?${params.toString()}`,
+              {
+                signal: controller.signal,
+              },
+            );
+          }),
         );
 
-        if (controller.signal.aborted || !response.feedbackByEmailId) return;
+        if (controller.signal.aborted) return;
+
+        const merged = responses.reduce<
+          Record<string, EmailImportanceFeedbackState>
+        >((accumulator, response) => {
+          if (response.feedbackByEmailId) {
+            Object.assign(accumulator, response.feedbackByEmailId);
+          }
+          return accumulator;
+        }, {});
+
+        if (Object.keys(merged).length === 0) return;
 
         setImportanceFeedbackByEmailId((prev) => ({
           ...prev,
-          ...response.feedbackByEmailId,
+          ...merged,
         }));
       } catch (error) {
         if (controller.signal.aborted) return;
@@ -464,7 +594,7 @@ export function EmailsClient({
     })();
 
     return () => controller.abort();
-  }, [importanceFeedbackEmailIds, isOutlook, projectId, scope]);
+  }, [importanceFeedbackEmailIds, projectId, scope]);
 
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setActiveFilters(nextFilters);
@@ -478,6 +608,10 @@ export function EmailsClient({
       to: typeof nextFilters.to === "string" ? nextFilters.to : null,
       has_attachments: nextFilters.has_attachments === true ? "true" : null,
       is_starred: nextFilters.is_starred === true ? "true" : null,
+      importance:
+        typeof nextFilters.importance === "string"
+          ? nextFilters.importance
+          : null,
       sent_at_from:
         typeof nextFilters.sent_at_from === "string"
           ? nextFilters.sent_at_from
@@ -572,6 +706,15 @@ export function EmailsClient({
       ...prev,
       [String(emailId)]: feedback,
     }));
+    void refetchEmails();
+  };
+
+  const handleImportanceCleared = (emailId: number) => {
+    setImportanceFeedbackByEmailId((prev) => {
+      const next = { ...prev };
+      delete next[String(emailId)];
+      return next;
+    });
   };
 
   const handleJunkRuleCreated = async (item: ProjectEmail) => {
@@ -713,6 +856,7 @@ export function EmailsClient({
           emails={sortedEmails}
           isLoading={isLoading}
           error={fetchError ?? undefined}
+          title={title}
           tabs={tabs ?? []}
           searchValue={tableState.searchInput}
           onSearchChange={tableState.setSearchInput}
@@ -727,6 +871,13 @@ export function EmailsClient({
           sortBy={tableState.sortBy ?? undefined}
           sortDirection={tableState.sortDirection}
           onSortChange={handleSortChange}
+          draftFeedbackMode={isMailboxReviewMode}
+          onDraftFeedbackSaved={() => {
+            void refetchEmails();
+          }}
+          importanceFeedbackByEmailId={importanceFeedbackByEmailId}
+          onImportanceRecorded={handleImportanceRecorded}
+          onImportanceCleared={handleImportanceCleared}
           viewSwitcher={
             <EmailViewSwitcher
               value={emailView}
@@ -904,7 +1055,9 @@ export function EmailsClient({
         }}
         emptyState={{
           title: "No emails found",
-          description: isOutlook
+          description: isMailboxReviewMode
+            ? "No synced Outlook intake rows are stored for this mailbox yet."
+            : isOutlook
             ? "No synced Outlook emails are stored yet."
             : isGlobal
               ? "No application or Resend emails are stored yet."
@@ -944,29 +1097,55 @@ export function EmailsClient({
           selectedEmail
             ? {
                 content: (
-                  <EmailReadingPanel
-                    email={selectedEmail}
-                    canCompose={!noWriteActions}
-                    canEditEmail={canEditEmail(selectedEmail)}
-                    canDelete={canDeleteEmail(selectedEmail)}
-                    canProjectEmailActions={!isOutlookSourced(selectedEmail)}
-                    onCompose={() => {
-                      setEditingEmail(null);
-                      setComposeOpen(true);
-                    }}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteIntent}
-                    importanceFeedback={
-                      importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
-                    }
-                    onImportanceRecorded={handleImportanceRecorded}
-                    className="h-full"
-                  />
+                  mailboxUserId ? (
+                    AI_REVIEW_PANEL_ENABLED ? (
+                      <AiReviewPanel
+                        selectedEmail={selectedEmail}
+                        onSaved={() => {
+                          void refetchEmails();
+                        }}
+                        className="h-full"
+                      />
+                    ) : (
+                      <EmailTrainingFeedbackPanel
+                        selectedEmail={selectedEmail}
+                        onSaved={() => {
+                          void refetchEmails();
+                        }}
+                        className="h-full"
+                      />
+                    )
+                  ) : (
+                    <EmailReadingPanel
+                      email={selectedEmail}
+                      canCompose={!noWriteActions}
+                      canEditEmail={canEditEmail(selectedEmail)}
+                      canDelete={canDeleteEmail(selectedEmail)}
+                      canProjectEmailActions={!isOutlookSourced(selectedEmail)}
+                      onCompose={() => {
+                        setEditingEmail(null);
+                        setComposeOpen(true);
+                      }}
+                      onEdit={handleEdit}
+                      onDelete={handleDeleteIntent}
+                      importanceFeedback={
+                        importanceFeedbackByEmailId[String(selectedEmail.id)] ?? null
+                      }
+                      onImportanceRecorded={handleImportanceRecorded}
+                      onImportanceCleared={handleImportanceCleared}
+                      className="h-full"
+                    />
+                  )
                 ),
                 variant: "wide",
-                defaultWidth: 560,
-                minWidth: 440,
-                storageKey: isGlobal ? "global-email-detail" : "project-email-detail",
+                defaultWidth: mailboxUserId ? 720 : 560,
+                minWidth: mailboxUserId ? 520 : 440,
+                maxWidth: mailboxUserId ? 980 : undefined,
+                storageKey: mailboxUserId
+                  ? "global-email-feedback-detail"
+                  : isGlobal
+                    ? "global-email-detail"
+                    : "project-email-detail",
                 contentClassName: "pl-0 pr-0",
                 showCloseButton: false,
                 onClose: () => setSelectedEmail(null),

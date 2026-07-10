@@ -3,17 +3,13 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import { buildProgressReportHtml } from "@/lib/progress-reports/pdf";
-import {
-  BRANDED_FOOTER_MARGIN,
-  buildBrandedFooterTemplate,
-} from "@/lib/documents/branded-letterhead";
+import { buildProgressReportPdfLayout } from "@/lib/progress-reports/pdf";
 import {
   getProgressReportDetail,
   listProjectTeamContacts,
   resolveProgressReportContacts,
 } from "@/lib/progress-reports/server";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { getApiRouteUserFromRequest } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const runtime = "nodejs";
@@ -22,10 +18,10 @@ export const dynamic = "force-dynamic";
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/pdf#GET",
   async ({ request, params }) => {
-    const developerGuard = await requireDeveloperApi();
+    const developerGuard = await requireDeveloperApi(request);
     if (developerGuard) return developerGuard;
 
-    const user = await getApiRouteUser();
+    const user = await getApiRouteUserFromRequest(request);
     if (!user) {
       throw new GuardrailError({
         code: "AUTH_EXPIRED",
@@ -55,27 +51,43 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    const html = buildProgressReportHtml({
+    const url = new URL(request.url);
+    const audience = url.searchParams.get("audience") === "internal" ? "internal" : "client";
+    const length = url.searchParams.get("length") === "brief" ? "brief" : "detailed";
+
+    const layout = buildProgressReportPdfLayout({
       project: projectResult.data,
       report: {
         ...detail.report,
         contacts: resolveProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
       selectedPhotos: detail.selectedPhotos,
+      view: { audience, length },
     });
-    const pdfBuffer = await renderPdfFromHtml(html, {
-      footerTemplate: buildBrandedFooterTemplate(),
-      marginBottom: BRANDED_FOOTER_MARGIN,
+
+    // Preview path: return the exact branded HTML the PDF is rendered from, so the
+    // in-app "Preview Report" shows a faithful render of the printed document
+    // without paying for a full PDF render. Same source of truth as the PDF.
+    if (url.searchParams.get("format") === "html") {
+      return new NextResponse(layout.html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "private, no-store",
+        },
+      });
+    }
+
+    const pdfBuffer = await renderPdfFromHtml(layout.html, {
+      footerOverlayPlan: layout.footerOverlayPlan,
     });
     const safeName = (projectResult.data.name ?? "project")
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40);
-    const filename = `${safeName || "project"}-progress-report-${detail.report.week_end}.pdf`;
+    const filename = `${safeName || "project"}-progress-report-${audience}-${length}-${detail.report.week_end}.pdf`;
     const disposition =
-      new URL(request.url).searchParams.get("disposition") === "inline"
-        ? "inline"
-        : "attachment";
+      url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

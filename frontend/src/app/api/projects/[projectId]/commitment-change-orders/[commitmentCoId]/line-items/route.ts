@@ -2,7 +2,8 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { assertCommitmentChangeOrderLineItemsUnlocked } from "@/lib/change-orders/commitment-change-order-line-item-lock.server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -25,6 +26,14 @@ export const GET = withApiGuardrails(
     if (!UUID_RE.test(commitmentCoId)) {
       return NextResponse.json({ error: "Invalid change order id" }, { status: 400 });
     }
+
+    // Unauthenticated requests must 401 before touching the DB — this route
+    // reads budget_lines below, which hard-errors for the anon role.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#GET", message: "Authentication required." });
+    }
+
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -97,6 +106,12 @@ export const POST = withApiGuardrails(
 
     const body = await request.json();
     const supabase = await createClient();
+    await assertCommitmentChangeOrderLineItemsUnlocked(
+      supabase,
+      projectIdNum,
+      commitmentCoId,
+      "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#POST",
+    );
 
     const { data, error } = await supabase
       .from("commitment_change_order_lines")

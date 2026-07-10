@@ -12,6 +12,8 @@ export interface TeamChannel {
   isDm?: boolean;
   dmPartnerId?: string;
   dmPartnerName?: string;
+  source?: "comments";
+  readOnly?: boolean;
 }
 
 export interface TeamChatAdminUser {

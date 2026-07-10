@@ -45,20 +45,19 @@ import {
   ModalHeader,
   ModalTitle,
 } from "@/components/ui/unified-modal";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -67,6 +66,7 @@ import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
   CalendarInviteWidgetPayload,
+  ChangeEventWorkflowWidgetPayload,
   CommitmentDraftWidgetPayload,
   CreateContactWidgetPayload,
   CreateEventWidgetPayload,
@@ -126,8 +126,8 @@ function WidgetShell({
   className,
 }: {
   title: string;
-  icon: ReactNode;
-  eyebrow: string;
+  icon?: ReactNode;
+  eyebrow?: string;
   children: ReactNode;
   actions?: ReactNode;
   className?: string;
@@ -141,13 +141,17 @@ function WidgetShell({
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-              {eyebrow}
+          {icon ? (
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-background text-muted-foreground">
+              {icon}
             </div>
+          ) : null}
+          <div className="min-w-0">
+            {eyebrow ? (
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                {eyebrow}
+              </div>
+            ) : null}
             <div className="truncate text-sm font-semibold text-foreground">
               {title}
             </div>
@@ -1720,48 +1724,6 @@ function toTextList(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
-function normalizeMeetingToolOutput(output: unknown): MeetingIntelligenceWidgetPayload | null {
-  const record = asRecord(output);
-  if (record.type === "meeting_intelligence") {
-    return record as MeetingIntelligenceWidgetPayload;
-  }
-
-  const meetings = Array.isArray(record.meetings) ? record.meetings : [];
-  if (meetings.length === 0 && typeof record.meetingCount !== "number") return null;
-
-  return {
-    type: "meeting_intelligence",
-    id: typeof record.id === "string" ? record.id : "meeting-intelligence",
-    title: typeof record.title === "string" ? record.title : "Meeting intelligence",
-    subtitle: typeof record.subtitle === "string" ? record.subtitle : "Structured meeting readout",
-    dateLabel: typeof record.dateLabel === "string" ? record.dateLabel : "Selected window",
-    meetingCount: typeof record.meetingCount === "number" ? record.meetingCount : meetings.length,
-    criticalRiskCount: typeof record.criticalRiskCount === "number" ? record.criticalRiskCount : 0,
-    decisionCount: typeof record.decisionCount === "number" ? record.decisionCount : 0,
-    actionItemCount: typeof record.actionItemCount === "number" ? record.actionItemCount : 0,
-    topInsights: toTextList(record.topInsights),
-    recommendedNextActions: toTextList(record.recommendedNextActions),
-    emptyState: typeof record.emptyState === "string" ? record.emptyState : undefined,
-    meetings: meetings.map((item, index) => {
-      const meeting = asRecord(item);
-      const id = typeof meeting.id === "string" ? meeting.id : `meeting-${index + 1}`;
-      const projectId = typeof meeting.projectId === "number" ? meeting.projectId : null;
-      return {
-        id,
-        title: typeof meeting.title === "string" ? meeting.title : "Untitled meeting",
-        projectId,
-        projectName: typeof meeting.projectName === "string" ? meeting.projectName : null,
-        date: typeof meeting.date === "string" ? meeting.date : null,
-        source: typeof meeting.source === "string" ? meeting.source : null,
-        summary: typeof meeting.summary === "string" ? meeting.summary : null,
-        criticalRisks: toTextList(meeting.criticalRisks),
-        decisions: toTextList(meeting.decisions),
-        actionItems: toTextList(meeting.actionItems),
-        href: typeof meeting.href === "string" ? meeting.href : projectId ? `/${projectId}/meetings/${id}` : `/meetings/${id}`,
-      };
-    }),
-  };
-}
 
 function normalizeCalendarInviteToolOutput(output: unknown): CalendarInviteWidgetPayload | null {
   const record = asRecord(output);
@@ -2827,6 +2789,156 @@ function CreateEventWidget({
   );
 }
 
+function ChangeEventWorkflowWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: ChangeEventWorkflowWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const { draft } = widget;
+  const draftFields = [
+    {
+      label: "Project",
+      value: draft.projectName ?? (draft.projectId ? `#${draft.projectId}` : "Missing"),
+    },
+    { label: "Title", value: draft.title ?? "Draft title pending" },
+    { label: "Type", value: draft.cause ?? "Needs classification" },
+    { label: "Scope", value: draft.scope },
+    { label: "Cost", value: draft.costImpact ?? "TBD" },
+    { label: "Schedule", value: draft.scheduleImpact ?? "TBD" },
+  ];
+  const hasEvidence = draft.relatedEvidence.length > 0;
+  const summary = draft.narrative
+    ? draft.readyForPreview
+      ? "This is organized into a working Change Event draft with enough information for review."
+      : "This is organized into a working Change Event draft."
+    : draft.projectId
+      ? "The project is set. Tell me what happened and the draft will be structured from there."
+      : "Select the project first, then the draft can start.";
+  const missingInformation = draft.missingRisks.slice(0, 3);
+  const recommendations = draft.recommendedImpacts.slice(0, 3);
+
+  return (
+    <WidgetShell
+      title="Change Event Draft"
+      actions={<WidgetMeta>{draft.readyForPreview ? "Ready to review" : "Building"}</WidgetMeta>}
+    >
+      <div className="space-y-1">
+        <div className="text-xs font-medium text-muted-foreground">What I’m doing</div>
+        <p className="text-sm leading-6 text-foreground">{summary}</p>
+      </div>
+
+      {draft.narrative ? (
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-muted-foreground">What happened</div>
+          <p className="line-clamp-3 text-sm leading-6 text-foreground">
+            {draft.narrative}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+        {draftFields.map((field) => (
+          <div key={field.label} className="min-w-0">
+            <div className="text-[11px] font-medium uppercase text-muted-foreground/80">
+              {field.label}
+            </div>
+            <div className="truncate text-sm text-foreground">{field.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {hasEvidence ? (
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">
+            Related project records
+          </div>
+          <div className="divide-y divide-border/60">
+            {draft.relatedEvidence.slice(0, 3).map((item) => (
+              <div key={item.id} className="flex gap-3 py-2">
+                <FileTextIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {item.title}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {item.sourceLabel}
+                      {item.date ? ` - ${item.date.slice(0, 10)}` : ""}
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">
+                    {item.snippet}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : draft.narrative ? (
+        <div className="text-sm text-muted-foreground">
+          Related project records were checked. No confident match was found yet.
+        </div>
+      ) : null}
+
+      {recommendations.length > 0 || missingInformation.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {recommendations.length > 0 ? (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">
+                Recommendations
+              </div>
+              <ul className="space-y-1 text-xs leading-5 text-muted-foreground">
+                {recommendations.map((recommendation) => (
+                  <li key={recommendation}>- {recommendation}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {missingInformation.length > 0 ? (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">
+                Still unclear
+              </div>
+              <ul className="space-y-1 text-xs leading-5 text-muted-foreground">
+                {missingInformation.map((risk) => (
+                  <li key={risk}>- {risk}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-muted-foreground">
+          One thing I still need
+        </div>
+        <p className="text-sm leading-6 text-foreground">{draft.nextQuestion}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => onEditDraft(draft.nextQuestion)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Add missing detail
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!draft.readyForPreview}
+          onClick={() => onSubmit(draft.confirmPrompt)}
+        >
+          <ShieldCheckIcon className="h-4 w-4" />
+          Review before creating
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
 function ProjectActionPreviewWidget({
   widget,
   selectedProjectId,
@@ -3038,11 +3150,6 @@ function getSourceTitle(source: SourceItem, index: number): string {
 
 function getSourceHref(source: SourceItem): string | null {
   const metadata = asRecord(source.metadata);
-  const externalLink = [metadata.url, metadata.fireflies_link]
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .find((value) => Boolean(value && /^https?:\/\//.test(value)));
-  if (externalLink) return externalLink;
-
   const projectId =
     typeof metadata.project_id === "number"
       ? metadata.project_id
@@ -3052,13 +3159,25 @@ function getSourceHref(source: SourceItem): string | null {
   ).trim();
   const type = String(metadata.doc_type ?? metadata.type ?? metadata.category ?? "").toLowerCase();
 
-  if (!recordId) return null;
-  if (type.includes("meeting")) return `/meetings/${recordId}`;
-  if (!projectId) return null;
-  if (type.includes("rfi")) return `/${projectId}/rfis/${recordId}`;
-  if (type.includes("submittal")) return `/${projectId}/submittals/${recordId}`;
-  if (type.includes("change event")) return `/${projectId}/change-events/${recordId}`;
-  return null;
+  // Prefer the IN-APP record page — "the actual file on the app" — over an
+  // external link, so a meeting citation opens our transcript page (which reads
+  // document_metadata by id) rather than the raw Fireflies recording.
+  if (recordId) {
+    if (type.includes("meeting")) return `/meetings/${recordId}`;
+    if (Number.isFinite(projectId) && projectId) {
+      if (type.includes("rfi")) return `/${projectId}/rfis/${recordId}`;
+      if (type.includes("submittal")) return `/${projectId}/submittals/${recordId}`;
+      if (type.includes("change event")) return `/${projectId}/change-events/${recordId}`;
+    }
+  }
+
+  // Fall back to the external link when there is no in-app detail page for this
+  // source type — e.g. an email opens its Outlook URL (there is no in-app email
+  // detail page), and a document opens its stored URL.
+  const externalLink = [metadata.url, metadata.fireflies_link]
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .find((value) => Boolean(value && /^https?:\/\//.test(value)));
+  return externalLink ?? null;
 }
 
 export function AssistantSourceEvidenceWidget({
@@ -3121,117 +3240,86 @@ function ProjectPickerWidget({
   widget: ProjectPickerWidgetPayload;
   onSubmit: (message: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const selectedProject = useMemo(
-    () => widget.projects.find((project) => project.projectId === selectedProjectId) ?? null,
-    [selectedProjectId, widget.projects],
-  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const actionLabel =
+    widget.actionLabel ??
+    (widget.intent === "owner_action_queue" ? "Generate queue" : "Use project");
+  const visibleProjects = widget.projects.slice(0, 4);
+  const dropdownProjects = widget.projects.slice(4);
+  const selectProject = (project: ProjectPickerWidgetPayload["projects"][number]) => {
+    setSelectedProjectId(String(project.projectId));
+    onSubmit(project.prompt);
+  };
 
   return (
     <WidgetShell
       title={widget.title}
-      eyebrow="Project picker"
-      icon={<FolderIcon className="h-4 w-4" />}
-      actions={<WidgetMeta>{widget.projects.length} projects</WidgetMeta>}
+      actions={<WidgetMeta>{visibleProjects.length} likely</WidgetMeta>}
     >
       <p className="text-sm leading-6 text-muted-foreground">{widget.subtitle}</p>
 
       {widget.projects.length > 0 ? (
         <div className="space-y-3">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="h-10 w-full justify-between gap-2 px-3 text-left font-normal"
-              >
-                <span className="min-w-0 flex-1 truncate">
-                  {selectedProject ? selectedProject.name : "Select project"}
-                </span>
-                <ChevronDownIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-2rem)] p-0"
-            >
-              <Command
-                filter={(value, search) => {
-                  if (!search) return 1;
-                  return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground">
+              Most active projects
+            </div>
+            <div className="divide-y divide-border/60">
+              {visibleProjects.map((project) => (
+                <Button
+                  key={project.projectId}
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start gap-3 px-0 py-2 text-left hover:bg-transparent"
+                  onClick={() => selectProject(project)}
+                  aria-label={`${actionLabel}: ${project.name}`}
+                >
+                  <FolderIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-foreground">
+                      {project.name}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+                      {[project.activityLabel, project.client, project.phase, project.state, project.contractValue]
+                        .filter(Boolean)
+                        .join(" - ") || `Project #${project.projectId}`}
+                    </span>
+                  </span>
+                  <ArrowRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Button>
+              ))}
+            </div>
+          </div>
+          {dropdownProjects.length > 0 ? (
+            <div className="space-y-1.5">
+              <Select
+                value={selectedProjectId}
+                onValueChange={(value) => {
+                  const project = widget.projects.find(
+                    (candidate) => String(candidate.projectId) === value,
+                  );
+                  if (project) selectProject(project);
                 }}
               >
-                <CommandInput placeholder="Search projects..." />
-                <CommandList className="max-h-72">
-                  <CommandEmpty>No projects found.</CommandEmpty>
-                  <CommandGroup>
-                    {widget.projects.map((project) => {
-                      const isSelected = project.projectId === selectedProjectId;
-                      return (
-                        <CommandItem
-                          key={project.projectId}
-                          value={[
-                            project.name,
-                            project.client,
-                            project.phase,
-                            project.state,
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          onSelect={() => {
-                            setSelectedProjectId(project.projectId);
-                            setOpen(false);
-                          }}
-                          className="cursor-pointer items-start gap-3 px-3 py-2.5"
-                        >
-                          <CheckIcon
-                            className={cn(
-                              "mt-0.5 h-4 w-4 shrink-0 text-primary",
-                              isSelected ? "opacity-100" : "opacity-0",
-                            )}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate text-sm font-medium text-foreground">
-                              {project.name}
-                            </div>
-                            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                              {project.client ? <span>{project.client}</span> : null}
-                              {project.phase ? <span>{project.phase}</span> : null}
-                              {project.state ? <span>{project.state}</span> : null}
-                              {project.contractValue ? <span>{project.contractValue}</span> : null}
-                            </div>
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          {selectedProject ? (
-            <div className="text-xs leading-5 text-muted-foreground">
-              {[selectedProject.client, selectedProject.phase, selectedProject.state]
-                .filter(Boolean)
-                .join(" - ")}
+                <SelectTrigger size="sm" aria-label="Choose another project">
+                  <SelectValue placeholder="Choose another project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {dropdownProjects.map((project) => (
+                    <SelectItem
+                      key={project.projectId}
+                      value={String(project.projectId)}
+                    >
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                You can also type the project name below.
+              </p>
             </div>
           ) : null}
-
-          <Button
-            type="button"
-            size="sm"
-            disabled={!selectedProject}
-            onClick={() => {
-              if (selectedProject) onSubmit(selectedProject.prompt);
-            }}
-          >
-            <ArrowRightIcon className="h-4 w-4" />
-            Generate queue
-          </Button>
         </div>
       ) : widget.emptyState ? (
         <InfoAlert variant="info">{widget.emptyState}</InfoAlert>
@@ -3573,6 +3661,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
     props.widget.type === "create_event" ? (
       <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
     ) : null,
+  change_event_workflow: (props) =>
+    props.widget.type === "change_event_workflow" ? (
+      <ChangeEventWorkflowWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   project_action_preview: (props) =>
     props.widget.type === "project_action_preview" ? (
       <ProjectActionPreviewWidget
@@ -3607,7 +3703,6 @@ type AssistantToolPartForRegistry = {
 };
 
 const assistantToolComponentRegistry: Record<string, (output: unknown) => AssistantWidgetPayload | null> = {
-  getMeetingIntelligence: normalizeMeetingToolOutput,
   createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
   draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
   getRecentEmails: normalizeGetRecentEmailsToolOutput,
@@ -3622,7 +3717,6 @@ export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegis
 
 const TOOL_LOADING_LABELS: Record<string, string> = {
   generateExecutiveDailyBrief: "Generating daily brief…",
-  getMeetingIntelligence: "Analyzing meeting…",
   getRecentEmails: "Loading emails…",
 };
 

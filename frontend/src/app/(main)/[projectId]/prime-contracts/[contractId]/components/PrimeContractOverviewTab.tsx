@@ -370,7 +370,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   return (
     <ContentSectionStack className="space-y-16 pb-20">
       <section>
-        <div className="grid grid-cols-1 gap-16 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-10">
             <DetailPanel>
               <SectionRuleHeading label="General Information" />

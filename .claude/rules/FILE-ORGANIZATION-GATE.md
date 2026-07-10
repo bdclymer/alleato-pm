@@ -10,7 +10,7 @@ The project root may ONLY contain these markdown files:
 - `AGENTS.md`
 - `CONTRIBUTING.md`
 - `WORKING_CONTEXT.md`
-- `DESIGN.md` (symlink to `docs/design/DESIGN.md`)
+- `DESIGN.md` (design system — real file at root, single source of truth)
 - `CHANGELOG.md`
 - `LICENSE` / `LICENSE.md`
 

@@ -191,6 +191,132 @@ describe("punch-items POST route", () => {
     );
   });
 
+  // ── Cost fields (added with the sidebar rework) ─────────────────────────────
+
+  it("passes cost_code through and coerces a numeric cost_impact string to a number", async () => {
+    punchItemServiceMock.create.mockResolvedValue({
+      data: { id: "abc", title: "Test", status: "draft", number: 1, project_id: 67 },
+      error: null,
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Test item",
+          cost_code: "09 91 00",
+          cost_impact: "1234.56",
+          drawing_reference: "A-101",
+        }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+
+    expect(response.status).toBe(201);
+    expect(punchItemServiceMock.create).toHaveBeenCalledWith(
+      67,
+      expect.objectContaining({
+        cost_code: "09 91 00",
+        cost_impact: 1234.56,
+        drawing_reference: "A-101",
+      }),
+      "user-123",
+    );
+  });
+
+  it("normalizes a blank cost_impact to null (never a NaN insert)", async () => {
+    punchItemServiceMock.create.mockResolvedValue({
+      data: { id: "abc", title: "Test", status: "draft", number: 1, project_id: 67 },
+      error: null,
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({ title: "Test item", cost_impact: "", cost_code: "" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+
+    expect(response.status).toBe(201);
+    expect(punchItemServiceMock.create).toHaveBeenCalledWith(
+      67,
+      expect.objectContaining({ cost_impact: null, cost_code: null }),
+      "user-123",
+    );
+  });
+
+  // ── Procore parity fields (Punch Item Manager, Final Approver, Private) ──────
+
+  it("passes punch_item_manager_id, final_approver_id, and is_private through to create", async () => {
+    punchItemServiceMock.create.mockResolvedValue({
+      data: { id: "abc", title: "Test", status: "draft", number: 1, project_id: 67 },
+      error: null,
+    });
+
+    const managerId = "11111111-1111-4111-8111-111111111111";
+    const approverId = "22222222-2222-4222-9222-222222222222";
+
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Test item",
+          punch_item_manager_id: managerId,
+          final_approver_id: approverId,
+          is_private: true,
+        }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+
+    expect(response.status).toBe(201);
+    expect(punchItemServiceMock.create).toHaveBeenCalledWith(
+      67,
+      expect.objectContaining({
+        punch_item_manager_id: managerId,
+        final_approver_id: approverId,
+        is_private: true,
+      }),
+      "user-123",
+    );
+  });
+
+  it("returns 400 when punch_item_manager_id is not a valid UUID", async () => {
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({ title: "Test item", punch_item_manager_id: "not-a-uuid" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+    expect(response.status).toBe(400);
+    expect(punchItemServiceMock.create).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a non-numeric cost_impact instead of leaking a database error", async () => {
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({ title: "Test item", cost_impact: "not-a-number" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+
+    expect(response.status).toBe(400);
+    expect(punchItemServiceMock.create).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for invalid due_date instead of leaking a database error", async () => {
     const request = new NextRequest(
       "http://localhost/api/projects/67/punch-items",

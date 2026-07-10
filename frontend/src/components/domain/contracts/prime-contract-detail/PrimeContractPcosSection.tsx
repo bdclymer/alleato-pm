@@ -1,20 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import Link from "next/link";
 import { toast } from "sonner";
 
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
-import { formatDate } from "@/lib/table-config/formatters";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { apiFetch } from "@/lib/api-client";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { formatDate } from "@/lib/table-config/formatters";
 
 interface PrimePco {
   id: string;
+  prime_contract_id?: string | null;
   pco_number: string | null;
   title: string;
   status: string;
@@ -23,12 +30,10 @@ interface PrimePco {
   revision: number | null;
   schedule_impact: number | null;
   change_reason: string | null;
-  due_date: string | null;
   created_at: string;
-  commitment_id: string;
-  commitment_type: string | null;
-  promoted_to_co_id: string | null;
   promoted_co_number: string | null;
+  linked_change_event_number: string | null;
+  linked_change_event_type: string | null;
 }
 
 interface PrimeContractPcosSectionProps {
@@ -36,10 +41,6 @@ interface PrimeContractPcosSectionProps {
   contractId: string;
   formatCurrency: (value: number | null | undefined) => string;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 export function PrimeContractPcosSection({
   projectId,
@@ -57,12 +58,9 @@ export function PrimeContractPcosSection({
           `/api/projects/${projectId}/prime-contract-pcos`,
         );
         const allPcos: PrimePco[] = Array.isArray(json) ? json : (json.data ?? []);
-        // Filter client-side to only show PCOs belonging to this prime contract
         setPcos(
           contractId
-            ? allPcos.filter(
-                (p) => (p as unknown as Record<string, unknown>).prime_contract_id === contractId,
-              )
+            ? allPcos.filter((pco) => pco.prime_contract_id === contractId)
             : allPcos,
         );
       } catch (error) {
@@ -72,169 +70,110 @@ export function PrimeContractPcosSection({
         setIsLoading(false);
       }
     };
-    fetchPcos();
-  }, [projectId, contractId]);
 
-  // Build the canonical nested prime-contract PCO detail route.
-  const buildPcoHref = useCallback(
-    (pcoId: string) => `/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pcoId}`,
-    [projectId, contractId],
-  );
+    void fetchPcos();
+  }, [contractId, projectId]);
 
-  // Navigate reliably even when table row click delegation is interrupted by nested UI handlers.
-  const navigateToPco = useCallback(
-    (pcoId: string) => {
-      if (!pcoId) return;
-      const href = buildPcoHref(pcoId);
-      window.location.assign(href);
-      window.setTimeout(() => {
-        if (window.location.pathname !== href) {
-          window.location.assign(href);
-        }
-      }, 150);
-    },
-    [buildPcoHref],
-  );
-
-  const columns: TableColumn<PrimePco>[] = useMemo(
-    () => [
-      {
-        id: "pco_number",
-        label: "Number",
-        alwaysVisible: true,
-        render: (pco) => (
-          <a
-            href={buildPcoHref(pco.id)}
-            className="text-primary hover:underline font-medium"
-            data-row-interactive="true"
-            onClick={(event) => {
-              event.stopPropagation();
-              navigateToPco(pco.id);
-            }}
-          >
-            {pco.pco_number ?? null}
-          </a>
-        ),
-      },
-      {
-        id: "revision",
-        label: "Revision",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.revision ?? null}
-          </span>
-        ),
-      },
-      {
-        id: "title",
-        label: "Title",
-        render: (pco) => (
-          <a
-            href={buildPcoHref(pco.id)}
-            className="text-foreground hover:underline"
-            data-row-interactive="true"
-            onClick={(event) => {
-              event.stopPropagation();
-              navigateToPco(pco.id);
-            }}
-          >
-            {pco.title}
-          </a>
-        ),
-      },
-      {
-        id: "status",
-        label: "Status",
-        render: (pco) => <StatusBadge status={pco.status} />,
-      },
-      {
-        id: "total_amount",
-        label: "Executed Amount",
-        render: (pco) => (
-          <div className="text-right tabular-nums">
-            {formatCurrency(pco.total_amount)}
-          </div>
-        ),
-      },
-      {
-        id: "schedule_impact",
-        label: "Schedule Impact",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : null}
-          </span>
-        ),
-      },
-      {
-        id: "created_at",
-        label: "Date Initiated",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">{formatDate(pco.created_at)}</span>
-        ),
-      },
-      {
-        id: "change_reason",
-        label: "Change Reason",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">{pco.change_reason || null}</span>
-        ),
-      },
-      {
-        id: "promoted_co_number",
-        label: "PCCO",
-        render: (pco) => (
-          <span className="text-sm text-muted-foreground">
-            {pco.promoted_co_number ?? null}
-          </span>
-        ),
-      },
-    ],
-    [buildPcoHref, formatCurrency, navigateToPco],
+  const totalAmount = useMemo(
+    () => pcos.reduce((sum, pco) => sum + (pco.total_amount ?? 0), 0),
+    [pcos],
   );
 
   return (
-    <div className="space-y-3">
+    <section className="space-y-3">
       <SectionRuleHeading label="Potential Change Orders" />
-      <UnifiedTablePage
-        header={{ title: "" }}
-        toolbar={{
-          totalItems: pcos.length,
-          filteredItems: pcos.length,
-          selectedCount: 0,
-          searchValue: "",
-          onSearchChange: () => {},
-          currentView: "table",
-          onViewChange: () => {},
-        }}
-        data={{ items: pcos, isLoading }}
-        table={{
-          columns,
-          getRowId: (pco) => pco.id,
-          onRowClick: (pco) => {
-            navigateToPco(pco.id);
-          },
-        }}
-        features={{
-          enableSearch: false,
-          enableViews: false,
-          enableFilters: false,
-          enableColumnToggle: false,
-          enableExport: false,
-          enableBulkDelete: false,
-          enableRowSelection: false,
-        }}
-        layout={{
-          containerPadding: false,
-          toolbarInlineWithHeader: true,
-          containerClassName: "min-h-0 pb-0",
-        }}
-        emptyState={{
-          title: "No potential change orders",
-          description: "PCOs will appear here when created for this contract.",
-          filteredDescription: "No potential change orders found.",
-          isFiltered: false,
-        }}
-      />
-    </div>
+      <InlineTable variant="read" tableClassName="min-w-full">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Revision</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Date Initiated</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Change Reason</InlineTableHeaderCell>
+            <InlineTableHeaderCell>PCCO</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Change Event</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Change Event Type</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Schedule Impact</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {isLoading ? (
+            <InlineTableRow>
+              <InlineTableCell colSpan={11} className="py-5 text-sm text-muted-foreground">
+                Loading potential change orders...
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : pcos.length === 0 ? (
+            <InlineTableRow>
+              <InlineTableCell colSpan={11} className="py-5 text-sm text-muted-foreground">
+                No potential change orders created yet.
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : (
+            pcos.map((pco) => (
+              <InlineTableRow key={pco.id}>
+                <InlineTableCell className="font-medium">
+                  <Link
+                    href={`/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pco.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {pco.pco_number || "—"}
+                  </Link>
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.revision ?? "—"}
+                </InlineTableCell>
+                <InlineTableCell>
+                  <Link
+                    href={`/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pco.id}`}
+                    className="text-foreground hover:underline"
+                  >
+                    {pco.title || "Untitled PCO"}
+                  </Link>
+                </InlineTableCell>
+                <InlineTableCell>
+                  <StatusBadge status={pco.status} />
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {formatDate(pco.created_at)}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.change_reason || "—"}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.promoted_co_number || "—"}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.linked_change_event_number || "—"}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.linked_change_event_type || "—"}
+                </InlineTableCell>
+                <InlineTableCell className="text-muted-foreground">
+                  {pco.schedule_impact != null ? `${pco.schedule_impact}d` : "—"}
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric>
+                  {formatCurrency(pco.total_amount ?? 0)}
+                </InlineTableCell>
+              </InlineTableRow>
+            ))
+          )}
+        </InlineTableBody>
+        {!isLoading && pcos.length > 0 ? (
+          <tfoot>
+            <tr className="border-t border-border/60">
+              <td className="px-3 py-3 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground" colSpan={10}>
+                Total
+              </td>
+              <td className="px-3 py-3 text-right text-sm font-semibold tabular-nums">
+                {formatCurrency(totalAmount)}
+              </td>
+            </tr>
+          </tfoot>
+        ) : null}
+      </InlineTable>
+    </section>
   );
 }

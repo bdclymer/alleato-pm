@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { CreatePurchaseOrderSchema } from "@/lib/schemas/create-purchase-order-schema";
 import { apiErrorResponse } from "@/lib/api-error";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 
 /**
  * GET /api/projects/[id]/purchase-orders
@@ -76,7 +81,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // Map form data to database columns
     const purchaseOrderData = {
       project_id: parseInt(projectId),
-      contract_number: data.contractNumber?.trim() || "",
+      contract_number: normalizeCommitmentContractNumber(
+        data.contractNumber,
+        "PO-",
+      ),
       contract_company_id: data.contractCompanyId || null,
       title: data.title || null,
       status: data.status || "Draft",
@@ -102,7 +110,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       ship_to_zip: data.shipToZip || null,
       ship_via: data.shipVia || null,
       description: data.description || null,
-      accounting_method: data.accountingMethod || "unit-quantity",
+      accounting_method: data.accountingMethod || "amount",
       contract_date: data.dates?.contractDate || null,
       delivery_date: data.dates?.deliveryDate || null,
       signed_po_received_date: data.dates?.signedPoReceivedDate || null,
@@ -133,19 +141,39 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Create SOV line items if provided
     if (data.sov && data.sov.length > 0) {
-      const sovItems = data.sov.map((item, index) => ({
-        purchase_order_id: purchaseOrder.id,
-        line_number: item.lineNumber || index + 1,
-        change_event_line_item: item.changeEventLineItem || null,
-        budget_code: item.budgetCode || null,
-        description: item.description || null,
-        quantity: item.quantity ?? null,
-        uom: item.uom || null,
-        unit_cost: item.unitCost ?? null,
-        amount: item.amount || 0,
-        billed_to_date: item.billedToDate || 0,
-        sort_order: index,
-      }));
+      const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+        supabase,
+        parseInt(projectId, 10),
+        "projects/[projectId]/purchase-orders#POST",
+      );
+      const sovItems = await Promise.all(
+        data.sov.map((item, index) => {
+          const lineNumber = item.lineNumber || index + 1;
+          const budgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+            budgetCodes: projectBudgetCodes,
+            lineNumber,
+            where: "projects/[projectId]/purchase-orders#POST",
+            submittedBudgetCode: item.budgetCode,
+            submittedProjectBudgetCodeId:
+              item.projectBudgetCodeId ?? item.budgetCodeId ?? null,
+          });
+
+          return {
+            purchase_order_id: purchaseOrder.id,
+            line_number: lineNumber,
+            change_event_line_item: item.changeEventLineItem || null,
+            budget_code: budgetCode.displayBudgetCode,
+            project_budget_code_id: budgetCode.projectBudgetCodeId,
+            description: item.description || null,
+            quantity: item.quantity ?? null,
+            uom: item.uom || null,
+            unit_cost: item.unitCost ?? null,
+            amount: item.amount || 0,
+            billed_to_date: item.billedToDate || 0,
+            sort_order: index,
+          };
+        }),
+      );
 
       const { error: sovError } = await supabase
         .from("purchase_order_sov_items")
@@ -175,6 +203,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       message: "Purchase order created successfully",
     });
   } catch (error) {
+    if (error instanceof GuardrailError) {
+      throw error;
+    }
     return apiErrorResponse(error);
   }
   },

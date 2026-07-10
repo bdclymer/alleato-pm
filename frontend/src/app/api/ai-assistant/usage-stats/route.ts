@@ -2,7 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { estimateCostWithFallback } from "@/lib/ai/model-pricing";
+import { estimateCostWithFallback, extractModelId } from "@/lib/ai/model-pricing";
 
 /**
  * GET /api/ai-assistant/usage-stats
@@ -101,7 +101,7 @@ export const GET = withApiGuardrails(
           sessionTokens[sid] = (sessionTokens[sid] ?? 0) + usage.totalTokens;
         }
 
-        const modelId = (meta?.modelId as string | undefined) ?? "";
+        const modelId = extractModelId(meta);
         const { cost, matchedModel } = estimateCostWithFallback(modelId, inTokens, outTokens);
         estimatedCost += cost;
         if (!matchedModel) messagesWithUnknownModel++;

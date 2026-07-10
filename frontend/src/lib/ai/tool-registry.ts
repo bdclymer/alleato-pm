@@ -22,12 +22,7 @@ export type AssistantToolCategory =
   | "workflow";
 
 export type AssistantToolCapability =
-  | "read"
-  | "write"
-  | "delivery"
-  | "source"
-  | "generate"
-  | "persist";
+  "read" | "write" | "delivery" | "source" | "generate" | "persist";
 
 export type AssistantToolRoutingPolicy = {
   useWhen: string[];
@@ -982,20 +977,19 @@ const intelligenceAssistantTools = factoryToolEntries({
 });
 
 const executiveBriefAssistantTools = factoryToolEntries({
-  names: ["generateExecutiveDailyBrief"],
+  names: ["readCurrentDailyExecutiveBrief"],
   factory: factory(
     "frontend/src/lib/ai/tools/executive-brief-tools.ts",
     "createExecutiveBriefTools",
   ),
   owningAdapter: "executive_brief_tools",
-  category: "generation",
+  category: "operational",
   sourceFamilies: [
-    "daily_recap",
     "project_intelligence",
+    "intelligence_packet",
     "document",
     "acumatica",
   ],
-  writeToolNames: new Set(["generateExecutiveDailyBrief"]),
 });
 
 const marketingWriteTools = new Set([
@@ -1258,28 +1252,16 @@ export const GLOBAL_ASSISTANT_TOOL_REGISTRY: AssistantToolRegistryEntry[] = [
     },
   }),
   executiveDailyBriefTool({
-    name: "generate-executive-daily-brief-packet",
+    name: "read-current-daily-executive-brief",
     description:
-      "Synthesize a source-backed Executive Daily Brief packet from normalized adapter records.",
-    owningAdapter: "executive_daily_brief_workflow",
-    inputSchemaName: "GenerateExecutiveDailyBriefPacketInput",
-    outputSchemaName: "ExecutiveDailyBriefPacket",
+      "Read the current canonical Daily Executive Brief packet from intelligence_packets target slug daily-executive-brief.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
+    inputSchemaName: "ReadCurrentDailyExecutiveBriefInput",
+    outputSchemaName: "CanonicalDailyBriefApiResponse",
     failureShape: "throws",
-    category: "generation",
-    capabilities: ["generate", "source"],
-    sourceFamilies: [
-      "fireflies",
-      "meeting",
-      "outlook",
-      "email",
-      "teams",
-      "document",
-      "rag",
-      "acumatica",
-      "project_intelligence",
-      "intelligence_packet",
-      "insight_card",
-    ],
+    category: "operational",
+    capabilities: ["read", "source"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
     requiresProjectScope: false,
     requiresWritePermission: false,
     requiresDeliveryPermission: false,
@@ -1288,115 +1270,92 @@ export const GLOBAL_ASSISTANT_TOOL_REGISTRY: AssistantToolRegistryEntry[] = [
       requiresSourceRefs: true,
       ledgerRequired: true,
     },
-    metadata: {},
+    metadata: {
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+    },
     factory: {
       modulePath: "@/lib/ai/tools/executive-brief-tools",
       exportName: "createExecutiveBriefTools",
     },
   }),
   executiveDailyBriefTool({
-    name: "persist-executive-daily-brief-artifact",
+    name: "fetch-daily-executive-brief-sources",
     description:
-      "Persist the generated packet and expose it as an AI work-run artifact.",
-    owningAdapter: "ai_ops_artifacts",
-    inputSchemaName: "PersistExecutiveDailyBriefArtifactInput",
-    outputSchemaName: "AiArtifact",
+      "Read source IDs and source counts already attached to the canonical Daily Executive Brief packet.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
+    inputSchemaName: "FetchDailyExecutiveBriefSourcesInput",
+    outputSchemaName: "DailyExecutiveBriefSourceSummary",
     failureShape: "throws",
-    category: "artifact",
-    capabilities: ["write", "persist"],
+    category: "source_adapter",
+    capabilities: ["read", "source"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
     requiresProjectScope: false,
-    requiresWritePermission: true,
+    requiresWritePermission: false,
     requiresDeliveryPermission: false,
     evidencePolicy: {
-      sourceBearing: false,
+      sourceBearing: true,
       requiresSourceRefs: true,
       ledgerRequired: true,
     },
-    metadata: {},
+    metadata: {
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+    },
   }),
   executiveDailyBriefTool({
     name: "build-teams-daily-brief-payload",
     description:
-      "Build a no-send or sendable Teams payload from an Executive Daily Brief packet.",
-    owningAdapter: "teams_delivery",
+      "Build a Teams payload from the current canonical Daily Executive Brief packet.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
     inputSchemaName: "BuildTeamsDailyBriefPayloadInput",
     outputSchemaName: "TeamsDailyBriefPayload",
-    failureShape: "result_error",
+    failureShape: "throws",
     category: "delivery",
     capabilities: ["read", "delivery"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
     allowedChannels: ["teams"],
     requiresProjectScope: false,
     requiresWritePermission: false,
     requiresDeliveryPermission: false,
     evidencePolicy: {
-      sourceBearing: false,
+      sourceBearing: true,
       requiresSourceRefs: true,
       ledgerRequired: true,
     },
-    metadata: { channel: "teams", deliveryTool: false },
+    metadata: {
+      channel: "teams",
+      deliveryTool: false,
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
+    },
   }),
   executiveDailyBriefTool({
     name: "send-teams-daily-brief",
     description:
-      "Send a Teams Executive Daily Brief payload and record provider/recipient outcome.",
-    owningAdapter: "teams_delivery",
+      "Send the current canonical Daily Executive Brief packet to Teams and record provider outcomes.",
+    owningAdapter: "daily_executive_brief_canonical_packet",
     inputSchemaName: "SendTeamsDailyBriefInput",
     outputSchemaName: "DeliveryAttempt",
     failureShape: "result_error",
     category: "delivery",
     capabilities: ["write", "delivery"],
+    sourceFamilies: ["intelligence_packet", "project_intelligence"],
     allowedChannels: ["teams"],
     requiresProjectScope: false,
     requiresWritePermission: true,
     requiresDeliveryPermission: true,
     evidencePolicy: {
-      sourceBearing: false,
-      requiresSourceRefs: false,
-      ledgerRequired: true,
-    },
-    metadata: { channel: "teams", deliveryTool: true },
-  }),
-  executiveDailyBriefTool({
-    name: "build-email-daily-brief-payload",
-    description:
-      "Build a no-send or sendable email payload from an Executive Daily Brief packet.",
-    owningAdapter: "email_delivery",
-    inputSchemaName: "BuildEmailDailyBriefPayloadInput",
-    outputSchemaName: "EmailDailyBriefPayload",
-    failureShape: "result_error",
-    category: "delivery",
-    capabilities: ["read", "delivery"],
-    allowedChannels: ["email"],
-    requiresProjectScope: false,
-    requiresWritePermission: false,
-    requiresDeliveryPermission: false,
-    evidencePolicy: {
-      sourceBearing: false,
+      sourceBearing: true,
       requiresSourceRefs: true,
       ledgerRequired: true,
     },
-    metadata: { channel: "email", deliveryTool: false },
-  }),
-  executiveDailyBriefTool({
-    name: "send-email-daily-brief",
-    description:
-      "Send an email Executive Daily Brief payload and record provider/recipient outcome.",
-    owningAdapter: "email_delivery",
-    inputSchemaName: "SendEmailDailyBriefInput",
-    outputSchemaName: "DeliveryAttempt",
-    failureShape: "result_error",
-    category: "delivery",
-    capabilities: ["write", "delivery"],
-    allowedChannels: ["email"],
-    requiresProjectScope: false,
-    requiresWritePermission: true,
-    requiresDeliveryPermission: true,
-    evidencePolicy: {
-      sourceBearing: false,
-      requiresSourceRefs: false,
-      ledgerRequired: true,
+    metadata: {
+      channel: "teams",
+      deliveryTool: true,
+      sourceOfTruth: "intelligence_packets",
+      targetSlug: "daily-executive-brief",
     },
-    metadata: { channel: "email", deliveryTool: true },
   }),
 ];
 

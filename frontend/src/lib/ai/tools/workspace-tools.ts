@@ -40,6 +40,7 @@ const artifactTypeEnum = z.enum([
   "analysis",
   "briefing",
   "note",
+  "change_event_draft",
 ]);
 
 const artifactStatusEnum = z.enum(["draft", "final", "archived", "promoted"]);
@@ -64,7 +65,7 @@ export function createWorkspaceTools(
       artifactType: artifactTypeEnum
         .optional()
         .describe(
-          "Filter by artifact type: owner_update, risk_report, meeting_prep, analysis, briefing, or note",
+          "Filter by artifact type: owner_update, risk_report, meeting_prep, analysis, briefing, note, or change_event_draft",
         ),
       status: artifactStatusEnum
         .optional()
@@ -206,13 +207,13 @@ export function createWorkspaceTools(
         .optional()
         .describe("Omit to create a new artifact; provide to update an existing one"),
       artifactType: artifactTypeEnum.describe(
-        "Type of artifact: owner_update, risk_report, meeting_prep, analysis, briefing, or note",
+        "Type of artifact: owner_update, risk_report, meeting_prep, analysis, briefing, note, or change_event_draft",
       ),
       title: z.string().describe("Short descriptive title for the artifact"),
       content: z
         .record(z.string(), z.unknown())
         .describe(
-          "JSON object with type-specific structure. For owner_update: { summary, highlights, risks, next_steps }. For risk_report: { risks: [{title, severity, mitigation}] }. For meeting_prep: { agenda, talking_points, questions }. For analysis: { findings, recommendations }. For briefing: { body }. For note: { text }.",
+          "JSON object with type-specific structure. For owner_update: { summary, highlights, risks, next_steps }. For risk_report: { risks: [{title, severity, mitigation}] }. For meeting_prep: { agenda, talking_points, questions }. For analysis: { findings, recommendations }. For briefing: { body }. For note: { text }. For change_event_draft: { workflow, draft, readiness }.",
         ),
       projectId: z.number().optional().describe("Associated project ID"),
       status: z

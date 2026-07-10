@@ -17,6 +17,8 @@ export interface CollaborationNotification {
   entityType: string | null;
   entityId: string | null;
   projectId: number | null;
+  /** The user who triggered this notification. Null for system/automated notices. */
+  actorId: string | null;
 }
 
 interface NotificationsResponse {

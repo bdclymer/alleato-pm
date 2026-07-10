@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { requireDeveloper } from "@/lib/auth/require-developer";
 
 /**
@@ -37,10 +36,12 @@ export default async function DeveloperLayout({
           style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
         >
           <SiteHeader />
-          <div className="flex flex-1 flex-col min-w-0 min-h-0">
+          <main
+            id="app-main-content"
+            className="flex min-h-0 min-w-0 flex-1 flex-col"
+          >
             <div className="flex-1">{children}</div>
-            <SiteFooter />
-          </div>
+          </main>
         </div>
       </SidebarInset>
     </SidebarProvider>

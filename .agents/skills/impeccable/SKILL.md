@@ -66,7 +66,12 @@ If PRODUCT.md lacks the `register` field (legacy), infer it once from its "Users
 
 Load the matching reference: [reference/brand.md](reference/brand.md) or [reference/product.md](reference/product.md). The shared design laws below apply to both.
 
-For product-register work in the Alleato PM repository, also load [reference/alleato-product-noise-gate.md](reference/alleato-product-noise-gate.md). It is the product UI authority for attention allocation, visual silence, progressive disclosure, cards, dashboards, and final noise-gate approval. If this reference conflicts with generic brand, delight, bolder, animate, or overdrive guidance, the Alleato noise gate wins unless the user explicitly asks for an expressive brand surface.
+For product-register work in the Alleato PM repository, this skill is the primary and only required design entrypoint. Also load:
+
+- [reference/alleato-doctrine.md](reference/alleato-doctrine.md)
+- [reference/alleato-product-noise-gate.md](reference/alleato-product-noise-gate.md)
+
+`reference/alleato-doctrine.md` carries the Alleato-specific workflow, pattern, blessed-layout, audit-script, and closeout rules that previously lived in a separate design-governance skill. `reference/alleato-product-noise-gate.md` remains the product UI authority for attention allocation, visual silence, progressive disclosure, cards, dashboards, and final noise-gate approval. If either Alleato reference conflicts with generic brand, delight, bolder, animate, or overdrive guidance, the Alleato references win unless the user explicitly asks for an expressive brand surface.
 
 ## Shared design laws
 

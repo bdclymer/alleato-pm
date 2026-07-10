@@ -6,8 +6,9 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { apiFetchRaw } from "@/lib/api-client";
+import { apiFetch, apiFetchRaw } from "@/lib/api-client";
 import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { PageShell } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
@@ -102,12 +103,10 @@ export default function NewCommitmentPage() {
         commitmentType === "subcontract"
           ? `/api/projects/${projectId}/subcontracts`
           : `/api/projects/${projectId}/purchase-orders`;
-      const res = await fetch(endpoint);
-      if (!res.ok) return null;
-
-      const payload = (await res.json().catch(() => ({}))) as
+      const payload = await apiFetch<
         | { data?: Array<{ id?: string; contract_number?: string }> }
-        | Array<{ id?: string; contract_number?: string }>;
+        | Array<{ id?: string; contract_number?: string }>
+      >(endpoint);
 
       const rows = Array.isArray(payload)
         ? payload
@@ -281,31 +280,38 @@ export default function NewCommitmentPage() {
         ? "New Purchase Order"
         : "New Commitment";
 
-  return (
-    <PageShell
-      variant="detail"
-      title={title}
-      description={
-        type === "subcontract"
-          ? "Create a new subcontract commitment"
-          : "Create a new purchase order commitment"
-      }
-      onBack={() => router.back()}
-    >
-      {type === "purchase_order" ? (
+  if (type === "purchase_order") {
+    return (
+      <PageShell
+        variant="detail"
+        title={title}
+        description="Create a new purchase order commitment"
+        onBack={() => router.back()}
+        actions={<CommitmentsHelpSheet buttonVariant="ghost" />}
+      >
         <CreatePurchaseOrderForm
           projectId={projectId}
           onSubmit={handleSubmitPurchaseOrder}
           onCancel={handleCancel}
         />
-      ) : (
-        <CreateSubcontractForm
-          projectId={projectId}
-          onSubmit={handleSubmitSubcontract}
-          onCancel={handleCancel}
-          initialData={subcontractInitialData}
-        />
-      )}
+      </PageShell>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="form"
+      title={title}
+      description="Create a new subcontract commitment"
+      onBack={() => router.back()}
+      backLabel="Back to Commitments"
+    >
+      <CreateSubcontractForm
+        projectId={projectId}
+        onSubmit={handleSubmitSubcontract}
+        onCancel={handleCancel}
+        initialData={subcontractInitialData}
+      />
     </PageShell>
   );
 }

@@ -29,10 +29,7 @@ import {
   type InsightCardWithTarget,
 } from "@/lib/ai/insight-cards";
 
-// Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
-// Keep this broad row shape until the tool layer is split into typed modules.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyRow = Record<string, any>;
+import { type AnyRow } from "./types";
 
 export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;

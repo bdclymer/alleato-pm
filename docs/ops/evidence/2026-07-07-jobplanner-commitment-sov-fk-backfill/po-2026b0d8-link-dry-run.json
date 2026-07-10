@@ -1,0 +1,55 @@
+{
+  "mode": "dry-run",
+  "createMissingBudgetCodes": false,
+  "reportMissingBudgetCodes": true,
+  "disabledCreateModeNote": {
+    "reason": "disabled_by_design",
+    "details": "Missing project_budget_codes are reported only. Creating canonical budget master data from heuristic JobPlanner parent matches is intentionally blocked."
+  },
+  "targetParent": "2026b0d8-d4f5-4ab9-9f99-360783c86fe8",
+  "unresolvedRows": 1,
+  "parentCount": 1,
+  "missingBudgetCodeCandidateCount": 0,
+  "missingBudgetCodeRowCount": 0,
+  "missingBudgetCodesToCreate": [],
+  "createdBudgetCodes": 0,
+  "resolvedUpdates": 1,
+  "resolvedByTable": {
+    "purchase_order_sov_items": 1
+  },
+  "reasonCounts": {},
+  "missingBudgetCodeCandidates": [],
+  "updateSample": [
+    {
+      "table": "purchase_order_sov_items",
+      "id": "5dc03333-8703-4ab3-862e-701919b5cd90",
+      "parentId": "2026b0d8-d4f5-4ab9-9f99-360783c86fe8",
+      "budgetCode": "214000",
+      "normalizedBudgetCode": "21-4000",
+      "projectBudgetCodeId": "e7052d62-4443-4e7d-815d-848e9b0f5b34",
+      "costTypeCode": "S",
+      "sourceLineIds": [
+        24443
+      ],
+      "proofQuality": "source_cost_type_only_amount_unmatched"
+    }
+  ],
+  "parentMatchSample": [
+    {
+      "parentId": "2026b0d8-d4f5-4ab9-9f99-360783c86fe8",
+      "contractNumber": "000064",
+      "localProjectId": 31,
+      "jpProjectId": 3729,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 140,
+          "id": 3119,
+          "number": "PO-3729-0002",
+          "title": "Sprinkler Materials and Fabrication",
+          "company": "Accu-Fire, Inc."
+        }
+      ]
+    }
+  ]
+}

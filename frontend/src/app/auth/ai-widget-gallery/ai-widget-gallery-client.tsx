@@ -84,7 +84,7 @@ const widgets: AssistantWidgetPayload[] = [
     outlookDraftId: "draft-1",
     outlookWebLink: "https://outlook.office.com/mail/deeplink/compose/draft-1",
     voiceProfile: {
-      path: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
+      path: "docs/architecture/memory/brandon-brand-voice/brandon-email-voice-profile.md",
       version: "2026-05-13",
     },
     adaptiveCard: {},
@@ -621,7 +621,7 @@ const AISDK_FEATURES: Array<{
   { feature: "generateObject", usage: "Structured output for project-intelligence summaries and LLM-as-judge response scoring.", where: "project-intelligence-summary, llm-judge", badge: "Core" },
   { feature: "tool()", usage: "28+ registered tools across 6 tool files: financial, operational, project, Acumatica, schedule, forecast, Outlook operations.", where: "lib/ai/tools/", badge: "Tools" },
   { feature: "Output.object() / Output.array()", usage: "Structured output from generateText without switching to generateObject — used for action briefs, suggestion arrays, and memory extraction.", where: "structured-output.ts, request-suggestions.ts, memory-extraction.ts", badge: "Tools" },
-  { feature: "stopWhen: stepCountIs(N)", usage: "Agentic loop cap: 10 steps for the main chat assistant, 7 steps for meeting prep generation.", where: "handler-v2.ts, meeting prep route", badge: "Agents" },
+  { feature: "stopWhen: isStepCount(N)", usage: "Agentic loop cap: 10 steps for the main chat assistant, 7 steps for meeting prep generation.", where: "handler-v2.ts, meeting prep route", badge: "Agents" },
   { feature: "smoothStream({ chunking: 'word' })", usage: "Word-level token smoothing on text artifact streaming to prevent jittery rendering.", where: "artifacts/text/server.ts", badge: "Streaming" },
   { feature: "useChat (@ai-sdk/react)", usage: "Client-side chat state, message list, input handling, and status tracking across 5 chat surfaces.", where: "widget-ai-chat, executive-chat-panel, rag-chat-page, ask-alleato, procore-docs", badge: "React" },
   { feature: "DefaultChatTransport", usage: "Custom transport configuration for useChat — sets base URL, credentials, and retry behavior.", where: "widget-ai-chat, chat.tsx, ask-alleato", badge: "React" },

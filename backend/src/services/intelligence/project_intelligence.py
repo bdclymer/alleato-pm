@@ -78,7 +78,27 @@ def _utc_now_iso() -> str:
 
 
 def _coalesce_doc_date(doc: Dict[str, Any]) -> Optional[str]:
-    return doc.get("date") or doc.get("captured_at")
+    return (
+        doc.get("date")
+        or doc.get("captured_at")
+        or doc.get("last_content_loaded_at")
+        or doc.get("last_indexed_at")
+        or doc.get("last_synced_at")
+        or doc.get("updated_at")
+        or doc.get("created_at")
+    )
+
+
+def _doc_date_sort_key(doc: Dict[str, Any]) -> datetime:
+    value = _coalesce_doc_date(doc)
+    if not value:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    try:
+        text = str(value).replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(text)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _severity_label(value: Any) -> str:
@@ -218,16 +238,22 @@ def _load_delta_docs(
     record, and it only READS, it does not write per-doc signals.
     """
     rows = (
-        client.table("document_metadata")
+        rag_read.table("rag_document_metadata")
         .select(
-            "id,title,type,category,source,source_system,date,captured_at,"
-            "participants,participants_array,source_item_id,source_web_url,"
-            "source_path,content_hash,project_id"
+            "id,app_document_id,project_id,source,source_system,source_item_id,"
+            "fireflies_id,title,type,category,source_web_url,url,storage_bucket,"
+            "storage_path,file_name,content,raw_text,summary,overview,content_hash,"
+            "last_synced_at,last_content_loaded_at,last_indexed_at,created_at,updated_at"
         )
         .eq("project_id", int(project_id))
-        .or_(f"date.gte.{since},captured_at.gte.{since}")
-        .order("date", desc=True)
-        .limit(120)
+        .or_(
+            "last_content_loaded_at.gte.{since},last_indexed_at.gte.{since},"
+            "last_synced_at.gte.{since},updated_at.gte.{since},created_at.gte.{since}".format(
+                since=since
+            )
+        )
+        .order("last_content_loaded_at", desc=True, nullsfirst=False)
+        .limit(160)
         .execute()
         .data
         or []
@@ -238,23 +264,30 @@ def _load_delta_docs(
     truncated = False
     max_doc_date: Optional[str] = None
 
-    # rows come newest-first; keep most-recent until the char budget is spent.
+    rows = sorted(rows, key=_doc_date_sort_key, reverse=True)
+
+    # Keep the most-recent source rows first. If one row no longer fits, skip it
+    # instead of stopping the scan so a large transcript cannot hide newer/smaller
+    # emails or Teams messages that still fit inside the remaining budget.
     for doc in rows:
         comm_type = _classify_comm_type(doc)
         if comm_type is None:
             continue
         doc_id = doc.get("id")
-        rag_row = fetch_optional_row(
-            rag_read, "rag_document_metadata", "content,raw_text", "id", doc_id
-        )
-        full_text = (rag_row.get("content") or rag_row.get("raw_text") or "").strip()
+        full_text = (
+            doc.get("content")
+            or doc.get("raw_text")
+            or doc.get("summary")
+            or doc.get("overview")
+            or ""
+        ).strip()
         if not full_text:
             continue
         if len(full_text) > MAX_DOC_CHARS:
             full_text = full_text[:MAX_DOC_CHARS] + "\n…[truncated]"
         if total_chars + len(full_text) > MAX_SYNTH_CHARS:
             truncated = True
-            break
+            continue
         total_chars += len(full_text)
         doc_date = _coalesce_doc_date(doc)
         if doc_date and (max_doc_date is None or str(doc_date) > max_doc_date):
@@ -271,8 +304,11 @@ def _load_delta_docs(
                 "source": doc.get("source"),
                 "source_system": doc.get("source_system"),
                 "source_item_id": doc.get("source_item_id"),
-                "source_web_url": doc.get("source_web_url"),
-                "source_path": doc.get("source_path"),
+                "fireflies_id": doc.get("fireflies_id"),
+                "source_web_url": doc.get("source_web_url") or doc.get("url"),
+                "source_path": doc.get("storage_path"),
+                "storage_bucket": doc.get("storage_bucket"),
+                "app_document_id": doc.get("app_document_id"),
                 "content_hash": doc.get("content_hash"),
                 "project_id": doc.get("project_id"),
                 "text": full_text,
@@ -286,6 +322,37 @@ def _load_delta_docs(
         "truncated": truncated,
         "total_chars": total_chars,
         "max_doc_date": max_doc_date,
+    }
+
+
+def _source_coverage_for_docs(docs: List[Dict[str, Any]], *, truncated: bool, latest_source_at: str) -> Dict[str, Any]:
+    counts: Dict[str, int] = {}
+    category_latest: Dict[str, Optional[str]] = {}
+    for doc in docs:
+        category = str(doc.get("comm_type") or doc.get("category") or doc.get("type") or "document")
+        counts[category] = counts.get(category, 0) + 1
+        doc_date = doc.get("date")
+        if doc_date and (category_latest.get(category) is None or str(doc_date) > str(category_latest[category])):
+            category_latest[category] = str(doc_date)
+
+    return {
+        "deltaDocCount": len(docs),
+        "sourceIds": [doc["id"] for doc in docs if doc.get("id")],
+        "sourceCounts": counts,
+        "truncated": truncated,
+        "latestSourceAt": latest_source_at,
+        "categoryCoverage": [
+            {
+                "category": category,
+                "label": category.replace("_", " ").title(),
+                "availableCount": count,
+                "sourceCount": count,
+                "inPacketCount": count,
+                "latestAt": category_latest.get(category),
+                "tableNames": ["rag_document_metadata"],
+            }
+            for category, count in sorted(counts.items())
+        ],
     }
 
 
@@ -640,7 +707,7 @@ def refresh_project_intelligence(
                 "type": d.get("type") or "other",
                 "title": d["title"],
                 "category": d.get("category") or d["comm_type"],
-                "sourceUrl": None,
+                "sourceUrl": d.get("source_web_url"),
                 "capturedAt": d.get("date"),
             }
             for d in docs
@@ -693,12 +760,11 @@ def refresh_project_intelligence(
             + (f"; {len(docs)} new this run." if docs else "; no new source docs this run.")
         ),
     }
-    source_coverage = {
-        "deltaDocCount": len(docs),
-        "truncated": delta["truncated"],
-        "latestSourceAt": covered_end_at,
-        "categoryCoverage": [],
-    }
+    source_coverage = _source_coverage_for_docs(
+        docs,
+        truncated=bool(delta["truncated"]),
+        latest_source_at=covered_end_at,
+    )
 
     # Distinct fields: current_status = the single most important current focus (a
     # headline, NOT a copy of the executive read); why_it_matters = the top
@@ -774,6 +840,10 @@ def refresh_project_intelligence(
             client.table("intelligence_packets").insert(payload).execute().data
         )
         packet_id = (written[0]["id"] if written else None)
+
+    client.table("intelligence_targets").update(
+        {"last_signal_at": covered_end_at}
+    ).eq("id", target_id).execute()
 
     result["packet_id"] = packet_id
     result["covered_end_at"] = covered_end_at

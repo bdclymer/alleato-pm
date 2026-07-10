@@ -1,0 +1,26 @@
+[
+  {
+    "name": "alleato-microsoft-executive-assistant-check",
+    "id": "crn-d8orvmmrnols73etajrg",
+    "suspended": "not_suspended",
+    "schedule": "*/15 * * * *",
+    "command": "timeout 10m python3 src/scripts/run_microsoft_executive_assistant_check.py",
+    "updatedAt": "2026-06-25T21:12:13.408275Z"
+  },
+  {
+    "name": "alleato-ai-provider-health",
+    "id": "crn-d8ndbas8aovs73abp21g",
+    "suspended": "not_suspended",
+    "schedule": "20 * * * *",
+    "command": "python3 -m src.services.health.ai_provider_health",
+    "updatedAt": "2026-06-25T21:12:14.145481Z"
+  },
+  {
+    "name": "alleato-rag-health",
+    "id": "crn-d827ch7avr4c739i5mp0",
+    "suspended": "not_suspended",
+    "schedule": "15 12 * * *",
+    "command": "python3 -m src.services.health.rag_meeting_health",
+    "updatedAt": "2026-06-25T21:12:14.86897Z"
+  }
+]

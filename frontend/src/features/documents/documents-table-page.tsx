@@ -498,10 +498,23 @@ export function DocumentsTablePage({
         projectNames,
         projects,
         onEditField: inlineEditingEnabled ? handleEditField : undefined,
-        getTitleHref: (doc) => getInternalDocumentHref(doc) ?? getDocumentViewUrl(doc),
-        isTitleExternal: (doc) => !getInternalDocumentHref(doc) && Boolean(getDocumentViewUrl(doc)),
+        onTitleClick: onSelectDoc,
+        getTitleHref: onSelectDoc
+          ? undefined
+          : (doc) => getInternalDocumentHref(doc) ?? getDocumentViewUrl(doc),
+        isTitleExternal: onSelectDoc
+          ? undefined
+          : (doc) =>
+              !getInternalDocumentHref(doc) &&
+              Boolean(getDocumentViewUrl(doc)),
       }),
-    [projectNames, projects, inlineEditingEnabled, handleEditField],
+    [
+      projectNames,
+      projects,
+      inlineEditingEnabled,
+      handleEditField,
+      onSelectDoc,
+    ],
   );
   const tableColumns = customTableColumns ?? defaultTableColumns;
 
@@ -649,10 +662,11 @@ export function DocumentsTablePage({
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
+          onRowClick: onSelectDoc ?? handleView,
           rowActions: (item) =>
             renderDocumentRowActions(
               item,
-              handleView,
+              onSelectDoc ?? handleView,
               projectAssignmentEnabled ? (doc) => setAssignDoc(doc) : undefined,
               deleteEnabled ? handleDeleteDocument : undefined,
             ),

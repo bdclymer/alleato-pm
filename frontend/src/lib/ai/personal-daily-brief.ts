@@ -88,6 +88,140 @@ export function isExecutiveBriefingMetadataQuestion(message: string): boolean {
   return mentionsBrief;
 }
 
+/**
+ * True when the user explicitly wants live, multi-source deep research (which
+ * justifies the slow Deep Agents pipeline) rather than the precomputed
+ * deep-read packet. Used to let a "dig deeper" request bypass the fast route.
+ */
+export function wantsDeepAgentResearchOverride(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    "dig deeper",
+    "deep dive",
+    "deep-dive",
+    "dig into",
+    "go deeper",
+    "research",
+    "investigate",
+    "look into",
+    "cross-reference",
+    "cross reference",
+    "root cause",
+    "why exactly",
+    "search the web",
+    "web search",
+    "on the web",
+    "google",
+    "fresh analysis",
+    "full analysis",
+    "detailed analysis",
+    "re-run the research",
+    "run the research",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
+/**
+ * True for portfolio-wide "what are the risks / issues / status / what's going
+ * on" questions. These are already answered by the precomputed Daily Executive
+ * Brief packet (the deep-read synthesis), so they can be served instantly
+ * instead of spinning up the ~24s Deep Agents multi-agent pipeline to
+ * reconstruct the same answer. `wantsDeepAgentResearchOverride` opts back into
+ * the slow path on explicit request.
+ */
+export function isPortfolioStatusRiskQuestion(message: string): boolean {
+  const normalized = message.toLowerCase();
+
+  const asksStatusOrRisk = [
+    "risk",
+    "risks",
+    "issue",
+    "issues",
+    "problem",
+    "problems",
+    "blocker",
+    "blockers",
+    "concern",
+    "concerns",
+    "what's going on",
+    "whats going on",
+    "what is going on",
+    "what should i worry",
+    "what do i need to worry",
+    "what needs attention",
+    "needs my attention",
+    "status",
+    "how are things",
+    "state of things",
+    "what's happening",
+    "whats happening",
+    "brief me",
+    "catch me up",
+    "anything i should know",
+    "fires",
+    "on fire",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (!asksStatusOrRisk) return false;
+
+  const portfolioScoped = [
+    "project",
+    "projects",
+    "portfolio",
+    "across",
+    "our projects",
+    "current projects",
+    "all projects",
+    "everything",
+    "the business",
+    "company",
+    "company-wide",
+    "overall",
+    "right now",
+  ].some((phrase) => normalized.includes(phrase));
+
+  return portfolioScoped;
+}
+
+export function isDailyDeepReadPacketQuestion(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const directDailyDeepRead = [
+    "daily deep read",
+    "deep read packet",
+    "source of truth for the daily brief",
+    "daily executive brief source of truth",
+    "latest daily deep read setup",
+    "current executive brief candidates",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (directDailyDeepRead) return true;
+
+  const mentionsPacketOrBrief = [
+    "daily brief",
+    "daily briefing",
+    "executive brief",
+    "executive briefing",
+    "project intelligence",
+    "intelligence packet",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (!mentionsPacketOrBrief) return false;
+
+  return [
+    "full-source",
+    "full source",
+    "entire transcript",
+    "entire transcripts",
+    "raw rag chunks",
+    "rag chunks",
+    "review-gated",
+    "review gated",
+    "candidate tasks",
+    "task candidates",
+    "risk candidates",
+    "decision candidates",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
 export function isPersonalTaskRegisterRequest(message: string): boolean {
   const normalized = message.toLowerCase();
   if (isPersonalDailyBriefRequest(message)) return false;

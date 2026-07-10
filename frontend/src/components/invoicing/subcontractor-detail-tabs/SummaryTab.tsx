@@ -6,7 +6,8 @@ import { Calendar as CalendarIcon, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
-import { DetailField, DetailFieldGrid } from "@/components/ds";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
+import { DetailField, DetailFieldGrid, InfoAlert } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,11 @@ type CoSummary = {
 };
 
 type InvoiceShape = {
+  subcontract_id?: number | null;
+  purchase_order_id?: number | null;
+  acumatica_doc_type?: string | null;
+  acumatica_ref_nbr?: string | null;
+  acumatica_sync_at?: string | null;
   contract_number?: string | null;
   contract_title?: string | null;
   contract_company_name?: string | null;
@@ -240,9 +246,40 @@ export function SummaryTab({
   );
 
   const coSummary = invoice.co_summary;
+  const changeOrderAdditions = coSummary?.additions ?? 0;
+  const changeOrderDeductions = coSummary?.deductions ?? 0;
+  const changeOrderNet = coSummary?.net ?? 0;
+  const erpRefNbr = invoice.acumatica_ref_nbr?.trim();
+  const erpDocType = invoice.acumatica_doc_type?.trim() || "Bill";
+  const erpHref = erpRefNbr
+    ? buildAcumaticaApBillHref(erpDocType, erpRefNbr)
+    : null;
+  const isErpLinked = Boolean(invoice.acumatica_sync_at || erpRefNbr);
+
+  // An invoice not linked to a subcontract/PO commitment cannot resolve its
+  // contract company, commitment number, original contract sum, or SOV — the
+  // whole G702 form renders blank/$0. Surface that loudly instead of letting a
+  // broken-looking page masquerade as a bug.
+  const isUnlinked = !invoice.subcontract_id && !invoice.purchase_order_id;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
+      {isUnlinked && (
+        <InfoAlert variant="warning" role="alert">
+          <span className="font-medium">Not linked to a commitment.</span> This
+          invoice has no subcontract or purchase order, so the contract company,
+          commitment number, and original contract sum below cannot be shown and
+          the totals read $0. Link it to its commitment to populate this form
+          {invoice.notes ? (
+            <>
+              {" "}(the notes reference{" "}
+              <span className="font-medium">{invoice.notes}</span>)
+            </>
+          ) : null}
+          .
+        </InfoAlert>
+      )}
+
       {/* Edit actions bar */}
       {editing && (
         <div className="flex items-center justify-end gap-2">
@@ -311,6 +348,22 @@ export function SummaryTab({
               invoice.invoice_number ?? "—"
             )}
           </DetailField>
+          <DetailField label="ERP Link">
+            {erpHref && erpRefNbr ? (
+              <a
+                href={erpHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {erpDocType} {erpRefNbr}
+              </a>
+            ) : isErpLinked ? (
+              "Linked, missing ERP reference"
+            ) : (
+              "Not linked"
+            )}
+          </DetailField>
           <DetailField label="Commitment #">
             {invoice.contract_number ?? "—"}
             {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
@@ -354,7 +407,7 @@ export function SummaryTab({
         <SectionRuleHeading label="Summary Preview" />
 
         {/* TO / FROM address blocks (stacked) + Project metadata (right column) */}
-        <div className="grid grid-cols-2 gap-x-20 gap-y-0">
+        <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-20 sm:gap-y-0">
           {/* Left column: stacked TO then FROM */}
           <div className="space-y-6">
             <div className="space-y-1 text-sm">
@@ -382,7 +435,7 @@ export function SummaryTab({
           </div>
 
           {/* Right column: Project / Application metadata */}
-          <DetailFieldGrid columns={2} className="gap-x-6 gap-y-3">
+          <DetailFieldGrid columns={1} className="gap-y-2">
             <DetailField label="Project">
               {invoice.project_name ?? "—"}
             </DetailField>
@@ -408,6 +461,10 @@ export function SummaryTab({
         {invoice.rollup && (
           <div className="space-y-4">
             <SectionRuleHeading label="Subcontractor's Application for Payment" />
+            <p className="text-sm text-muted-foreground">
+              Application is made for payment, as shown below, in connection
+              with the Contract. Continuation sheet is attached.
+            </p>
             <dl className="divide-y divide-border text-sm">
               {[
                 {
@@ -486,36 +543,67 @@ export function SummaryTab({
           </div>
         )}
 
-        {/* Change Order Summary Table */}
-        {coSummary && (coSummary.additions !== 0 || coSummary.deductions !== 0) && (
-          <div className="space-y-4">
-            <SectionRuleHeading label="Change Order Summary" />
+        <div className="space-y-4">
+          <SectionRuleHeading label="Change Order Summary" />
+          <div className="overflow-hidden border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">Type</TableHead>
-                  <TableHead className="text-right text-xs">Additions</TableHead>
-                  <TableHead className="text-right text-xs">Deductions</TableHead>
-                  <TableHead className="text-right text-xs">Net Change</TableHead>
+                  <TableHead className="w-1/2 align-bottom text-xs uppercase text-foreground">
+                    Change Order Summary
+                  </TableHead>
+                  <TableHead className="w-1/4 text-xs uppercase text-foreground">
+                    Additions
+                  </TableHead>
+                  <TableHead className="w-1/4 text-xs uppercase text-foreground">
+                    Deductions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {[
+                  {
+                    label:
+                      "Total changes approved in previous months by Owner/Client:",
+                    additions: changeOrderAdditions,
+                    deductions: changeOrderDeductions,
+                  },
+                  {
+                    label: "Total approved this Month:",
+                    additions: 0,
+                    deductions: 0,
+                  },
+                  {
+                    label: "Totals:",
+                    additions: changeOrderAdditions,
+                    deductions: changeOrderDeductions,
+                  },
+                ].map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell className="text-sm">{row.label}</TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {formatCurrency(row.additions)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      {formatCurrency(row.deductions)}
+                    </TableCell>
+                  </TableRow>
+                ))}
                 <TableRow>
-                  <TableCell className="text-sm">Approved Change Orders</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {formatCurrency(coSummary.additions)}
+                  <TableCell className="text-sm font-medium">
+                    Net changes by change order:
                   </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">
-                    {formatCurrency(coSummary.deductions)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-sm font-semibold">
-                    {formatCurrency(coSummary.net)}
+                  <TableCell
+                    colSpan={2}
+                    className="text-right tabular-nums text-sm font-medium"
+                  >
+                    {formatCurrency(changeOrderNet)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
-        )}
+        </div>
       </section>
 
       {/* ── Section 3: Attachments ── */}

@@ -1,9 +1,24 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
-import { ArrowLeft, Github, Trash2, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowUp,
+  CircleDot,
+  Github,
+  Link2,
+  Minus,
+  Shapes,
+  Tag,
+  Trash2,
+  User,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 import {
   Button,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -11,6 +26,10 @@ import {
   SelectValue,
 } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
 import { useConfirm } from "@/hooks/use-confirm";
 import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -20,12 +39,13 @@ import { STATUS_OPTIONS, REQUEST_TYPE_LABELS } from "../constants";
 import {
   submitterLabel,
   toDisplayStatus,
+  toolLabelFromPath,
 } from "../helpers";
-import type { AgentTarget, DisplayStatus, FeedbackItem } from "../types";
+import type { DisplayStatus, FeedbackItem } from "../types";
 
-import { AgentDispatchSection } from "./agent-dispatch-section";
 import { CollapsibleDetailSection } from "./collapsible-detail-section";
 import { CommentsSection } from "./comments-section";
+import { FeedbackResourcesSection } from "./feedback-resources-section";
 import { GitHubActivitySection } from "./github-activity-section";
 import { ToolContextSection } from "./tool-context-section";
 
@@ -33,29 +53,33 @@ export function FeedbackDetail({
   item,
   updatingId,
   sendingToGitHub,
-  dispatchingId,
   deletingId,
   onUpdateStatus,
+  onUpdateTitle,
+  onUpdateCategory,
   onSendToGitHub,
-  onDispatchToAgent,
   onDelete,
+  onRefresh,
   onBack,
   commentInputRef,
 }: {
   item: FeedbackItem;
   updatingId: string | null;
   sendingToGitHub: boolean;
-  dispatchingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
+  onUpdateTitle: (id: string, title: string) => void;
+  onUpdateCategory: (id: string, category: string | null) => void;
   onSendToGitHub: (id: string) => void;
-  onDispatchToAgent: (id: string, target: AgentTarget) => void;
   onDelete: (id: string) => void;
+  onRefresh: () => void;
   onBack?: () => void;
   commentInputRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   const displayStatus = toDisplayStatus(item.status);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [titleValue, setTitleValue] = useState(item.title);
+  const [categoryValue, setCategoryValue] = useState(item.category ?? "");
   const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } =
     useConfirm();
   const displayTitle = displayAdminFeedbackTitle({
@@ -65,6 +89,35 @@ export function FeedbackDetail({
     targetText: item.target_text,
     pageTitle: item.page_title,
   });
+  const toolLabel = toolLabelFromPath(item.page_path);
+  const priorityMeta = (() => {
+    const severity = item.severity ?? "medium";
+    if (severity === "high") {
+      return {
+        icon: ArrowUp,
+        label: "High",
+        className: "text-status-error",
+      };
+    }
+    if (severity === "low") {
+      return {
+        icon: Minus,
+        label: "Low",
+        className: "text-status-success",
+      };
+    }
+    return {
+      icon: AlertCircle,
+      label: "Medium",
+      className: "text-status-warning",
+    };
+  })();
+  const PriorityIcon = priorityMeta.icon as LucideIcon;
+
+  useEffect(() => {
+    setTitleValue(item.title);
+    setCategoryValue(item.category ?? "");
+  }, [item.category, item.id, item.title]);
 
   useEffect(() => {
     if (!lightboxImage) return;
@@ -88,7 +141,7 @@ export function FeedbackDetail({
   return (
     <>
       {DetailConfirmDialog}
-      <div className="mx-auto w-full max-w-2xl space-y-8 px-5 py-8 lg:px-0">
+      <div className="mx-auto w-full max-w-3xl space-y-6 px-5 py-8 sm:px-6 lg:px-8">
         {onBack && (
           <Button
             type="button"
@@ -109,35 +162,11 @@ export function FeedbackDetail({
               <h2 className="text-lg font-semibold leading-snug text-foreground">
                 {displayTitle}
               </h2>
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-foreground">
-                {item.github_issue_url && (
-                  <a
-                    href={item.github_issue_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-foreground transition-colors hover:text-muted-foreground"
-                  >
-                    <Github className="h-3.5 w-3.5" />
-                    {item.github_issue_number}
-                  </a>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  className="h-auto rounded px-0 py-0 text-xs font-normal text-foreground transition-colors hover:bg-transparent hover:text-muted-foreground"
-                  onClick={() => {
-                    navigator.clipboard.writeText(item.id);
-                    toast.success("ID copied to clipboard");
-                  }}
-                  title={`Copy full ID: ${item.id}`}
-                >
-                  <span className="font-sans text-xs font-normal text-foreground">
-                    ID:
-                  </span>
-                  {item.id.slice(0, 8)}
-                </Button>
-              </div>
+              {toolLabel ? (
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {toolLabel}
+                </p>
+              ) : null}
             </div>
             <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-muted-foreground">
               {new Date(item.created_at).toLocaleDateString("en-US", {
@@ -150,97 +179,180 @@ export function FeedbackDetail({
             </span>
           </div>
 
-          {/* Inline metadata row.
-              Status is the only interactive field. Request type and severity
-              are static — no fake chevrons. */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <Select
-              value={displayStatus}
-              onValueChange={(value) =>
-                onUpdateStatus(item.id, value as DisplayStatus)
-              }
-              disabled={updatingId === item.id}
+          <DetailPropertyBar className="mt-6 mb-0 gap-x-4 gap-y-2 overflow-hidden pb-0 sm:flex-nowrap">
+            <DetailPropertyItem
+              icon={CircleDot}
+              className="shrink-0"
+              contentClassName="overflow-visible"
             >
-              <SelectTrigger
-                aria-label="Feedback status"
-                size="sm"
-                className={cn(
-                  "h-auto w-auto min-w-0 gap-1 rounded-full border-0 bg-muted px-2.5 py-0.5 text-xs font-medium shadow-none hover:bg-muted/80 focus-visible:ring-1",
-                  displayStatus === "resolved" &&
-                    "bg-status-success/10 text-status-success hover:bg-status-success/15",
-                  displayStatus === "open" &&
-                    "bg-status-warning/10 text-status-warning hover:bg-status-warning/15",
-                  displayStatus === "in_progress" &&
-                    "bg-status-info/10 text-status-info hover:bg-status-info/15",
-                  displayStatus === "deferred" &&
-                    "bg-muted text-muted-foreground",
-                )}
+              <Select
+                value={displayStatus}
+                onValueChange={(value) =>
+                  onUpdateStatus(item.id, value as DisplayStatus)
+                }
+                disabled={updatingId === item.id}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  aria-label="Feedback status"
+                  size="sm"
+                  className={cn(
+                    "h-auto w-auto min-w-0 gap-1 border-0 bg-transparent p-0 text-xs font-medium text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground focus-visible:ring-1",
+                    displayStatus === "verified" &&
+                      "text-muted-foreground hover:text-foreground",
+                    displayStatus === "in_review" &&
+                      "text-muted-foreground hover:text-foreground",
+                    (displayStatus === "in_progress" || displayStatus === "pr_created") &&
+                      "text-muted-foreground hover:text-foreground",
+                    displayStatus === "deferred" &&
+                      "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </DetailPropertyItem>
 
-            <span className="inline-flex items-center text-xs text-muted-foreground">
-              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-            </span>
+            {item.github_issue_url && (
+              <DetailPropertyItem
+                icon={Github}
+                href={item.github_issue_url}
+                external
+                className="shrink-0"
+              >
+                #{item.github_issue_number}
+              </DetailPropertyItem>
+            )}
 
             {item.severity && (
-              <span
-                className={cn(
-                  "inline-flex items-center text-xs",
-                  item.severity === "high" && "text-status-error",
-                  item.severity === "medium" && "text-status-warning",
-                  item.severity === "low" && "text-muted-foreground",
-                )}
+              <DetailPropertyItem
+                icon={PriorityIcon}
+                className={cn("shrink-0", priorityMeta.className)}
+                title={`${priorityMeta.label} priority`}
               >
-                Priority: {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-              </span>
+                {priorityMeta.label}
+              </DetailPropertyItem>
             )}
 
-            <span className="text-xs text-foreground">
+            <DetailPropertyItem
+              icon={Tag}
+              className="shrink-0"
+              muted={!item.category}
+            >
+              {item.category ?? "No category"}
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
+              icon={Shapes}
+              className="shrink-0"
+            >
+              {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
+              icon={Link2}
+              href={item.page_url}
+              external
+              className="min-w-32 flex-1"
+              title={item.page_url}
+            >
+              Open submitted page
+            </DetailPropertyItem>
+
+            <DetailPropertyItem
+              icon={User}
+              className="min-w-0 max-w-40 shrink"
+              title={submitterLabel(item)}
+            >
               {submitterLabel(item)}
-            </span>
+            </DetailPropertyItem>
 
             {!item.github_issue_number && (
-              <Button
-                size="xs"
-                variant="link"
+              <DetailPropertyItem
+                icon={Github}
                 onClick={() => onSendToGitHub(item.id)}
                 disabled={sendingToGitHub}
-                className="h-auto p-0 text-xs font-medium"
+                className="shrink-0"
+                aria-label="Create GitHub issue"
               >
-                {sendingToGitHub ? "Sending..." : "Create Issue"}
-              </Button>
+                {sendingToGitHub ? "Creating" : "Issue"}
+              </DetailPropertyItem>
             )}
-          </div>
-
-          {/* Agent Dispatch — always visible, one click from any item. */}
-          <div className="mt-3">
-            <AgentDispatchSection
-              item={item}
-              dispatching={dispatchingId === item.id}
-              onDispatch={onDispatchToAgent}
-            />
-          </div>
+          </DetailPropertyBar>
         </div>
 
-        {/* Description */}
-        <div className="space-y-8">
-          <a
-            href={item.page_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block break-all text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {item.page_url}
-          </a>
+        <section className="space-y-4">
+          <SectionRuleHeading label="Details" />
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Title</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={titleValue}
+                onChange={(event) => setTitleValue(event.target.value)}
+                placeholder="Edit title"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  titleValue.trim().length === 0 ||
+                  titleValue.trim() === item.title
+                }
+                onClick={() => onUpdateTitle(item.id, titleValue.trim())}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium text-muted-foreground">Category</span>
+            <div className="flex items-center gap-2">
+              <Input
+                value={categoryValue}
+                onChange={(event) => setCategoryValue(event.target.value)}
+                placeholder="Add category"
+                className="h-9"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={
+                  updatingId === item.id ||
+                  (categoryValue.trim() || "") === (item.category ?? "")
+                }
+                onClick={() =>
+                  onUpdateCategory(item.id, categoryValue.trim() || null)
+                }
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionRuleHeading label="Feedback" />
+
+          <div className="space-y-1.5 text-sm">
+            {item.target_text ? (
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {item.target_text}
+              </p>
+            ) : null}
+          </div>
+
           <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
             {item.comment}
           </p>
@@ -260,40 +372,57 @@ export function FeedbackDetail({
               />
             </Button>
           )}
-        </div>
-
-        {/* Tool Context — promoted out of Developer accordion.
-            For an admin triaging Procore feedback, the tool IS the work. */}
-        <section className="space-y-3">
-          <SectionRuleHeading label="Tool Context" className="mb-0 pb-0" />
-          <ToolContextSection item={item} />
         </section>
 
-        {/* Comments */}
-        <div>
+        <section className="space-y-3">
           <CommentsSection
             feedbackItemId={item.id}
             commentInputRef={commentInputRef}
           />
-        </div>
+        </section>
 
-        {/* GitHub Activity — visible when there's an issue, not hidden in accordion */}
+        <CollapsibleDetailSection key={`${item.id}-routing`} label="Routing">
+          <ToolContextSection item={item} onAssignmentChanged={onRefresh} />
+        </CollapsibleDetailSection>
+
+        <CollapsibleDetailSection key={`${item.id}-resources`} label="Resources">
+          <FeedbackResourcesSection
+            item={item}
+            onResourcesChanged={onRefresh}
+          />
+        </CollapsibleDetailSection>
+
         {item.github_issue_number && (
-          <section className="space-y-3">
-            <SectionRuleHeading
-              label={`GitHub Activity #${item.github_issue_number}`}
-              className="mb-0 pb-0"
-            />
+          <CollapsibleDetailSection
+            key={`${item.id}-github`}
+            label={`GitHub Activity #${item.github_issue_number}`}
+          >
             <GitHubActivitySection issueNumber={item.github_issue_number} />
-          </section>
+          </CollapsibleDetailSection>
         )}
 
-        {/* Debug — selector, raw metadata, dangerous actions */}
+        {/* Debug — tool context, page context, metadata, dangerous actions */}
         <CollapsibleDetailSection key={`${item.id}-debug`} label="Debug">
           <div className="space-y-8">
             <section className="space-y-3">
               <SectionRuleHeading label="Page Context" className="mb-0 pb-0" />
               <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="w-16 shrink-0 text-muted-foreground">ID</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-auto rounded px-0 py-0 text-xs font-normal text-foreground transition-colors hover:bg-transparent hover:text-muted-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(item.id);
+                      toast.success("ID copied to clipboard");
+                    }}
+                    title={`Copy full ID: ${item.id}`}
+                  >
+                    <code className="font-mono text-xs">{item.id}</code>
+                  </Button>
+                </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="w-16 shrink-0 text-muted-foreground">Page</span>
                   <a

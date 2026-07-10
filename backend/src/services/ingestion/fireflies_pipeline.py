@@ -10,7 +10,7 @@ import re
 import sys
 import unicodedata
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -19,12 +19,12 @@ import requests
 
 from ..ai_transport import get_openai_client, retry_ai_call
 from ..pipeline.source_processing import (
+    INTENTIONALLY_EXCLUDED_STATUS,
     SourceProcessingContext,
     record_source_processing_status,
     status_for_project_assignment,
 )
-from ..task_assignees import TaskAssigneeResolver
-from .fireflies_task_rewriter import REWRITER_PROMPT_VERSION, rewrite_action_items
+from .sync_followups import run_fireflies_post_ingest_extraction
 
 # Reason: Add parent directory to Python path so supabase_helpers can be imported
 # when running this script directly (not as a module). This works both when
@@ -241,8 +241,351 @@ class FirefliesIngestionPipeline:
         return "\n".join(parts).strip()
 
     @staticmethod
+    def _normalize_meeting_title(value: Optional[str]) -> str:
+        if not value:
+            return ""
+        lowered = str(value).strip().lower()
+        lowered = re.sub(r"\s+", " ", lowered)
+        lowered = re.sub(r"[^a-z0-9]+", " ", lowered)
+        return lowered.strip()
+
+    def _find_matching_meeting_for_transcript(
+        self,
+        *,
+        document_id: str,
+        project_id: Optional[int],
+        title: str,
+        captured_at: Optional[datetime],
+        fireflies_id: Optional[str],
+    ) -> Optional[str]:
+        if not project_id:
+            logger.info(
+                "[FirefliesIngestion] Transcript %s has no inferred project_id; skipping meeting linkage",
+                document_id,
+            )
+            return None
+
+        normalized_title = self._normalize_meeting_title(title)
+        if not normalized_title:
+            logger.warning(
+                "[FirefliesIngestion] Transcript %s missing meeting title after normalization; skipping meeting linkage",
+                document_id,
+            )
+            return None
+
+        def _load_rows(query_date: Optional[datetime]) -> List[dict]:
+            query = (
+                self.store._client.table("meetings")
+                .select("id,name,meeting_date,transcript_document_id,meeting_link")
+                .eq("project_id", project_id)
+            )
+            if query_date is not None:
+                query = query.eq("meeting_date", query_date.date().isoformat())
+            return query.execute().data or []
+
+        rows = _load_rows(captured_at)
+        if captured_at and not rows:
+            # Legacy meetings can miss meeting_date; fallback to a project-only
+            # scan before declaring no match.
+            rows = _load_rows(None)
+
+        if not rows:
+            logger.warning(
+                "[FirefliesIngestion] No meeting candidates for project_id=%s title=%r from transcript %s",
+                project_id,
+                title,
+                document_id,
+            )
+            return None
+
+        exact_matches = [
+            row
+            for row in rows
+            if self._normalize_meeting_title(row.get("name") or "") == normalized_title
+        ]
+        if fireflies_id:
+            ff_matches = [
+                row for row in exact_matches if fireflies_id in str(row.get("meeting_link") or "")
+            ]
+            if ff_matches:
+                exact_matches = ff_matches
+
+        if len(exact_matches) == 0:
+            logger.warning(
+                "[FirefliesIngestion] No exact meeting title match for transcript %s (project_id=%s, title=%r)",
+                document_id,
+                project_id,
+                title,
+            )
+            return None
+
+        if len(exact_matches) > 1:
+            logger.warning(
+                "[FirefliesIngestion] Multiple meeting matches (%d) for transcript %s; skipping auto-link to avoid override",
+                len(exact_matches),
+                document_id,
+            )
+            return None
+
+        match = exact_matches[0]
+        meeting_id = match.get("id")
+        if not meeting_id:
+            logger.warning(
+                "[FirefliesIngestion] Matched meeting row missing id for transcript %s (project_id=%s)",
+                document_id,
+                project_id,
+            )
+            return None
+
+        existing_transcript_id = match.get("transcript_document_id")
+        if existing_transcript_id:
+            if existing_transcript_id != document_id:
+                logger.warning(
+                    "[FirefliesIngestion] Meeting %s already linked to %s; not replacing with %s",
+                    meeting_id,
+                    existing_transcript_id,
+                    document_id,
+                )
+            return existing_transcript_id if existing_transcript_id == document_id else None
+
+        try:
+            self.store._client.table("meetings").update({
+                "transcript_document_id": document_id,
+            }).eq("id", meeting_id).execute()
+            logger.info(
+                "[FirefliesIngestion] Linked transcript document %s to meeting %s",
+                document_id,
+                meeting_id,
+            )
+            return str(meeting_id)
+        except Exception as exc:
+            logger.error(
+                "[FirefliesIngestion] Failed to link transcript document %s to meeting %s: %s",
+                document_id,
+                meeting_id,
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    def _link_transcript_to_meeting(
+        self,
+        *,
+        document_id: str,
+        meeting_title: str,
+        project_id: Optional[int],
+        captured_at: Optional[datetime],
+        fireflies_id: Optional[str],
+    ) -> Optional[str]:
+        return self._find_matching_meeting_for_transcript(
+            document_id=document_id,
+            project_id=project_id,
+            title=meeting_title,
+            captured_at=captured_at,
+            fireflies_id=fireflies_id,
+        )
+
+    @staticmethod
     def _is_interview_title(title: Optional[str]) -> bool:
         return "interview" in str(title or "").lower()
+
+    # Postgres unique_violation error code (mirrors the frontend's structured
+    # meeting-create retry in projects/[projectId]/meetings/route.ts).
+    _POSTGRES_UNIQUE_VIOLATION = "23505"
+
+    def _upsert_structured_meeting(self, sb: Any, doc_meta: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Ensure every ingested Fireflies transcript has a structured `meetings` row.
+
+        Mirrors the series-upsert + max(number)+1 logic in the frontend meeting
+        creation route (`frontend/src/app/api/projects/[projectId]/meetings/route.ts`)
+        so a transcript that arrives with no pre-scheduled meeting still shows up
+        in the Meetings tool. If `_link_transcript_to_meeting` already attached this
+        document to an existing (pre-scheduled) meeting, step 1 below finds that
+        link and skips — this helper never creates a duplicate row.
+
+        Never raises: any failure is logged loudly via ``logger.error`` (so it is
+        visible in monitoring) and the helper returns ``None``. Transcript
+        ingestion must succeed even when structured-meeting linking fails.
+        """
+        document_id = doc_meta.get("id")
+        try:
+            if not document_id:
+                logger.error(
+                    "[FirefliesIngestion] _upsert_structured_meeting called without a document id; doc_meta=%r",
+                    doc_meta,
+                )
+                return None
+
+            # 1. Idempotency: a meetings row may already be linked to this
+            # transcript, either by a prior run of this helper or by
+            # `_link_transcript_to_meeting` attaching a pre-scheduled meeting.
+            existing_link = (
+                sb.table("meetings")
+                .select("id,project_id,series_id,number,name,meeting_date,meeting_link,transcript_document_id")
+                .eq("transcript_document_id", str(document_id))
+                .limit(1)
+                .execute()
+            )
+            existing_rows = existing_link.data or []
+            if existing_rows:
+                return existing_rows[0]
+
+            # 2. A transcript can be ingested before a project is assigned.
+            # Skip for now — it can be linked by a later re-sync once
+            # project assignment succeeds, or remain unlinked.
+            project_id = doc_meta.get("project_id")
+            if not project_id:
+                logger.warning(
+                    "[FirefliesIngestion] Transcript %s has no project_id; skipping structured meeting creation",
+                    document_id,
+                )
+                return None
+
+            # Use the human-readable title (trimmed) as the series/meeting name,
+            # falling back to "Meeting" to match the Task 1 backfill convention.
+            display_title = str(doc_meta.get("title") or "").strip() or "Meeting"
+
+            # 3. Series: exact name match within the project; else create.
+            # Handle the UNIQUE(project_id, name) race by re-selecting on conflict.
+            series_row = self._get_or_create_meeting_series(sb, project_id, display_title)
+            if series_row is None:
+                logger.error(
+                    "[FirefliesIngestion] Failed to resolve meeting_series for transcript %s (project_id=%s, title=%r)",
+                    document_id,
+                    project_id,
+                    display_title,
+                )
+                return None
+            series_id = series_row.get("id")
+
+            captured_raw = doc_meta.get("date") or doc_meta.get("captured_at")
+            meeting_date = self._coerce_meeting_date(captured_raw)
+            meeting_link = doc_meta.get("meeting_link") or doc_meta.get("fireflies_link")
+
+            def _insert_meeting(number: int):
+                payload = {
+                    "project_id": project_id,
+                    "series_id": series_id,
+                    "number": number,
+                    "name": display_title,
+                    "meeting_date": meeting_date,
+                    "meeting_link": meeting_link,
+                    "mode": "minutes",  # a transcript exists -> the meeting happened
+                    "is_draft": False,
+                    "transcript_document_id": str(document_id),
+                }
+                return sb.table("meetings").insert(payload).execute()
+
+            next_number = self._next_meeting_number(sb, series_id)
+            try:
+                response = _insert_meeting(next_number)
+            except Exception as insert_exc:
+                if not self._is_unique_violation(insert_exc):
+                    raise
+                # 4. Duplicate-number race: another writer inserted the same
+                # number between our read and our insert. Re-read and retry once.
+                next_number = self._next_meeting_number(sb, series_id)
+                response = _insert_meeting(next_number)
+
+            rows = response.data or []
+            if not rows:
+                logger.error(
+                    "[FirefliesIngestion] Structured meeting insert for transcript %s returned no row",
+                    document_id,
+                )
+                return None
+
+            logger.info(
+                "[FirefliesIngestion] Created structured meeting %s (series=%s, number=%s) for transcript %s",
+                rows[0].get("id"),
+                series_id,
+                next_number,
+                document_id,
+            )
+            return rows[0]
+        except Exception as exc:
+            logger.error(
+                "[FirefliesIngestion] _upsert_structured_meeting failed for transcript %s: %s",
+                document_id,
+                exc,
+                exc_info=True,
+            )
+            return None
+
+    def _get_or_create_meeting_series(
+        self, sb: Any, project_id: int, name: str
+    ) -> Optional[Dict[str, Any]]:
+        existing = (
+            sb.table("meeting_series")
+            .select("id,project_id,name")
+            .eq("project_id", project_id)
+            .eq("name", name)
+            .limit(1)
+            .execute()
+        )
+        existing_rows = existing.data or []
+        if existing_rows:
+            return existing_rows[0]
+
+        try:
+            response = sb.table("meeting_series").insert({"project_id": project_id, "name": name}).execute()
+        except Exception as insert_exc:
+            if not self._is_unique_violation(insert_exc):
+                raise
+            # Another writer created the same (project_id, name) series
+            # concurrently — re-select rather than fail.
+            retry = (
+                sb.table("meeting_series")
+                .select("id,project_id,name")
+                .eq("project_id", project_id)
+                .eq("name", name)
+                .limit(1)
+                .execute()
+            )
+            retry_rows = retry.data or []
+            return retry_rows[0] if retry_rows else None
+
+        rows = response.data or []
+        return rows[0] if rows else None
+
+    @staticmethod
+    def _next_meeting_number(sb: Any, series_id: str) -> int:
+        result = (
+            sb.table("meetings")
+            .select("number")
+            .eq("series_id", series_id)
+            .order("number", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        current_max = rows[0].get("number") if rows else None
+        return int(current_max or 0) + 1
+
+    @classmethod
+    def _is_unique_violation(cls, error: Any) -> bool:
+        """True for a Postgres unique_violation, whether raised as an exception
+        (real supabase-py `.execute()` behavior) or exposed via a `.code`/
+        dict-style error payload (test doubles and some client wrappers)."""
+        code = getattr(error, "code", None)
+        if code is None and isinstance(error, dict):
+            code = error.get("code")
+        if code is not None and str(code) == cls._POSTGRES_UNIQUE_VIOLATION:
+            return True
+        message = str(error).lower()
+        return "duplicate key value violates unique constraint" in message or cls._POSTGRES_UNIQUE_VIOLATION in message
+
+    @staticmethod
+    def _coerce_meeting_date(value: Optional[str]) -> Optional[str]:
+        """Return the ISO date part (YYYY-MM-DD) from an ISO datetime/date string."""
+        if not value:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        # Values are already ISO (from datetime.isoformat()); take the date part
+        # without requiring a full parse round-trip.
+        return text[:10]
 
     # ------------------------------------------------------------------
     # Public API
@@ -273,7 +616,7 @@ class FirefliesIngestionPipeline:
             except Exception:
                 # Fall back to provided content if Fireflies API is unavailable.
                 pass
-        content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
+        content_hash = self._stable_content_hash(parsed.raw_text)
         source_item_id = parsed.fireflies_id or content_hash
         source_context = SourceProcessingContext(
             source_system="fireflies",
@@ -308,6 +651,30 @@ class FirefliesIngestionPipeline:
                 ),
                 status="skipped_unchanged",
                 metadata={"reason": "content_hash_already_ingested"},
+            )
+            # NOTE: `existing_project_id` is not yet defined at this point in the
+            # function (it's only assigned further below, after this early-return
+            # branch) — use `existing.get("project_id")` directly, same as the
+            # `record_source_processing_status` call immediately above.
+            skipped_project_id = (existing or {}).get("project_id")
+            self._link_transcript_to_meeting(
+                document_id=str(existing_document_id or parsed.fireflies_id or source_item_id),
+                meeting_title=parsed.title,
+                project_id=skipped_project_id,
+                captured_at=parsed.captured_at,
+                fireflies_id=parsed.fireflies_id,
+            )
+            skipped_document_id = str(existing_document_id or parsed.fireflies_id or source_item_id)
+            self._upsert_structured_meeting(
+                self.store._client,
+                {
+                    "id": skipped_document_id,
+                    "project_id": skipped_project_id,
+                    "title": parsed.title,
+                    "date": parsed.captured_at.isoformat() if parsed.captured_at else None,
+                    "meeting_link": (existing or {}).get("meeting_link"),
+                    "fireflies_link": (existing or {}).get("fireflies_link"),
+                },
             )
             return IngestionResult(
                 document_id=str(existing.get("id") or parsed.fireflies_id or uuid4()),
@@ -387,11 +754,17 @@ class FirefliesIngestionPipeline:
             "phase": "construction",
             "status": "processed",
         }
-        # Merge in any extra structured metadata from the raw Fireflies transcript
+        # Merge in any extra structured metadata from the raw Fireflies transcript.
+        # Fireflies returns absent summary sub-fields (action_items, bullet_gist, …)
+        # as an empty dict `{}` rather than null. Storing that into a text column
+        # serializes to the literal 2-char string "{}", which is what caused
+        # action_items / bullet_points to show garbage instead of being empty.
+        # Drop empty containers so the column stays NULL.
         if extra_metadata:
             for key, value in extra_metadata.items():
-                if value is not None:
-                    metadata[key] = value
+                if value is None or value == {} or value == []:
+                    continue
+                metadata[key] = value
 
         segments = parsed.transcript_segments
         chunks = list(
@@ -424,6 +797,14 @@ class FirefliesIngestionPipeline:
 
         try:
             self.store.upsert_document_metadata(metadata)
+            self._link_transcript_to_meeting(
+                document_id=str(document_id),
+                meeting_title=parsed.title,
+                project_id=effective_project_id,
+                captured_at=parsed.captured_at,
+                fireflies_id=parsed.fireflies_id,
+            )
+            self._upsert_structured_meeting(self.store._client, metadata)
             if self._is_interview_title(parsed.title):
                 reason = (
                     'INTENTIONALLY_EXCLUDED: Meeting title contains "Interview", '
@@ -453,7 +834,7 @@ class FirefliesIngestionPipeline:
                 )
                 record_source_processing_status(
                     source_context,
-                    status="failed_permanent",
+                    status=INTENTIONALLY_EXCLUDED_STATUS,
                     error_code="interview_title_excluded",
                     error_message=reason,
                 )
@@ -466,37 +847,6 @@ class FirefliesIngestionPipeline:
                     dry_run=False,
                 )
 
-            rewrite_tasks_during_ingest = os.getenv(
-                "FIREFLIES_REWRITE_TASKS_DURING_INGEST",
-                "false",
-            ).lower() in {"1", "true", "yes"}
-            task_rows = []
-            if rewrite_tasks_during_ingest:
-                task_rows = self._build_task_rows_via_rewriter(
-                    metadata_id=document_id,
-                    meeting_title=parsed.title,
-                    action_items=parsed.action_items,
-                    project_id=effective_project_id,
-                    participants=parsed.attendees,
-                    speaker_email_map=parsed.speaker_email_map,
-                    source_date=parsed.captured_at,
-                    notes_context=parsed.raw_text,
-                    action_items_structured=parsed.action_items_structured,
-                )
-            else:
-                logger.info(
-                    "[FirefliesIngestion] Skipping inline task rewrite for %s; "
-                    "downstream intelligence extraction owns task synthesis",
-                    document_id,
-                )
-            # Replace the prior auto-generated batch only when we have a fresh
-            # one — a transient empty rewriter response must not wipe existing
-            # tasks. User-edited/completed tasks are preserved (see the store
-            # method's status/source scoping).
-            if task_rows:
-                self.store.delete_open_rewriter_tasks_for_document(document_id)
-                for task in task_rows:
-                    self.store.upsert_task(task)
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings):
                 chunk.embedding = embedding
@@ -625,25 +975,28 @@ class FirefliesIngestionPipeline:
         analytics = transcript.get("analytics") or {}
         sentiments = analytics.get("sentiments") or {}
 
-        # Duration: Fireflies returns duration in minutes (integer column).
-        # Some transcripts arrive with duration=0 or duration=1 before full
-        # processing completes. Fall back to the last sentence's end_time
-        # (in seconds) when the API value is suspiciously low (< 2 minutes).
+        # Duration: Fireflies returns duration in minutes (float). Some
+        # transcripts arrive with a stub value (0, 1, 2…) before Fireflies
+        # finishes processing, so the API value UNDER-reports the real length.
+        # The last sentence's end_time (seconds) is a reliable lower bound of
+        # the true duration, so take the MAX of the two rather than trusting a
+        # low API value. (A ~2-hour meeting was showing "2 min" because the
+        # API duration arrived as 2 and the old `> 1` guard accepted it.)
         duration_raw = transcript.get("duration")
-        duration_minutes = None
-        if isinstance(duration_raw, (int, float)) and duration_raw > 1:
-            duration_minutes = int(round(duration_raw))
-        else:
-            sentences = transcript.get("sentences") or []
-            if sentences:
-                last_end = max(
-                    (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
-                )
-                if isinstance(last_end, (int, float)) and last_end > 0:
-                    duration_minutes = max(1, int(round(last_end / 60)))
-            # If sentences gave us nothing, keep the API value (even if 0 or 1)
-            if duration_minutes is None and isinstance(duration_raw, (int, float)) and duration_raw > 0:
-                duration_minutes = int(round(duration_raw))
+        api_minutes = (
+            int(round(duration_raw))
+            if isinstance(duration_raw, (int, float)) and duration_raw > 0
+            else 0
+        )
+        sentence_minutes = 0
+        sentences = transcript.get("sentences") or []
+        if sentences:
+            last_end = max(
+                (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
+            )
+            if isinstance(last_end, (int, float)) and last_end > 0:
+                sentence_minutes = int(round(last_end / 60))
+        duration_minutes = max(api_minutes, sentence_minutes) or None
 
         # Keywords: may be a list or newline-separated string
         keywords_raw = summary.get("keywords") or []
@@ -702,7 +1055,9 @@ class FirefliesIngestionPipeline:
             "host_email": transcript.get("host_email"),
             "calendar_type": transcript.get("calendar_type"),
             "privacy": transcript.get("privacy"),
-            "bullet_points": summary.get("bullet_gist") or summary.get("shorthand_bullet"),
+            "bullet_points": self._coerce_summary_text(
+                summary.get("bullet_gist") or summary.get("shorthand_bullet")
+            ),
             "notes": summary.get("notes"),
             "outline": summary.get("outline"),
             "meeting_type": summary.get("meeting_type"),
@@ -785,7 +1140,7 @@ class FirefliesIngestionPipeline:
 
                 apps_outputs = self._fetch_apps_outputs(transcript_id)
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
-                content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
+                content_hash = self._stable_content_hash(markdown)
                 existing = self.store.find_document_by_hash(content_hash)
                 existing_document_id = str(existing.get("id") or "") if existing else None
                 if (
@@ -827,6 +1182,9 @@ class FirefliesIngestionPipeline:
                     storage_url=storage_url,
                     extra_metadata=rich_metadata,
                 )
+                extraction = None
+                if not dry_run and not ingestion.skipped:
+                    extraction = run_fireflies_post_ingest_extraction(ingestion.document_id)
                 results.append(
                     {
                         "transcript_id": transcript_id,
@@ -836,6 +1194,7 @@ class FirefliesIngestionPipeline:
                         "storage_path": storage_path,
                         "storage_url": storage_url,
                         "ingestion": ingestion.__dict__,
+                        "extraction": extraction,
                     }
                 )
             except Exception as exc:
@@ -920,6 +1279,7 @@ class FirefliesIngestionPipeline:
         text = re.sub(r"\s+", " ", text).strip()
         text = re.sub(r"[\\/:*?\"<>|]+", "", text)
         text = re.sub(r"[\x00-\x1f\x7f]+", "", text)
+        text = re.sub(r"\s+", " ", text).strip()
         return text[:180] or "Untitled Meeting"
 
     def _build_storage_path(self, title: str, captured_at: Optional[datetime]) -> str:
@@ -1305,6 +1665,42 @@ class FirefliesIngestionPipeline:
                 buffer.append(line)
         sections[current] = "\n".join(buffer).strip()
         return sections
+
+    @classmethod
+    def _stable_content_hash(cls, markdown: str) -> str:
+        """Idempotency key over DURABLE meeting content only.
+
+        The formatted Fireflies markdown embeds presigned ``**Audio:**`` /
+        ``**Video:**`` URLs whose signature/expiry token is regenerated on
+        EVERY Fireflies API fetch. Hashing the raw markdown therefore makes the
+        same unchanged meeting look like new content on every hourly sync poll,
+        which defeats the ingest/embed skip guards and re-runs the whole
+        pipeline (re-embed + LLM signal extraction) hour after hour, minting a
+        fresh batch of near-duplicate insight cards each time.
+
+        Key on identity (fireflies id + title + date) plus the transcript body
+        instead. These are stable across fetches, so an unchanged meeting hashes
+        identically and the skip guards fire. AI-summary/keyword header fields
+        are intentionally excluded — they carry no content the skip decision
+        needs and can be non-deterministically refined by Fireflies.
+        """
+        sections = cls._split_sections(markdown)
+        header = sections.get("header", "")
+        title = cls._extract_title(header) or ""
+        fireflies_id = (
+            cls._extract_metadata_value(header, "Fireflies ID")
+            or cls._extract_metadata_value(header, "ID")
+            or ""
+        )
+        date = cls._extract_metadata_value(header, "Date") or ""
+        body = (
+            sections.get("Transcript", "")
+            or sections.get("Full Transcript", "")
+        )
+        canonical = "\x1f".join(
+            part.strip() for part in (fireflies_id, title, date, body)  # sep below
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     @staticmethod
     def _extract_title(header_block: str) -> Optional[str]:
@@ -1776,449 +2172,25 @@ class FirefliesIngestionPipeline:
         return pairs
 
     @staticmethod
-    def _normalize_person_text(value: str) -> str:
-        normalized = unicodedata.normalize("NFKD", value or "")
-        ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
-        ascii_text = ascii_text.lower().replace("'", " ")
-        ascii_text = re.sub(r"[^a-z0-9]+", " ", ascii_text)
-        return re.sub(r"\s+", " ", ascii_text).strip()
+    def _coerce_summary_text(value: Any) -> Optional[str]:
+        """Return a non-empty string, or None for missing / empty-container values.
 
-    @staticmethod
-    def _strip_action_item_timestamp(value: str) -> str:
-        return re.sub(r"\s*\(\d{2}:\d{2}\)\s*$", "", value or "").strip()
-
-    @classmethod
-    def _build_people_lookup(
-        cls,
-        speaker_email_map: Optional[Dict[str, str]],
-        speakers_json: Optional[List[Dict[str, Any]]],
-        attendees_json: Optional[List[Dict[str, Any]]],
-    ) -> List[Dict[str, Optional[str]]]:
-        people: List[Dict[str, Optional[str]]] = []
-        seen: set[tuple[str, str]] = set()
-
-        def add_person(name: str, email: Optional[str]) -> None:
-            clean_name = (name or "").strip()
-            clean_email = (email or "").strip() or None
-            if not clean_name:
-                return
-            key = (clean_name.lower(), (clean_email or "").lower())
-            if key in seen:
-                return
-            seen.add(key)
-            people.append({"name": clean_name, "email": clean_email})
-
-        for name, email in (speaker_email_map or {}).items():
-            add_person(name, email)
-
-        for speaker in speakers_json or []:
-            speaker_name = str(speaker.get("speakerName") or speaker.get("name") or "").strip()
-            if not speaker_name:
-                continue
-            add_person(speaker_name, (speaker_email_map or {}).get(speaker_name))
-
-        for attendee in attendees_json or []:
-            attendee_name = str(attendee.get("displayName") or attendee.get("name") or "").strip()
-            attendee_email = str(attendee.get("email") or "").strip() or None
-            if attendee_name:
-                add_person(attendee_name, attendee_email)
-
-        return people
-
-    @classmethod
-    def _resolve_action_item_assignee(
-        cls,
-        action_item: str,
-        speaker_email_map: Optional[Dict[str, str]],
-        speakers_json: Optional[List[Dict[str, Any]]],
-        attendees_json: Optional[List[Dict[str, Any]]],
-    ) -> tuple[Optional[str], Optional[str]]:
-        people = cls._build_people_lookup(speaker_email_map, speakers_json, attendees_json)
-        normalized_text = cls._normalize_person_text(action_item)
-
-        def resolve_candidate_name(candidate_name: str) -> tuple[Optional[str], Optional[str]]:
-            normalized_candidate = cls._normalize_person_text(candidate_name)
-            for person in people:
-                normalized_name = cls._normalize_person_text(person["name"] or "")
-                aliases = {normalized_name}
-                name_parts = normalized_name.split()
-                if name_parts:
-                    aliases.add(name_parts[0])
-                if normalized_candidate in aliases:
-                    return person["name"], person["email"]
-            return candidate_name, None
-
-        for pattern in (
-            r"^\s*(?:follow up with|coordinate with|contact|ask|tell|have|support|add)\s+([A-Z][A-Za-z']+)",
-        ):
-            match = re.search(pattern, action_item, flags=re.IGNORECASE)
-            if match:
-                return resolve_candidate_name(match.group(1).strip())
-
-        best_match: Optional[tuple[int, int, Dict[str, Optional[str]]]] = None
-        for person in people:
-            name = person["name"] or ""
-            normalized_name = cls._normalize_person_text(name)
-            if not normalized_name:
-                continue
-
-            aliases = {normalized_name}
-            name_parts = normalized_name.split()
-            if name_parts:
-                aliases.add(name_parts[0])
-
-            for alias in aliases:
-                if not alias:
-                    continue
-                pattern = rf"\b{re.escape(alias)}\b"
-                match = re.search(pattern, normalized_text)
-                if not match:
-                    continue
-                prefix_words = normalized_text[: match.start()].split()
-                if prefix_words[-1:] in (["copy"], ["cc"]):
-                    continue
-                score = len(alias.split()) * 10 + len(alias)
-                candidate = (match.start(), -score, person)
-                if best_match is None or candidate < best_match:
-                    best_match = candidate
-
-        if best_match:
-            person = best_match[2]
-            return person["name"], person["email"]
-
-        leading_match = re.match(
-            r"^\s*([A-Z][A-Za-z']+(?:\s+[A-Z][A-Za-z']+)?)\s+to\b",
-            action_item,
-        )
-        if leading_match:
-            candidate_name = leading_match.group(1).strip()
-            if cls._normalize_person_text(candidate_name.split()[0]) not in {
-                "contact",
-                "follow",
-                "coordinate",
-                "review",
-                "provide",
-                "monitor",
-                "support",
-                "add",
-                "take",
-                "perform",
-                "adjust",
-                "export",
-            }:
-                return candidate_name, None
-
-        with_match = re.search(r"\b(?:with|contact|ask|tell|have)\s+([A-Z][A-Za-z']+)\b", action_item)
-        if with_match:
-            return resolve_candidate_name(with_match.group(1).strip())
-
-        return None, None
-
-    @staticmethod
-    def _infer_action_item_priority(action_item: str) -> str:
-        text = (action_item or "").lower()
-        urgent_markers = ("urgent", "immediately", "asap", "today", "tomorrow", "end of day")
-        high_markers = ("priority", "by end of week", "deadline", "due")
-        if any(marker in text for marker in urgent_markers):
-            return "high"
-        if any(marker in text for marker in high_markers):
-            return "medium"
-        return "medium"
-
-    @staticmethod
-    def _coerce_source_date(value: Optional[datetime | str]) -> Optional[datetime]:
-        if value is None:
-            return None
-        if isinstance(value, datetime):
-            parsed = value
-        else:
-            raw = str(value).strip()
-            if not raw:
-                return None
-            try:
-                parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-            except ValueError:
-                return None
-        if parsed.tzinfo is None:
-            return parsed.replace(tzinfo=timezone.utc)
-        return parsed.astimezone(timezone.utc)
-
-    @staticmethod
-    def _next_weekday(source_date: datetime, weekday: int) -> datetime:
-        days_ahead = (weekday - source_date.weekday()) % 7
-        if days_ahead == 0:
-            days_ahead = 7
-        return source_date + timedelta(days=days_ahead)
-
-    @classmethod
-    def _infer_action_item_due_date(
-        cls,
-        action_item: str,
-        source_date: Optional[datetime | str],
-    ) -> Optional[str]:
-        source_dt = cls._coerce_source_date(source_date)
-        if not source_dt:
-            return None
-
-        text = (action_item or "").lower()
-        if re.search(r"\btoday\b", text):
-            return source_dt.date().isoformat()
-        if re.search(r"\btomorrow\b", text):
-            return (source_dt + timedelta(days=1)).date().isoformat()
-        if re.search(r"\basap\b|as soon as possible", text):
-            return (source_dt + timedelta(days=2)).date().isoformat()
-        if re.search(r"\bend of (the )?week\b", text):
-            friday = source_dt + timedelta(days=(4 - source_dt.weekday()) % 7)
-            return friday.date().isoformat()
-
-        month_match = re.search(
-            r"\b(?:by|before|on|due|no later than)?\s*"
-            r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
-            r"jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
-            r"\s+(\d{1,2})(?:st|nd|rd|th)?\b",
-            text,
-        )
-        if month_match:
-            month_lookup = {
-                "jan": 1,
-                "feb": 2,
-                "mar": 3,
-                "apr": 4,
-                "may": 5,
-                "jun": 6,
-                "jul": 7,
-                "aug": 8,
-                "sep": 9,
-                "oct": 10,
-                "nov": 11,
-                "dec": 12,
-            }
-            month = month_lookup[month_match.group(1)[:3]]
-            day = int(month_match.group(2))
-            year = source_dt.year
-            try:
-                candidate = datetime(year, month, day, tzinfo=timezone.utc)
-            except ValueError:
-                return None
-            if candidate.date() < source_dt.date():
-                try:
-                    candidate = datetime(year + 1, month, day, tzinfo=timezone.utc)
-                except ValueError:
-                    return None
-            return candidate.date().isoformat()
-
-        weekday_lookup = {
-            "monday": 0,
-            "tuesday": 1,
-            "wednesday": 2,
-            "thursday": 3,
-            "friday": 4,
-            "saturday": 5,
-            "sunday": 6,
-        }
-        weekday_match = re.search(
-            r"\b(?:by|before|on|this|next)?\s*"
-            r"(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b",
-            text,
-        )
-        if weekday_match:
-            return cls._next_weekday(source_dt, weekday_lookup[weekday_match.group(1)]).date().isoformat()
-
-        return None
-
-    # Patterns for low-value scheduling/admin noise that should not become tasks
-    _LOW_VALUE_TASK_RE: re.Pattern = re.compile(
-        r"""
-        schedule\s+(a\s+)?(follow.?up|meeting|call|sync|standup|check.in)|
-        send\s+(a\s+)?(meeting|calendar)\s+(invite|request|link|notification)|
-        set\s+up\s+(a\s+)?(meeting|call|sync|zoom|teams\s+meeting)|
-        find\s+a\s+time\s+(to\s+(meet|talk|connect|discuss))?|
-        book\s+(a\s+)?(meeting|call|room|conference)|
-        create\s+(a\s+)?calendar\s+(event|invite|block)|
-        send\s+meeting\s+(request|invite|link)|
-        add\s+(it\s+)?to\s+(the\s+)?(calendar|agenda)|
-        block\s+(time|calendar)\s+for
-        """,
-        re.IGNORECASE | re.VERBOSE,
-    )
-
-    @classmethod
-    def _is_low_value_task(cls, description: str) -> bool:
-        """Return True for scheduling noise that shouldn't become tracked tasks."""
-        return bool(cls._LOW_VALUE_TASK_RE.search(description or ""))
-
-    def _build_task_rows_via_rewriter(
-        self,
-        *,
-        metadata_id: str,
-        meeting_title: str,
-        action_items: List[str],
-        project_id: Optional[int],
-        participants: List[str],
-        speaker_email_map: Optional[Dict[str, str]] = None,
-        source_date: Optional[datetime | str] = None,
-        notes_context: str = "",
-        action_items_structured: Optional[List[Dict[str, Optional[str]]]] = None,
-    ) -> List[Dict[str, Any]]:
-        """LLM-rewritten task rows. Replaces the old regex-based extraction.
-
-        Each Fireflies action-item line is rewritten into an imperative task
-        (≤10-word title + description). When ``action_items_structured`` carries
-        the owner Fireflies grouped the item under, that owner is handed to the
-        rewriter as the proposed doer — without it the rewriter sees nameless
-        imperatives, can't pick an owner, and drops every item (the bug that left
-        the tasks table nearly empty). Owners that don't resolve to an internal
-        Alleato employee are still dropped — those actions show up elsewhere as
-        project intelligence, not as tracked tasks.
+        Fireflies returns absent summary fields as an empty dict ``{}`` (not null),
+        which would otherwise be stored as the literal string ``"{}"``.
         """
-        # Pair each action item with the Fireflies owner, preserving alignment
-        # through the same cleaning the items go through.
-        if action_items_structured:
-            raw_pairs = [
-                (str(pair.get("text") or ""), pair.get("assignee"))
-                for pair in action_items_structured
-            ]
-        else:
-            raw_pairs = [(item, None) for item in action_items]
-
-        cleaned_pairs: List[tuple[str, Optional[str]]] = []
-        for text, owner in raw_pairs:
-            stripped = self._strip_action_item_timestamp(text)
-            if not stripped or not stripped.strip():
-                continue
-            if self._is_low_value_task(stripped):
-                continue
-            cleaned_pairs.append((stripped, owner))
-        if not cleaned_pairs:
-            return []
-        cleaned_items = [text for text, _ in cleaned_pairs]
-        cleaned_owners = [owner for _, owner in cleaned_pairs]
-
-        source_date_iso: Optional[str] = None
-        if isinstance(source_date, datetime):
-            source_date_iso = source_date.date().isoformat()
-        elif isinstance(source_date, str):
-            try:
-                source_date_iso = datetime.fromisoformat(source_date.replace("Z", "+00:00")).date().isoformat()
-            except ValueError:
-                source_date_iso = None
-
-        rewritten = rewrite_action_items(
-            meeting_title=meeting_title,
-            action_items=cleaned_items,
-            participants=participants or [],
-            speaker_email_map=speaker_email_map or {},
-            source_date=source_date_iso,
-            notes_context=notes_context or "",
-            item_owners=cleaned_owners,
-        )
-        if not rewritten:
-            return []
-
-        resolver = TaskAssigneeResolver(self.store._client)
-        rows: List[Dict[str, Any]] = []
-        seen_descriptions: set[str] = set()
-
-        for task in rewritten:
-            resolved = resolver.resolve(task.assignee_name, task.assignee_email)
-            if not resolved.is_employee:
-                logger.info(
-                    "[FirefliesRewriter] Dropping non-employee owner: %r (person_type=%r) title=%r",
-                    task.assignee_name,
-                    resolved.person_type,
-                    task.title,
-                )
-                continue
-
-            dedupe_key = (task.description or task.title or "").lower().strip()
-            if not dedupe_key or dedupe_key in seen_descriptions:
-                continue
-            seen_descriptions.add(dedupe_key)
-
-            row: Dict[str, Any] = {
-                "metadata_id": metadata_id,
-                "title": task.title,
-                "description": task.description or task.title,
-                "assignee_name": resolved.name or task.assignee_name,
-                "assignee_person_id": resolved.person_id,
-                "due_date": task.due_date,
-                "priority": task.priority or "medium",
-                "status": "open",
-                "source_system": "fireflies",
-                "project_id": project_id,
-                "project_ids": [project_id] if project_id is not None else [],
-                "extraction_source": "fireflies_rewriter",
-                "extraction_model": "gpt-5.5",
-                "extraction_prompt_version": REWRITER_PROMPT_VERSION,
-                "assigned_by": task.assigned_by,
-                "extraction_metadata": {
-                    "assignee_resolution_method": resolved.method,
-                    "assignee_resolution_confidence": resolved.confidence,
-                    "assignee_person_type": resolved.person_type,
-                    "rewriter_confidence": task.confidence,
-                    "source_action_item": task.source_action_item,
-                },
-            }
-            email = resolved.email or task.assignee_email
-            if email:
-                row["assignee_email"] = email
-            rows.append(row)
-
-        return rows
-
-    @classmethod
-    def _build_task_rows_from_action_items(
-        cls,
-        metadata_id: str,
-        action_items: List[str],
-        project_id: Optional[int],
-        speaker_email_map: Optional[Dict[str, str]] = None,
-        speakers_json: Optional[List[Dict[str, Any]]] = None,
-        attendees_json: Optional[List[Dict[str, Any]]] = None,
-        source_date: Optional[datetime | str] = None,
-    ) -> List[Dict[str, Any]]:
-        rows: List[Dict[str, Any]] = []
-        seen_descriptions: set[str] = set()
-        for item in action_items:
-            description = cls._strip_action_item_timestamp(item)
-            if not description:
-                continue
-            # Skip low-value scheduling/admin noise
-            if cls._is_low_value_task(description):
-                continue
-            dedupe_key = description.lower()
-            if dedupe_key in seen_descriptions:
-                continue
-            seen_descriptions.add(dedupe_key)
-            assignee_name, assignee_email = cls._resolve_action_item_assignee(
-                action_item=description,
-                speaker_email_map=speaker_email_map,
-                speakers_json=speakers_json,
-                attendees_json=attendees_json,
-            )
-            # Don't persist placeholder @example.com emails — store None instead
-            if assignee_email and "example.com" in assignee_email:
-                assignee_email = None
-            row: Dict[str, Any] = {
-                "metadata_id": metadata_id,
-                "description": description,
-                "assignee_name": assignee_name,
-                "due_date": cls._infer_action_item_due_date(description, source_date),
-                "priority": cls._infer_action_item_priority(description),
-                "status": "open",
-                "source_system": "fireflies",
-                "project_id": project_id,
-                "project_ids": [project_id] if project_id is not None else [],
-            }
-            if assignee_email:
-                row["assignee_email"] = assignee_email
-            rows.append(row)
-        return rows
+        if not isinstance(value, str):
+            return None
+        text = value.strip()
+        return text or None
 
     @staticmethod
     def _append_text_section(lines: List[str], title: str, value: Any) -> None:
+        # Guard against Fireflies' empty-container placeholders ({} / []) whose
+        # str() would emit literal "## Title\n{}" junk into the markdown body.
+        if isinstance(value, (dict, list)) and not value:
+            return
         text = str(value).strip() if value is not None else ""
-        if not text:
+        if not text or text in ("{}", "[]"):
             return
         lines.append(f"## {title}")
         lines.append(text)

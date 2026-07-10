@@ -159,7 +159,7 @@ export const GET = withApiGuardrails(
     let query = supabase
       .from("collaboration_notifications")
       .select(
-        "id, kind, title, body, metadata, created_at, read_at, entity_type, entity_id, project_id",
+        "id, kind, title, body, metadata, created_at, read_at, entity_type, entity_id, project_id, actor_id",
       )
       .eq("user_id", user.id)
       .is("deleted_at", null)
@@ -234,6 +234,7 @@ export const GET = withApiGuardrails(
         entityType: row.entity_type,
         entityId: row.entity_id,
         projectId: row.project_id,
+        actorId: row.actor_id,
       })),
       unreadCount: unreadCount ?? 0,
       hasMore,

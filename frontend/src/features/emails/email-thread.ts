@@ -105,6 +105,12 @@ export function normalizeEmailText(value: string): string {
     .replace(/<li[^>]*>/gi, "- ")
     .replace(/<[^>]+>/g, " ")
     .replace(/\u00a0/g, " ")
+    // Outlook/HTML\u2192plain-text conversion collapses paragraph and line breaks into
+    // runs of spaces, which otherwise render as one unreadable wall of text. Treat
+    // a run of 2+ spaces as the break it used to be: 6+ spaces = a paragraph gap,
+    // 2\u20135 = a single line break. (Well-formatted emails keep single spaces, so this
+    // is a no-op for them.)
+    .replace(/ {2,}/g, (run) => (run.length >= 6 ? "\n\n" : "\n"))
     .replace(/\s+(From|Sent|To|Cc|Bcc|Subject):\s/gi, "\n$1: ")
     .replace(
       /\s+(Client Information Address|Your Occupation|Date of Birth|Phone No|Federal Payment|Indiana Payment|Charitable Contribution|Real Estate Taxes|Home Mortgage Interest \(Form 1098\)|Form W-2s|Form 1099-INT & DIV|Any other tax documents)\s*:?/gi,

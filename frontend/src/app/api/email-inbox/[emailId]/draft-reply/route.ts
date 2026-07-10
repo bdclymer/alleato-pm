@@ -146,7 +146,7 @@ export const POST = withApiGuardrails<{ emailId: string }>(
 
     const { text } = await generateText({
       model: getLanguageModel("gpt-4.1-mini"),
-      system: `You are a professional construction project manager assistant drafting email replies on behalf of a PM at Alleato Group, a construction management firm based in Indianapolis.${projectContext}
+      instructions: `You are a professional construction project manager assistant drafting email replies on behalf of a PM at Alleato Group, a construction management firm based in Indianapolis.${projectContext}
 
 ${toneInstructions}
 ${learningContext}

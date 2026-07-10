@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   type DragEndEvent,
@@ -83,10 +84,10 @@ import {
   ArrowUp,
   ChevronDown,
   ChevronUp,
+  Eye,
   EyeOff,
   GripVertical,
   Inbox,
-  MoreHorizontal,
   MoreVertical,
   PanelRightClose,
   PanelRightOpen,
@@ -124,6 +125,33 @@ export const TABLE_HEADER_LABEL_CLASSNAME =
 export const TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME = "w-auto lg:hidden";
 export const TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME =
   "hidden min-w-0 justify-end lg:flex";
+export const TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME =
+  "flex h-full min-h-0 flex-1 min-w-0 overflow-hidden";
+export const TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME =
+  "flex h-full min-h-0 flex-col overflow-hidden pb-0";
+export const TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME = "overflow-x-visible";
+export const TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME =
+  "-mx-4 w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] lg:-mx-8 lg:w-[calc(100%+4rem)]";
+
+export function shouldRenderRowSelection(
+  features?: UnifiedTableFeatures,
+): boolean {
+  return features?.enableRowSelection ?? true;
+}
+
+/** Minimum width (px) a column can be dragged down to during a resize. */
+export const MIN_COLUMN_RESIZE_WIDTH = 120;
+
+/**
+ * Pure width computation for a column-resize drag, clamped to the minimum.
+ * Extracted so the resize floor is regression-tested without rendering the table.
+ */
+export function computeResizedColumnWidth(
+  startWidth: number,
+  deltaX: number,
+): number {
+  return Math.max(MIN_COLUMN_RESIZE_WIDTH, startWidth + deltaX);
+}
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -248,6 +276,7 @@ export interface TableColumn<T> extends ColumnConfig {
   render: (item: T) => ReactNode;
   csvValue?: (item: T) => string;
   sortable?: boolean;
+  showSortIcon?: boolean;
   sortValue?: (item: T) => string | number | null | undefined;
   align?: "left" | "center" | "right";
   /**
@@ -259,6 +288,12 @@ export interface TableColumn<T> extends ColumnConfig {
   onEdit?: (item: T, value: string) => void | Promise<void>;
   editEmptyLabel?: string;
   editInputType?: React.HTMLInputTypeAttribute;
+  /**
+   * "cell" lets the whole cell enter edit mode. "icon" keeps rendered content
+   * available for row/detail navigation and only opens editing from the pencil.
+   * Name columns default to "icon".
+   */
+  editTrigger?: "cell" | "icon";
   /**
    * Declarative inline editor type. The component renders the matching editor
    * centrally — no per-column `renderEditor` needed:
@@ -280,6 +315,14 @@ export interface TableColumn<T> extends ColumnConfig {
     onCommit: (value?: string) => void;
     onCancel: () => void;
   }) => ReactNode;
+}
+
+export function shouldUseIconOnlyInlineEdit<T>(
+  column: Pick<TableColumn<T>, "id" | "editTrigger">,
+) {
+  return column.editTrigger
+    ? column.editTrigger === "icon"
+    : column.id === "name";
 }
 
 type TableColumnAlignment = "left" | "center" | "right";
@@ -335,6 +378,8 @@ export interface UnifiedTablePageProps<T> {
     actions?: ReactNode;
     variant?: "default" | "compact";
     mobileActionsInline?: boolean;
+    /** Keep title available for storage/export/reporting, but hide the visual page header. */
+    hidden?: boolean;
   };
   tabs?: TabItem[];
   toolbar: {
@@ -388,6 +433,8 @@ export interface UnifiedTablePageProps<T> {
     customActions?: ReactNode;
     /** Content rendered on the left of the toolbar row, with icons pushed to the right */
     leftContent?: ReactNode;
+    /** Render the toolbar into an external DOM node instead of the default toolbar row. */
+    portalContainerId?: string;
     /**
      * Stable identifier for this table when saving views (e.g. "meetings").
      * Set this to enable the per-user "Saved views" picker. Project-agnostic —
@@ -406,9 +453,11 @@ export interface UnifiedTablePageProps<T> {
     defaultPinnedLeftColumns?: string[];
     defaultPinnedRightColumns?: string[];
     rowActions?: (item: T) => ReactNode;
+    /** Called when user clicks View in the default row-actions menu. */
+    onView?: (item: T) => void;
     /** Called when user clicks Edit in the default row-actions menu. */
     onEdit?: (item: T) => void;
-    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Edit + Delete. */
+    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with View/Edit/Delete as available. */
     onDelete?: (item: T) => void;
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
@@ -525,6 +574,12 @@ export interface UnifiedTablePageProps<T> {
     plainFooterTotals?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
+    /**
+     * Keep the toolbar (search/filter/column/export icons) on the SAME row as
+     * the tabs at every width, instead of the default (icons drop into the
+     * header row below `lg`). Only meaningful when `tabs` are provided.
+     */
+    toolbarWithTabs?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
     containerClassName?: string;
     /** Override the card-view grid className (default: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4) */
@@ -666,22 +721,13 @@ export function UnifiedTablePage<T>({
   ]);
 
   const effectiveSelectedCount = toolbar.selectedCount ?? selectedIds.length;
-  // Row selection (checkboxes) only renders when there is a usable bulk action.
-  // Empty checkboxes with no destination are a bug — see SKILL.md "Selection requires a bulk action".
-  // Parents can force-enable by either:
-  //   (a) explicitly passing a `selection` prop (URL-synced selection state), or
-  //   (b) setting `features.enableRowSelection` explicitly (true *or* false).
-  // Otherwise: checkboxes appear only when `table.onDelete` or `toolbar.onBulkDelete` is wired.
-  const parentOptedIntoSelection =
-    features?.enableRowSelection !== undefined || Boolean(selection);
-  const hasBulkAction =
-    Boolean(table.onDelete) || Boolean(toolbar.onBulkDelete);
-  const hasRowSelection = parentOptedIntoSelection
-    ? resolvedFeatures.enableRowSelection
-    : resolvedFeatures.enableRowSelection && hasBulkAction;
+  // Row selection is default-on across unified tables now. Pages that should
+  // not expose selection must explicitly opt out with
+  // `features.enableRowSelection: false`.
+  const hasRowSelection = shouldRenderRowSelection(features);
   const hasRowActions =
     resolvedFeatures.enableRowActions &&
-    Boolean(table.rowActions || table.onDelete || table.onEdit);
+    Boolean(table.rowActions || table.onView || table.onDelete || table.onEdit);
 
   // Built-in delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -841,9 +887,12 @@ export function UnifiedTablePage<T>({
   const plainFooterTotals = layout?.plainFooterTotals ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
+  const toolbarWithTabs = (layout?.toolbarWithTabs ?? false) && Boolean(tabs);
   const containerMaxWidth = layout?.maxWidth ?? "full";
   const containerClassName = layout?.containerClassName;
   const containerPadding = layout?.containerPadding !== false;
+  const shouldUseFullBleedDesktopScrollShell =
+    isFullBleedTable && containerPadding && !sidePanel;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -983,13 +1032,26 @@ export function UnifiedTablePage<T>({
     {},
   );
   const tableScrollRef = React.useRef<HTMLDivElement>(null);
+  // Horizontal-scroll affordance: when a table is wider than the viewport, a
+  // partially-visible trailing column must read as "scroll for more" — not as a
+  // random/broken clip. We fade the leading/trailing edges whenever there is more
+  // content to scroll to in that direction. Fixed here once so every table page
+  // inherits it (design-audit DA-001).
+  const [tableScrollEdges, setTableScrollEdges] = React.useState<{
+    left: boolean;
+    right: boolean;
+  }>({ left: false, right: false });
   const rowRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
   const resizeStateRef = React.useRef<{
     columnId: string;
     startX: number;
     startWidth: number;
   } | null>(null);
-  const [isResizingColumn, setIsResizingColumn] = React.useState(false);
+  // True from the first drag movement until the synthetic click that follows
+  // mouseup is consumed — lets the header's onClick skip sorting after a resize.
+  const didResizeRef = React.useRef(false);
+  // Coalesces mousemove width updates into one state write per animation frame.
+  const resizeRafRef = React.useRef<number | null>(null);
   const hasUserManagedColumnOrderRef = React.useRef(false);
   const selectionColumnWidth = 40;
 
@@ -1718,7 +1780,9 @@ export function UnifiedTablePage<T>({
         toast.error("Cell update issue", {
           id: "unified-table-cell-update",
           description:
-            "The edited cell was restored because the save request did not complete.",
+            error instanceof Error
+              ? error.message
+              : "The edited cell was restored because the save request did not complete.",
         });
       } finally {
         setEditingCell(null);
@@ -1770,6 +1834,44 @@ export function UnifiedTablePage<T>({
     return () => window.cancelAnimationFrame(raf);
   }, [showTable, shouldRenderTableView, table.autoFocusOnLoad]);
 
+  // Track horizontal-scroll position so the edge fades signal "more columns →"
+  // (design-audit DA-001). Recomputes on scroll, viewport resize, and whenever the
+  // rendered table changes width (column show/hide/resize, data load).
+  React.useEffect(() => {
+    const el = tableScrollRef.current;
+    if (!el) {
+      setTableScrollEdges({ left: false, right: false });
+      return;
+    }
+
+    const update = () => {
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+      const overflows = maxScroll > 1;
+      setTableScrollEdges({
+        left: overflows && el.scrollLeft > 1,
+        right: overflows && el.scrollLeft < maxScroll - 1,
+      });
+    };
+
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(update);
+      observer.observe(el);
+      const innerTable = el.querySelector("table");
+      if (innerTable) observer.observe(innerTable);
+    }
+
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      observer?.disconnect();
+    };
+  }, [showTable, shouldRenderTableView, paginatedItems, visibleColumns]);
+
   const handleTableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     table.onTableKeyDown?.(event, paginatedItems);
     if (event.defaultPrevented || paginatedItems.length === 0) return;
@@ -1818,39 +1920,52 @@ export function UnifiedTablePage<T>({
         startX: event.clientX,
         startWidth: headerCell.getBoundingClientRect().width,
       };
-      setIsResizingColumn(true);
+      didResizeRef.current = false;
+      // Suppress text selection and lock the resize cursor for the whole drag.
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      // Attach listeners synchronously here — NOT via an effect keyed on state —
+      // so the drag is tracked from the very first pixel instead of after a
+      // re-render (which is slow on large tables and made resize feel laggy).
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const resizeState = resizeStateRef.current;
+        if (!resizeState) return;
+        didResizeRef.current = true;
+        const deltaX = moveEvent.clientX - resizeState.startX;
+        const nextWidth = computeResizedColumnWidth(
+          resizeState.startWidth,
+          deltaX,
+        );
+        // Coalesce into one state write per frame so a fast drag doesn't
+        // re-render the whole table body on every mousemove event.
+        if (resizeRafRef.current !== null) return;
+        resizeRafRef.current = window.requestAnimationFrame(() => {
+          resizeRafRef.current = null;
+          setColumnWidths((prev) => ({
+            ...prev,
+            [resizeState.columnId]: nextWidth,
+          }));
+        });
+      };
+
+      const handleMouseUp = () => {
+        resizeStateRef.current = null;
+        if (resizeRafRef.current !== null) {
+          window.cancelAnimationFrame(resizeRafRef.current);
+          resizeRafRef.current = null;
+        }
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
     },
     [],
   );
-
-  React.useEffect(() => {
-    if (!isResizingColumn) return;
-
-    const handleMouseMove = (event: MouseEvent) => {
-      const resizeState = resizeStateRef.current;
-      if (!resizeState) return;
-
-      const deltaX = event.clientX - resizeState.startX;
-      const nextWidth = Math.max(120, resizeState.startWidth + deltaX);
-      setColumnWidths((prev) => ({
-        ...prev,
-        [resizeState.columnId]: nextWidth,
-      }));
-    };
-
-    const handleMouseUp = () => {
-      resizeStateRef.current = null;
-      setIsResizingColumn(false);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isResizingColumn]);
 
   const renderTableToolbar = (className?: string) => (
     <TableToolbar
@@ -1945,9 +2060,28 @@ export function UnifiedTablePage<T>({
     </div>
   ) : null;
 
+  const shouldRenderHeader = Boolean(header.title) && !header.hidden;
+
   const headerContent = (
     <PageHeader
       title={header.title}
+      // Render the title with `truncate` instead of PageHeader's default
+      // `break-words`. Table-page headers place the toolbar inline with the
+      // title (mobileActionsInline), and the toolbar is `shrink-0`, so in a
+      // narrow container (e.g. the tablet 3-pane center column) the title's
+      // flex column can be squeezed below one word's width — `break-words`
+      // then shatters it one letter per line. Truncating fails gracefully to
+      // an ellipsis and is a no-op on desktop where the title fits.
+      // Scoped to the default variant: the `compact` variant renders the title
+      // as a small Eyebrow, so passing titleContent there would wrongly replace
+      // it with this large <h1>.
+      titleContent={
+        header.variant === "compact" ? undefined : (
+          <h1 className="truncate text-xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
+            {header.title}
+          </h1>
+        )
+      }
       eyebrow={header.eyebrow}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
@@ -1963,10 +2097,26 @@ export function UnifiedTablePage<T>({
             {headerActionsSlot}
             {tableToolbar}
           </div>
+        ) : toolbarWithTabs ? (
+          // Toolbar lives on the tabs row at all widths — no duplicate in the header.
+          headerActionsSlot
         ) : headerActionsSlot ? (
-          <div className="flex items-center gap-2">
-            {headerActionsSlot}
-            {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
+          // On phones (< md) the toolbar collapses to a single settings sheet
+          // trigger. Normalize it and the primary action to the SAME 44px round
+          // button so they read as one proportional set instead of a heavy
+          // filled square next to a bare glyph. The secondary gets a soft tonal
+          // fill; the primary keeps its accent. Icons are pinned to one size and
+          // any button label is collapsed (`text-[0]`) so both are icon-only.
+          <div className="flex items-center gap-2 max-md:gap-2">
+            {/* `:has(svg)` scopes the round-icon treatment to icon-bearing
+                buttons only, so a text-only header action degrades to its normal
+                label instead of collapsing to an empty circle. */}
+            <div className="contents max-md:[&_button:has(svg)]:h-11 max-md:[&_button:has(svg)]:w-11 max-md:[&_button:has(svg)]:justify-center max-md:[&_button:has(svg)]:gap-0 max-md:[&_button:has(svg)]:rounded-full max-md:[&_button:has(svg)]:bg-muted max-md:[&_button:has(svg)]:p-0 max-md:[&_button:has(svg)]:text-[0px] max-md:[&_button:has(svg)]:text-muted-foreground max-md:[&_button:has(svg)]:shadow-none max-md:[&_button:has(svg):hover]:bg-muted/70 max-md:[&_svg]:h-5 max-md:[&_svg]:w-5">
+              {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
+            </div>
+            <div className="contents max-md:[&_button:has(svg)]:h-11 max-md:[&_button:has(svg)]:w-11 max-md:[&_button:has(svg)]:justify-center max-md:[&_button:has(svg)]:gap-0 max-md:[&_button:has(svg)]:rounded-full max-md:[&_button:has(svg)]:p-0 max-md:[&_button:has(svg)]:text-[0px] max-md:[&_svg]:h-5 max-md:[&_svg]:w-5">
+              {headerActionsSlot}
+            </div>
           </div>
         ) : (
           renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)
@@ -1975,18 +2125,33 @@ export function UnifiedTablePage<T>({
     />
   );
 
+  const shouldPortalToolbar = Boolean(toolbar.portalContainerId);
+  const toolbarPortalContainer =
+    shouldPortalToolbar && typeof document !== "undefined"
+      ? document.getElementById(toolbar.portalContainerId!)
+      : null;
+  const portaledToolbar =
+    shouldPortalToolbar && toolbarPortalContainer
+      ? createPortal(renderTableToolbar("w-auto py-0"), toolbarPortalContainer)
+      : null;
+
   // Split content into "above table" (header, tabs, toolbar) and "table area" so
   // the side panel grid can align its top with the table, not the page header.
   const aboveTableContent = (
     <>
-      {header.title ? headerContent : null}
+      {shouldRenderHeader ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
-            "flex flex-col gap-2",
-            tabs
-              ? "md:flex-row md:items-center md:justify-between md:gap-4"
-              : "md:flex-row md:items-center md:justify-end md:gap-4",
+            toolbarWithTabs
+              ? // Keep tabs + toolbar on one horizontal row at EVERY width.
+                "flex flex-row items-center justify-between gap-2"
+              : cn(
+                  "flex flex-col gap-2",
+                  tabs
+                    ? "md:flex-row md:items-center md:justify-between md:gap-4"
+                    : "md:flex-row md:items-center md:justify-end md:gap-4",
+                ),
             isCompactDensity
               ? "pb-1 pt-0"
               : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
@@ -1999,14 +2164,16 @@ export function UnifiedTablePage<T>({
               className="-mr-1 mb-0 w-full min-w-0 sm:mr-0 md:w-auto md:flex-none"
             />
           )}
-          {!toolbarInlineWithHeader ? (
+          {!toolbarInlineWithHeader && !shouldPortalToolbar ? (
             <div
               className={cn(
-                TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
+                toolbarWithTabs
+                  ? "flex min-w-0 justify-end"
+                  : TABLE_ABOVE_TABLE_TOOLBAR_CLASSNAME,
                 tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >
-              {tableToolbar}
+              {toolbarWithTabs ? renderTableToolbar("w-auto py-0") : tableToolbar}
             </div>
           ) : null}
         </div>
@@ -2059,6 +2226,8 @@ export function UnifiedTablePage<T>({
           onRowClick={table.onRowClick ? activateRow : undefined}
           isFetching={data.isFetching}
           rowActions={table.rowActions}
+          onView={table.onView}
+          onEdit={table.onEdit}
           onDelete={table.onDelete ? handleDeleteIntent : undefined}
           hasRowActions={hasRowActions}
         />
@@ -2066,10 +2235,32 @@ export function UnifiedTablePage<T>({
 
       {/* Desktop table view */}
       {showTable && shouldRenderTableView && (
-        <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
+        <div
+          className={cn(
+            "relative hidden sm:block",
+            data.isFetching && "opacity-70",
+          )}
+        >
+          {/* Edge fades — signal that the table scrolls horizontally so a
+              partially-visible trailing column reads as "more →", not a broken
+              clip (design-audit DA-001). */}
+          {tableScrollEdges.left ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 bg-gradient-to-r from-background to-transparent"
+            />
+          ) : null}
+          {tableScrollEdges.right ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-background to-transparent"
+            />
+          ) : null}
           <div
             className={cn(
-              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              shouldUseFullBleedDesktopScrollShell &&
+                TABLE_FULL_BLEED_SCROLL_SHELL_CLASSNAME,
               removeTableFrame ? "border-0 rounded-none" : "",
               sidePanel
                 ? removeTableFrame
@@ -2244,6 +2435,13 @@ export function UnifiedTablePage<T>({
                             }
                             style={columnStyle}
                             onClick={() => {
+                              // A resize drag ends with a synthetic click on the
+                              // <th> (the handle is a child). Consume it so the
+                              // resize doesn't also re-sort the column.
+                              if (didResizeRef.current) {
+                                didResizeRef.current = false;
+                                return;
+                              }
                               if (isSortable) {
                                 handleSortClick(column.id);
                               }
@@ -2280,6 +2478,7 @@ export function UnifiedTablePage<T>({
                                 <>
                                   {hasContextActions ? (
                                     <div className="flex items-center w-full">
+                                      {columnAlignment === "right" && dragHandle}
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button
@@ -2302,6 +2501,14 @@ export function UnifiedTablePage<T>({
                                               event.currentTarget.click();
                                             }}
                                           >
+                                            {/* Right-aligned headers place the sort
+                                                indicator BEFORE the label so the label
+                                                stays flush with the column's right edge,
+                                                matching the right-aligned numeric cells. */}
+                                            {columnAlignment === "right" &&
+                                              isSortable &&
+                                              column.showSortIcon !== false &&
+                                              renderSortIcon(column.id)}
                                             <span
                                               className={
                                                 TABLE_HEADER_LABEL_CLASSNAME
@@ -2309,7 +2516,9 @@ export function UnifiedTablePage<T>({
                                             >
                                               {column.label}
                                             </span>
-                                            {isSortable &&
+                                            {columnAlignment !== "right" &&
+                                              isSortable &&
+                                              column.showSortIcon !== false &&
                                               renderSortIcon(column.id)}
                                           </Button>
                                         </DropdownMenuTrigger>
@@ -2388,7 +2597,7 @@ export function UnifiedTablePage<T>({
                                           )}
                                         </DropdownMenuContent>
                                       </DropdownMenu>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   ) : (
                                     <div
@@ -2403,14 +2612,13 @@ export function UnifiedTablePage<T>({
                                             : "justify-start",
                                       )}
                                     >
+                                      {columnAlignment === "right" && dragHandle}
                                       <span
-                                        className={
-                                          TABLE_HEADER_LABEL_CLASSNAME
-                                        }
+                                        className={TABLE_HEADER_LABEL_CLASSNAME}
                                       >
                                         {column.label}
                                       </span>
-                                      {dragHandle}
+                                      {columnAlignment !== "right" && dragHandle}
                                     </div>
                                   )}
                                   <div
@@ -2418,6 +2626,9 @@ export function UnifiedTablePage<T>({
                                     onMouseDown={(event) =>
                                       handleColumnResizeStart(event, column.id)
                                     }
+                                    // A click on the handle itself (no drag) must
+                                    // not bubble to the header's sort onClick.
+                                    onClick={(event) => event.stopPropagation()}
                                     aria-hidden="true"
                                   />
                                 </>
@@ -2565,15 +2776,18 @@ export function UnifiedTablePage<T>({
                             column,
                             "left",
                           );
+                          const isEditableCell =
+                            Boolean(resolvedFeatures.enableInlineEditing) &&
+                            Boolean(column.editable) &&
+                            Boolean(column.editValue);
+                          const isIconOnlyEdit =
+                            isEditableCell &&
+                            shouldUseIconOnlyInlineEdit(column);
                           return (
                             <TableCell
                               key={column.id}
                               data-editable-cell={
-                                resolvedFeatures.enableInlineEditing &&
-                                column.editable &&
-                                column.editValue
-                                  ? "true"
-                                  : undefined
+                                isEditableCell ? "true" : undefined
                               }
                               style={
                                 columnWidths[column.id] ||
@@ -2599,20 +2813,13 @@ export function UnifiedTablePage<T>({
                                   : columnAlignment === "center"
                                     ? "text-center"
                                     : "text-left",
-                                resolvedFeatures.enableInlineEditing &&
-                                  column.editable &&
-                                  column.editValue
-                                  ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
-                                  : "",
+                                isEditableCell &&
+                                  !isIconOnlyEdit &&
+                                  "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40",
+                                isIconOnlyEdit && "focus-within:bg-muted/40",
                               )}
                               onClick={(event) => {
-                                if (
-                                  !(
-                                    resolvedFeatures.enableInlineEditing &&
-                                    column.editable &&
-                                    column.editValue
-                                  )
-                                ) {
+                                if (!isEditableCell || isIconOnlyEdit) {
                                   return;
                                 }
                                 if (isInteractiveRowTarget(event.target)) {
@@ -2624,9 +2831,7 @@ export function UnifiedTablePage<T>({
                             >
                               {editingCell?.rowId === table.getRowId(item) &&
                               editingCell.columnId === column.id &&
-                              resolvedFeatures.enableInlineEditing &&
-                              column.editable &&
-                              column.editValue ? (
+                              isEditableCell ? (
                                 column.renderEditor ? (
                                   column.renderEditor({
                                     item,
@@ -2718,26 +2923,47 @@ export function UnifiedTablePage<T>({
                                     }}
                                   />
                                 )
-                              ) : resolvedFeatures.enableInlineEditing &&
-                                column.editable &&
-                                column.editValue ? (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
-                                  data-row-interactive="true"
-                                  aria-label={`Edit ${column.label}`}
-                                  title={`Edit ${column.label}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    startInlineEdit(item, column);
-                                  }}
-                                >
-                                  <span className="min-w-0 flex-1 truncate">
-                                    {column.render(item)}
-                                  </span>
-                                  <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
-                                </Button>
+                              ) : isEditableCell ? (
+                                isIconOnlyEdit ? (
+                                  <div className="flex min-w-0 items-center justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      {column.render(item)}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 shrink-0 opacity-0 transition-opacity hover:bg-transparent focus-visible:opacity-100 group-hover/cell:opacity-100 group-focus-within/cell:opacity-100"
+                                      data-row-interactive="true"
+                                      aria-label={`Edit ${column.label}`}
+                                      title={`Edit ${column.label}`}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        startInlineEdit(item, column);
+                                      }}
+                                    >
+                                      <Pencil className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+                                    data-row-interactive="true"
+                                    aria-label={`Edit ${column.label}`}
+                                    title={`Edit ${column.label}`}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      startInlineEdit(item, column);
+                                    }}
+                                  >
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {column.render(item)}
+                                    </span>
+                                    <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
+                                  </Button>
+                                )
                               ) : (
                                 column.render(item)
                               )}
@@ -2751,7 +2977,7 @@ export function UnifiedTablePage<T>({
                           >
                             {table.rowActions ? (
                               table.rowActions(item)
-                            ) : table.onDelete || table.onEdit ? (
+                            ) : table.onView || table.onDelete || table.onEdit ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
@@ -2760,14 +2986,27 @@ export function UnifiedTablePage<T>({
                                     className="h-8 w-8"
                                     aria-label="Row actions"
                                   >
-                                    <MoreHorizontal />
+                                    <MoreVertical />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  {table.onView && (
+                                    <DropdownMenuItem
+                                      onClick={() => table.onView!(item)}
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      View
+                                    </DropdownMenuItem>
+                                  )}
+                                  {table.onView &&
+                                  (table.onEdit || table.onDelete) ? (
+                                    <DropdownMenuSeparator />
+                                  ) : null}
                                   {table.onEdit && (
                                     <DropdownMenuItem
                                       onClick={() => table.onEdit!(item)}
                                     >
+                                      <Pencil className="mr-2 h-4 w-4" />
                                       Edit
                                     </DropdownMenuItem>
                                   )}
@@ -2821,12 +3060,22 @@ export function UnifiedTablePage<T>({
                               ...getPinnedStyle(column.id),
                             } as React.CSSProperties)
                           : undefined;
+                        const columnAlignment = resolveColumnAlignment(
+                          column,
+                          "left",
+                        );
+                        const alignmentClass =
+                          columnAlignment === "right"
+                            ? "text-right"
+                            : columnAlignment === "center"
+                              ? "text-center"
+                              : "text-left";
                         const value = footerTotals.values[column.id];
                         if (index === 0 && !value) {
                           return (
                             <TableCell
                               key={column.id}
-                              className="font-semibold"
+                              className="font-semibold text-left"
                               style={columnStyle}
                             >
                               {footerTotals.label ?? "Totals"}
@@ -2836,7 +3085,7 @@ export function UnifiedTablePage<T>({
                         return (
                           <TableCell
                             key={column.id}
-                            className="font-semibold"
+                            className={cn("font-semibold", alignmentClass)}
                             style={columnStyle}
                           >
                             {value ?? null}
@@ -2941,7 +3190,7 @@ export function UnifiedTablePage<T>({
           const SplitView = views?.split;
           if (!SplitView) return null;
           return (
-            <div className="flex flex-1 min-h-0">
+            <div className={TABLE_SPLIT_VIEW_CONTAINER_CLASSNAME}>
               {SplitView({
                 items: rowOrderedItems,
                 getRowId: table.getRowId,
@@ -3026,12 +3275,17 @@ export function UnifiedTablePage<T>({
 
   return (
     <>
+      {portaledToolbar}
       <PageContainer
         maxWidth={containerMaxWidth}
-        padding={containerPadding}
+        // Split view is edge-to-edge like the emails feedback page — no left/right
+        // gutter so the list + detail panel own the full content width (design-audit
+        // DA-002). Other views keep the standard container padding.
+        padding={canRenderSplitView ? false : containerPadding}
         className={cn(
           "pb-12",
-          canRenderSplitView && "flex flex-col min-h-0",
+          canRenderSplitView && TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,
+          isFullBleedTable && TABLE_FULL_BLEED_PAGE_CONTAINER_CLASSNAME,
           sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}
@@ -3089,8 +3343,14 @@ export function UnifiedTablePage<T>({
                       <div className="absolute left-0 top-0 h-full w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
                     </div>
                   )}
-                  <div className={cn("flex-1 flex flex-col min-h-0 pl-4 pr-4", sidePanel.contentClassName)}>
-                    {sidePanel.onClose && sidePanel.showCloseButton !== false ? (
+                  <div
+                    className={cn(
+                      "flex-1 flex flex-col min-h-0 pl-4 pr-4",
+                      sidePanel.contentClassName,
+                    )}
+                  >
+                    {sidePanel.onClose &&
+                    sidePanel.showCloseButton !== false ? (
                       <div className="flex h-10 shrink-0 items-center justify-end border-b border-border/60">
                         <Button
                           variant="ghost"

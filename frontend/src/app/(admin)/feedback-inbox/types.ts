@@ -6,6 +6,7 @@ export type UserProfile = {
 
 export type FeedbackItem = {
   id: string;
+  category: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -29,8 +30,24 @@ export type FeedbackItem = {
   github_issue_number: number | null;
   github_issue_url: string | null;
   github_issue_state: string | null;
+  tool_id?: number | null;
   metadata: Record<string, unknown>;
   submitter: UserProfile;
+};
+
+export type FeedbackResourceKind = "file" | "link";
+
+export type FeedbackResource = {
+  id: string;
+  kind: FeedbackResourceKind;
+  label: string;
+  url: string;
+  path: string | null;
+  fileName: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  createdAt: string;
+  createdBy: string | null;
 };
 
 export type FeedbackComment = {
@@ -59,18 +76,22 @@ export type GitHubComment = {
 };
 
 export type StatusFilter =
+  | "active"
   | "open"
   | "in_progress"
+  | "in_review"
+  | "verified"
   | "dispatched"
   | "deferred"
-  | "resolved"
   | "all";
 
 export type DisplayStatus =
   | "open"
   | "in_progress"
+  | "pr_created"
+  | "in_review"
+  | "verified"
   | "deferred"
-  | "resolved"
   | "archived";
 
 export type AgentTarget = "codex" | "claude_code";
@@ -85,7 +106,7 @@ export type DispatchHistoryEntry = {
   githubIssueUrl?: string | null;
 };
 
-export type FeedbackInboxTab = "issues" | "feature_requests";
+export type FeedbackInboxTab = "all" | "issues" | "feature_requests";
 
 export type ToolOption = {
   id: number;

@@ -1,23 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowUpRight,
-  Clock,
-  Copy,
-  Download,
-  Inbox,
-  Link2,
-  MoreHorizontal,
-  Trash2,
-} from "lucide-react";
+import { Clock, Inbox, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
+import { shouldLoadPrimeContractPcoFinancialMarkup } from "@/lib/prime-contract-pcos/financial-markup-load";
 import {
   PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
 } from "@/lib/change-orders/prime-contract-change-order-statuses";
@@ -34,21 +27,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Inline } from "@/components/layout/inline";
+  Skeleton,
+} from "@/components/ui/skeleton";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
   DetailField,
   DetailFieldGrid,
   EditableDetailField,
@@ -62,7 +43,6 @@ import {
 } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { ErrorState, StatusBadge } from "@/components/ds";
-import { PrimeContractFinancialMarkupTab } from "@/components/domain/contracts/prime-contract-detail";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import {
   InlineTable,
@@ -72,7 +52,18 @@ import {
   InlineTableBody,
   InlineTableRow,
   InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
 } from "@/components/ds";
+import { PrimeContractPcoHeaderActions } from "./prime-contract-pco-header-actions";
+
+const PrimeContractFinancialMarkupTab = dynamic(
+  () =>
+    import(
+      "@/components/domain/contracts/prime-contract-detail/PrimeContractFinancialMarkupTab"
+    ).then((module) => module.PrimeContractFinancialMarkupTab),
+);
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -219,6 +210,7 @@ export default function PrimeContractPcoDetailPage() {
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [savedVerticalMarkups, setSavedVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
+  const [hasLoadedFinancialMarkupData, setHasLoadedFinancialMarkupData] = useState(false);
 
   const buildPcoDetailPath = useCallback(
     (primeContractId: string | null | undefined) => {
@@ -258,49 +250,37 @@ export default function PrimeContractPcoDetailPage() {
   }, [contractIdFromRoute, pco?.prime_contract_id, router, buildPcoDetailPath]);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (
+      !shouldLoadPrimeContractPcoFinancialMarkup({
+        projectId,
+        activeTab,
+        hasLoadedFinancialMarkupData,
+      })
+    ) {
+      return;
+    }
 
     let active = true;
-    const fetchBudgetCodes = async () => {
-      try {
-        const response = await apiFetch<{ budgetCodes: BudgetCode[] }>(
-          `/api/projects/${projectId}/budget-codes`,
-        );
-        if (active) {
-          setBudgetCodes(response.budgetCodes || []);
-        }
-      } catch {
-        if (active) {
-          setBudgetCodes([]);
-        }
-      }
-    };
-
-    void fetchBudgetCodes();
-    return () => {
-      active = false;
-    };
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-
-    let active = true;
-    const fetchVerticalMarkups = async () => {
+    const fetchFinancialMarkupData = async () => {
       setMarkupsLoading(true);
       try {
-        const data = await apiFetch<{ markups?: VerticalMarkup[] }>(
-          `/api/projects/${projectId}/vertical-markup`,
-        );
+        const [budgetCodeResponse, markupResponse] = await Promise.all([
+          apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`),
+          apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`),
+        ]);
         if (!active) return;
-        const fetched = data.markups || [];
-        setVerticalMarkups(fetched);
-        setSavedVerticalMarkups(fetched);
+
+        const fetchedMarkups = markupResponse.markups || [];
+        setBudgetCodes(budgetCodeResponse.budgetCodes || []);
+        setVerticalMarkups(fetchedMarkups);
+        setSavedVerticalMarkups(fetchedMarkups);
+        setHasLoadedFinancialMarkupData(true);
       } catch {
-        if (active) {
-          setVerticalMarkups([]);
-          setSavedVerticalMarkups([]);
-        }
+        if (!active) return;
+        setBudgetCodes([]);
+        setVerticalMarkups([]);
+        setSavedVerticalMarkups([]);
+        setHasLoadedFinancialMarkupData(true);
       } finally {
         if (active) {
           setMarkupsLoading(false);
@@ -308,11 +288,11 @@ export default function PrimeContractPcoDetailPage() {
       }
     };
 
-    void fetchVerticalMarkups();
+    void fetchFinancialMarkupData();
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [activeTab, hasLoadedFinancialMarkupData, projectId]);
 
   /* ── Navigation ────────────────────────────────────────────────── */
 
@@ -323,6 +303,17 @@ export default function PrimeContractPcoDetailPage() {
     }
     router.push(`/${projectId}/prime-contract-pcos`);
   }, [router, projectId, contractIdFromRoute]);
+
+  const buildPcoEditPath = useCallback(
+    (primeContractId: string | null | undefined) => {
+      const resolvedContractId = contractIdFromRoute ?? primeContractId ?? null;
+      if (resolvedContractId) {
+        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}/edit`;
+      }
+      return `/${projectId}/prime-contract-pcos/${pcoId}/edit`;
+    },
+    [contractIdFromRoute, pcoId, projectId],
+  );
 
   /* ── Actions ───────────────────────────────────────────────────── */
 
@@ -568,57 +559,29 @@ export default function PrimeContractPcoDetailPage() {
 
   /* ── Header ────────────────────────────────────────────────────── */
 
-  const pageTitle = [
-    "Potential Change Order",
-    formatPcoHeadingNumber(pco.pco_number),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .concat(pco.title ? `: ${pco.title}` : "");
-
-  const resolvedContractId = contractIdFromRoute ?? pco.prime_contract_id;
-  const contractDisplayName = pco.prime_contract
-    ? [pco.prime_contract.contract_number, pco.prime_contract.title].filter(Boolean).join(" - ")
-    : "Prime Contract";
+  // Header: number sits in the eyebrow (matching prime-contract / change-event
+  // detail pages); the h1 is the real title. Fall back to the entity name when
+  // the title is missing or is just the PCO number, so the number never renders
+  // twice (records promoted from a change event often default title = number).
+  const headingNumber = formatPcoHeadingNumber(pco.pco_number);
+  const trimmedTitle = pco.title?.trim() ?? "";
+  const trimmedNumber = pco.pco_number?.trim() ?? "";
+  const pageTitle =
+    trimmedTitle && trimmedTitle !== trimmedNumber
+      ? trimmedTitle
+      : "Potential Change Order";
 
   const headerActions = (
-    <Inline gap="sm">
-      {canPromote && (
-        <Button size="sm" onClick={() => setShowPromoteDialog(true)}>
-          <ArrowUpRight className="mr-1 h-4 w-4" />
-          Promote to PCCO
-        </Button>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export as CSV
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopyId}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy ID
-          </DropdownMenuItem>
-          {canDelete && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Inline>
+    <PrimeContractPcoHeaderActions
+      canDelete={canDelete}
+      canEdit={canEdit}
+      canPromote={canPromote}
+      onCopyId={handleCopyId}
+      onDelete={() => setShowDeleteDialog(true)}
+      onEdit={() => router.push(buildPcoEditPath(pco.prime_contract_id))}
+      onExport={handleExport}
+      onPromote={() => setShowPromoteDialog(true)}
+    />
   );
 
   /* ── Main render ────────────────────────────────────────────────── */
@@ -626,6 +589,7 @@ export default function PrimeContractPcoDetailPage() {
   return (
     <PageShell
       variant="detailWide"
+      eyebrow={headingNumber || undefined}
       title={pageTitle}
       onBack={handleBack}
       backLabel="Back"
@@ -633,33 +597,30 @@ export default function PrimeContractPcoDetailPage() {
       contentClassName="space-y-8"
     >
       <div className="space-y-4 border-b border-border pb-6">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${projectId}/prime-contracts`}>Prime Contracts</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${projectId}/prime-contracts/${resolvedContractId}`}>
-                  {contractDisplayName}
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="space-y-2">
+            <StatusBadge status={pco.status} />
+            {pco.prime_contract && (
+              <Text tone="muted" size="sm">
+                Related Contract:{" "}
+                <Link
+                  href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
+                  className="underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  {pco.prime_contract.contract_number} - {pco.prime_contract.title}
                 </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Change Orders</BreadcrumbPage>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {formatPcoHeadingNumber(pco.pco_number) || "Potential Change Order"}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+              </Text>
+            )}
+          </div>
+          <div className="ml-auto text-right">
+            <Text size="sm" tone="muted">
+              Total Amount
+            </Text>
+            <Text className="text-xl font-semibold tabular-nums">
+              {formatMoney(pco.calculated_amount || totalAmount)}
+            </Text>
+          </div>
+        </div>
 
         <PageTabs
           variant="inline"
@@ -692,31 +653,6 @@ export default function PrimeContractPcoDetailPage() {
           ]}
           onTabClick={(href) => setActiveTab(href as PcoTab)}
         />
-
-        <div className="flex flex-wrap items-start gap-4">
-        <div className="space-y-2">
-          <StatusBadge status={pco.status} />
-          {pco.prime_contract && (
-            <Text tone="muted" size="sm">
-              Related Contract:{" "}
-              <Link
-                href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
-                className="underline underline-offset-4 transition-colors hover:text-foreground"
-              >
-                {pco.prime_contract.contract_number} - {pco.prime_contract.title}
-              </Link>
-            </Text>
-          )}
-        </div>
-        <div className="ml-auto text-right">
-          <Text size="sm" tone="muted">
-            Total Amount
-          </Text>
-          <Text className="text-xl font-semibold tabular-nums">
-            {formatMoney(pco.calculated_amount || totalAmount)}
-          </Text>
-        </div>
-      </div>
       </div>
 
       <ContentSectionStack className="pt-1">
@@ -734,16 +670,14 @@ export default function PrimeContractPcoDetailPage() {
             <DetailField label="Date Created">
               {formatDateTime(pco.created_at)}
             </DetailField>
-            <DetailField label="Revision">
-              <EditableDetailField
-                label="Revision"
-                type="number"
-                value={pco.revision != null ? String(pco.revision) : ""}
-                emptyPlaceholder="0"
-                disabled={!canEdit}
-                onSave={(value) => saveField("revision", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Revision"
+              type="number"
+              value={pco.revision != null ? String(pco.revision) : ""}
+              emptyPlaceholder="0"
+              disabled={!canEdit}
+              onSave={(value) => saveField("revision", value)}
+            />
             <DetailField label="Created By">
               {pco.created_by_name || pco.created_by || "--"}
             </DetailField>
@@ -782,149 +716,124 @@ export default function PrimeContractPcoDetailPage() {
                 "--"
               )}
             </DetailField>
-            <DetailField label="Title">
-              <EditableDetailField
-                label="Title"
-                value={pco.title ?? ""}
-                emptyPlaceholder="Set title"
-                disabled={!canEdit}
-                onSave={(value) => saveField("title", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Title"
+              value={pco.title ?? ""}
+              emptyPlaceholder="Set title"
+              disabled={!canEdit}
+              onSave={(value) => saveField("title", value)}
+            />
             <DetailField label="Linked PCO">
               {pco.promoted_to_co_id ? `#${pco.promoted_to_co_id}` : "None"}
             </DetailField>
-            <DetailField label="Status">
-              <EditableDetailField
-                label="Status"
-                type="select"
-                value={pco.status ?? ""}
-                display={<StatusBadge status={pco.status} />}
-                options={PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((statusOption) => ({
-                  value: statusOption.value,
-                  label: statusOption.label,
-                }))}
-                disabled={!canEdit}
-                onSave={(value) => saveField("status", value)}
-              />
-            </DetailField>
-            <DetailField label="PCO Signed">
-              <EditableDetailField
-                label="PCO Signed"
-                type="date"
-                value={pco.signed_co_received_date ?? ""}
-                display={formatDate(pco.signed_co_received_date)}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("signed_co_received_date", value)}
-              />
-            </DetailField>
-            <DetailField label="Change Reason">
-              <EditableDetailField
-                label="Change Reason"
-                type="select"
-                value={pco.change_reason ?? "__none__"}
-                display={pco.change_reason || "--"}
-                options={[{ value: "__none__", label: "None" }, ...CHANGE_REASONS]}
-                disabled={!canEdit}
-                onSave={(value) => saveField("change_reason", value)}
-              />
-            </DetailField>
-            <DetailField label="Location">
-              <EditableDetailField
-                label="Location"
-                value={pco.location ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("location", value)}
-              />
-            </DetailField>
-            <DetailField label="Private">
-              <EditableDetailField
-                label="Private"
-                type="boolean"
-                value={String(pco.is_private)}
-                display={pco.is_private ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("is_private", value)}
-              />
-            </DetailField>
-            <DetailField label="Field Change">
-              <EditableDetailField
-                label="Field Change"
-                type="boolean"
-                value={String(pco.field_change)}
-                display={pco.field_change ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("field_change", value)}
-              />
-            </DetailField>
-            <DetailField label="Executed">
-              <EditableDetailField
-                label="Executed"
-                type="boolean"
-                value={String(pco.executed)}
-                display={pco.executed ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("executed", value)}
-              />
-            </DetailField>
-            <DetailField label="Paid in Full">
-              <EditableDetailField
-                label="Paid in Full"
-                type="boolean"
-                value={String(pco.paid_in_full)}
-                display={pco.paid_in_full ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("paid_in_full", value)}
-              />
-            </DetailField>
-            <DetailField label="Requested By">
-              <EditableDetailField
-                label="Requested By"
-                value={pco.request_received_from ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("request_received_from", value)}
-              />
-            </DetailField>
-            <DetailField label="Schedule Impact">
-              <EditableDetailField
-                label="Schedule Impact"
-                type="number"
-                value={pco.schedule_impact != null ? String(pco.schedule_impact) : ""}
-                display={
-                  pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"
-                }
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("schedule_impact", value)}
-              />
-            </DetailField>
-            <DetailField label="Reference">
-              <EditableDetailField
-                label="Reference"
-                value={pco.reference ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("reference", value)}
-              />
-            </DetailField>
-            <DetailField label="Description" span={2}>
-              <EditableDetailField
-                label="Description"
-                type="textarea"
-                value={pco.description ?? ""}
-                display={
-                  <span className="whitespace-pre-wrap">
-                    {pco.description || "--"}
-                  </span>
-                }
-                emptyPlaceholder="Add a description"
-                disabled={!canEdit}
-                onSave={(value) => saveField("description", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Status"
+              type="select"
+              value={pco.status ?? ""}
+              display={<StatusBadge status={pco.status} />}
+              options={PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((statusOption) => ({
+                value: statusOption.value,
+                label: statusOption.label,
+              }))}
+              disabled={!canEdit}
+              onSave={(value) => saveField("status", value)}
+            />
+            <EditableDetailField
+              label="PCO Signed"
+              type="date"
+              value={pco.signed_co_received_date ?? ""}
+              display={formatDate(pco.signed_co_received_date)}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("signed_co_received_date", value)}
+            />
+            <EditableDetailField
+              label="Change Reason"
+              type="select"
+              value={pco.change_reason ?? "__none__"}
+              display={pco.change_reason || "--"}
+              options={[{ value: "__none__", label: "None" }, ...CHANGE_REASONS]}
+              disabled={!canEdit}
+              onSave={(value) => saveField("change_reason", value)}
+            />
+            <EditableDetailField
+              label="Location"
+              value={pco.location ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("location", value)}
+            />
+            <EditableDetailField
+              label="Private"
+              type="boolean"
+              value={String(pco.is_private)}
+              display={pco.is_private ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("is_private", value)}
+            />
+            <EditableDetailField
+              label="Field Change"
+              type="boolean"
+              value={String(pco.field_change)}
+              display={pco.field_change ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("field_change", value)}
+            />
+            <EditableDetailField
+              label="Executed"
+              type="boolean"
+              value={String(pco.executed)}
+              display={pco.executed ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("executed", value)}
+            />
+            <EditableDetailField
+              label="Paid in Full"
+              type="boolean"
+              value={String(pco.paid_in_full)}
+              display={pco.paid_in_full ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("paid_in_full", value)}
+            />
+            <EditableDetailField
+              label="Requested By"
+              value={pco.request_received_from ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("request_received_from", value)}
+            />
+            <EditableDetailField
+              label="Schedule Impact"
+              type="number"
+              value={pco.schedule_impact != null ? String(pco.schedule_impact) : ""}
+              display={
+                pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"
+              }
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("schedule_impact", value)}
+            />
+            <EditableDetailField
+              label="Reference"
+              value={pco.reference ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("reference", value)}
+            />
+            <EditableDetailField
+              label="Description"
+              span={2}
+              type="textarea"
+              value={pco.description ?? ""}
+              display={
+                <span className="whitespace-pre-wrap">
+                  {pco.description || "--"}
+                </span>
+              }
+              emptyPlaceholder="Add a description"
+              disabled={!canEdit}
+              onSave={(value) => saveField("description", value)}
+            />
           </DetailFieldGrid>
         </section>
 
@@ -963,9 +872,11 @@ export default function PrimeContractPcoDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No attachments yet. Upload files to attach them to this PCO.
-            </p>
+            <EmptyState
+              title="No attachments yet"
+              description="Upload files to attach them to this PCO."
+              className="py-6"
+            />
           )}
         </section>
         </section>
@@ -984,95 +895,63 @@ export default function PrimeContractPcoDetailPage() {
               description="This potential change order does not have any line items yet."
             />
           ) : (
-            <div className="line-items-scroll-shell relative rounded-lg">
-              <InlineTable variant="edit" tableClassName="min-w-[62rem] table-fixed">
-                <colgroup>
-                  <col className="w-176" />
-                  <col className="w-24" />
-                  <col className="w-24" />
-                  <col className="w-40" />
-                  <col className="w-40" />
-                </colgroup>
-                <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
-                  <InlineTableHeaderRow className="border-b border-border/60 hover:bg-transparent">
-                    <InlineTableHeaderCell
-                      colSpan={1}
-                      className="line-item-group-end border-b border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground"
-                    >
-                      Detail
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell
-                      colSpan={4}
-                      className="line-item-group-start border-b border-l border-border/60 px-2 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground"
-                    >
-                      Pricing
-                    </InlineTableHeaderCell>
-                  </InlineTableHeaderRow>
-                  <InlineTableHeaderRow className="border-b-0 hover:bg-transparent">
-                    <InlineTableHeaderCell className="w-176 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Description
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Qty
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-24 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      UOM
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Unit Cost
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Amount
-                    </InlineTableHeaderCell>
-                  </InlineTableHeaderRow>
-                </InlineTableHeader>
-                <InlineTableBody>
-                  {lineItems.map((item) => (
-                    <InlineTableRow
-                      key={item.id}
-                      className="group border-b-0 bg-background transition-colors hover:bg-transparent"
-                    >
-                      <InlineTableCell
-                        className="w-176 px-1 py-1.5 align-top text-[13px]"
-                        title={item.description || undefined}
-                      >
-                        <span className="block whitespace-normal text-foreground">
-                          {item.description || "--"}
-                        </span>
-                        {item.change_event && (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            CE: {item.change_event.number} - {item.change_event.title}
-                          </span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 align-top text-right text-[13px] tabular-nums">
-                        {item.quantity}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-24 px-2 py-1.5 align-top text-[13px] text-muted-foreground">
-                        {item.unit_of_measure || "--"}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-40 px-1 py-1.5 align-top text-right text-[13px] tabular-nums">
-                        {formatMoney(item.unit_cost || 0)}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-40 px-1 py-1.5 align-top text-right text-[13px] font-semibold tabular-nums">
-                        {formatMoney(item.amount || 0)}
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  ))}
-                  <InlineTableRow className="bg-muted/35 hover:bg-muted/35">
-                    <InlineTableCell className="border-t border-border px-1.5 pb-3 pt-4 text-sm font-semibold text-foreground">
-                      Total
+            <InlineTable>
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell className="w-10">#</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-20">
+                    Qty
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-20">UOM</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-32">
+                    Unit Cost
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-32">
+                    Amount
+                  </InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {lineItems.map((item, index) => (
+                  <InlineTableRow key={item.id}>
+                    <InlineTableCell className="text-xs text-muted-foreground">
+                      {index + 1}
                     </InlineTableCell>
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground tabular-nums">
-                      {formatMoney(totalAmount)}
+                    <InlineTableCell>
+                      <span className="block text-foreground">
+                        {item.description || "--"}
+                      </span>
+                      {item.change_event && (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          CE: {item.change_event.number} - {item.change_event.title}
+                        </span>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right">
+                      {item.quantity}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-muted-foreground">
+                      {item.unit_of_measure || "--"}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right">
+                      {formatMoney(item.unit_cost || 0)}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right" className="font-medium">
+                      {formatMoney(item.amount || 0)}
                     </InlineTableCell>
                   </InlineTableRow>
-                </InlineTableBody>
-              </InlineTable>
-            </div>
+                ))}
+              </InlineTableBody>
+              <InlineTableFooter>
+                <InlineTableFooterRow type="totals">
+                  <InlineTableFooterCell colSpan={5}>Total</InlineTableFooterCell>
+                  <InlineTableFooterCell numeric align="right">
+                    {formatMoney(totalAmount)}
+                  </InlineTableFooterCell>
+                </InlineTableFooterRow>
+              </InlineTableFooter>
+            </InlineTable>
           )}
         </section>
         )}
@@ -1151,15 +1030,28 @@ export default function PrimeContractPcoDetailPage() {
         )}
 
         {activeTab === "financial-markup" && (
-          <PrimeContractFinancialMarkupTab
-            projectId={String(projectId)}
-            budgetCodes={budgetCodes}
-            verticalMarkups={verticalMarkups}
-            setVerticalMarkups={setVerticalMarkups}
-            savedVerticalMarkups={savedVerticalMarkups}
-            setSavedVerticalMarkups={setSavedVerticalMarkups}
-            markupsLoading={markupsLoading}
-          />
+          markupsLoading && !hasLoadedFinancialMarkupData ? (
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Financial Markup"
+                className="[&_span]:text-primary"
+              />
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-44 w-full" />
+              </div>
+            </section>
+          ) : (
+            <PrimeContractFinancialMarkupTab
+              projectId={String(projectId)}
+              budgetCodes={budgetCodes}
+              verticalMarkups={verticalMarkups}
+              setVerticalMarkups={setVerticalMarkups}
+              savedVerticalMarkups={savedVerticalMarkups}
+              setSavedVerticalMarkups={setSavedVerticalMarkups}
+              markupsLoading={markupsLoading}
+            />
+          )
         )}
 
         {activeTab === "history" && (

@@ -3,7 +3,13 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { TaskListItem } from "../tasks-inbox";
+import {
+  TASKS_SPLIT_WORKSPACE_CLASSNAME,
+  TASKS_SPLIT_FIRST_PANE_WIDTH,
+  TASK_DETAIL_PROPERTY_BAR_CLASSNAME,
+  TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME,
+  TaskListItem,
+} from "../tasks-inbox";
 import type { TasksRow } from "../task-utils";
 
 jest.mock("@/components/ai/TaskFeedbackButtons", () => ({
@@ -12,8 +18,20 @@ jest.mock("@/components/ai/TaskFeedbackButtons", () => ({
   ),
 }));
 
+jest.mock("@/components/misc/markdown", () => ({
+  Markdown: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => <div className={className}>{children}</div>,
+}));
+
 jest.mock("@/components/ds/SwipeableListRow", () => ({
-  SwipeableListRow: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SwipeableListRow: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 function buildTask(overrides: Partial<TasksRow> = {}): TasksRow {
@@ -59,7 +77,7 @@ function buildTask(overrides: Partial<TasksRow> = {}): TasksRow {
 }
 
 describe("TaskListItem feedback visibility", () => {
-  it("shows compact feedback controls only for AI-generated tasks in split-view rows", () => {
+  it("keeps generated-task feedback out of list rows so detail owns the correction path", () => {
     const { rerender } = render(
       <TaskListItem
         item={buildTask()}
@@ -71,7 +89,9 @@ describe("TaskListItem feedback visibility", () => {
       />,
     );
 
-    expect(screen.getByTestId("task-feedback-buttons")).toHaveTextContent("task-1");
+    expect(
+      screen.queryByTestId("task-feedback-buttons"),
+    ).not.toBeInTheDocument();
 
     rerender(
       <TaskListItem
@@ -88,6 +108,32 @@ describe("TaskListItem feedback visibility", () => {
       />,
     );
 
-    expect(screen.queryByTestId("task-feedback-buttons")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("task-feedback-buttons"),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("Tasks split layout", () => {
+  it("keeps the split view on the same parent-fill contract as emails", () => {
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("h-full");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("min-h-0");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("flex-1");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("overflow-hidden");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).toContain("w-full");
+    expect(TASKS_SPLIT_WORKSPACE_CLASSNAME).not.toContain("100dvh");
+  });
+
+  it("uses the shared split-page width API for the wider tasks list pane", () => {
+    expect(TASKS_SPLIT_FIRST_PANE_WIDTH).toBe("30rem");
+  });
+
+  it("keeps task detail metadata on the shared property-bar spacing contract", () => {
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mt-3");
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).toContain("mb-0");
+    expect(TASK_DETAIL_PROPERTY_BAR_CLASSNAME).not.toContain("grid");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).toContain("mt-2");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).toContain("mb-0");
+    expect(TASK_DETAIL_SECONDARY_PROPERTY_BAR_CLASSNAME).not.toContain("grid");
   });
 });

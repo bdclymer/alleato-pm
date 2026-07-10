@@ -182,7 +182,8 @@ export function BudgetModificationModal({
       isOpen={open}
       onClose={() => onOpenChange(false)}
       title="Add Budget Modification"
-      size="xl"
+      description="Transfer budget value between existing line items. Each row creates a balanced move from one line to another."
+      size="lg"
     >
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalBody className="space-y-4">

@@ -1,0 +1,15 @@
+
+> alleato-procore@0.1.0 rag:verify:repaired-meeting-retrieval
+> node scripts/verify/verify_repaired_meeting_transcript_retrieval.mjs
+
+# Repaired Meeting Transcript Retrieval
+
+| Title | Document | Chunks | Probe Chunk | Expected Rank | Top Similarity | Top Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| Alleato Group - CSM | 01KNCE5SSKRZYC791WFEBKQF86 | 72 | 42 | 1 | 0.819 | meeting_transcript |
+| Weekly Accounting Meeting | 01KN4F1F9FDSMA6M1CK38A0MHJ | 69 | 40 | 1 | 0.772 | meeting_transcript |
+| Nevada GC license update | 01KE7FYDNMKTRQ1JDKXV2V7BHP | 65 | 38 | 1 | 0.702 | meeting_transcript |
+| Onboarding - system review | 01KM6895ESZP84DPVF1TFP1YD1 | 56 | 33 | 1 | 0.806 | meeting_transcript |
+| Weekly OPS (Estimators) | 01KNH7919ERHPEP6QM9SNJKD4E | 55 | 32 | 1 | 0.768 | meeting_transcript |
+
+Repaired meeting transcript retrieval: PASS

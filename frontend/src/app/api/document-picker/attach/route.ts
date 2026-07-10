@@ -24,7 +24,9 @@ type JunctionInsert =
   | Database['public']['Tables']['subcontractor_invoice_documents']['Insert']
   | Database['public']['Tables']['submittal_doc_links']['Insert']
   | Database['public']['Tables']['rfi_documents']['Insert']
-  | Database['public']['Tables']['company_documents']['Insert'];
+  | Database['public']['Tables']['company_documents']['Insert']
+  | Database['public']['Tables']['meeting_documents']['Insert']
+  | Database['public']['Tables']['meeting_item_documents']['Insert'];
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +58,9 @@ type EntityType =
   | 'submittal'
   | 'rfi'
   | 'drawing'
-  | 'company';
+  | 'company'
+  | 'meeting'
+  | 'meeting_item';
 
 interface AttachBody {
   entityType: EntityType;
@@ -111,15 +115,21 @@ export async function POST(req: NextRequest) {
   }
 
   // All other entity types — insert into junction table
-  const { table: tableName, fkColumn } = getPatternCConfig(resolved.entityType);
+  const {
+    table: tableName,
+    fkColumn,
+    timestampColumn = 'attached_at',
+    actorColumn = 'attached_by',
+    supportsDocumentType = true,
+  } = getPatternCConfig(resolved.entityType);
 
   const row: Record<string, unknown> = {
     [fkColumn]:             /^\d+$/.test(resolved.entityId) ? Number(resolved.entityId) : resolved.entityId,
     document_metadata_id:   documentMetadataId,
-    attached_by:            user.id,
-    attached_at:            new Date().toISOString(),
+    [actorColumn]:          user.id,
+    [timestampColumn]:      new Date().toISOString(),
   };
-  if (documentType) {
+  if (documentType && supportsDocumentType) {
     row['document_type'] = documentType;
   }
 

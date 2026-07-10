@@ -1,0 +1,170 @@
+{
+  "generatedAt": "2026-07-09T05:08:01.431Z",
+  "jpProjectId": 7487,
+  "appProjectId": 760,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 6,
+    "adopt": 1,
+    "create": 1,
+    "flag": 4,
+    "existingChangeEvents": 5,
+    "appOnly": 1,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 2,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1740,
+      "number": "CR-7487-0004",
+      "title": "Painting",
+      "statusId": 0,
+      "cost": 0,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "FLAG",
+      "reason": "seq 4 matches 004 but title (sim 0.00) AND amount (Δ $-97,500.00) both diverge — verify manually",
+      "matchedExisting": {
+        "id": "c82ce9c6-546b-4842-b63d-dd7706db90ec",
+        "number": "004",
+        "title": "Dmarc outlets",
+        "cost": 97500,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1737,
+      "number": "CR-7487-0002",
+      "title": "Joint Sealant",
+      "statusId": 8,
+      "cost": 557881,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "FLAG",
+      "reason": "seq 2 matches 002 but title (sim 0.00) AND amount (Δ $-123,898.00) both diverge — verify manually",
+      "matchedExisting": {
+        "id": "55355b29-6686-4a17-94e8-350811a7ccc2",
+        "number": "002",
+        "title": "Door Packages",
+        "cost": 681779,
+        "lineCount": 4
+      }
+    },
+    {
+      "jpChangeRequestId": 1855,
+      "number": "CR-7487-0005",
+      "title": "Added Electrical for FA",
+      "statusId": 8,
+      "cost": 0,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "ADOPT",
+      "reason": "seq 5 == 005; amount matches; titleSim 0.00",
+      "matchedExisting": {
+        "id": "19624060-c74f-4006-8e6b-2c4be1e87466",
+        "number": "005",
+        "title": "Restroom relocation after framing",
+        "cost": 0,
+        "lineCount": 0
+      }
+    },
+    {
+      "jpChangeRequestId": 1876,
+      "number": "CR-7487-0007",
+      "title": "Dmarc outlets",
+      "statusId": 8,
+      "cost": 1470,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 3
+      },
+      "decision": "FLAG",
+      "reason": "no seq match, but \"003\" is a strong title+amount match (sim 1.00) — possible renumber, verify",
+      "matchedExisting": {
+        "id": "0677f83a-a218-4f93-8245-1f0b0b9bd8c7",
+        "number": "003",
+        "title": "Dmarc outlets",
+        "cost": 1470,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1739,
+      "number": "CR-7487-0003",
+      "title": "Dock Packages",
+      "statusId": 0,
+      "cost": 1289595,
+      "lineItems": 7,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 7
+      },
+      "decision": "FLAG",
+      "reason": "seq 3 matches 003 but title (sim 0.00) AND amount (Δ $1,288,125.00) both diverge — verify manually",
+      "matchedExisting": {
+        "id": "0677f83a-a218-4f93-8245-1f0b0b9bd8c7",
+        "number": "003",
+        "title": "Dmarc outlets",
+        "cost": 1470,
+        "lineCount": 1
+      }
+    },
+    {
+      "jpChangeRequestId": 1856,
+      "number": "CR-7487-0006",
+      "title": "Added Electrical Panel Option A",
+      "statusId": 0,
+      "cost": 59222,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 3
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [
+    {
+      "id": "35f3607c-c31d-4eec-bce5-fa3800b9fc74",
+      "number": "001",
+      "title": "Joint Sealant",
+      "cost": 557881,
+      "lineCount": 2
+    }
+  ],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": [
+      {
+        "number": "PCCO-7487-0001",
+        "amount": 621953.63,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7487-0003",
+        "amount": 77482.08,
+        "twin": null
+      }
+    ]
+  }
+}

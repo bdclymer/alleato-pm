@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { requireUserManagementAccess } from "@/lib/auth/user-management-access";
 import { createServiceClient } from "@/lib/supabase/service";
 
 type RouteParams = {
@@ -38,41 +38,7 @@ function getProjectIds(body: z.infer<typeof ProjectAccessPostBody>) {
 }
 
 async function requireAdmin(where: string) {
-  const supabase = await createClient();
-  const user = await getApiRouteUser();
-
-  if (!user) {
-    throw new GuardrailError({
-      code: "AUTH_EXPIRED",
-      where,
-      message: "Authentication required.",
-    });
-  }
-
-  const { data: profile, error } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    throw new GuardrailError({
-      code: "UPSTREAM_FAILURE",
-      where,
-      message: "Failed to verify admin access.",
-      details: error,
-    });
-  }
-
-  if (!profile?.is_admin) {
-    throw new GuardrailError({
-      code: "FORBIDDEN",
-      where,
-      message: "Access denied.",
-    });
-  }
-
-  return user;
+  return requireUserManagementAccess(where);
 }
 
 async function assertPersonExists(personId: string, where: string) {

@@ -7,10 +7,12 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
   type KeyboardEvent,
   type RefObject,
 } from "react";
-import { Image as ImageIcon, Loader2, Send, XCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Send, XCircle } from "lucide-react";
 import { Button, Textarea } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { apiFetch } from "@/lib/api-client";
@@ -26,6 +28,14 @@ import {
   relativeTime,
 } from "../helpers";
 
+type PendingImage = {
+  id: string;
+  dataUrl: string;
+  name: string;
+};
+
+const MAX_COMMENT_IMAGES = 8;
+
 function CommentInput({
   onSubmit,
   users,
@@ -35,7 +45,7 @@ function CommentInput({
   onSubmit: (
     body: string,
     mentions: string[],
-    screenshotDataUrl: string | null,
+    screenshotDataUrls: string[],
   ) => void;
   users: UserProfile[];
   submitting: boolean;
@@ -45,26 +55,35 @@ function CommentInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [attachedImages, setAttachedImages] = useState<PendingImage[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   const localInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = externalInputRef ?? localInputRef;
 
-  function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function attachImageFile(
+    file: File,
+    source: "file-picker" | "paste" | "drop",
+  ) {
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file.");
-      return;
+      return false;
     }
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image must be under 10MB.");
-      return;
+      return false;
     }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        setScreenshotDataUrl(reader.result);
+        setAttachedImages((current) => [
+          ...current,
+          {
+            id: `${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+            dataUrl: reader.result as string,
+            name: file.name,
+          },
+        ]);
       }
     };
     reader.onerror = () => {
@@ -77,13 +96,83 @@ function CommentInput({
         fallback: "The selected feedback comment screenshot could not be read.",
         error,
         metadata: {
+          source,
           fileName: file.name,
           fileSize: file.size,
         },
       });
     };
     reader.readAsDataURL(file);
+    return true;
+  }
+
+  function attachImageFiles(
+    files: Iterable<File>,
+    source: "file-picker" | "paste" | "drop",
+  ) {
+    const imageFiles = Array.from(files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+
+    if (imageFiles.length === 0) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    const remainingSlots = MAX_COMMENT_IMAGES - attachedImages.length;
+    if (remainingSlots <= 0) {
+      toast.error(`You can attach up to ${MAX_COMMENT_IMAGES} images.`);
+      return;
+    }
+
+    const filesToAttach = imageFiles.slice(0, remainingSlots);
+    if (imageFiles.length > remainingSlots) {
+      toast.error(`Only ${MAX_COMMENT_IMAGES} images can be attached.`);
+    }
+
+    filesToAttach.forEach((file) => attachImageFile(file, source));
+  }
+
+  function handleFileUpload(e: ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files?.length) return;
+    attachImageFiles(e.target.files, "file-picker");
     e.target.value = "";
+  }
+
+  function handlePaste(e: ClipboardEvent<HTMLTextAreaElement>) {
+    const imageFiles = Array.from(e.clipboardData.items)
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => Boolean(file));
+
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+    attachImageFiles(imageFiles, "paste");
+  }
+
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    if (!Array.from(e.dataTransfer.items).some((item) => item.type.startsWith("image/"))) {
+      return;
+    }
+
+    e.preventDefault();
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setDragActive(false);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    const imageFiles = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+
+    if (imageFiles.length === 0) return;
+    e.preventDefault();
+    setDragActive(false);
+    attachImageFiles(imageFiles, "drop");
   }
 
   const filteredUsers = useMemo(() => {
@@ -161,11 +250,15 @@ function CommentInput({
 
   function handleSubmit() {
     const trimmed = value.trim();
-    if ((!trimmed && !screenshotDataUrl) || submitting) return;
+    if ((!trimmed && attachedImages.length === 0) || submitting) return;
     const mentions = extractMentionIds(trimmed, users);
-    onSubmit(trimmed || "(screenshot)", mentions, screenshotDataUrl);
+    onSubmit(
+      trimmed || "(image)",
+      mentions,
+      attachedImages.map((image) => image.dataUrl),
+    );
     setValue("");
-    setScreenshotDataUrl(null);
+    setAttachedImages([]);
     setShowMentions(false);
   }
 
@@ -203,23 +296,31 @@ function CommentInput({
         </div>
       )}
 
-      {screenshotDataUrl && (
-        <div className="mb-2 relative inline-block">
-          <img
-            src={screenshotDataUrl}
-            alt="Comment screenshot"
-            className="h-24 max-w-48 rounded-lg border border-border object-cover"
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon-xs"
-            onClick={() => setScreenshotDataUrl(null)}
-            className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full shadow-sm transition-colors hover:bg-destructive/90"
-            aria-label="Remove screenshot"
-          >
-            <XCircle className="h-3 w-3" />
-          </Button>
+      {attachedImages.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {attachedImages.map((image) => (
+            <div key={image.id} className="relative inline-block">
+              <img
+                src={image.dataUrl}
+                alt={image.name}
+                className="h-20 w-20 rounded-md border border-border object-cover"
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon-xs"
+                onClick={() =>
+                  setAttachedImages((current) =>
+                    current.filter((item) => item.id !== image.id),
+                  )
+                }
+                className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full shadow-sm transition-colors hover:bg-destructive/90"
+                aria-label={`Remove ${image.name}`}
+              >
+                <XCircle className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -227,16 +328,26 @@ function CommentInput({
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        multiple
         aria-label="Attach image"
         className="hidden"
         onChange={handleFileUpload}
       />
-      <div className="rounded-md border border-border bg-background p-3 focus-within:ring-1 focus-within:ring-ring">
+      <div
+        className={cn(
+          "rounded-md border border-border bg-background p-3 focus-within:ring-1 focus-within:ring-ring",
+          dragActive && "border-primary/50 ring-1 ring-primary/30",
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <Textarea
           ref={inputRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Add a comment"
           rows={1}
           className="max-h-24 min-h-10 resize-none border-0 bg-transparent p-0 shadow-none"
@@ -247,16 +358,15 @@ function CommentInput({
             variant="ghost"
             size="xs"
             onClick={() => fileInputRef.current?.click()}
-            className="gap-1.5 text-xs"
+            className="h-auto px-0 py-0 text-xs font-normal text-primary hover:bg-transparent hover:underline"
           >
-            <ImageIcon className="h-3.5 w-3.5" />
             Attach image
           </Button>
           <Button
             size="icon-xs"
             variant="ghost"
             onClick={handleSubmit}
-            disabled={(!value.trim() && !screenshotDataUrl) || submitting}
+            disabled={(!value.trim() && attachedImages.length === 0) || submitting}
             aria-label={submitting ? "Sending comment" : "Send comment"}
           >
             {submitting ? (
@@ -282,6 +392,7 @@ export function CommentsSection({
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchComments = useCallback(async () => {
@@ -326,6 +437,7 @@ export function CommentsSection({
   useEffect(() => {
     setLoading(true);
     setComments([]);
+    setCollapsed(false);
     fetchComments();
     fetchUsers();
   }, [fetchComments, fetchUsers]);
@@ -341,11 +453,14 @@ export function CommentsSection({
   async function handleSubmit(
     body: string,
     mentions: string[],
-    screenshotDataUrl: string | null,
+    screenshotDataUrls: string[],
   ) {
     setSubmitting(true);
     try {
-      const data = await apiFetch<{ comment: FeedbackComment }>(
+      const data = await apiFetch<{
+        comment?: FeedbackComment;
+        comments?: FeedbackComment[];
+      }>(
         "/api/admin/feedback/comments",
         {
           method: "POST",
@@ -353,11 +468,12 @@ export function CommentsSection({
             feedbackItemId,
             body,
             mentions,
-            screenshotDataUrl,
+            screenshotDataUrls,
           }),
         },
       );
-      setComments((prev) => [...prev, data.comment]);
+      const newComments = data.comments ?? (data.comment ? [data.comment] : []);
+      setComments((prev) => [...prev, ...newComments]);
       scrollToBottom();
       if (mentions.length > 0) {
         toast.success(
@@ -373,7 +489,7 @@ export function CommentsSection({
         metadata: {
           feedbackItemId,
           mentionCount: mentions.length,
-          hasScreenshot: Boolean(screenshotDataUrl),
+          imageCount: screenshotDataUrls.length,
         },
       });
     } finally {
@@ -397,57 +513,81 @@ export function CommentsSection({
 
   return (
     <div className="space-y-6">
-      <SectionRuleHeading label="Comments" className="mb-0 pb-0" />
-
-      <div ref={scrollRef} className="space-y-6">
-        {loading && (
-          <div className="flex items-center justify-center py-4">
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
-          </div>
-        )}
-
-        {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-4">
-            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-              {getInitials(comment.author)}
-            </span>
-            <div className="min-w-0 flex-1 rounded-md bg-muted/30 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
-                  {displayName(comment.author)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {relativeTime(comment.created_at)}
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {renderBody(comment.body)}
-              </p>
-              {comment.screenshot_url && (
-                <a
-                  href={comment.screenshot_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1.5 inline-block"
-                >
-                  <img
-                    src={comment.screenshot_url}
-                    alt="Comment screenshot"
-                    className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
-                  />
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <CommentInput
-        onSubmit={handleSubmit}
-        users={users}
-        submitting={submitting}
-        inputRef={commentInputRef}
+      <SectionRuleHeading
+        label="Comments"
+        className="mb-0 pb-0"
+        actions={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => setCollapsed((value) => !value)}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand comments" : "Collapse comments"}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {collapsed ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronUp className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        }
       />
+
+      {!collapsed && (
+        <>
+          <div ref={scrollRef} className="space-y-6">
+            {loading && (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              </div>
+            )}
+
+            {comments.map((comment) => (
+              <div key={comment.id} className="flex gap-4">
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                  {getInitials(comment.author)}
+                </span>
+                <div className="min-w-0 flex-1 rounded-md bg-muted/30 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                      {displayName(comment.author)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {relativeTime(comment.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    {renderBody(comment.body)}
+                  </p>
+                  {comment.screenshot_url && (
+                    <a
+                      href={comment.screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 inline-block"
+                    >
+                      <img
+                        src={comment.screenshot_url}
+                        alt="Comment screenshot"
+                        className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <CommentInput
+            onSubmit={handleSubmit}
+            users={users}
+            submitting={submitting}
+            inputRef={commentInputRef}
+          />
+        </>
+      )}
     </div>
   );
 }

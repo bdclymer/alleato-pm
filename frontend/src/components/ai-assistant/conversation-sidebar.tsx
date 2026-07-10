@@ -37,10 +37,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   PlusIcon,
-  MoreHorizontalIcon,
+  MoreVerticalIcon,
   PencilIcon,
   Trash2Icon,
   PinIcon,
+  PinOffIcon,
 } from "lucide-react";
 import type { RagConversation } from "@/hooks/use-rag-conversations";
 
@@ -157,15 +158,10 @@ function ConversationRow({
         {conversation.title || "New conversation"}
       </span>
 
-      {/* Absolute-positioned hover actions — overlays end of text, matching ChatGPT pattern.
-          Pinned rows keep the actions visible so the pin state is obvious and reversible. */}
-      <div
-        className={cn(
-          "absolute right-0 flex items-center transition-opacity group-hover:opacity-100",
-          conversation.is_pinned ? "opacity-100" : "opacity-0",
-        )}
-      >
-        {/* Gradient fade so text doesn't hard-clip under buttons */}
+      {/* Hover-only ⋯ menu. Reveals on row hover and stays visible while its
+          dropdown is open. Pin / rename / delete all live inside the menu. */}
+      <div className="absolute right-0 flex items-center opacity-0 transition-opacity group-hover:opacity-100 has-[[data-state=open]]:opacity-100">
+        {/* Gradient fade so text doesn't hard-clip under the button */}
         <div
           className={cn(
             "pointer-events-none absolute right-full h-full w-8",
@@ -178,29 +174,6 @@ function ConversationRow({
           "flex items-center pr-1",
           isActive ? "bg-sidebar-accent" : "bg-sidebar-accent/50",
         )}>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className={cn(
-              "h-6 w-6 rounded-md hover:bg-transparent",
-              conversation.is_pinned
-                ? "text-primary hover:text-primary"
-                : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin(conversation);
-            }}
-            title={conversation.is_pinned ? "Unpin conversation" : "Pin conversation"}
-          >
-            <PinIcon
-              className={cn("h-3.5 w-3.5", conversation.is_pinned && "fill-current")}
-            />
-            <span className="sr-only">
-              {conversation.is_pinned ? "Unpin conversation" : "Pin conversation"}
-            </span>
-          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -210,11 +183,24 @@ function ConversationRow({
                 className="h-6 w-6 rounded-md text-sidebar-foreground/50 hover:bg-transparent hover:text-sidebar-foreground"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontalIcon className="h-3.5 w-3.5" />
+                <MoreVerticalIcon className="h-3.5 w-3.5" />
                 <span className="sr-only">More options</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTogglePin(conversation);
+                }}
+              >
+                {conversation.is_pinned ? (
+                  <PinOffIcon className="h-4 w-4" />
+                ) : (
+                  <PinIcon className="h-4 w-4" />
+                )}
+                {conversation.is_pinned ? "Unpin" : "Pin"}
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();

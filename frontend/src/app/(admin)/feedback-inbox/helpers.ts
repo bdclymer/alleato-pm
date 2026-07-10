@@ -4,8 +4,10 @@ import { appToast as toast } from "@/lib/toast/app-toast";
 import {
   ARCHIVED_STATUSES,
   DEFERRED_STATUSES,
+  IN_REVIEW_STATUSES,
   IN_PROGRESS_STATUSES,
-  RESOLVED_STATUSES,
+  PR_CREATED_STATUSES,
+  VERIFIED_STATUSES,
 } from "./constants";
 import type {
   AgentTarget,
@@ -39,27 +41,29 @@ export function notifyFeedbackInboxFailure({
   toast.error(title, { description });
 }
 
+// Segments that are record identifiers, not tool names: numeric ids, UUIDs, long hex ids.
+const ID_SEGMENT =
+  /^(\d+|[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}|[0-9a-f]{16,})$/i;
+// Trailing action segments that sit after the tool name in the path.
+const ACTION_SEGMENTS = new Set(["new", "edit", "create", "view", "detail", "details"]);
+
 export function toolLabelFromPath(pagePath: string): string | null {
-  const parts = pagePath.split("/").filter(Boolean);
-  const projectsIdx = parts.indexOf("projects");
-  if (projectsIdx >= 0 && parts.length > projectsIdx + 2) {
-    const toolSlug = parts[projectsIdx + 2];
-    if (!/^\d+$/.test(toolSlug)) {
-      return toolSlug
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
-    }
+  const parts = pagePath
+    .split("/")
+    .filter(Boolean)
+    .filter((p) => !ID_SEGMENT.test(p));
+  while (
+    parts.length > 1 &&
+    ACTION_SEGMENTS.has(parts[parts.length - 1].toLowerCase())
+  ) {
+    parts.pop();
   }
-  const nonNumeric = parts.filter((p) => !/^\d+$/.test(p));
-  if (nonNumeric.length > 0) {
-    const last = nonNumeric[nonNumeric.length - 1];
-    return last
-      .split("-")
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(" ");
-  }
-  return null;
+  const last = parts[parts.length - 1];
+  if (!last || ACTION_SEGMENTS.has(last.toLowerCase())) return null;
+  return last
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 export function relativeTime(dateStr: string) {
@@ -78,8 +82,10 @@ export function relativeTime(dateStr: string) {
 
 export function toDisplayStatus(status: string): DisplayStatus {
   if (ARCHIVED_STATUSES.has(status)) return "archived";
-  if (RESOLVED_STATUSES.has(status)) return "resolved";
+  if (VERIFIED_STATUSES.has(status)) return "verified";
+  if (IN_REVIEW_STATUSES.has(status)) return "in_review";
   if (DEFERRED_STATUSES.has(status)) return "deferred";
+  if (PR_CREATED_STATUSES.has(status)) return "pr_created";
   if (IN_PROGRESS_STATUSES.has(status)) return "in_progress";
   return "open";
 }

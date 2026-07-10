@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Text } from "@/components/ds/text";
 import { EmptyState, ErrorState } from "@/components/ds";
-import { PageShell, PageTabs } from "@/components/layout";
+import { PageShell, PageTabs, DetailLayout } from "@/components/layout";
 import { usePCO, useSubmitPCO } from "@/hooks/use-pcos";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { PCORecordHeader } from "@/components/domain/pcos/PCORecordHeader";
@@ -109,16 +109,19 @@ export default function PCODetailPage() {
         <div className="space-y-4">
           <Skeleton className="h-10 w-80" />
           <Skeleton className="h-6 w-full" />
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4">
+          <DetailLayout
+            sidebar={
+              <div className="space-y-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-32 w-full" />
+              </div>
+            }
+          >
+            <div className="space-y-4">
               <Skeleton className="h-40 w-full" />
               <Skeleton className="h-60 w-full" />
             </div>
-            <div className="space-y-4">
-              <Skeleton className="h-48 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
+          </DetailLayout>
         </div>
       </PageShell>
     );
@@ -292,16 +295,8 @@ function MainContent({
   projectId: string;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Main column */}
-      <div className="lg:col-span-2">
-        <PCOTimeline pco={pco} projectId={projectId} />
-      </div>
-
-      {/* Sidebar */}
-      <div>
-        <PCOSidebar pco={pco} />
-      </div>
-    </div>
+    <DetailLayout sidebar={<PCOSidebar pco={pco} />}>
+      <PCOTimeline pco={pco} projectId={projectId} />
+    </DetailLayout>
   );
 }

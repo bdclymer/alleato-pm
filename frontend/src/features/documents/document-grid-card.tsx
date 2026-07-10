@@ -23,7 +23,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDate } from "@/lib/format";
-import type { PipelineDoc } from "@/features/documents/documents-table-config";
+import {
+  documentSourceLabel,
+  type PipelineDoc,
+} from "@/features/documents/documents-table-config";
 import {
   pipelineDocInlineHref,
   pipelineDocPreviewKind,
@@ -259,6 +262,7 @@ export function DocumentGridCard({
   const dateValue = item.created_at ?? item.date;
   const meta = [
     humanizeCategory(item.category),
+    documentSourceLabel(item.source ?? item.source_system),
     dateValue ? formatDate(dateValue) : null,
   ]
     .filter(Boolean)

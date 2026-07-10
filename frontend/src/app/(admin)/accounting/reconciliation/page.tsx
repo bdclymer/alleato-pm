@@ -32,20 +32,13 @@ import {
   reconciliationFilters,
   tierLabels,
 } from "@/features/reconciliation/reconciliation-table-config";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 
 const ACUMATICA_BASE = "https://alleatogroup.acumatica.com";
 const ACUMATICA_PROJECTS_URL = `${ACUMATICA_BASE}/Main?ScreenId=PM301000`;
 
-// Acumatica AP "Bills and Adjustments" (AP301000) doc-type codes.
-const DOC_TYPE_CODE: Record<string, string> = {
-  Bill: "INV",
-  "Debit Adj.": "ADR",
-  "Credit Adj.": "ACR",
-};
-
 function acumaticaBillUrl(copy: ApBillCopy): string {
-  const code = DOC_TYPE_CODE[copy.docType ?? "Bill"] ?? "INV";
-  return `${ACUMATICA_BASE}/Main?ScreenId=AP301000&DocType=${code}&RefNbr=${encodeURIComponent(copy.ref ?? "")}`;
+  return buildAcumaticaApBillHref(copy.docType, copy.ref ?? "");
 }
 
 const tierVariant: Record<FindingTier, "error" | "warning" | "neutral"> = {

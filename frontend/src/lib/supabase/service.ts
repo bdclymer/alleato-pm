@@ -58,6 +58,12 @@ export function isBackendApiOnly() {
   );
 }
 
+/**
+ * @deprecated Prefer `serviceDb.from(table)` from `@/lib/supabase/service-db`,
+ * which routes each table to the right project by construction. Reach for this
+ * factory directly only for RAG `.rpc()` calls or when you genuinely need the
+ * whole client. Picking a client by hand is the leak the router exists to close.
+ */
 export function createRagServiceClient(): SupabaseClient<RagDatabase> {
   const supabaseUrl = process.env.RAG_SUPABASE_URL;
   const supabaseServiceKey =
@@ -86,6 +92,12 @@ export function createRagServiceClient(): SupabaseClient<RagDatabase> {
   });
 }
 
+/**
+ * @deprecated Prefer `serviceDb.from("outlook_email_intake" | ...)` from
+ * `@/lib/supabase/service-db`, which routes to the AI Database with the correct
+ * `RagDatabase` typing. This factory connects to the AI Database but is typed as
+ * `<Database>` (PM APP) — the router removes the need for this workaround.
+ */
 export function createOutlookIntakeServiceClient(): SupabaseClient<Database> {
   // Outlook intake tables (`outlook_email_intake*`) physically live in the AI
   // database. Falling back to the PM App database makes the inbox look empty

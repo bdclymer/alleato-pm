@@ -32,6 +32,7 @@ export {
   CellStatus,
   CellBadge,
   CellLink,
+  TABLE_LINK_CLASSNAME,
   CellEmail,
   TruncatedCell,
   formatParticipantDisplayName,
@@ -47,6 +48,10 @@ export {
   type UnifiedTableFeatures,
 } from "./unified-table-page";
 export {
+  EmbeddedUnifiedTablePage,
+  type EmbeddedUnifiedTablePageProps,
+} from "./embedded-unified-table-page";
+export {
   useUnifiedTableState,
   type UnifiedTableState,
   type UnifiedTableStateOptions,
@@ -61,4 +66,9 @@ export {
   InlineSelectEditor,
   type InlineSelectOption,
 } from "./inline-select-editor";
+export {
+  createInlinePatchHandler,
+  editableSelectColumn,
+  editableTextColumn,
+} from "./editable-columns";
 export { DataQualityCell } from "./data-quality-cell";

@@ -82,7 +82,7 @@ describe("Executive Daily Brief workflow pack", () => {
     );
   });
 
-  it("filters tools by workflow policy before runtime use", () => {
+  it("exposes canonical packet Teams delivery without reopening generation tools", () => {
     const policy = createExecutiveDailyBriefToolPolicy({
       allowDelivery: true,
       allowWrites: true,
@@ -94,8 +94,21 @@ describe("Executive Daily Brief workflow pack", () => {
       policy,
     ).map((toolDefinition) => toolDefinition.name);
 
-    expect(visibleToolNames).toContain("send-teams-daily-brief");
-    expect(visibleToolNames).not.toContain("send-email-daily-brief");
+    expect(visibleToolNames).toEqual(
+      expect.arrayContaining([
+        "read-current-daily-executive-brief",
+        "fetch-daily-executive-brief-sources",
+        "build-teams-daily-brief-payload",
+        "send-teams-daily-brief",
+      ]),
+    );
+    expect(visibleToolNames).not.toEqual(
+      expect.arrayContaining([
+        "generate-executive-daily-brief-packet",
+        "persist-executive-daily-brief-artifact",
+        "send-email-daily-brief",
+      ]),
+    );
   });
 
   it("builds its registry from the global assistant registry", () => {
@@ -107,20 +120,38 @@ describe("Executive Daily Brief workflow pack", () => {
     expect(EXECUTIVE_DAILY_BRIEF_TOOL_REGISTRY).toEqual(globalDefinitions);
   });
 
-  it("hides send tools when delivery is disabled or dry-run only", () => {
+  it("only exposes Teams send when delivery and write policy allow it", () => {
     const scope = executiveDailyBriefToolScope({
-      allowDelivery: false,
+      allowDelivery: true,
       allowWrites: true,
       allowedChannels: ["teams"],
     });
 
-    expect(scope.visibleToolNames).toContain("build-teams-daily-brief-payload");
-    expect(scope.visibleToolNames).not.toContain("send-teams-daily-brief");
-    expect(scope.hiddenToolNames).toEqual(
-      expect.arrayContaining([
-        "send-teams-daily-brief",
-        "send-email-daily-brief",
-      ]),
+    expect(scope.visibleToolNames).toContain(
+      "read-current-daily-executive-brief",
+    );
+    expect(scope.visibleToolNames).toContain("send-teams-daily-brief");
+    expect(scope.visibleToolNames).not.toContain("send-email-daily-brief");
+
+    const noDeliveryScope = executiveDailyBriefToolScope({
+      allowDelivery: false,
+      allowWrites: true,
+      allowedChannels: ["teams"],
+    });
+    expect(noDeliveryScope.visibleToolNames).toContain(
+      "build-teams-daily-brief-payload",
+    );
+    expect(noDeliveryScope.visibleToolNames).not.toContain(
+      "send-teams-daily-brief",
+    );
+
+    const emailOnlyScope = executiveDailyBriefToolScope({
+      allowDelivery: true,
+      allowWrites: true,
+      allowedChannels: ["email"],
+    });
+    expect(emailOnlyScope.visibleToolNames).not.toContain(
+      "send-teams-daily-brief",
     );
   });
 
@@ -143,9 +174,7 @@ describe("Executive Daily Brief workflow pack", () => {
     ]);
     expect(scope.visibleToolNames).toContain("fetch-document-rag-sources");
     expect(scope.visibleToolNames).toContain("fetch-teams-message-sources");
-    expect(scope.visibleToolNames).not.toContain(
-      "fetch-outlook-email-sources",
-    );
+    expect(scope.visibleToolNames).not.toContain("fetch-outlook-email-sources");
     expect(scope.visibleToolNames).not.toContain(
       "fetch-acumatica-financial-sources",
     );

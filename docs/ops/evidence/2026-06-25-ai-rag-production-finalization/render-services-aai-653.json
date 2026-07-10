@@ -1,0 +1,1248 @@
+[
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:01:50.929762Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827cfm7r5hc73e7lp20",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827cfm7r5hc73e7lp20",
+      "name": "alleato-acumatica-financial-sync",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 scripts/run_acumatica_financial_sync.py",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "0 */2 * * *"
+      },
+      "slug": "alleato-acumatica-financial-sync-om96",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-06-16T22:02:24.425746Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:02:03.557813Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827cijbc2fs73c3uqsg",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827cijbc2fs73c3uqsg",
+      "name": "alleato-executive-daily-brief-evening",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./backend/Dockerfile.executive-brief"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "30 22,23 * * 1-5"
+      },
+      "slug": "alleato-executive-daily-brief-evening-o38k",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-05-18T09:40:20.016482Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:02:00.465513Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827chojs32c73doj780",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827chojs32c73doj780",
+      "name": "alleato-executive-daily-brief-morning",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./backend/Dockerfile.executive-brief"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "0 11,12 * * 1-5"
+      },
+      "slug": "alleato-executive-daily-brief-morning-2s1j",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-05-18T09:40:19.599439Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:05:02.090871Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827dut7vvec73b33fa0",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827dut7vvec73b33fa0",
+      "name": "alleato-graph-sync",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -c \"import json,sys; sys.path.insert(0,'/app'); from src.services.integrations.microsoft_graph.sync import run_graph_sync; from src.services.supabase_helpers import get_supabase_client; result=run_graph_sync(get_supabase_client(), run_teams=False, run_embedding=True, embed_limit=25); print(json.dumps(result, indent=2, default=str)); sys.exit(1 if result.get('errors') and result.get('total_synced',0)==0 else 0)\"",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "lastSuccessfulRunAt": "2026-06-25T20:20:40Z",
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "20 */2 * * *"
+      },
+      "slug": "alleato-graph-sync-kv3b",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T20:20:04.195818Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-16T21:27:54.97955Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8orvmmrnols73etajrg",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d8orvmmrnols73etajrg",
+      "name": "alleato-microsoft-executive-assistant-check",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "timeout 10m python3 src/scripts/run_microsoft_executive_assistant_check.py",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "*/15 * * * *"
+      },
+      "slug": "alleato-microsoft-executive-assistant-hfhd",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-06-22T18:05:04.506197Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:01:57.238464Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827ch7avr4c739i5mp0",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827ch7avr4c739i5mp0",
+      "name": "alleato-rag-health",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -m src.services.health.rag_meeting_health",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "15 12 * * *"
+      },
+      "slug": "alleato-rag-health-salo",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-06-17T04:51:01.946908Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:05:10.033525Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827e1bbc2fs73c409mg",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827e1bbc2fs73c409mg",
+      "name": "alleato-source-rag-health",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -m src.services.health.source_rag_health",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "5 */4 * * *"
+      },
+      "slug": "alleato-source-rag-health-msgw",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T20:05:03.490916Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:02:06.636875Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827cjfaqgkc73960j70",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827cjfaqgkc73960j70",
+      "name": "alleato-source-sync-health",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -c \"import asyncio; from src.services.health.source_sync_health import _run_source_sync_health_recompute; asyncio.run(_run_source_sync_health_recompute())\"",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "lastSuccessfulRunAt": "2026-06-25T21:00:43Z",
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "*/30 * * * *"
+      },
+      "slug": "alleato-source-sync-health-kbb7",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T21:00:08.77182Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:03:58.337719Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827dfbbc2fs73c3vnp0",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827dfbbc2fs73c3vnp0",
+      "name": "alleato-teams-channel-sync",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "lastSuccessfulRunAt": "2026-06-25T20:10:55Z",
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "10 * * * *"
+      },
+      "slug": "alleato-teams-channel-sync-g56i",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T20:10:04.322614Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T13:04:52.884812Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d827dt6gvqtc73dec8f0",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "crn-d827dt6gvqtc73dec8f0",
+      "name": "alleato-teams-dm-sync",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "lastSuccessfulRunAt": "2026-06-25T20:47:49Z",
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "40 * * * *"
+      },
+      "slug": "alleato-teams-dm-sync-havg",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T20:40:03.991793Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-05-13T12:38:58.692923Z",
+      "dashboardUrl": "https://dashboard.render.com/web/srv-d8271ohj2pic739klb7g",
+      "environmentId": "evm-d8271ofavr4c739hsds0",
+      "id": "srv-d8271ohj2pic739klb7g",
+      "name": "alleato-backend",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "cache": {
+          "profile": "no-cache"
+        },
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "healthCheckPath": "",
+        "ipAllowList": [
+          {
+            "cidrBlock": "0.0.0.0/0",
+            "description": "everywhere"
+          }
+        ],
+        "maintenanceMode": {
+          "enabled": false,
+          "uri": ""
+        },
+        "numInstances": 1,
+        "openPorts": [
+          {
+            "port": 5432,
+            "protocol": "TCP"
+          }
+        ],
+        "plan": "standard",
+        "previews": {
+          "generation": "off"
+        },
+        "pullRequestPreviewsEnabled": "no",
+        "region": "oregon",
+        "runtime": "docker",
+        "sshAddress": "srv-d8271ohj2pic739klb7g@ssh.oregon.render.com",
+        "url": "https://alleato-backend-rbnj.onrender.com"
+      },
+      "slug": "alleato-backend-rbnj",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "web_service",
+      "updatedAt": "2026-06-25T20:07:40.306516Z"
+    },
+    "project": {
+      "createdAt": "2026-05-13T12:38:57.531824Z",
+      "environmentIds": [
+        "evm-d8271ofavr4c739hsds0"
+      ],
+      "id": "prj-d8271ofavr4c739hsdrg",
+      "name": "Alleato",
+      "owner": {
+        "email": "support@megankharrison.com",
+        "id": "tea-d826v4v7f7vs73dru88g",
+        "name": "Alleato",
+        "type": "team"
+      },
+      "updatedAt": "2026-05-13T12:41:34.302395Z"
+    },
+    "environment": {
+      "databasesIds": null,
+      "envGroupIds": [
+        "evg-d8u6k0rtqb8s73aspudg"
+      ],
+      "id": "evm-d8271ofavr4c739hsds0",
+      "ipAllowList": [
+        {
+          "cidrBlock": "0.0.0.0/0",
+          "description": "everywhere"
+        }
+      ],
+      "name": "Production",
+      "networkIsolationEnabled": false,
+      "projectId": "prj-d8271ofavr4c739hsdrg",
+      "protectedStatus": "unprotected",
+      "redisIds": null,
+      "serviceIds": [
+        "srv-d8271ohj2pic739klb7g",
+        "crn-d8orvmmrnols73etajrg",
+        "crn-d827cjfaqgkc73960j70",
+        "crn-d827cfm7r5hc73e7lp20",
+        "crn-d827chojs32c73doj780",
+        "crn-d827cijbc2fs73c3uqsg",
+        "crn-d827dt6gvqtc73dec8f0",
+        "crn-d827dfbbc2fs73c3vnp0",
+        "crn-d827dut7vvec73b33fa0",
+        "crn-d827ch7avr4c739i5mp0",
+        "crn-d827e1bbc2fs73c409mg"
+      ]
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-14T16:24:12.405083Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8ndbas8aovs73abp21g",
+      "id": "crn-d8ndbas8aovs73abp21g",
+      "name": "alleato-ai-provider-health",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -m src.services.health.ai_provider_health",
+          "dockerContext": "./backend",
+          "dockerfilePath": "./backend/Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "20 * * * *"
+      },
+      "slug": "alleato-ai-provider-health-ocu2",
+      "suspended": "suspended",
+      "suspenders": [
+        "user"
+      ],
+      "type": "cron_job",
+      "updatedAt": "2026-06-16T22:06:34.82487Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-15T20:23:31.271951Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d83o1gkvikkc73cpcmb0",
+      "id": "crn-d83o1gkvikkc73cpcmb0",
+      "name": "alleato-domain-packet-compiler",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 src/scripts/run_domain_packet_compiler.py --lookback-days 60 --doc-limit 150",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "30 2,9,15,21 * * *"
+      },
+      "slug": "alleato-domain-packet-compiler-47lp",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T15:30:05.766012Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-19T18:19:16.079755Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8qog8ugvqtc73e230p0",
+      "id": "crn-d8qog8ugvqtc73e230p0",
+      "name": "alleato-email-digest",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "0 12 * * *"
+      },
+      "slug": "alleato-email-digest",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T12:00:13.145173Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-10T17:54:07.334202Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8kq9fl8nd3s73bgt570",
+      "id": "crn-d8kq9fl8nd3s73bgt570",
+      "name": "alleato-fireflies-sync",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "env FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c \"\nimport json, sys;\nsys.path.insert(0, '/app');\nfrom src.services.scheduler import _run_fireflies_sync;\nresult = _run_fireflies_sync(limit=25);\nprint(json.dumps(result if isinstance(result, dict) else {'result': str(result)}, indent=2, default=str));\n\"",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "15 * * * *"
+      },
+      "slug": "alleato-fireflies-sync-atxi",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T20:15:06.475377Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-19T17:44:53.906751Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8qo05egvqtc73e1fd30",
+      "id": "crn-d8qo05egvqtc73e1fd30",
+      "name": "alleato-graph-subscription-reconcile",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "0 */6 * * *"
+      },
+      "slug": "alleato-graph-subscription-reconcile-v452",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T18:00:10.489242Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-23T23:07:58.298361Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8th3jf7f7vs73f3e0jg",
+      "id": "crn-d8th3jf7f7vs73f3e0jg",
+      "name": "alleato-pipeline-alert",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -m src.services.health.pipeline_alert_notifier",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "lastSuccessfulRunAt": "2026-06-25T21:00:19Z",
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "*/15 * * * *"
+      },
+      "slug": "alleato-pipeline-alert",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T21:00:05.449111Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-06-14T17:23:05.95871Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8ne6u8js32c73dkbre0",
+      "id": "crn-d8ne6u8js32c73dkbre0",
+      "name": "alleato-project-synthesis-sweep",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "python3 -m src.services.intelligence.project_synthesizer",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "0 7 * * *"
+      },
+      "slug": "alleato-project-synthesis-sweep-zm1f",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T07:00:09.930961Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "yes",
+      "autoDeployTrigger": "commit",
+      "branch": "main",
+      "createdAt": "2026-06-25T19:16:06.207867Z",
+      "dashboardUrl": "https://dashboard.render.com/cron/crn-d8unstbsq97s73cc9q80",
+      "id": "crn-d8unstbsq97s73cc9q80",
+      "name": "alleato-rfi-email-ingest",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/alleato-pm",
+      "rootDir": "",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "timeout 5m python3 -m src.services.rfis.email_ingestion",
+          "dockerContext": "./backend",
+          "dockerfilePath": "./backend/Dockerfile"
+        },
+        "plan": "starter",
+        "region": "oregon",
+        "runtime": "docker",
+        "schedule": "*/15 * * * *"
+      },
+      "slug": "alleato-rfi-email-ingest-kvy6",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "cron_job",
+      "updatedAt": "2026-06-25T21:00:03.529797Z"
+    }
+  },
+  {
+    "service": {
+      "autoDeploy": "no",
+      "autoDeployTrigger": "off",
+      "branch": "main",
+      "createdAt": "2026-05-18T04:00:54.196498Z",
+      "dashboardUrl": "https://dashboard.render.com/web/srv-d858ttegvqtc73bl9ssg",
+      "id": "srv-d858ttegvqtc73bl9ssg",
+      "name": "mkh",
+      "notifyOnFail": "default",
+      "ownerId": "tea-d826v4v7f7vs73dru88g",
+      "repo": "https://github.com/MeganHarrison/mkh",
+      "rootDir": "backend",
+      "serviceDetails": {
+        "buildPlan": "starter",
+        "cache": {
+          "profile": "no-cache"
+        },
+        "env": "docker",
+        "envSpecificDetails": {
+          "dockerCommand": "",
+          "dockerContext": ".",
+          "dockerfilePath": "./Dockerfile"
+        },
+        "healthCheckPath": "",
+        "ipAllowList": [
+          {
+            "cidrBlock": "0.0.0.0/0",
+            "description": "everywhere"
+          }
+        ],
+        "maintenanceMode": {
+          "enabled": false,
+          "uri": ""
+        },
+        "numInstances": 1,
+        "openPorts": [
+          {
+            "port": 3001,
+            "protocol": "TCP"
+          }
+        ],
+        "plan": "starter",
+        "previews": {
+          "generation": "off"
+        },
+        "pullRequestPreviewsEnabled": "no",
+        "region": "oregon",
+        "runtime": "docker",
+        "sshAddress": "srv-d858ttegvqtc73bl9ssg@ssh.oregon.render.com",
+        "url": "https://mkh-89mx.onrender.com"
+      },
+      "slug": "mkh-89mx",
+      "suspended": "not_suspended",
+      "suspenders": [],
+      "type": "web_service",
+      "updatedAt": "2026-05-23T09:28:16.005234Z"
+    }
+  }
+]

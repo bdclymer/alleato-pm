@@ -1,15 +1,30 @@
 import { CHANGE_REQUEST_WORKFLOW } from "@/lib/ai/workflow-registry";
 
+function tierOf(field: (typeof CHANGE_REQUEST_WORKFLOW.fields)[number]) {
+  return field.tier ?? (field.required ? "required" : "optional");
+}
+
 const workflowRequiredFields = CHANGE_REQUEST_WORKFLOW.fields
-  .filter((field) => field.required)
+  .filter((field) => tierOf(field) === "required")
   .map((field) => ({
     name: field.name,
     label: field.label,
     description: field.description,
   }));
 
+// Fields the agent should actively pursue before previewing, each carrying the
+// one-line reason it matters so the model can make the case instead of just asking.
+const workflowRecommendedFields = CHANGE_REQUEST_WORKFLOW.fields
+  .filter((field) => tierOf(field) === "recommended")
+  .map((field) => ({
+    name: field.name,
+    label: field.label,
+    description: field.description,
+    whyItMatters: field.whyItMatters ?? "",
+  }));
+
 const workflowOptionalFields = CHANGE_REQUEST_WORKFLOW.fields
-  .filter((field) => !field.required)
+  .filter((field) => tierOf(field) === "optional")
   .map((field) => ({
     name: field.name,
     label: field.label,
@@ -28,6 +43,7 @@ export const CHANGE_REQUEST_FIELD_GUIDE = {
     "unexpected condition",
   ],
   requiredFields: workflowRequiredFields,
+  recommendedFields: workflowRecommendedFields,
   optionalFields: workflowOptionalFields,
   generatedFields: [
     {
@@ -58,7 +74,7 @@ export const CHANGE_REQUEST_FIELD_GUIDE = {
     },
   ],
   previewRule:
-    "Always call createChangeEvent with confirmed=false first. Only write with confirmed=true after the user explicitly confirms the preview.",
+    "Always call createChangeEvent with confirmed=false first. Only write with confirmed=true after the user explicitly confirms the preview. When you call confirmed=false, the tool returns an interactive form card that displays every field — keep your chat reply to a single short line like 'Here's the preview — review and confirm or tell me what to change.' Do NOT restate the field values in prose; the card already shows them, and repeating them is noise.",
 } as const;
 
 type ChangeRequestPreviewFields = {
@@ -110,6 +126,7 @@ function formatPreviewValue(value: unknown): string | null {
 function guideField(name: string) {
   return [
     ...CHANGE_REQUEST_FIELD_GUIDE.requiredFields,
+    ...CHANGE_REQUEST_FIELD_GUIDE.recommendedFields,
     ...CHANGE_REQUEST_FIELD_GUIDE.optionalFields,
     ...CHANGE_REQUEST_FIELD_GUIDE.generatedFields,
   ].find((field) => field.name === name);
@@ -221,20 +238,38 @@ function formatFieldList(
     .join("\n");
 }
 
+function formatRecommendedList(
+  fields: ReadonlyArray<{
+    name: string;
+    label: string;
+    whyItMatters: string;
+  }>,
+) {
+  return fields
+    .map(
+      (field) =>
+        `- ${field.name} (${field.label}): ${field.whyItMatters || "Fill this in when known."}`,
+    )
+    .join("\n");
+}
+
 export function renderChangeRequestFieldGuide() {
   return [
     "### Change Request / Change Event Field Guide",
     "",
     `Canonical tool: \`${CHANGE_REQUEST_FIELD_GUIDE.canonicalTool}\`.`,
     `User wording to treat as this workflow: ${CHANGE_REQUEST_FIELD_GUIDE.aliases.join(", ")}.`,
-    "Act like an experienced Alleato PM: translate obvious shorthand into valid field values, state the assumption you are making, recommend the practical default, and only ask the user when the value is genuinely ambiguous.",
+    "Voice: you are a sharp, experienced Alleato project manager — warm, fast, and concrete. Talk like a person who runs jobs, not a form. Translate obvious shorthand into valid field values, name the assumption you just made, recommend the practical default, and only stop to ask when the value genuinely changes the money or the routing.",
     "For owner changes, expectingRevenue defaults to true unless the user says the job is absorbing it, it is included in base scope, or it is non-compensable.",
     "When the user asks a field/domain question while giving change-request details, answer the question and continue assembling the preview in the same response.",
     "",
-    "Required before preview:",
+    "Required before preview (no value = do not preview):",
     formatFieldList(CHANGE_REQUEST_FIELD_GUIDE.requiredFields),
     "",
-    "Optional fields to prefill when known:",
+    "Recommended — actively pursue each of these BEFORE previewing. Make the case with the reason given, in one short line; do not silently ride the default:",
+    formatRecommendedList(CHANGE_REQUEST_FIELD_GUIDE.recommendedFields),
+    "",
+    "Optional — name that they're available, prefill when the user already gave them, but do not push:",
     formatFieldList(CHANGE_REQUEST_FIELD_GUIDE.optionalFields),
     "",
     "Regular form sections that are visible in chat but not written by the current chat create tool:",
@@ -247,17 +282,26 @@ export function renderChangeRequestFieldGuide() {
     formatFieldList(CHANGE_REQUEST_FIELD_GUIDE.generatedFields),
     "",
     CHANGE_REQUEST_FIELD_GUIDE.previewRule,
+    "Closing: after the record is written, do not stop at a bare confirmation. Lead the user to the next concrete step — attachments, line items in the full form, or a related record — in one sentence.",
   ].join("\n");
 }
 
 export function renderChangeRequestToolDescription() {
+  const recommended = CHANGE_REQUEST_FIELD_GUIDE.recommendedFields
+    .map((field) => field.name)
+    .join(", ");
+  const optional = CHANGE_REQUEST_FIELD_GUIDE.optionalFields
+    .map((field) => field.name)
+    .join(", ");
   return [
-    "Help create a change request/change event for a possible scope, cost, or schedule change.",
+    "Create a change request/change event for a possible scope, cost, or schedule change.",
     "Use this when the user says change request, change event, potential change, field change, scope change, or describes an unexpected field condition.",
-    "Required fields are projectId and title. Optional fields are description, type, scope, status, reason, origin, originId, expectingRevenue, lineItemRevenueSource, and primeContractId.",
-    "Behave like an experienced Alleato PM: recommend practical defaults, translate obvious shorthand into valid app values, state assumptions, and keep moving toward preview instead of asking for every internal enum.",
-    "The preview card must show editable-looking core fields and line items. Do not show a dead attachments section in the preview; after the core create flow is complete, ask whether the user has attachments to upload.",
-    "The tool generates the change event number and updated_at timestamp.",
-    CHANGE_REQUEST_FIELD_GUIDE.previewRule,
+    "Talk like a sharp, experienced Alleato PM — warm and concrete, not a form. Recommend practical defaults, translate shorthand into valid app values, and state the assumptions you make out loud.",
+    "Required: projectId and title.",
+    `Recommended — pursue these before previewing, each with a one-line reason it matters, instead of riding the default: ${recommended}.`,
+    `Optional — mention they exist and prefill if given, but do not push: ${optional}, originId.`,
+    "ALWAYS call this tool with confirmed=false first. That returns a preview that renders as an interactive change-event form card the user edits in place — it is the primary UI for this flow, never a substitute text summary. On that preview turn keep your chat reply to one short line (e.g. 'Here's the preview — review and confirm or tell me what to change') and do NOT restate the field values in prose; the card already displays them. Only call again with confirmed=true after the user explicitly confirms the card.",
+    "The tool generates the change event number and updated_at timestamp; never ask the user for those.",
+    "After the write succeeds, do not stop at 'done' — point the user at the next concrete step (attachments, line items in the full form, or a related record) in one sentence.",
   ].join(" ");
 }

@@ -13,6 +13,10 @@ interface NumberInputProps extends Omit<React.ComponentProps<"input">, "type" | 
   decimals?: number;
 }
 
+function isZeroLike(raw: string): boolean {
+  return raw === "0" || raw === "0.0" || raw === "0.00";
+}
+
 /**
  * Enhanced number input for non-currency numeric data entry (quantities, sq ft, etc.)
  *
@@ -43,6 +47,8 @@ function NumberInput({
   const [displayValue, setDisplayValue] = React.useState<string>("")
   const isFocusedRef = React.useRef(false)
   const internalRef = React.useRef<HTMLInputElement>(null)
+  const replaceOnNextInputRef = React.useRef(false)
+  const focusedRawValueRef = React.useRef("")
 
   // Merge external ref with internal ref
   const setRefs = React.useCallback((node: HTMLInputElement | null) => {
@@ -83,6 +89,10 @@ function NumberInput({
   React.useEffect(() => {
     if (isFocusedRef.current) return
     const strVal = value === undefined || value === null ? "" : String(value)
+    if (clearZeroOnFocus && isZeroLike(strVal)) {
+      setDisplayValue("")
+      return
+    }
     if (formatOnBlur && strVal) {
       setDisplayValue(formatForDisplay(strVal))
     } else {
@@ -101,7 +111,22 @@ function NumberInput({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = sanitize(e.target.value)
+    const incoming = sanitize(e.target.value)
+    const focusedRaw = focusedRawValueRef.current
+    let cleaned = incoming
+
+    if (replaceOnNextInputRef.current) {
+      replaceOnNextInputRef.current = false
+
+      if (focusedRaw && incoming.startsWith(focusedRaw) && incoming.length > focusedRaw.length) {
+        cleaned = incoming.slice(focusedRaw.length)
+      } else if (focusedRaw && incoming.endsWith(focusedRaw) && incoming.length > focusedRaw.length) {
+        cleaned = incoming.slice(0, -focusedRaw.length)
+      } else if (focusedRaw === "0" && incoming.startsWith("0") && incoming.length > 1) {
+        cleaned = incoming.replace(/^0+(?=\d)/, "")
+      }
+    }
+
     setDisplayValue(cleaned)
     fireChange(cleaned)
   }
@@ -110,14 +135,14 @@ function NumberInput({
     isFocusedRef.current = true
     // Switch to raw number for clean editing
     const raw = sanitize(String(value ?? ""))
-    setDisplayValue(raw)
+    const startsAsPlaceholderZero = clearZeroOnFocus && isZeroLike(raw)
+    focusedRawValueRef.current = raw
+    replaceOnNextInputRef.current = raw.length > 0
+    setDisplayValue(startsAsPlaceholderZero ? "" : raw)
 
     if (autoSelectOnFocus) {
+      e.target.setSelectionRange(0, e.target.value.length)
       requestAnimationFrame(() => e.target.select())
-    } else if (clearZeroOnFocus) {
-      if (raw === "0" || raw === "0.00" || raw === "0.0") {
-        setDisplayValue("")
-      }
     }
 
     onFocus?.(e)
@@ -125,8 +150,15 @@ function NumberInput({
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     isFocusedRef.current = false
+    replaceOnNextInputRef.current = false
+    focusedRawValueRef.current = ""
     if (formatOnBlur) {
       const raw = sanitize(e.target.value)
+      if (clearZeroOnFocus && isZeroLike(raw)) {
+        setDisplayValue("")
+        onBlur?.(e)
+        return
+      }
       setDisplayValue(raw ? formatForDisplay(raw) : "")
     }
     onBlur?.(e)
@@ -152,7 +184,7 @@ function NumberInput({
       onChange={handleChange}
       onPaste={handlePaste}
       className={cn(
-        "tabular-nums text-right !bg-transparent",
+        "min-w-20 tabular-nums text-right !bg-transparent",
         "focus:border-input focus:ring-0",
         "transition-all duration-200",
         className

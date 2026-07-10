@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
 
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const currentYear = new Date().getFullYear();
 
@@ -53,58 +60,35 @@ const adminSections = [
 ];
 
 function AdminDropdown() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
   return (
-    <div ref={ref} className="relative">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(!open)}
-        className="h-auto gap-1 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
-      >
-        Admin
-        <ChevronUp className={`h-3 w-3 transition-transform ${open ? "" : "rotate-180"}`} />
-      </Button>
-      {open && (
-        <div className="absolute bottom-full left-0 mb-1 rounded-md border border-border bg-popover p-5 shadow-sm">
-          <div className="flex gap-8">
-            {adminSections.map((section) => (
-              <div key={section.label} className="shrink-0">
-                {/* eslint-disable-next-line design-system/no-raw-heading */}
-                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  {section.label}
-                </h3>
-                <div className="space-y-0.5">
-                  {section.links.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setOpen(false)}
-                      className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1 px-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
+        >
+          Admin
+          <ChevronUp className="size-3" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="top" align="start" className="min-w-56">
+        {adminSections.map((section, sectionIndex) => (
+          <div key={section.label}>
+            {sectionIndex > 0 ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {section.label}
+            </DropdownMenuLabel>
+            {section.links.map((link) => (
+              <DropdownMenuItem key={link.href} asChild>
+                <Link href={link.href}>{link.label}</Link>
+              </DropdownMenuItem>
             ))}
           </div>
-        </div>
-      )}
-    </div>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -114,12 +98,12 @@ export function SiteFooter() {
     profile?.isAdmin === true && adminDropdownAllowedUserIds.has(profile.id);
 
   return (
-    <footer className="mt-auto shrink-0">
-      <div className="flex flex-col items-center gap-3 bg-transparent px-4 py-1 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
-        <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
+    <footer className="w-full shrink-0 bg-background" data-shell-footer>
+      <div className="flex min-h-10 items-center justify-between gap-4 px-4 py-1 sm:px-6 lg:px-8">
+        <nav className="flex min-w-0 items-center" aria-label="Footer admin links">
           {canViewAdminDropdown ? <AdminDropdown /> : null}
         </nav>
-        <p className="text-xs text-muted-foreground">
+        <p className="shrink-0 text-right text-xs text-muted-foreground">
           &copy; {currentYear} Alleato Group. All rights reserved.
         </p>
       </div>

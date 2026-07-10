@@ -31,6 +31,14 @@ export const GET = withApiGuardrails(
     const { projectId, contractId } = await params;
     const supabase = await createClient();
     const serviceClient = createServiceClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/contracts/[contractId]/attachments#GET",
+        message: "Authentication required.",
+      });
+    }
 
     if (!(await verifyPrimeContract(supabase, Number(projectId), contractId))) {
       return Response.json({ success: false, error_message: "Contract not found", error: "Contract not found" }, { status: 404 });

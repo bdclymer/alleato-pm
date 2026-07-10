@@ -35,6 +35,7 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
+import { getBestComposerTarget } from "@/lib/admin-feedback/launcher-target";
 import { compressImageDataUrl } from "@/lib/admin-feedback/compress-image";
 import {
   MAX_RECORDING_DURATION_MS,
@@ -53,6 +54,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   InputGroup,
   InputGroupAddon,
@@ -177,27 +179,6 @@ function inferProjectId(pathname: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function getBestComposerTarget() {
-  const candidates = [
-    "[role='dialog']:not([data-admin-feedback-root='true'])",
-    "[data-feedback-id='app.main-content']",
-    "main",
-  ];
-
-  for (const selector of candidates) {
-    const target = document.querySelector(selector);
-    if (
-      target instanceof HTMLElement &&
-      target.offsetParent !== null &&
-      !isOverlayHost(target)
-    ) {
-      return target;
-    }
-  }
-
-  return document.body;
-}
-
 function waitForComposerToLeaveViewport() {
   return new Promise<void>((resolve) => {
     window.requestAnimationFrame(() => {
@@ -273,6 +254,10 @@ export function AdminFeedbackWidget() {
   >(null);
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Per-capture toggle. OFF (default) = just save the row for batch triage in
+  // the inbox; ON = also open a GitHub issue immediately. The default stays
+  // save-only so flagging many things quickly never fans out into issues.
+  const [createIssue, setCreateIssue] = useState(false);
   const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
     null,
   );
@@ -297,6 +282,7 @@ export function AdminFeedbackWidget() {
   });
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Any new base screenshot (capture / upload / re-pick / clear) discards the
   // prior annotation so a stale overlay can never be submitted with a new image.
@@ -659,6 +645,11 @@ export function AdminFeedbackWidget() {
     if (!dialogOpen || !selectedElement) {
       return;
     }
+    // Don't clobber a screenshot the user already captured, uploaded, or
+    // annotated when the composer is reopened.
+    if (screenshotDataUrl) {
+      return;
+    }
 
     let isCancelled = false;
 
@@ -669,12 +660,27 @@ export function AdminFeedbackWidget() {
           setScreenshotDataUrl(dataUrl);
         }
       })
-      .catch((err) => {
-        console.error("[FeedbackWidget] Screenshot capture failed:", err);
-        if (!isCancelled) {
-          setScreenshotDataUrl(null);
-          toast.error("Auto-capture failed — upload a screenshot instead.");
+      .catch((error) => {
+        if (isCancelled) {
+          return;
         }
+        // This capture is automatic — the user never asked for it, and the
+        // composer offers explicit Camera / Upload / Point-to-an-area controls.
+        // A failure here (html-to-image is intermittently flaky on complex
+        // pages) must not block the user with an error toast. Record it for
+        // monitoring and leave the screenshot unset; the manual controls remain.
+        reportNonCriticalFailure({
+          area: "admin-feedback-widget",
+          operation: "auto-capture-screenshot",
+          error,
+          userVisibleFallback:
+            "Automatic screenshot skipped; manual capture still available.",
+          metadata: {
+            pagePath,
+            selectedTargetId: selectedTarget?.targetId ?? null,
+          },
+        });
+        setScreenshotDataUrl(null);
       })
       .finally(() => {
         if (!isCancelled) {
@@ -685,7 +691,19 @@ export function AdminFeedbackWidget() {
     return () => {
       isCancelled = true;
     };
-  }, [dialogOpen, selectedElement]);
+  }, [dialogOpen, selectedElement, screenshotDataUrl, pagePath, selectedTarget]);
+
+  useEffect(() => {
+    if (!dialogOpen || !selectedTarget) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      commentInputRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [dialogOpen, selectedTarget]);
 
   useEffect(() => {
     const openComposer = () => {
@@ -747,6 +765,7 @@ export function AdminFeedbackWidget() {
     setDraftActive(false);
     setScreenshotDataUrl(null);
     setForm(getDefaultForm(pagePath));
+    setCreateIssue(false);
     discardRecording();
   };
 
@@ -840,6 +859,7 @@ export function AdminFeedbackWidget() {
 
       try {
         const payload = await apiFetch<{
+          captured?: boolean;
           githubIssue?: { url?: string };
           githubWarning?: { message?: string } | string | null;
         }>("/api/admin/feedback", {
@@ -847,6 +867,7 @@ export function AdminFeedbackWidget() {
           body: JSON.stringify({
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
+            createIssue,
             requestType: mapFeedbackTypeToRequestType(form.feedbackType),
             severity: form.feedbackType === "Bug" ? form.priority : "medium",
             pageUrl: window.location.href,
@@ -902,6 +923,10 @@ export function AdminFeedbackWidget() {
             description:
               warningDescription ||
               "Open Feedback Inbox and send it to GitHub after the integration is fixed.",
+          });
+        } else if (payload?.captured) {
+          toast.success("Saved to inbox.", {
+            description: "Batch-triage it later — no issue was created.",
           });
         } else {
           toast.success(getSubmissionSuccessLabel(form.feedbackType));
@@ -1104,6 +1129,7 @@ export function AdminFeedbackWidget() {
                 <InputGroup className="rounded-2xl border-border/70 focus-within:border-border">
                   <InputGroupTextarea
                     id="feedback-comment"
+                    ref={commentInputRef}
                     rows={5}
                     placeholder="Describe the issue, idea, or question."
                     value={form.comment}
@@ -1181,13 +1207,27 @@ export function AdminFeedbackWidget() {
                         ? "Sending..."
                         : isUploadingVideo
                           ? "Uploading..."
-                          : "Send"}
+                          : createIssue
+                            ? "Send + issue"
+                            : "Save"}
                       {!isSubmitting && !isUploadingVideo && (
                         <ArrowUp className="h-4 w-4" />
                       )}
                     </Button>
                   </InputGroupAddon>
                 </InputGroup>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="feedback-create-issue" className="font-normal text-muted-foreground">
+                  Create GitHub issue now
+                </Label>
+                <Switch
+                  id="feedback-create-issue"
+                  checked={createIssue}
+                  onCheckedChange={setCreateIssue}
+                  aria-label="Create GitHub issue now"
+                />
               </div>
 
               {screenshotDataUrl && (

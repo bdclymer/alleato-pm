@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
+  SidebarStats,
 } from "./BaseSidebar";
-import { Button } from "@/components/ui/button";
 import {
   InlineTable,
   InlineTableHeader,
@@ -17,6 +16,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { apiFetch } from "@/lib/api-client";
+import { BudgetDrilldownRecordLink } from "./BudgetDrilldownRecordLink";
 
 interface Commitment {
   id: string;
@@ -25,9 +25,10 @@ interface Commitment {
   description: string;
   amount: number;
   status: string;
-  type: "subcontract" | "purchase_order";
+  type: "subcontract" | "purchase_order" | "change_order";
   executedDate: string | null;
   changeOrders: number;
+  detailHref?: string | null;
 }
 
 interface CommittedCostsModalProps {
@@ -85,7 +86,7 @@ export function CommittedCostsModal({
   };
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return "-";
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
@@ -104,15 +105,16 @@ export function CommittedCostsModal({
     >
       <SidebarBody className="bg-background">
         <div className="p-4 sm:p-6 space-y-3">
-          {/* Inline stats */}
-          <div className="flex items-baseline justify-between">
-            <p className="text-sm text-muted-foreground">
-              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""} · Approved subcontracts and purchase orders for this cost code.
-            </p>
-            <p className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap ml-4">
-              {formatCurrency(totalAmount)}
-            </p>
-          </div>
+          <SidebarStats
+            summary={
+              <>
+                {costCode ? `${costCode} · ` : ""}
+                {commitments.length} commitment
+                {commitments.length === 1 ? "" : "s"}
+              </>
+            }
+            value={formatCurrency(totalAmount)}
+          />
 
           {/* Commitments Table */}
           <InlineTable variant="read">
@@ -158,16 +160,22 @@ export function CommittedCostsModal({
               ) : (
                 commitments.map((commitment) => (
                   <InlineTableRow key={commitment.id}>
-                    <InlineTableCell className="font-medium text-primary">
-                      {commitment.commitmentNumber}
+                    <InlineTableCell>
+                      <BudgetDrilldownRecordLink href={commitment.detailHref}>
+                        {commitment.commitmentNumber}
+                      </BudgetDrilldownRecordLink>
                     </InlineTableCell>
                     <InlineTableCell>
                       <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                        {commitment.type === "subcontract" ? "SC" : "PO"}
+                        {commitment.type === "subcontract"
+                          ? "SC"
+                          : commitment.type === "change_order"
+                            ? "CO"
+                            : "PO"}
                       </span>
                     </InlineTableCell>
                     <InlineTableCell>
-                      {commitment.vendor || "-"}
+                      {commitment.vendor || ""}
                     </InlineTableCell>
                     <InlineTableCell
                       className="max-w-xs truncate"
@@ -183,9 +191,7 @@ export function CommittedCostsModal({
                         <span className="text-foreground text-xs font-medium">
                           {commitment.changeOrders}
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      ) : null}
                     </InlineTableCell>
                     <InlineTableCell>
                       {formatDate(commitment.executedDate)}
@@ -198,13 +204,6 @@ export function CommittedCostsModal({
         </div>
       </SidebarBody>
 
-      <SidebarFooter>
-        <div className="flex items-center justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

@@ -4,9 +4,11 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
 
 type BudgetLine = {
   id: string;
+  project_budget_code_id: string | null;
   cost_code_id: string;
   cost_type_id: string;
   description: string | null;
@@ -76,7 +78,7 @@ export const POST = withApiGuardrails<
 
     const { data: commitment, error: commitmentError } = await (supabase as any)
       .from("commitments_unified")
-      .select("id, project_id, commitment_type")
+      .select("id, project_id, commitment_type, status")
       .eq("id", commitmentId)
       .eq("project_id", numericProjectId)
       .single();
@@ -91,6 +93,24 @@ export const POST = withApiGuardrails<
       });
     }
 
+    const lock = await getCommitmentSovLockStateForCommitment(supabase, {
+      commitmentId,
+      commitmentType: commitment.commitment_type === "subcontract" ? "subcontract" : "purchase_order",
+    });
+
+    if (lock.locked) {
+      throw new GuardrailError({
+        code: "PRECONDITION_FAILED",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/line-items/import#POST",
+        message: lock.message ?? "This commitment schedule of values is locked.",
+        details: {
+          commitmentId,
+          errorCode: "COMMITMENT_SOV_LOCKED_AFTER_INVOICE_SUBMISSION",
+          reason: lock.reason,
+        },
+      });
+    }
+
     const commitmentType = commitment.commitment_type as string;
     const isSubcontract = commitmentType === "subcontract";
     const sovTable = isSubcontract ? "subcontract_sov_items" : "purchase_order_sov_items";
@@ -101,6 +121,7 @@ export const POST = withApiGuardrails<
       .select(
         `
         id,
+        project_budget_code_id,
         cost_code_id,
         cost_type_id,
         description,
@@ -172,6 +193,14 @@ export const POST = withApiGuardrails<
       const budgetCode = costTypeCode
         ? `${budgetLine.cost_code_id}.${costTypeCode}`
         : budgetLine.cost_code_id;
+
+      if (!budgetLine.project_budget_code_id) {
+        errors.push(
+          `Line ${lineNumber}: Budget line ${budgetLine.id} has no project_budget_code_id; cannot import a text-only commitment SOV line.`,
+        );
+        continue;
+      }
+
       const baseDescription =
         budgetLine.description || costCode?.title || "Imported from budget";
       const typeSuffix = costType?.description ? ` - ${costType.description}` : "";
@@ -181,6 +210,7 @@ export const POST = withApiGuardrails<
         [fkColumn]: commitmentId,
         line_number: lineNumber,
         budget_code: budgetCode,
+        project_budget_code_id: budgetLine.project_budget_code_id,
         description,
         amount: budgetLine.original_amount,
         billed_to_date: 0,

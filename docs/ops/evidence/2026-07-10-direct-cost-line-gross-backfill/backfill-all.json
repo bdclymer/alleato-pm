@@ -1,0 +1,300 @@
+{
+  "generated_at": "2026-07-10T12:53:48.684Z",
+  "project_filter": "all",
+  "apply": true,
+  "scanned_direct_costs": 5715,
+  "scanned_line_items": 9042,
+  "mismatched_headers_before": 45,
+  "mismatched_with_raw_payload": 10,
+  "mismatched_no_raw_payload_single_line": 8,
+  "mismatched_no_raw_payload_multi_line": 27,
+  "planned_updates": 5,
+  "skipped_no_raw_payload": 3568,
+  "skipped_no_detail_match": 0,
+  "samples": [
+    {
+      "id": "ce533c9d-ff2a-4c55-bec5-c727749247c9",
+      "direct_cost_id": "3eb4a8b1-47eb-4be8-8b10-cbcda0ba8366",
+      "project_id": 43,
+      "document_key": "Bill|002227",
+      "quantity": 1,
+      "source": "header-fallback-single-line",
+      "before_unit_cost": 900,
+      "after_unit_cost": 1000,
+      "before_line_total": 900,
+      "after_line_total": 1000
+    },
+    {
+      "id": "6f10340e-47fe-4efe-81be-7069327f76f9",
+      "direct_cost_id": "beb83fdb-88f5-4314-a4e7-2ee67006e0b1",
+      "project_id": 43,
+      "document_key": "Bill|002002",
+      "quantity": 1,
+      "source": "header-fallback-single-line",
+      "before_unit_cost": 4365,
+      "after_unit_cost": 4850,
+      "before_line_total": 4365,
+      "after_line_total": 4850
+    },
+    {
+      "id": "00349011-d1cd-41ad-9b25-e38d6c196059",
+      "direct_cost_id": "e35fe097-dcda-46a0-819b-a9e0b16717ff",
+      "project_id": 43,
+      "document_key": "Bill|001898",
+      "quantity": 1,
+      "source": "header-fallback-single-line",
+      "before_unit_cost": 20700,
+      "after_unit_cost": 23000,
+      "before_line_total": 20700,
+      "after_line_total": 23000
+    },
+    {
+      "id": "ed832d6d-e6e4-4412-849d-2a65ef410291",
+      "direct_cost_id": "6de7be31-c6ff-47c7-899e-c25de7ff4560",
+      "project_id": 43,
+      "document_key": "Bill|002763",
+      "quantity": 1,
+      "source": "header-fallback-single-line",
+      "before_unit_cost": 20578.29,
+      "after_unit_cost": 22864.77,
+      "before_line_total": 20578.29,
+      "after_line_total": 22864.77
+    },
+    {
+      "id": "2e883e66-eaad-4519-b925-252f728abdab",
+      "direct_cost_id": "60ca9b68-8028-453a-a2ec-cde46c3a5d44",
+      "project_id": 43,
+      "document_key": "Bill|002640",
+      "quantity": 1,
+      "source": "header-fallback-single-line",
+      "before_unit_cost": 3465,
+      "after_unit_cost": 3850,
+      "before_line_total": 3465,
+      "after_line_total": 3850
+    }
+  ],
+  "residual_no_raw_payload_mismatches": [
+    {
+      "direct_cost_id": "8686b4ba-f12d-4967-b80f-a327d8a499ce",
+      "project_id": 43,
+      "document_key": "Bill|002525",
+      "line_count": 6,
+      "header_total": 149365,
+      "line_sum": 134428.5
+    },
+    {
+      "direct_cost_id": "537182a6-5eed-4aa2-9d6f-fb7d81fd807d",
+      "project_id": 43,
+      "document_key": "Bill|003026",
+      "line_count": 5,
+      "header_total": 14360.45,
+      "line_sum": 12924.4
+    },
+    {
+      "direct_cost_id": "2e9c7c07-7796-4eb4-8bb1-c4f4e0eec7de",
+      "project_id": 43,
+      "document_key": "Bill|002855",
+      "line_count": 5,
+      "header_total": 20000,
+      "line_sum": -3000
+    },
+    {
+      "direct_cost_id": "bae92391-334b-467b-a00c-cff62a321a8b",
+      "project_id": 43,
+      "document_key": "Bill|002425",
+      "line_count": 9,
+      "header_total": 189488.71,
+      "line_sum": 170539.83
+    },
+    {
+      "direct_cost_id": "5a6e85d6-ab78-48fe-8993-7dad60e3ae0a",
+      "project_id": 43,
+      "document_key": "Bill|002553",
+      "line_count": 5,
+      "header_total": 50553.89,
+      "line_sum": 45498.49
+    },
+    {
+      "direct_cost_id": "af853d21-4b10-48d0-91dc-88f3bf86102d",
+      "project_id": 43,
+      "document_key": "Bill|002638",
+      "line_count": 3,
+      "header_total": 42500,
+      "line_sum": 38250
+    },
+    {
+      "direct_cost_id": "39470d2b-ba59-444b-843b-7527ea775c20",
+      "project_id": 43,
+      "document_key": "Bill|002548",
+      "line_count": 7,
+      "header_total": 157815.5,
+      "line_sum": 142033.95
+    },
+    {
+      "direct_cost_id": "43ca218e-b3a3-413b-a48c-9e6b94113735",
+      "project_id": 43,
+      "document_key": "Bill|002637",
+      "line_count": 6,
+      "header_total": 13937.68,
+      "line_sum": 12543.91
+    },
+    {
+      "direct_cost_id": "5a4fb120-0e32-4f6b-b9d4-9857c07ccf56",
+      "project_id": 43,
+      "document_key": "Bill|002761",
+      "line_count": 14,
+      "header_total": 76418.92,
+      "line_sum": 68777.03
+    },
+    {
+      "direct_cost_id": "beaec62c-224e-4d0d-81e8-64a260bbd5bc",
+      "project_id": 43,
+      "document_key": "Debit Adj.|003085",
+      "line_count": 4,
+      "header_total": 560,
+      "line_sum": 0
+    },
+    {
+      "direct_cost_id": "7f67a3ff-b273-4b51-8500-43c1e13f184e",
+      "project_id": 43,
+      "document_key": "Bill|002014",
+      "line_count": 3,
+      "header_total": 95280.42,
+      "line_sum": 85752.37
+    },
+    {
+      "direct_cost_id": "6f2481af-2164-4306-9dbf-5920bdb400ee",
+      "project_id": 43,
+      "document_key": "Bill|002145",
+      "line_count": 4,
+      "header_total": 137808.45,
+      "line_sum": 124027.6
+    },
+    {
+      "direct_cost_id": "7092d457-4d36-425f-8673-16ef5d09839d",
+      "project_id": 43,
+      "document_key": "Bill|002149",
+      "line_count": 2,
+      "header_total": 17000,
+      "line_sum": 15300
+    },
+    {
+      "direct_cost_id": "ad4beddd-5802-493f-9a1f-c79085365f69",
+      "project_id": 43,
+      "document_key": "Bill|002154",
+      "line_count": 3,
+      "header_total": 32500,
+      "line_sum": 29250
+    },
+    {
+      "direct_cost_id": "2a228717-0bbc-4e66-b68b-975871c70600",
+      "project_id": 43,
+      "document_key": "Bill|002259",
+      "line_count": 10,
+      "header_total": 91414.8,
+      "line_sum": 82273.31
+    },
+    {
+      "direct_cost_id": "42dc848c-b439-4de3-b713-c6d35aea061d",
+      "project_id": 43,
+      "document_key": "Bill|002399",
+      "line_count": 3,
+      "header_total": 22000,
+      "line_sum": 19800
+    },
+    {
+      "direct_cost_id": "562c5982-9ce2-488c-a866-709bbc49e2ac",
+      "project_id": 43,
+      "document_key": "Bill|002421",
+      "line_count": 4,
+      "header_total": 30000,
+      "line_sum": 27000
+    },
+    {
+      "direct_cost_id": "8451e396-de22-4565-b744-161655943bb7",
+      "project_id": 43,
+      "document_key": "Bill|002550",
+      "line_count": 3,
+      "header_total": 25095.96,
+      "line_sum": 22586.36
+    },
+    {
+      "direct_cost_id": "8d3b25e2-d0a3-4399-bdfa-0ccc8903b982",
+      "project_id": 43,
+      "document_key": "Bill|002551",
+      "line_count": 5,
+      "header_total": 53000,
+      "line_sum": 47700
+    },
+    {
+      "direct_cost_id": "fc4e6a43-73d1-4b9c-97b7-d5b492aae53e",
+      "project_id": 43,
+      "document_key": "Bill|002764",
+      "line_count": 4,
+      "header_total": 8000,
+      "line_sum": 7200
+    },
+    {
+      "direct_cost_id": "9e9e9a98-6feb-42bb-a01b-58526e75b98d",
+      "project_id": 43,
+      "document_key": "Bill|002639",
+      "line_count": 6,
+      "header_total": 175380,
+      "line_sum": 157842
+    },
+    {
+      "direct_cost_id": "bf0f3c43-82f5-4c9b-a222-cef6910b7646",
+      "project_id": 43,
+      "document_key": "Bill|002653",
+      "line_count": 13,
+      "header_total": 185003.2,
+      "line_sum": 166502.88
+    },
+    {
+      "direct_cost_id": "1ef8ab4d-ecdb-4396-938e-afff9f2bfa06",
+      "project_id": 43,
+      "document_key": "Bill|002655",
+      "line_count": 4,
+      "header_total": 60252.24,
+      "line_sum": 54227.01
+    },
+    {
+      "direct_cost_id": "ecb3ba79-8dbc-4827-b094-47d3d5a32a80",
+      "project_id": 43,
+      "document_key": "Bill|002656",
+      "line_count": 3,
+      "header_total": 89074.64,
+      "line_sum": 80167.17
+    },
+    {
+      "direct_cost_id": "6ce4320a-bfc3-4238-af87-387145a5d47b",
+      "project_id": 43,
+      "document_key": "Bill|003029",
+      "line_count": 3,
+      "header_total": 7693.4,
+      "line_sum": 6924.06
+    },
+    {
+      "direct_cost_id": "56893b99-8cb1-458b-b7b0-c22f5da5b8d6",
+      "project_id": 43,
+      "document_key": "Bill|003056",
+      "line_count": 2,
+      "header_total": 5800,
+      "line_sum": 5220
+    },
+    {
+      "direct_cost_id": "17919f79-93c2-4c1a-bc3a-bde879835b22",
+      "project_id": 43,
+      "document_key": "Bill|003079",
+      "line_count": 4,
+      "header_total": 53317.75,
+      "line_sum": 47985.97
+    }
+  ],
+  "applied": {
+    "updated": 5,
+    "failed": 0,
+    "verified_reconciling": 5,
+    "still_off": 0
+  }
+}

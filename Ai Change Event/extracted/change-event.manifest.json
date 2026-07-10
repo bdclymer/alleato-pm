@@ -1,0 +1,145 @@
+{
+  "entityType": "change_event",
+  "label": "Change Event",
+  "table": "change_events",
+  "numberPrefix": "CE",
+  "titleField": "title",
+
+  "fields": [
+    {
+      "key": "number",
+      "label": "Number",
+      "type": "text",
+      "priority": "system",
+      "derivedFrom": "sequence",
+      "description": "Auto-assigned (CE-014). Not user-editable.",
+      "whyItMatters": "Sequence is system-owned so the agent never asks for it and never collides with an existing number."
+    },
+    {
+      "key": "status",
+      "label": "Status",
+      "type": "select",
+      "priority": "system",
+      "derivedFrom": "default",
+      "default": "open",
+      "options": [
+        { "value": "open", "label": "Open" },
+        { "value": "pending", "label": "Pending" },
+        { "value": "approved", "label": "Approved" },
+        { "value": "closed", "label": "Closed" }
+      ],
+      "whyItMatters": "A change event is born 'open'. The agent does not ask status on creation; status changes happen later through workflow actions, not at intake."
+    },
+    {
+      "key": "created_by_id",
+      "label": "Created By",
+      "type": "reference",
+      "priority": "system",
+      "derivedFrom": "auth.user",
+      "reference": { "table": "users", "labelField": "full_name", "valueField": "id" },
+      "whyItMatters": "Taken from the authenticated session for the audit ledger. Never prompted."
+    },
+
+    {
+      "key": "title",
+      "label": "Title",
+      "type": "text",
+      "priority": "required",
+      "placeholder": "e.g. Added roof drains per owner request",
+      "description": "One-line identity of the change.",
+      "whyItMatters": "This is how the change event is recognized in every downstream list, RFQ, and change order. A vague title (\"Change 1\") makes the whole financial trail unreadable later. Push for a specific, scope-anchored title.",
+      "validation": { "minLength": 4, "maxLength": 255, "message": "Give a specific title, not a placeholder." }
+    },
+    {
+      "key": "description",
+      "label": "Description",
+      "type": "textarea",
+      "priority": "recommended",
+      "placeholder": "What changed, who triggered it, and what scope it touches.",
+      "description": "Full scope narrative.",
+      "whyItMatters": "The description is the source text the RFQ and eventual change order inherit. Capturing the trigger and scope now means nobody re-interviews the field later. Worth one good paragraph even though it isn't required."
+    },
+    {
+      "key": "commitment_id",
+      "label": "Commitment",
+      "type": "reference",
+      "priority": "recommended",
+      "reference": { "table": "commitments", "labelField": "title", "valueField": "id", "scopeToProject": true },
+      "description": "The contract/subcontract this change affects.",
+      "whyItMatters": "Linking the commitment is what lets this change event roll into the right contract's revised amount and budget. An unlinked change event floats with no financial home and has to be reconciled by hand. Strongly pursue this."
+    },
+    {
+      "key": "rom_cost_impact",
+      "label": "ROM Cost Impact",
+      "type": "currency",
+      "priority": "recommended",
+      "unit": "$",
+      "placeholder": "0.00",
+      "description": "Rough order-of-magnitude cost impact.",
+      "whyItMatters": "ROM cost is the number that decides whether this becomes a change order and whether it threatens budget headroom on the affected cost codes. Even a rough figure is far more useful than null. Ask for a best estimate if no firm number exists."
+    },
+    {
+      "key": "rom_schedule_impact",
+      "label": "ROM Schedule Impact",
+      "type": "integer",
+      "priority": "recommended",
+      "unit": "days",
+      "placeholder": "0",
+      "description": "Estimated schedule impact in days.",
+      "whyItMatters": "Schedule exposure feeds delay-risk tracking and any time-extension claim. Capturing it at intake means the delay isn't discovered downstream. Pursue a day estimate.",
+      "validation": { "min": 0, "max": 999 }
+    }
+  ],
+
+  "sections": [
+    {
+      "id": "identity",
+      "title": "Change Event",
+      "description": "What changed and where it lives",
+      "fieldKeys": ["title", "description", "commitment_id"]
+    },
+    {
+      "id": "impact",
+      "title": "Rough Impact",
+      "description": "Best-estimate exposure — refine later",
+      "fieldKeys": ["rom_cost_impact", "rom_schedule_impact"]
+    }
+  ],
+
+  "postCreate": "insight",
+  "insightQueries": [
+    {
+      "source": "search_all_knowledge",
+      "query": "change events similar to {{title}} on this project and their outcomes",
+      "framing": "Comparable changes on this job and how they resolved"
+    },
+    {
+      "source": "structured_analytics_query",
+      "query": "remaining budget headroom on cost codes tied to commitment {{commitment_id}}",
+      "framing": "Budget headroom on the affected commitment vs this ROM cost"
+    },
+    {
+      "source": "search_risks",
+      "query": "open risks related to {{title}}",
+      "framing": "Open risks this change may intersect"
+    }
+  ],
+
+  "schemaGaps": [
+    {
+      "field": "origin",
+      "reason": "Procore change events record their origin (RFI, observation, owner directive, prime CO). change_events has no origin column, so the agent currently cannot store where the change came from.",
+      "suggestedColumn": "origin VARCHAR(50)  -- enum-like: rfi | observation | owner_directive | prime_co | other"
+    },
+    {
+      "field": "change_reason",
+      "reason": "No column for the reason code (design development, owner-requested, unforeseen condition, code compliance). This is standard for change-event reporting and budget categorization.",
+      "suggestedColumn": "change_reason VARCHAR(50)"
+    },
+    {
+      "field": "scope",
+      "reason": "No in-scope / out-of-scope / TBD designation. Scope drives whether the change is billable and how it nets against contingency.",
+      "suggestedColumn": "scope VARCHAR(10)  -- in | out | tbd"
+    }
+  ]
+}

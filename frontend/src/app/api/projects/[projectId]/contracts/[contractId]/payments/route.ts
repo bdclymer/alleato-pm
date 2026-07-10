@@ -58,12 +58,23 @@ export const GET = withApiGuardrails(
       .select("contract_number")
       .eq("id", contractId)
       .eq("project_id", projectIdNum)
-      .single();
+      .maybeSingle();
 
-    if (contractError) {
+    // PGRST116 = "Cannot coerce the result to a single JSON object" — the
+    // contract row does not exist (or is not visible under RLS). That is a
+    // not-found condition, not a malformed request, so it must return 404 the
+    // same way the contract detail route does. Only genuine DB errors are 400.
+    if (contractError && contractError.code !== "PGRST116") {
       return NextResponse.json(
         { error: "Failed to verify contract before fetching payments", details: contractError.message },
         { status: 400 },
+      );
+    }
+
+    if (!contract) {
+      return NextResponse.json(
+        { error: "Contract not found" },
+        { status: 404 },
       );
     }
 

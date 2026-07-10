@@ -11,10 +11,95 @@ export const BrandonReviewOutcomeSchema = z.enum([
 
 export type BrandonReviewOutcome = z.infer<typeof BrandonReviewOutcomeSchema>;
 
+export const BrandonAssistantActionSchema = z.enum([
+  "reply",
+  "delegate",
+  "watch",
+  "ignore",
+]);
+
+export type BrandonAssistantAction = z.infer<typeof BrandonAssistantActionSchema>;
+
+export const BrandonAssistantPrioritySchema = z.enum([
+  "urgent",
+  "high",
+  "normal",
+  "low",
+]);
+
+export type BrandonAssistantPriority = z.infer<typeof BrandonAssistantPrioritySchema>;
+
+export const ProjectAssignmentReasonSignalSchema = z.enum([
+  "subject_line",
+  "sender",
+  "message_body",
+  "attachment",
+  "existing_project_context",
+  "other",
+]);
+
+export type ProjectAssignmentReasonSignal = z.infer<
+  typeof ProjectAssignmentReasonSignalSchema
+>;
+
+export const ProjectAssignmentFeedbackSchema = z
+  .object({
+    status: z.enum(["correct", "incorrect", "unreviewed"]),
+    correctedProjectId: z.number().int().positive().nullable().optional(),
+    reasonSignals: z.array(ProjectAssignmentReasonSignalSchema).optional(),
+    reasonNote: z.string().trim().max(500).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.status === "incorrect" && value.correctedProjectId === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["correctedProjectId"],
+        message: "Correct project is required when marking assignment incorrect.",
+      });
+    }
+
+    if (value.status !== "unreviewed" && (value.reasonSignals?.length ?? 0) === 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reasonSignals"],
+        message: "At least one project assignment reason is required for AI training.",
+      });
+    }
+
+    if (
+      value.reasonSignals?.includes("other") &&
+      !value.reasonNote?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reasonNote"],
+        message: "Add a note when selecting Other for project assignment reasoning.",
+      });
+    }
+  });
+
+export const AssistantFieldVerdictSchema = z.enum([
+  "correct",
+  "incorrect",
+  "unreviewed",
+]);
+
+export const AssistantFieldFeedbackSchema = z.object({
+  action: AssistantFieldVerdictSchema.optional(),
+  priority: AssistantFieldVerdictSchema.optional(),
+  category: AssistantFieldVerdictSchema.optional(),
+  draft: AssistantFieldVerdictSchema.optional(),
+  project: AssistantFieldVerdictSchema.optional(),
+  owner: AssistantFieldVerdictSchema.optional(),
+  reason: AssistantFieldVerdictSchema.optional(),
+  score: AssistantFieldVerdictSchema.optional(),
+});
+
 export const BrandonAssistantReviewPayloadSchema = z
   .object({
     assistantAction: z.enum(["reply", "delegate", "watch", "ignore"]),
-    assistantPriority: z.enum(["urgent", "high", "normal", "low"]),
+    assistantPriority: BrandonAssistantPrioritySchema,
+    assistantCategory: z.string().trim().max(100).nullable().optional(),
     assistantScore: z.number().finite().min(0).max(200).nullable().optional(),
     reviewOutcome: BrandonReviewOutcomeSchema,
     draftBody: z.string().trim().max(20_000).nullable().optional(),
@@ -24,6 +109,8 @@ export const BrandonAssistantReviewPayloadSchema = z
     assistantRisk: z.string().trim().max(1_000).nullable().optional(),
     assistantEvidence: z.string().trim().max(1_000).nullable().optional(),
     sourceMetadata: z.record(z.string(), z.unknown()).optional(),
+    projectAssignment: ProjectAssignmentFeedbackSchema.optional(),
+    fieldFeedback: AssistantFieldFeedbackSchema.optional(),
   })
   .superRefine((value, ctx) => {
     const draftRequired =

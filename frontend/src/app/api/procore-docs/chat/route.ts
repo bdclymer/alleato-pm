@@ -238,7 +238,7 @@ export const POST = withApiGuardrails(
       // surfaced as "Load failed" and pinned the dev server under memory pressure.
       const result = streamText({
         model: getLanguageModel(PROCORE_DOCS_MODEL),
-        system: systemWithContext,
+        instructions: systemWithContext,
         messages: modelMessages.length > 0
           ? modelMessages
           : [{ role: "user", content: query }],

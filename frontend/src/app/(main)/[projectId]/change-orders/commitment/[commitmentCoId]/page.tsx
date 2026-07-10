@@ -1,14 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Check, Edit, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Edit, FileDown, Info, Mail, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 import {
   InlineTable,
@@ -24,27 +24,25 @@ import {
   StatusBadge,
   ErrorState,
   EntityAttachments,
+  DetailActions,
 } from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import { useCostCodeTypes } from "@/hooks/use-project-cost-codes";
-import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, DetailPanel, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import {
   normalizeBudgetCodesForSelector,
   resolveBudgetCodeByCostFields,
 } from "@/lib/budget/budget-code-selection";
+import { getCommitmentChangeOrderLineItemLock } from "@/lib/change-orders/commitment-change-order-status";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import {
   Form,
   FormControl,
@@ -64,6 +62,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -80,18 +79,6 @@ const CHANGE_REASONS = [
   "Value Engineering",
   "Other",
 ] as const;
-
-const MARKUP_TYPE_LABELS: Record<string, string> = {
-  insurance: "Insurance",
-  bond: "Bond",
-  fee: "Contractor Fee",
-  overhead: "Overhead",
-  custom: "Custom",
-};
-
-function getMarkupLabel(markupType: string): string {
-  return MARKUP_TYPE_LABELS[markupType.toLowerCase()] || markupType;
-}
 
 // ---------------------------------------------------------------------------
 // Types & schema
@@ -242,40 +229,15 @@ export default function CommitmentCODetailPage() {
   const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [lineItemSaving, setLineItemSaving] = useState(false);
-
-  // Vertical markup
-  const numericProjectId = Number(projectId);
-  const { markupRows } = useVerticalMarkup(
-    Number.isFinite(numericProjectId) ? numericProjectId : undefined,
+  const lineItemLock = useMemo(
+    () => getCommitmentChangeOrderLineItemLock(co?.status),
+    [co?.status],
   );
 
   const lineItemSubtotal = useMemo(
     () => lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
     [lineItems],
   );
-
-  const computedMarkups = useMemo(() => {
-    if (!markupRows.length) return [];
-    const sorted = [...markupRows].sort(
-      (a, b) => a.calculation_order - b.calculation_order,
-    );
-    let runningBase = lineItemSubtotal;
-    return sorted.map((markup) => {
-      const amount = runningBase * (markup.percentage / 100);
-      if (markup.compound) {
-        runningBase += amount;
-      }
-      return { ...markup, amount };
-    });
-  }, [markupRows, lineItemSubtotal]);
-
-  const markupTotal = useMemo(
-    () => computedMarkups.reduce((sum, m) => sum + m.amount, 0),
-    [computedMarkups],
-  );
-
-  const grandTotal = lineItemSubtotal + markupTotal;
-
 
   // Fetch CO data
   const fetchCo = useCallback(async () => {
@@ -316,6 +278,13 @@ export default function CommitmentCODetailPage() {
     if (co) fetchLineItemsFn();
   }, [co, fetchLineItemsFn]);
 
+  useEffect(() => {
+    if (!lineItemLock.locked) return;
+    setAddingLineItem(false);
+    setEditingLineItemId(null);
+    setLineItemDraft(emptyDraft);
+  }, [lineItemLock.locked]);
+
   const fetchBudgetCodes = useCallback(async () => {
     setBudgetCodesLoading(true);
     try {
@@ -347,6 +316,10 @@ export default function CommitmentCODetailPage() {
   const lineItemApiBase = `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/line-items`;
 
   const handleAddLineItem = useCallback(async () => {
+    if (lineItemLock.locked) {
+      toast.error(lineItemLock.message ?? "Line items are locked.");
+      return;
+    }
     const amount = parseFloat(lineItemDraft.amount) || 0;
     setLineItemSaving(true);
     try {
@@ -368,9 +341,13 @@ export default function CommitmentCODetailPage() {
     } finally {
       setLineItemSaving(false);
     }
-  }, [lineItemDraft, lineItemApiBase, fetchLineItemsFn]);
+  }, [lineItemDraft, lineItemApiBase, fetchLineItemsFn, lineItemLock]);
 
   const handleUpdateLineItem = useCallback(async () => {
+    if (lineItemLock.locked) {
+      toast.error(lineItemLock.message ?? "Line items are locked.");
+      return;
+    }
     if (!editingLineItemId) return;
     const amount = parseFloat(lineItemDraft.amount) || 0;
     setLineItemSaving(true);
@@ -393,10 +370,14 @@ export default function CommitmentCODetailPage() {
     } finally {
       setLineItemSaving(false);
     }
-  }, [editingLineItemId, lineItemDraft, lineItemApiBase, fetchLineItemsFn]);
+  }, [editingLineItemId, lineItemDraft, lineItemApiBase, fetchLineItemsFn, lineItemLock]);
 
   const handleDeleteLineItem = useCallback(
     async (lineItemId: string) => {
+      if (lineItemLock.locked) {
+        toast.error(lineItemLock.message ?? "Line items are locked.");
+        return;
+      }
       const ok = await confirm({
         description: "Delete this line item?",
         variant: "destructive",
@@ -413,11 +394,15 @@ export default function CommitmentCODetailPage() {
         toast.error("Failed to delete line item");
       }
     },
-    [lineItemApiBase, fetchLineItemsFn, confirm],
+    [lineItemApiBase, fetchLineItemsFn, confirm, lineItemLock],
   );
 
   const startEditLineItem = useCallback(
     (item: LineItem) => {
+      if (lineItemLock.locked) {
+        toast.error(lineItemLock.message ?? "Line items are locked.");
+        return;
+      }
       setEditingLineItemId(item.id);
       setAddingLineItem(false);
       setLineItemDraft({
@@ -427,7 +412,7 @@ export default function CommitmentCODetailPage() {
         cost_type_id: item.cost_type_id || "",
       });
     },
-    [],
+    [lineItemLock],
   );
 
   const cancelLineItemEdit = useCallback(() => {
@@ -572,9 +557,17 @@ export default function CommitmentCODetailPage() {
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=commitment`);
     } catch (err) {
-      toast.error("Failed to delete");
+      toast.error("Could not delete change order", {
+        description:
+          err instanceof Error ? err.message : "an unexpected error occurred",
+      });
     }
   }, [co, contractId, projectId, commitmentCoId, router, confirm]);
+
+  const { exportPdf: handleExportPdf } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/pdf`,
+    filename: co?.change_order_number || "commitment-change-order",
+  });
 
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
@@ -592,6 +585,7 @@ export default function CommitmentCODetailPage() {
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
 
   const handleReject = useCallback(async () => {
     if (!co || !contractId || !rejectionReason.trim()) {
@@ -688,7 +682,7 @@ export default function CommitmentCODetailPage() {
                   name="change_order_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>CO Number *</FormLabel>
+                      <FormLabel>CCO Number *</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="e.g. 001" />
                       </FormControl>
@@ -979,11 +973,12 @@ export default function CommitmentCODetailPage() {
       <PageShell
         variant="detail"
         title={pageTitle}
-        description={co.change_order_number ? `CO ${co.change_order_number}` : undefined}
+        description={co.change_order_number ?? undefined}
         statusBadge={<StatusBadge status={statusLabel(co.status)} />}
         onBack={handleBack}
         actions={
           <div className="flex items-center gap-1.5">
+            <CommitmentsHelpSheet buttonVariant="ghost" />
             {co.status === "pending" && (
               <>
                 <Button
@@ -1008,22 +1003,21 @@ export default function CommitmentCODetailPage() {
               <Edit />
               Edit
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <DetailActions
+              onDelete={handleDelete}
+              extraActions={[
+                {
+                  label: "Email PDF",
+                  icon: <Mail className="h-4 w-4" />,
+                  onClick: () => setDeliveryDialogOpen(true),
+                },
+                {
+                  label: "Export PDF",
+                  icon: <FileDown className="h-4 w-4" />,
+                  onClick: () => void handleExportPdf(),
+                },
+              ]}
+            />
           </div>
         }
       >
@@ -1035,7 +1029,7 @@ export default function CommitmentCODetailPage() {
               <div>
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="CO Number">
+                  <LabelValueRow label="CCO Number">
                     {co.change_order_number || "—"}
                   </LabelValueRow>
                   {co.title && (
@@ -1144,9 +1138,9 @@ export default function CommitmentCODetailPage() {
             </div>
           </section>
 
-          {/* Associated Change Requests */}
+          {/* Associated Change Events */}
           <section className="space-y-4">
-            <SectionRuleHeading label="Associated Change Requests" className="[&_span]:text-primary" />
+            <SectionRuleHeading label="Associated Change Events" className="[&_span]:text-primary" />
             {associatedChangeRequests.length > 0 ? (
               <InlineTable variant="read">
                 <InlineTableHeader>
@@ -1186,14 +1180,35 @@ export default function CommitmentCODetailPage() {
               </InlineTable>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No associated change requests.
+                No associated change events.
               </p>
             )}
           </section>
 
           {/* Line Items */}
           <section className="space-y-4">
-            <SectionRuleHeading label="Line Items" className="[&_span]:text-primary" />
+            <SectionRuleHeading
+              label="Line Items"
+              className="[&_span]:text-primary"
+              actions={
+                lineItemLock.locked ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={lineItemLock.message ?? "Line items are locked"}
+                      >
+                        <Info className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{lineItemLock.message}</TooltipContent>
+                  </Tooltip>
+                ) : undefined
+              }
+            />
             {lineItemsLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -1214,7 +1229,11 @@ export default function CommitmentCODetailPage() {
                     <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Cost Type</InlineTableHeaderCell>
                     <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
-                    <InlineTableHeaderCell align="right" className="w-24">Actions</InlineTableHeaderCell>
+                    {!lineItemLock.locked && (
+                      <InlineTableHeaderCell align="right" className="w-24">
+                        Actions
+                      </InlineTableHeaderCell>
+                    )}
                   </InlineTableHeaderRow>
                 </InlineTableHeader>
                 <InlineTableBody>
@@ -1248,30 +1267,32 @@ export default function CommitmentCODetailPage() {
                             className="h-8 text-sm text-right"
                           />
                         </InlineTableCell>
-                        <InlineTableCell align="right" className="pl-2">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-primary"
-                              onClick={handleUpdateLineItem}
-                              disabled={lineItemSaving}
-                              aria-label="Save line item"
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground"
-                              onClick={cancelLineItemEdit}
-                              disabled={lineItemSaving}
-                              aria-label="Cancel edit"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </InlineTableCell>
+                        {!lineItemLock.locked && (
+                          <InlineTableCell align="right" className="pl-2">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-primary"
+                                onClick={handleUpdateLineItem}
+                                disabled={lineItemSaving}
+                                aria-label="Save line item"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground"
+                                onClick={cancelLineItemEdit}
+                                disabled={lineItemSaving}
+                                aria-label="Cancel edit"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </InlineTableCell>
+                        )}
                       </InlineTableRow>
                     ) : (
                       <InlineTableRow key={item.id}>
@@ -1279,33 +1300,35 @@ export default function CommitmentCODetailPage() {
                         <InlineTableCell className="text-muted-foreground">{costCodeLabel(item.cost_code_id, item.cost_type_id)}</InlineTableCell>
                         <InlineTableCell className="text-muted-foreground">{costTypeLabel(item.cost_type_id)}</InlineTableCell>
                         <InlineTableCell align="right">{formatCurrency(item.amount)}</InlineTableCell>
-                        <InlineTableCell align="right">
-                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                              onClick={() => startEditLineItem(item)}
-                              aria-label={`Edit line item ${item.description || ""}`}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                              onClick={() => handleDeleteLineItem(item.id)}
-                              aria-label={`Delete line item ${item.description || ""}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </InlineTableCell>
+                        {!lineItemLock.locked && (
+                          <InlineTableCell align="right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                onClick={() => startEditLineItem(item)}
+                                aria-label={`Edit line item ${item.description || ""}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteLineItem(item.id)}
+                                aria-label={`Delete line item ${item.description || ""}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </InlineTableCell>
+                        )}
                       </InlineTableRow>
                     ),
                   )}
                   {/* Inline add row */}
-                  {addingLineItem && (
+                  {addingLineItem && !lineItemLock.locked && (
                     <InlineTableRow>
                       <InlineTableCell className="pr-2">
                         <Input
@@ -1360,46 +1383,19 @@ export default function CommitmentCODetailPage() {
                       </InlineTableCell>
                     </InlineTableRow>
                   )}
-                  {/* Subtotal row when markup rows exist */}
-                  {computedMarkups.length > 0 && (
-                    <InlineTableRow className="border-t font-medium">
-                      <InlineTableCell colSpan={3}>Subtotal</InlineTableCell>
-                      <InlineTableCell align="right">{formatCurrency(lineItemSubtotal)}</InlineTableCell>
-                      <InlineTableCell />
-                    </InlineTableRow>
-                  )}
-                  {/* Vertical markup rows */}
-                  {computedMarkups.map((markup) => (
-                    <InlineTableRow
-                      key={markup.id}
-                      type="markup"
-                      className="text-muted-foreground"
-                    >
-                      <InlineTableCell colSpan={2} className="pl-4">
-                        {getMarkupLabel(markup.markup_type)}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        {formatPercent(markup.percentage / 100)}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        {formatCurrency(markup.amount)}
-                      </InlineTableCell>
-                      <InlineTableCell />
-                    </InlineTableRow>
-                  ))}
                 </InlineTableBody>
                 <InlineTableFooter>
                   <InlineTableFooterRow type="totals">
                     <InlineTableFooterCell colSpan={3}>Total</InlineTableFooterCell>
                     <InlineTableFooterCell align="right">
-                      {formatCurrency(grandTotal)}
+                      {formatCurrency(lineItemSubtotal)}
                     </InlineTableFooterCell>
-                    <InlineTableFooterCell />
+                    {!lineItemLock.locked && <InlineTableFooterCell />}
                   </InlineTableFooterRow>
                 </InlineTableFooter>
               </InlineTable>
             )}
-            {!addingLineItem && !editingLineItemId && (
+            {!lineItemLock.locked && !addingLineItem && !editingLineItemId && (
               <Button
                 variant="outline"
                 size="sm"
@@ -1439,6 +1435,20 @@ export default function CommitmentCODetailPage() {
       </PageShell>
 
       {ConfirmDialog}
+
+      <DocumentDeliveryDialog
+        open={deliveryDialogOpen}
+        onOpenChange={setDeliveryDialogOpen}
+        recordType="commitment"
+        recordId={commitmentCoId}
+        title={co.title || co.description || "Commitment Change Order"}
+        number={co.change_order_number || "CCO"}
+        initialTab="email"
+        allowedTabs={["email"]}
+        recipientsEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/recipients`}
+        emailEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/email`}
+        downloadEndpoint={`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/pdf`}
+      />
 
       {/* Rejection dialog */}
       {showRejectDialog && (

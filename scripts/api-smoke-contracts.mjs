@@ -21,7 +21,10 @@ const BASE_URL = process.env.API_SMOKE_BASE_URL || "http://localhost:3000";
 const ERROR_ALERT_WEBHOOK_URL = process.env.ERROR_ALERT_WEBHOOK_URL || "";
 const PROJECT_ID = process.env.API_SMOKE_PROJECT_ID || "67";
 const BEARER_TOKEN = process.env.API_SMOKE_BEARER_TOKEN || "";
-const FAKE_UUID = "00000000-0000-0000-0000-000000000000";
+// A syntactically valid but non-existent UUID for "fake id" probes. Must NOT be the
+// nil UUID (00000000-…): route handlers call assertNonNilUuid() which rejects the nil
+// UUID with a 400 before auth/lookup, which would mask the 401/404 these probes assert.
+const FAKE_UUID = "11111111-1111-1111-1111-111111111111";
 
 // FastAPI backend (separate service from the Next.js app). The intelligence
 // endpoints live here, authed via the x-admin-api-key header. Default matches
@@ -31,8 +34,16 @@ const BACKEND_URL =
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
 
 // ─── Endpoint definitions ───────────────────────────────────────────────────
-// [method, path, description, expectedStatuses?]
+// [method, path, description, expectedStatuses?, requestBody?, options?]
 // If expectedStatuses is omitted, defaults to: any non-500, non-000 status
+//
+// options.graceUntil ("YYYY-MM-DD") + options.graceStatuses: extra statuses
+// tolerated through that date (inclusive). This exists because the PR gate
+// (changed-quality) probes PRODUCTION — a PR that tightens an endpoint's
+// behavior would otherwise deadlock: the strict contract can't pass until the
+// fix deploys, and the fix can't merge until the contract passes. Give the
+// old behavior a short grace window instead of loosening the contract or
+// admin-merging. After the date the strict contract enforces automatically.
 const ENDPOINTS = [
   // Health — must be 200 with specific body shape
   ["GET", "/api/health", "Health check", [200]],
@@ -51,7 +62,7 @@ const ENDPOINTS = [
   // got "New Row violates Row-level security policy" (403-equivalent) instead.
   ["POST", `/api/projects/${PROJECT_ID}/budget/snapshots`, "Budget snapshots create (auth check)", [401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/direct-costs`, "Budget direct costs", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/budget-codes`, "Budget codes", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/budget-codes`, "Budget codes (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=csv`, "Budget export CSV", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=excel`, "Budget export Excel", [200, 401]],
   // Lock + modifications power the Unlock dialog's "blocked when active mods exist"
@@ -61,9 +72,13 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/budget/modifications`, "Budget modifications list", [200, 401]],
 
   // Change Events
-  ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (fake id)", [200, 401, 404]],
-  ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  // Detail — must 401 unauthenticated (guard added 2026-07-02). The embedded
+  // budget_lines join hard-errors for the anon role, so an unguarded handler
+  // surfaces as Postgres "permission denied for table budget_lines" noise.
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200, 404] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/related-items/options?type=rfi`, "Change event related-items options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
   // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
   // Email — regression guard for issue #193: Puppeteer failure caused 500 before fix in commit 24e1d0009
@@ -78,18 +93,21 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/pcos`, "All PCOs", [200, 401]],
 
   // Prime Contract Change Orders (canonical routes)
-  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders`, "Prime contract change orders list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700`, "Prime contract change order detail", [200, 401, 404]],
-  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700/line-items`, "Prime CO line items list", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders`, "Prime contract change orders list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700`, "Prime contract change order detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700/line-items`, "Prime CO line items list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404] }],
   ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/export`, "Prime contract change orders CSV export", [200, 401]],
 
   // Commitment Change Orders (canonical routes)
-  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list", [200, 401]],
+  // List — must 401 unauthenticated (guard added 2026-07-02): reads budget_lines,
+  // which hard-errors for the anon role when the handler runs unauthenticated.
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/${FAKE_UUID}/line-items`, "Commitment CO line items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/export`, "Commitment change orders CSV export", [200, 401]],
 
   // Contracts
-  ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/contracts/settings`, "Prime contract settings", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/settings`, "Prime contract settings (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}`, "Prime contract detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/line-items`, "Prime contract line items (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/payments`, "Prime contract payments (fake id)", [200, 401, 404]],
@@ -108,7 +126,7 @@ const ENDPOINTS = [
 
   // Commitments
   ["GET", "/api/commitments", "Commitments list", [200, 401]],
-  ["GET", `/api/commitments/${FAKE_UUID}`, "Commitment detail (fake id)", [200, 401, 404]],
+  ["GET", `/api/commitments/${FAKE_UUID}`, "Commitment detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404] }],
   // Issue #238: PUT must never silently drop retainage for purchase orders.
   // An unauthenticated PUT must return 401 — if it returns 500 the update handler is broken.
   ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment update unauthorized (retainage guard)", [401]],
@@ -123,7 +141,7 @@ const ENDPOINTS = [
   // removed or the inline schema crashed, breaking in-place editing.
   ["PATCH", `/api/commitments/${FAKE_UUID}`, "Commitment inline PATCH — title/description/executed (auth check)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
-  ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
+  ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (deprecated notice)", [200]],
   // Regression guard: this endpoint returns { deprecated: true } with 200 (no auth required).
   // A 500 here would mean the stub was accidentally removed or the handler was broken.
   ["POST", "/api/sync/acumatica/vendors", "Vendors Acumatica sync (deprecated notice)", [200]],
@@ -148,7 +166,7 @@ const ENDPOINTS = [
 
   // Directory (Project)
   ["GET", `/api/projects/${PROJECT_ID}/directory/companies`, "Directory companies", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/directory/people`, "Directory people", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/directory/people`, "Directory people (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/directory/groups`, "Directory groups", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/directory/vendors`, "Directory vendors", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/directory/roles`, "Directory roles", [200, 401]],
@@ -160,7 +178,7 @@ const ENDPOINTS = [
   // Directory (Global)
   ["GET", "/api/companies", "Companies (global)", [200, 401]],
   ["GET", "/api/directory/companies", "Directory companies (global)", [200, 401]],
-  ["GET", "/api/directory/vendors", "Vendors (global)", [200, 401]],
+  ["GET", "/api/directory/vendors", "Vendors (global, unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   ["GET", "/api/directory/project-companies", "Project companies", [200, 401]],
   ["GET", "/api/contacts", "Contacts", [200, 401]],
   ["GET", "/api/people", "People", [200, 401]],
@@ -172,20 +190,23 @@ const ENDPOINTS = [
   ["GET", "/api/permissions/templates", "Permission templates", [200, 401]],
 
   // RFIs
-  ["GET", `/api/projects/${PROJECT_ID}/rfis`, "RFIs list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI detail (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/rfis`, "RFIs list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404] }],
   // Regression: drawing_number must be included in POST insertData (was silently dropped — fixed 2026-04-20)
   // Regression (2026-06-14): closing an RFI must NOT fail the request when the close-notification
   // email fails. The status change is persisted first, then the route returns 200 with a
   // non-blocking `_emailWarning` instead of a 502. An unauthenticated PATCH must return 401
   // (auth runs before any status/email work) — a 500 means the close handler crashed before auth.
-  ["PATCH", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI close — email failure is non-blocking (auth check)", [401]],
+  // Sends a realistic close payload so this exercises the auth path (-> 401), not the
+  // empty-body case. The route must check auth BEFORE parsing the body, or an
+  // unauthenticated request would surface a 500 from request.json() instead of 401.
+  ["PATCH", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI close — email failure is non-blocking (auth check)", [401], { status: "closed" }],
 
   // Submittals
-  ["GET", `/api/projects/${PROJECT_ID}/submittals`, "Submittals list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}`, "Submittal detail (fake id)", [200, 401, 404]],
-  ["GET", `/api/projects/${PROJECT_ID}/submittals/packages`, "Submittal packages", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/submittals/specs`, "Submittal specs", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals`, "Submittals list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}`, "Submittal detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/packages`, "Submittal packages (nested, unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/specs`, "Submittal specs (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   // Regression: responsible_contractor_id was z.coerce.number() but column is UUID — field silently dropped.
   // An unauthenticated PATCH must return 401 — if it returns 500 the update handler is broken.
   ["PUT", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}`, "Submittal update unauthorized (responsible_contractor guard)", [401]],
@@ -214,34 +235,93 @@ const ENDPOINTS = [
 
   // Meetings
   ["GET", `/api/projects/${PROJECT_ID}/meetings`, "Meetings list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}`, "Meeting detail (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}/items/${FAKE_UUID}/tasks`, "Meeting agenda item tasks (fake ids)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/meetings/${FAKE_UUID}/items/${FAKE_UUID}/history`, "Meeting agenda item previous-minutes history (fake ids)", [200, 401, 404]],
 
   // Photos
-  ["GET", `/api/projects/${PROJECT_ID}/photos`, "Photos list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/photo-albums`, "Photo albums", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/photos`, "Photos list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  ["GET", `/api/projects/${PROJECT_ID}/photo-albums`, "Photo albums (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
 
   // Documents
   ["GET", `/api/projects/${PROJECT_ID}/documents`, "Documents list", [200, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/transmittals`, "Transmittals", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/transmittals`, "Transmittals (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
   ["GET", `/api/projects/${PROJECT_ID}/emails`, "Emails", [200, 401]],
 
   // Entity Links (cross-entity relationships) — top-level route, NOT project-scoped.
   // GET requires entityType+entityId+projectId query params, returns 400 without them.
   // The [linkId] sub-route only supports DELETE — there is no GET handler.
-  ["GET", "/api/entity-links", "Entity links list (auth + schema check)", [200, 400, 401]],
+  ["GET", "/api/entity-links", "Entity links list (unauthed must 401 — auth runs before param validation)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400, 500] }],
+  ["GET", "/api/entity-links/search?targetType=rfi&projectId=67&q=a", "Entity links search (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
   ["POST", "/api/entity-links", "Entity link create (auth check)", [400, 401]],
   ["DELETE", `/api/entity-links/${FAKE_UUID}`, "Entity link delete (auth check)", [401, 404]],
+
+  // Auth guard sweep (PR #639, 2026-07-02) — routes with no prior smoke coverage.
+  // Each was previously unguarded (anon-role query on GET); grace covers the old
+  // behavior (200 with real/empty data, or a hard 500 from an RLS-restricted join)
+  // until the fix deploys.
+  ["GET", `/api/commitments/${FAKE_UUID}/advanced-settings`, "Commitment advanced settings (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/change-orders`, "Commitment change orders — nested list (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/change-orders/${FAKE_UUID}`, "Commitment change order detail — nested (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/history`, "Commitment history (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/invoices`, "Commitment invoices (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/related-items`, "Commitment related items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/rfqs`, "Commitment RFQs (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitments/${FAKE_UUID}/change-events`, "Commitment change events — project-scoped (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/directory/vendors/${FAKE_UUID}`, "Vendor detail — global (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", "/api/document-picker/types", "Document picker types (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/document-picker/linked?entityType=change_event&entityId=${FAKE_UUID}`, "Document picker linked (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 400, 500] }],
+  ["GET", `/api/entity-links/search?targetType=commitment&q=x`, "Entity links search (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 400, 500] }],
+  ["GET", "/api/estimates/gc-templates", "Estimate GC templates (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/budget-changes`, "Budget changes (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-options`, "Commitment options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/next-number`, "Change event next-number (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/attachments`, "Change event attachments (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/attachments/${FAKE_UUID}`, "Change event attachment detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items/${FAKE_UUID}`, "Change event line item detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/prime-contract-change-orders`, "Change event PCCOs (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/related-items`, "Change event related items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/related-items/options`, "Change event related item options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/${FAKE_UUID}`, "Commitment change order detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/${FAKE_UUID}/line-items`, "Commitment change order line items — nested (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/attachments`, "Prime contract attachments (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/change-orders`, "Prime contract change orders — nested (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/related-items`, "Prime contract related items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/pcos/${FAKE_UUID}`, "PCO detail — canonical (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/pcos/${FAKE_UUID}/line-items`, "PCO line items — canonical (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/pcos/${FAKE_UUID}/change-events`, "PCO change events — canonical (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/${FAKE_UUID}/related-items`, "PCCO related items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/${FAKE_UUID}/related-items/options`, "PCCO related item options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittal-packages`, "Submittal packages — top-level (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittal-spec-sections`, "Submittal spec sections (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittal-types`, "Submittal types (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}/related-items`, "Submittal related items (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}/revisions`, "Submittal revisions (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}/workflow-steps`, "Submittal workflow steps (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/submittals/export`, "Submittals export (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/transmittals/${FAKE_UUID}`, "Transmittal detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/photos/${FAKE_UUID}`, "Photo detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200, 404, 500] }],
 
   // Punch Items
   ["GET", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items", [200, 401]],
   ["POST", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items create (auth check)", [400, 401]],
-  ["GET", `/api/projects/${PROJECT_ID}/checklist`, "Checklist", [200, 401]],
+  // Checklist — must 401 unauthenticated, never 200. Before 2026-07-02 the route
+  // had no auth guard: anon-role queries made budget_lines throw "permission
+  // denied" in Postgres while every other count silently returned 0 (a 200 with
+  // all-false statuses). Strict [401] guards both the noisy and the silent half.
+  ["GET", `/api/projects/${PROJECT_ID}/checklist`, "Checklist (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-04", graceStatuses: [200] }],
 
   // Other project-scoped
-  ["GET", `/api/projects/${PROJECT_ID}/vendors`, "Vendors", [200, 401]],
-  // POST /vendors is used by AddCompanyModal in change-events form. Before
-  // this was added the endpoint 404'd silently. Unauthenticated calls should
-  // be 401, never 404 or 500 (401 = handler exists and is protected).
-  ["POST", `/api/projects/${PROJECT_ID}/vendors`, "Vendors create (unauthenticated)", [401]],
+  ["GET", `/api/projects/${PROJECT_ID}/vendors`, "Vendors (project, unauthed must 401)", [401], undefined, { graceUntil: "2026-07-05", graceStatuses: [200] }],
+  // Company creation is disabled everywhere (Acumatica/ERP is the source of
+  // truth — see issue #540). These routes must still check auth BEFORE the
+  // ERP guardrail, so an unauthenticated call is 401, never 404 or 500.
+  ["POST", `/api/projects/${PROJECT_ID}/vendors`, "Vendors create — disabled, auth check first", [401]],
+  ["POST", "/api/companies", "Companies create — disabled, auth check first", [401]],
+  ["POST", "/api/directory/companies", "Directory companies create — disabled, auth check first", [401]],
+  ["PATCH", `/api/directory/companies/${FAKE_UUID}`, "Directory company edit — disabled, auth check first", [401]],
+  ["POST", `/api/projects/${PROJECT_ID}/directory/companies`, "Directory companies create (project) — disabled, auth check first", [401]],
+  ["PATCH", `/api/projects/${PROJECT_ID}/directory/companies/${FAKE_UUID}`, "Directory company edit (project) — restricted to primary_contact_id, auth check first", [401]],
   ["GET", `/api/projects/${PROJECT_ID}/employees`, "Project employees", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/subcontracts`, "Subcontracts", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/purchase-orders`, "Purchase orders", [200, 401]],
@@ -275,13 +355,27 @@ const ENDPOINTS = [
   ["GET", "/api/documents/status", "Document status", [200, 401]],
   ["GET", "/api/initiative-cards", "Initiative cards", [200, 401]],
   ["GET", "/api/clients", "Clients", [200, 401]],
+  ["POST", "/api/clients", "Clients create — disabled, auth check first", [401]],
   ["GET", "/api/monitoring/dashboard", "Monitoring dashboard", [200, 401]],
   ["POST", "/api/docs-search", "Docs search (auth check)", [400, 401]],
 
   // Auth checks — these must require auth
   ["POST", "/api/cron/daily-flags", "Cron unauthorized", [401]],
   ["POST", "/api/cron/autonomous-triage", "Cron unauthorized", [401]],
+  ["POST", "/api/cron/sync-feedback-pr-status", "Cron unauthorized", [401]],
   ["GET", "/api/monitoring/notify", "Monitoring notify unauthorized", [401]],
+
+  // Silent-200 auth-guard sweep (PR #639, verified 2026-07-02): these GET routes
+  // previously ran DB queries as the anon role with no auth check. Four raw
+  // (non-withApiGuardrails) handlers threw GuardrailError with nothing to catch
+  // it → 500/400; several wrapped handlers placed the guard after param/existence
+  // checks → 200/400/404 unauthenticated. All now check auth FIRST and 401.
+  // Grace tolerates the pre-deploy production behavior until the fix ships.
+  ["GET", "/api/estimates/gc-templates", "GC templates (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 500] }],
+  ["GET", "/api/document-picker/types?for=commitment", "Document-picker types (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
+  ["GET", `/api/commitments/${FAKE_UUID}/history`, "Commitment history (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400, 500] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1`, "Prime CO detail (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 404] }],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1/related-items/options?type=rfi`, "Prime CO related-items options (unauthed must 401)", [401], undefined, { graceUntil: "2026-07-06", graceStatuses: [200, 400] }],
 ];
 
 const AUTH_WRITE_PROBES = [
@@ -316,7 +410,8 @@ const AUTH_WRITE_PROBES = [
     method: "PUT",
     path: `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/advanced-settings`,
     description: "Prime contract advanced settings invalid payload validation",
-    expectedStatuses: [400],
+    // 400 if payload is validated first; 404 if the non-existent contract is resolved first.
+    expectedStatuses: [400, 404],
     body: {
       project_settings: {
         co_tier_count: 9,
@@ -457,7 +552,16 @@ async function run() {
   console.log(`Base URL: ${BASE_URL}`);
   console.log(`Endpoints: ${total}\n`);
 
-  for (const [method, path, description, expectedStatuses] of ENDPOINTS) {
+  const today = new Date().toISOString().slice(0, 10);
+  for (const [method, path, description, baseExpected, requestBody, options] of ENDPOINTS) {
+    const inGrace =
+      baseExpected &&
+      options?.graceUntil &&
+      today <= options.graceUntil &&
+      options.graceStatuses?.length;
+    const expectedStatuses = inGrace
+      ? [...baseExpected, ...options.graceStatuses]
+      : baseExpected;
     const url = `${BASE_URL}${path}`;
     let status = 0;
     let body = null;
@@ -466,6 +570,12 @@ async function run() {
       const res = await fetch(url, {
         method,
         signal: AbortSignal.timeout(10000),
+        ...(requestBody !== undefined
+          ? {
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(requestBody),
+            }
+          : {}),
       });
       status = res.status;
       const text = await res.text();

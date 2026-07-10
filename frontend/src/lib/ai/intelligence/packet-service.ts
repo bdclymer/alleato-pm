@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database, Json } from "@/types/database.types";
+import type { Database } from "@/types/database.types";
 import type {
   ClientProjectIntelligencePacket,
   ConfidenceLevel,
@@ -19,6 +19,8 @@ import type {
   SourceCoverageSummary,
 } from "./types";
 import { PACKET_STALE_AFTER_HOURS } from "./types";
+import { chunkArray, normalizeDbRow, normalizeDbRows, withAppDbClient } from "./db-fallback";
+import { cleanSourcePreview, isMetadataOnlyPreview, sourceCoverageCategory, toRecord } from "./utils";
 
 type AlleatoSupabaseClient = SupabaseClient<Database>;
 type ProjectOperatingRecordContext = ClientProjectIntelligencePacket["operatingRecord"];
@@ -30,76 +32,6 @@ type SourceDocumentPreview = Pick<
   content?: string | null;
   raw_text?: string | null;
 };
-
-const SUPABASE_IN_FILTER_CHUNK_SIZE = 100;
-
-async function withAppDbClient<T>(callback: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
-  const databaseUrl =
-    process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL;
-  if (!databaseUrl) {
-    throw new Error("App database URL is not configured for Project Intelligence fallback.");
-  }
-
-  const pg = await import("pg");
-  const url = new URL(databaseUrl);
-  url.searchParams.delete("sslmode");
-
-  let lastError: unknown = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const pool = new pg.Pool({
-      connectionString: url.toString(),
-      ssl: { rejectUnauthorized: false },
-      max: 1,
-      connectionTimeoutMillis: 8_000,
-      idleTimeoutMillis: 1_000,
-    });
-
-    try {
-      const client = await pool.connect();
-      try {
-        await client.query("set statement_timeout = '15000ms'");
-        return await callback(client);
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      lastError = error;
-      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 750));
-    } finally {
-      await pool.end();
-    }
-  }
-
-  throw lastError;
-}
-
-function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
-  return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [
-      key,
-      value instanceof Date ? value.toISOString() : value,
-    ]),
-  ) as T;
-}
-
-function normalizeDbRows<T extends Record<string, unknown>>(rows: T[]): T[] {
-  return rows.map((row) => normalizeDbRow(row));
-}
-
-function chunkArray<T>(items: T[], size = SUPABASE_IN_FILTER_CHUNK_SIZE): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-}
-
-function toRecord(value: Json | null): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-  return value;
-}
 
 function normalizeQuery(value: string): string {
   return value
@@ -141,39 +73,6 @@ function mapTarget(
     resolutionReason,
     source,
   };
-}
-
-function cleanSourcePreview(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const cleaned = value
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\n{4,}/g, "\n\n\n")
-    .trim();
-  return cleaned || null;
-}
-
-function normalizePreview(value: string | null | undefined): string {
-  return cleanSourcePreview(value)
-    ?.toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim() ?? "";
-}
-
-function isMetadataOnlyPreview(value: string | null | undefined): boolean {
-  const text = normalizePreview(value);
-  return (
-    text.startsWith("subject ") ||
-    (text.includes(" subject ") && text.includes(" from ")) ||
-    (text.includes(" date ") && text.includes(" from ") && text.includes(" to ")) ||
-    (
-      text.includes("duration") &&
-      text.includes("organizer email") &&
-      (text.includes("fireflies link") || text.includes("participants"))
-    )
-  );
 }
 
 function getSourcePreview(source: SourceDocumentPreview | undefined): string | null {
@@ -268,21 +167,6 @@ function mapCard(
   };
 }
 
-function sourceCoverageCategory(evidence: InsightCardEvidence): string {
-  const raw = `${evidence.sourceCategory ?? ""} ${evidence.sourceType ?? ""}`.toLowerCase();
-  if (raw.includes("meeting") || raw.includes("fireflies") || raw.includes("transcript")) return "meeting";
-  if (raw.includes("email") || raw.includes("outlook")) return "email";
-  if (raw.includes("teams") || raw.includes("chat") || raw.includes("message")) return "teams";
-  if (raw.includes("rfi")) return "rfi";
-  if (raw.includes("submittal")) return "submittal";
-  if (raw.includes("drawing")) return "drawing";
-  if (raw.includes("spec")) return "specification";
-  if (raw.includes("daily")) return "daily_report";
-  if (raw.includes("task")) return "task";
-  if (raw.includes("risk")) return "risk";
-  return "document";
-}
-
 function enrichSourceCoverage(
   sourceCoverage: SourceCoverageSummary,
   cards: InsightCard[],
@@ -294,7 +178,7 @@ function enrichSourceCoverage(
   const counts = new Map<string, { count: number; latestAt: string | null }>();
   for (const card of cards) {
     for (const evidence of card.evidence) {
-      const category = sourceCoverageCategory(evidence);
+      const category = sourceCoverageCategory(`${evidence.sourceCategory ?? ""} ${evidence.sourceType ?? ""}`);
       const current = counts.get(category) ?? { count: 0, latestAt: null };
       const latestAt =
         evidence.sourceOccurredAt && (!current.latestAt || evidence.sourceOccurredAt > current.latestAt)
@@ -554,6 +438,31 @@ export async function loadCurrentIntelligencePacket(input: {
       );
     }
   }
+}
+
+export async function loadCurrentIntelligencePacketBySlug(input: {
+  slug: string;
+  supabase: AlleatoSupabaseClient;
+  includeSourcePreview?: boolean;
+}): Promise<ClientProjectIntelligencePacket | null> {
+  const { data: target, error } = await input.supabase
+    .from("intelligence_targets")
+    .select("*")
+    .eq("slug", input.slug)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to resolve intelligence target ${input.slug}: ${error.message}`);
+  }
+  if (!target) return null;
+
+  return loadCurrentIntelligencePacket({
+    targetId: target.id,
+    supabase: input.supabase,
+    includeSourcePreview: input.includeSourcePreview,
+    projectId: target.project_id,
+  });
 }
 
 export async function loadPacketCards(input: {

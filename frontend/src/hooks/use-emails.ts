@@ -40,6 +40,46 @@ export interface ProjectEmail {
   graph_message_id?: string | null;
   mailbox_user_id?: string | null;
   conversation_id?: string | null;
+  assistant_action?: "reply" | "delegate" | "watch" | "ignore" | null;
+  assistant_priority?: "urgent" | "high" | "normal" | "low" | null;
+  assistant_category?: string | null;
+  assistant_score?: number | null;
+  assistant_reason?: string | null;
+  assistant_owner?: string | null;
+  assistant_risk?: string | null;
+  assistant_evidence?: string | null;
+  assistant_rules_applied?: string[] | null;
+  assistant_review?: {
+    reviewId: string;
+    reviewOutcome: "draft_copied" | "draft_edited" | "skipped" | "delegated" | "watched" | "marked_no_action";
+    reviewerNote: string | null;
+    draftBody: string | null;
+    assistantCategory: string | null;
+    feedbackProvidedAt: string | null;
+    fieldFeedback: {
+      action: "correct" | "incorrect" | "unreviewed";
+      priority: "correct" | "incorrect" | "unreviewed";
+      category: "correct" | "incorrect" | "unreviewed";
+      draft: "correct" | "incorrect" | "unreviewed";
+      project: "correct" | "incorrect" | "unreviewed";
+      owner: "correct" | "incorrect" | "unreviewed";
+      reason: "correct" | "incorrect" | "unreviewed";
+      score: "correct" | "incorrect" | "unreviewed";
+    };
+  projectAssignmentFeedback: {
+    status: "correct" | "incorrect" | "unreviewed";
+    correctedProjectId: number | null;
+    reasonSignals: Array<
+      | "subject_line"
+      | "sender"
+      | "message_body"
+      | "attachment"
+      | "existing_project_context"
+      | "other"
+    >;
+    reasonNote: string | null;
+  };
+  } | null;
 }
 
 /**
@@ -76,34 +116,63 @@ export type CreateEmailInput = {
 export type UpdateEmailInput = Partial<CreateEmailInput>;
 export type EmailSource = "app" | "outlook" | "all";
 
+export interface MailboxFeedbackCoverageDay {
+  dateKey: string;
+  label: string;
+  liveCount: number | null;
+  syncedCount: number;
+  reviewedCount: number;
+}
+
+export interface MailboxFeedbackCoverage {
+  mailboxUserId: string;
+  timeZone: string;
+  days: MailboxFeedbackCoverageDay[];
+  liveFetchedAt: string | null;
+  liveTruncated: boolean;
+  liveError: string | null;
+}
+
+interface EmailQueryOptions {
+  refetchInterval?: number | false;
+}
+
 export const emailKeys = {
   global: (status?: string, source?: EmailSource) =>
     ["emails", "global", status, source] as const,
+  globalMailbox: (status?: string, source?: EmailSource, mailboxUserId?: string) =>
+    ["emails", "global", status, source, mailboxUserId] as const,
   all: (projectId: number) => ["emails", projectId] as const,
   list: (projectId: number, status?: string, source?: EmailSource) =>
     ["emails", projectId, "list", status, source] as const,
   detail: (projectId: number, id: string) =>
     ["emails", projectId, "detail", id] as const,
+  feedbackCoverage: (mailboxUserId?: string, timeZone?: string) =>
+    ["emails", "feedback-coverage", mailboxUserId, timeZone] as const,
 };
 
 export function useAllEmails(
   status?: string,
   enabled = true,
   source: EmailSource = "app",
+  mailboxUserId?: string,
+  options?: EmailQueryOptions,
 ) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (source !== "all") params.set("source", source);
+  if (mailboxUserId) params.set("mailboxUserId", mailboxUserId);
   const queryString = params.toString();
 
   return useQuery<ProjectEmail[]>({
-    queryKey: emailKeys.global(status, source),
+    queryKey: emailKeys.globalMailbox(status, source, mailboxUserId),
     queryFn: ({ signal }) =>
       apiFetch<ProjectEmail[]>(
         `/api/emails${queryString ? `?${queryString}` : ""}`,
         { signal },
       ),
     enabled,
+    refetchInterval: options?.refetchInterval,
   });
 }
 
@@ -137,6 +206,27 @@ export function useEmail(projectId: number, emailId: string) {
         { signal },
       ),
     enabled: !!projectId && !!emailId,
+  });
+}
+
+export function useMailboxFeedbackCoverage(
+  mailboxUserId?: string,
+  timeZone = "America/New_York",
+) {
+  const params = new URLSearchParams();
+  if (mailboxUserId) params.set("mailboxUserId", mailboxUserId);
+  if (timeZone) params.set("timeZone", timeZone);
+  const queryString = params.toString();
+
+  return useQuery<MailboxFeedbackCoverage>({
+    queryKey: emailKeys.feedbackCoverage(mailboxUserId, timeZone),
+    queryFn: ({ signal }) =>
+      apiFetch<MailboxFeedbackCoverage>(
+        `/api/outlook-draft-feedback/mailbox-stats${queryString ? `?${queryString}` : ""}`,
+        { signal },
+      ),
+    enabled: Boolean(mailboxUserId),
+    staleTime: 60_000,
   });
 }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
   Table,
   TableBody,
@@ -23,6 +24,7 @@ interface AuditRow {
   new_value: unknown;
   notes: string | null;
   created_at: string;
+  actor_display_name?: string | null;
 }
 
 function describe(row: AuditRow): string {
@@ -75,15 +77,7 @@ export function ChangeHistoryTab({
 
   return (
     <section className="space-y-4">
-      <div>
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-sm font-semibold text-foreground">
-          Change History
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Audit log of all changes made to this invoice.
-        </p>
-      </div>
+      <SectionRuleHeading label="Change History" />
       {loading ? (
         <div className="py-8 text-center text-sm text-muted-foreground">
           Loading…
@@ -111,7 +105,9 @@ export function ChangeHistoryTab({
                 <TableCell className="text-muted-foreground whitespace-nowrap">
                   {formatDateTime(r.created_at)}
                 </TableCell>
-                <TableCell>{r.actor_email ?? "—"}</TableCell>
+                <TableCell>
+                  {r.actor_display_name ?? r.actor_email ?? "Not recorded"}
+                </TableCell>
                 <TableCell className="font-medium">{describe(r)}</TableCell>
                 <TableCell className="text-muted-foreground text-xs">
                   {r.notes ??

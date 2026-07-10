@@ -7,10 +7,12 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ChatSidebar } from "./chat-sidebar";
 import { ChatMain, type TeamChatMessage } from "./chat-main";
 import { ChatRightPanel, type ThreadReply } from "./chat-right-panel";
+import { resolveInitialTeamChatChannelId } from "./team-chat-routing";
 import type { TeamChannel, TeamChatAdminUser } from "./team-chat-data";
 
 interface ChatLayoutProps {
   username: string;
+  initialDiscussionId?: string | null;
   onUsernameChange?: (username: string) => void;
 }
 
@@ -35,7 +37,7 @@ const EMPTY_CHANNEL: TeamChannel = {
   deletable: false,
 };
 
-export function ChatLayout({ username }: ChatLayoutProps) {
+export function ChatLayout({ username, initialDiscussionId }: ChatLayoutProps) {
   const [channels, setChannels] = useState<TeamChannel[]>([]);
   const [dms, setDms] = useState<TeamChannel[]>([]);
   const [adminUsers, setAdminUsers] = useState<TeamChatAdminUser[]>([]);
@@ -91,16 +93,18 @@ export function ChatLayout({ username }: ChatLayoutProps) {
   const allChannels = useMemo(() => [...channels, ...dms], [channels, dms]);
 
   useEffect(() => {
-    if (allChannels.length === 0) {
-      if (activeChannel) setActiveChannel("");
+    const nextChannelId = resolveInitialTeamChatChannelId(
+      allChannels,
+      activeChannel,
+      initialDiscussionId,
+    );
+
+    if (nextChannelId && nextChannelId !== activeChannel) {
+      setActiveChannel(nextChannelId);
+      setSelectedMessage(null);
       return;
     }
-    const hasActive = allChannels.some((ch) => ch.id === activeChannel);
-    if (!hasActive) {
-      setActiveChannel(allChannels[0].id);
-      setSelectedMessage(null);
-    }
-  }, [allChannels, activeChannel]);
+  }, [allChannels, activeChannel, initialDiscussionId]);
 
   const activeChannelDetails = useMemo(
     () => allChannels.find((ch) => ch.id === activeChannel) ?? EMPTY_CHANNEL,
@@ -212,6 +216,7 @@ export function ChatLayout({ username }: ChatLayoutProps) {
         <ChatMain
           channel={activeChannelDetails}
           username={username}
+          focusDiscussionId={activeChannelDetails.readOnly ? initialDiscussionId ?? null : null}
           onToggleSidebar={() => setSidebarOpen(true)}
           onToggleRightPanel={() => setRightPanelOpen((o) => !o)}
           onMessageSelect={(message) => {

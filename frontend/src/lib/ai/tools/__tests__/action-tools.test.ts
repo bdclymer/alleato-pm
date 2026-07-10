@@ -1,3 +1,7 @@
+jest.mock("ai", () => ({
+  tool: jest.fn((definition) => definition),
+}));
+
 jest.mock("../guardrails", () => ({
   createToolGuardrails: jest.fn(),
 }));
@@ -42,7 +46,6 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
 }));
 
 jest.mock("@/services/notificationService", () => ({
-  notifyChangeRequestReviewNeeded: jest.fn(),
   notifyRfiReviewNeeded: jest.fn(),
 }));
 
@@ -52,10 +55,7 @@ jest.mock("@/lib/ai/notification-decision-ledger", () => ({
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { recordAiNotificationDecision } from "@/lib/ai/notification-decision-ledger";
-import {
-  notifyChangeRequestReviewNeeded,
-  notifyRfiReviewNeeded,
-} from "@/services/notificationService";
+import { notifyRfiReviewNeeded } from "@/services/notificationService";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
@@ -69,9 +69,6 @@ import {
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
 const mockedCreateServiceClient = jest.mocked(createServiceClient);
-const mockedNotifyChangeRequestReviewNeeded = jest.mocked(
-  notifyChangeRequestReviewNeeded,
-);
 const mockedNotifyRfiReviewNeeded = jest.mocked(notifyRfiReviewNeeded);
 const mockedRecordAiNotificationDecision = jest.mocked(
   recordAiNotificationDecision,
@@ -80,10 +77,6 @@ const mockedRecordAiNotificationDecision = jest.mocked(
 describe("previewCreateRFI", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedNotifyChangeRequestReviewNeeded.mockResolvedValue({
-      created: 1,
-      skipped: 0,
-    });
     mockedNotifyRfiReviewNeeded.mockResolvedValue({
       created: 1,
       skipped: 0,
@@ -313,18 +306,6 @@ describe("createChangeEvent", () => {
         }),
       ]),
     );
-    expect(mockedNotifyChangeRequestReviewNeeded).toHaveBeenCalledWith(
-      "00000000-0000-0000-0000-000000000001",
-      expect.objectContaining({
-        projectId: 43,
-        title: "Owner-requested lobby finish change",
-        description: "Owner asked to upgrade the lobby finish package.",
-        scope: "TBD",
-        type: "Owner Change",
-        status: "Open",
-        eventKey: expect.stringMatching(/^[a-f0-9]{64}$/),
-      }),
-    );
     expect(mockedRecordAiNotificationDecision).toHaveBeenCalledWith(
       expect.objectContaining({
         recipientUserId: "00000000-0000-0000-0000-000000000001",
@@ -462,7 +443,6 @@ describe("createChangeEvent", () => {
       success: false,
       error: expect.stringContaining('Invalid change request status "void"'),
     });
-    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
     expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
   });
 
@@ -509,10 +489,12 @@ describe("createChangeEvent", () => {
         return {
           select: jest.fn(() => ({
             eq: jest.fn().mockResolvedValue({
+              // Statuses drive the closing-insight open count: only CE-009 is open,
+              // so other-open = 1 and the newly created (Open) CE makes 2.
               data: [
-                { number: "001" },
-                { number: "CE-009" },
-                { number: "not-a-number" },
+                { number: "001", status: "Approved", deleted_at: null },
+                { number: "CE-009", status: "Open", deleted_at: null },
+                { number: "not-a-number", status: "Closed", deleted_at: null },
               ],
               error: null,
             }),
@@ -574,12 +556,11 @@ describe("createChangeEvent", () => {
     expect(auditInsert).toHaveBeenCalledWith(
       expect.objectContaining({ status: "success" }),
     );
-    expect(mockedNotifyChangeRequestReviewNeeded).not.toHaveBeenCalled();
     expect(mockedRecordAiNotificationDecision).not.toHaveBeenCalled();
     expect(output).toMatchObject({
       success: true,
       message:
-        'Change request **010 — "Owner-requested lobby finish change"** logged. Do you have any attachments you want to add to this change event?',
+        'Change request **010 — "Owner-requested lobby finish change"** logged. That\'s **2 open change events** on this project now — worth a scan if you\'re tracking exposure. Want to add attachments or open the full form to set line items?',
       record: {
         id: "ce-1",
         project_id: 43,
@@ -1133,6 +1114,7 @@ describe("buildCommitmentDraftWidget", () => {
         subcontract_id: "commitment-1",
         line_number: 1,
         budget_code: "26-0000",
+        project_budget_code_id: null,
         description: "Electrical rough-in",
         amount: 12500,
         billed_to_date: 0,
@@ -1159,10 +1141,38 @@ describe("buildCommitmentDraftWidget", () => {
         purchase_order_id: "commitment-2",
         line_number: 1,
         budget_code: "22-0000",
+        project_budget_code_id: null,
         description: "Plumbing fixtures",
         amount: 8000,
         billed_to_date: 0,
         uom: "EA",
+      }),
+    ]);
+  });
+
+  it("uses resolved project budget code IDs when building commitment SOV inserts", () => {
+    expect(
+      buildCommitmentSovInserts({
+        commitmentId: "commitment-1",
+        type: "subcontract",
+        budgetCodeResolutions: [
+          {
+            projectBudgetCodeId: "project-budget-code-1",
+            displayBudgetCode: "26-0000.S",
+          },
+        ],
+        lineItems: [
+          {
+            budgetCode: "26-0000.S",
+            description: "Electrical rough-in",
+            amount: 12500,
+          },
+        ],
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        budget_code: "26-0000.S",
+        project_budget_code_id: "project-budget-code-1",
       }),
     ]);
   });
@@ -1500,6 +1510,25 @@ describe("createCommitment line-item writes", () => {
           })),
         };
       }
+      if (tableName === "project_budget_codes") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn().mockResolvedValue({
+                data: [
+                  {
+                    id: "project-budget-code-1",
+                    cost_code_id: "26-0000",
+                    cost_type_id: "cost-type-1",
+                    cost_code_types: { code: "S", description: "Subcontract" },
+                  },
+                ],
+                error: null,
+              }),
+            })),
+          })),
+        };
+      }
       if (tableName === "subcontract_sov_items") {
         return {
           insert: sovInsert,
@@ -1562,7 +1591,8 @@ describe("createCommitment line-item writes", () => {
       expect.objectContaining({
         subcontract_id: "subcontract-1",
         line_number: 1,
-        budget_code: "26-0000",
+        budget_code: "26-0000.S",
+        project_budget_code_id: "project-budget-code-1",
         description: "Electrical rough-in",
         amount: 12500,
         quantity: 1,
@@ -1571,5 +1601,102 @@ describe("createCommitment line-item writes", () => {
         retainage_percent: 10,
       }),
     ]);
+  });
+
+  it("does not create the commitment when an AI-provided SOV budget code is inactive", async () => {
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const subcontractInsert = jest.fn();
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "subcontracts") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+          insert: subcontractInsert,
+        };
+      }
+      if (tableName === "companies") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              ilike: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({
+                  data: [{ id: "company-1", name: "Acme Electric" }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        };
+      }
+      if (tableName === "project_budget_codes") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+            })),
+          })),
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table in inactive budget code test: ${tableName}`);
+    });
+
+    mockedCreateServiceClient.mockReturnValue({ from, rpc: jest.fn() } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      lineItems: [
+        {
+          budgetCode: "99-9999",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      confirmed: true,
+    });
+
+    expect(output).toMatchObject({
+      success: false,
+      error: 'Line 1: budget code "99-9999" is not active for this project.',
+    });
+    expect(subcontractInsert).not.toHaveBeenCalled();
+    expect(auditInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tool_name: "createCommitment",
+        status: "error",
+      }),
+    );
   });
 });

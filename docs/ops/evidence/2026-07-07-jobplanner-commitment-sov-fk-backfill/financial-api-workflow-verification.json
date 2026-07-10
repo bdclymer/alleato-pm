@@ -1,0 +1,153 @@
+{
+  "status": "pass",
+  "tag": "codex-financial-api-1783415712307",
+  "baseUrl": "http://localhost:3001",
+  "projectId": 31,
+  "checks": [
+    {
+      "name": "select real route fixtures",
+      "status": "pass",
+      "details": {
+        "projectId": 31,
+        "companyId": "9a30ae2f-dd1b-451c-ad63-e379a5257b3c",
+        "projectBudgetCodeId": "68130b9f-1f36-472c-965a-5d207758efd4",
+        "primeContractId": "fd263116-dba6-4dac-8b94-49a7c98df84e",
+        "budgetLineId": "2fa7fa97-921f-43ab-b1b1-3f05acf77248"
+      }
+    },
+    {
+      "name": "create purchase order via API route",
+      "status": "pass",
+      "details": {
+        "purchaseOrderId": "e819c12c-2a9f-41c3-bdb3-ff77decf92bd"
+      }
+    },
+    {
+      "name": "purchase order API SOV FK readback",
+      "status": "pass",
+      "details": {
+        "sovItemId": "cea5a470-6f80-4878-885f-dc0c679b70d6"
+      }
+    },
+    {
+      "name": "create subcontract via API route",
+      "status": "pass",
+      "details": {
+        "subcontractId": "99536396-d9e7-4dd9-9883-5fc6776200ac"
+      }
+    },
+    {
+      "name": "subcontract API SOV FK readback",
+      "status": "pass",
+      "details": {
+        "sovItemId": "066af11c-d10e-446d-86e4-ee57ffc1b9f5"
+      }
+    },
+    {
+      "name": "create change event via API route",
+      "status": "pass",
+      "details": {
+        "changeEventId": "48560850-7a1a-4185-a0ce-14d7f688839c"
+      }
+    },
+    {
+      "name": "create change event line item via API route",
+      "status": "pass",
+      "details": {
+        "changeEventLineItemId": "603f3cff-5d72-4677-b81f-b0d7f058014c",
+        "budgetLineId": "2fa7fa97-921f-43ab-b1b1-3f05acf77248"
+      }
+    },
+    {
+      "name": "create prime PCO and line items via add-to-pco route",
+      "status": "pass",
+      "details": {
+        "primePcoId": "b3b9e980-39d4-4518-8cd5-53496255afbe",
+        "lineItems": 1,
+        "links": 1
+      }
+    },
+    {
+      "name": "promote prime PCO to change order via API route",
+      "status": "pass",
+      "details": {
+        "pccoId": 5212,
+        "copiedLineItems": 1
+      }
+    },
+    {
+      "name": "create commitment PCO and line items via add-to-pco route",
+      "status": "pass",
+      "details": {
+        "commitmentPcoId": "9bbfbb9c-4366-49e7-ac2e-24b6e70d439d",
+        "lineItems": 1,
+        "links": 1
+      }
+    },
+    {
+      "name": "promote commitment PCO to change order via API route",
+      "status": "pass",
+      "details": {
+        "commitmentChangeOrderId": "bdbd161e-b93e-4555-aca3-830dc9cf91ed",
+        "copiedLineItems": 1
+      }
+    },
+    {
+      "name": "cleanup route verifier records",
+      "status": "pass",
+      "details": {
+        "purchaseOrderId": "e819c12c-2a9f-41c3-bdb3-ff77decf92bd",
+        "subcontractId": "99536396-d9e7-4dd9-9883-5fc6776200ac",
+        "changeEventId": "48560850-7a1a-4185-a0ce-14d7f688839c",
+        "cleanupReadback": {
+          "purchaseOrders": 0,
+          "purchaseOrderSovItems": 0,
+          "subcontracts": 0,
+          "subcontractSovItems": 0,
+          "changeEvents": 0,
+          "changeEventLineItems": 0,
+          "pcoLinks": 0,
+          "pcoLineItems": 0,
+          "primePcos": 0,
+          "primeChangeOrders": 0,
+          "pccoLineItems": 0,
+          "commitmentPcos": 0,
+          "commitmentChangeOrders": 0,
+          "commitmentChangeOrderLines": 0
+        }
+      }
+    }
+  ],
+  "created": {
+    "purchaseOrderId": "e819c12c-2a9f-41c3-bdb3-ff77decf92bd",
+    "purchaseOrderSovItemIds": [
+      "cea5a470-6f80-4878-885f-dc0c679b70d6"
+    ],
+    "subcontractId": "99536396-d9e7-4dd9-9883-5fc6776200ac",
+    "subcontractSovItemIds": [
+      "066af11c-d10e-446d-86e4-ee57ffc1b9f5"
+    ],
+    "changeEventId": "48560850-7a1a-4185-a0ce-14d7f688839c",
+    "changeEventLineItemId": "603f3cff-5d72-4677-b81f-b0d7f058014c",
+    "primePcoId": "b3b9e980-39d4-4518-8cd5-53496255afbe",
+    "primePccoId": 5212,
+    "pccoLineItemIds": [
+      10
+    ],
+    "commitmentPcoId": "9bbfbb9c-4366-49e7-ac2e-24b6e70d439d",
+    "commitmentChangeOrderId": "bdbd161e-b93e-4555-aca3-830dc9cf91ed",
+    "commitmentChangeOrderLineIds": [
+      "86ac6e79-324a-41ca-8598-ff8e70bf860c"
+    ],
+    "pcoLineItemIds": [
+      "3a9dd9ba-1720-47ea-9f22-404ad2bd4713",
+      "84eb0284-7805-4a01-a5d9-928f725064aa"
+    ],
+    "pcoLinkIds": [
+      "97b7aa97-7de7-4a15-8504-7d755f135d44",
+      "ba0fdc76-338f-45e2-a212-3e14fe7b6c84"
+    ]
+  },
+  "error": null,
+  "generatedAt": "2026-07-07T09:15:25.108Z"
+}

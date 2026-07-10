@@ -85,7 +85,7 @@ async function expandQuery(originalQuery: string): Promise<string[]> {
   try {
     const { text } = await generateText({
       model: getLanguageModel(PROCORE_DOCS_MODEL),
-      system: `You are a query expansion assistant for Procore construction software documentation.
+      instructions: `You are a query expansion assistant for Procore construction software documentation.
 Generate 2-3 alternative phrasings of the user's question that might match different wordings in the docs.
 Include paraphrases using different terminology, technical terms, and related concepts.
 Respond with ONLY valid JSON: { "queries": ["phrasing1", "phrasing2"] }`,
@@ -285,7 +285,7 @@ Please use your expertise to:
     // Step 5: Generate response via AI Gateway
     const { text: answer } = await generateText({
       model: getLanguageModel(PROCORE_DOCS_MODEL),
-      system: SYSTEM_PROMPT,
+      instructions: SYSTEM_PROMPT,
       messages: [...history, { role: "user" as const, content: userMessage }],
     });
 

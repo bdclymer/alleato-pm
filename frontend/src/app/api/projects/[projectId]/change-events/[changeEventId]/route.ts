@@ -16,15 +16,10 @@ import {
   resolveUserEmails,
   mapChangedBy,
 } from "@/lib/change-events/history-formatters";
+import { computeLineItemRevenueRom } from "@/lib/change-events/financial-summary";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
-}
-
-interface VerticalMarkupRow {
-  percentage: number | null;
-  calculation_order: number | null;
-  compound: boolean | null;
 }
 
 interface ChangeEventLineItemRow {
@@ -37,44 +32,6 @@ interface RfqResponseAmountRow {
   extended_amount: number | string | null;
   submitted_at: string | null;
   created_at: string | null;
-}
-
-function computeMarkupAdditions(
-  _baseCost: number,
-  baseRevenue: number,
-  markups: VerticalMarkupRow[],
-): { cost: number; revenue: number } {
-  if (markups.length === 0) {
-    return { cost: 0, revenue: 0 };
-  }
-
-  const sortedMarkups = [...markups].sort(
-    (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0),
-  );
-
-  let runningRevenueBase = baseRevenue;
-  let totalRevenueMarkup = 0;
-
-  for (const markup of sortedMarkups) {
-    const percentage = Number(markup.percentage || 0);
-    if (!Number.isFinite(percentage) || percentage <= 0) {
-      continue;
-    }
-
-    const rate = percentage / 100;
-    // Markups (contractor fee, insurance) apply to Revenue ROM only
-    const revenueMarkup = runningRevenueBase * rate;
-    totalRevenueMarkup += revenueMarkup;
-
-    if (markup.compound) {
-      runningRevenueBase += revenueMarkup;
-    }
-  }
-
-  return {
-    cost: 0,
-    revenue: totalRevenueMarkup,
-  };
 }
 
 
@@ -116,6 +73,14 @@ export const GET = withApiGuardrails(
 
     const { projectId, changeEventId } = await params;
     assertNonNilUuid(changeEventId, "changeEventId", "projects/[projectId]/change-events/[changeEventId]#GET");
+
+    // Unauthenticated requests must 401 before touching the DB — this query
+    // embeds budget_lines, which hard-errors for the anon role.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]#GET", message: "Authentication required." });
+    }
+
     const supabase = await createClient();
     const serviceSupabase = createServiceClient();
 
@@ -366,7 +331,14 @@ export const GET = withApiGuardrails(
     }
 
     const baseRevenueRom = lineItems.reduce(
-      (sum: number, item: any) => sum + (item.revenue_rom || 0),
+      (sum, item) =>
+        sum +
+        computeLineItemRevenueRom({
+          expectingRevenue: changeEvent.expecting_revenue !== false,
+          revenueSource: changeEvent.line_item_revenue_source,
+          costRom: item.cost_rom,
+          revenueRom: item.revenue_rom,
+        }),
       0,
     );
     const baseCostRom = lineItems.reduce(
@@ -378,22 +350,13 @@ export const GET = withApiGuardrails(
       0,
     );
 
-    const { data: projectMarkups } = await supabase
-      .from("vertical_markup")
-      .select("percentage, calculation_order, compound")
-      .eq("project_id", parseInt(projectId, 10));
-
-    const applyMarkup = changeEvent.expecting_revenue !== false;
-    const markupAdditions = computeMarkupAdditions(
-      baseCostRom,
-      baseRevenueRom,
-      applyMarkup ? ((projectMarkups || []) as VerticalMarkupRow[]) : [],
-    );
-
-    // Calculate totals from line items + project financial markup
+    // Totals reflect the change event's own line items only. Project
+    // vertical markup (contractor fee, insurance, etc.) is a Prime PCO
+    // conversion concern — it's surfaced explicitly in the "Add to Prime
+    // PCO" preview, not baked silently into the change event's own numbers.
     const totals = {
-      revenueRom: (baseRevenueRom + markupAdditions.revenue).toFixed(2),
-      costRom: (baseCostRom + markupAdditions.cost).toFixed(2),
+      revenueRom: baseRevenueRom.toFixed(2),
+      costRom: baseCostRom.toFixed(2),
       nonCommittedCost: baseNonCommittedCost.toFixed(2),
       lineItemsCount: lineItems.length,
     };
@@ -471,7 +434,14 @@ export const GET = withApiGuardrails(
           unitOfMeasure: item.unit_of_measure,
           unitCost: item.unit_cost,
           extendedAmount: quantity * unitCost,
-          revenueRom: item.revenue_rom,
+          // Effective revenue (unset source defaults to match-cost) so the
+          // line-items table agrees with the rolled-up Revenue ROM summary.
+          revenueRom: computeLineItemRevenueRom({
+            expectingRevenue: changeEvent.expecting_revenue !== false,
+            revenueSource: changeEvent.line_item_revenue_source,
+            costRom: item.cost_rom,
+            revenueRom: item.revenue_rom,
+          }),
           costRom: item.cost_rom,
           rfqCost: latestRfqAmountByLineItemId.get(item.id) ?? null,
           nonCommittedCost: item.non_committed_cost,
@@ -701,7 +671,12 @@ export const PATCH = withApiGuardrails(
           unitOfMeasure: item.unit_of_measure,
           unitCost: item.unit_cost,
           extendedAmount: quantity * unitCost,
-          revenueRom: item.revenue_rom,
+          revenueRom: computeLineItemRevenueRom({
+            expectingRevenue: data.expecting_revenue !== false,
+            revenueSource: data.line_item_revenue_source,
+            costRom: item.cost_rom,
+            revenueRom: item.revenue_rom,
+          }),
           costRom: item.cost_rom,
           nonCommittedCost: item.non_committed_cost,
           vendorId: item.vendor_id,

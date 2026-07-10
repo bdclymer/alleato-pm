@@ -1,13 +1,14 @@
-import { ChevronRight, Eye, MoreHorizontal, Pencil, RotateCcw, Send, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, MoreVertical, Pencil, RotateCcw, Send, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { formatDate } from "@/lib/format";
 
 import { StatusBadge } from "@/components/ds";
-import type {
-  ColumnConfig,
-  FilterConfig,
-  TableColumn,
+import {
+  CellLink,
+  type ColumnConfig,
+  type FilterConfig,
+  type TableColumn,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import {
@@ -368,7 +369,15 @@ export function buildChangeEventTableColumns(
     {
       ...byId("commitment_title"),
       render: (item) => (
-        <span className="line-clamp-1">{item.commitment_title || "--"}</span>
+        <CellLink
+          value={item.commitment_title}
+          href={
+            item.commitment_id
+              ? `/${item.project_id}/commitments/${item.commitment_id}`
+              : null
+          }
+          className="line-clamp-1"
+        />
       ),
       sortValue: (item) => item.commitment_title ?? "",
     },
@@ -459,7 +468,7 @@ export function renderChangeEventRowActions(
             className="h-7 w-7"
             onClick={(e) => e.stopPropagation()}
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

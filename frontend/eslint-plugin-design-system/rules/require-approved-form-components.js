@@ -21,6 +21,8 @@ module.exports = {
     messages: {
       inputInForm:
         'In RHF/form contexts, use RHFTextField/RHFDateField/RHFNumberField (or shared form field components) instead of raw <Input>.',
+      numericInput:
+        'Raw numeric <Input> is not allowed. Use <NumberInput>/<NumberField>/<RHFNumberField> for non-currency values, or <MoneyField>/<RHFMoneyField> for currency values.',
       textareaInForm:
         'In RHF/form contexts, use RHFTextareaField (or shared TextareaField) instead of raw <Textarea>.',
       selectInForm:
@@ -47,6 +49,43 @@ module.exports = {
     }
 
     let hasFormContext = false;
+
+    function getLiteralAttrValue(node, attrName) {
+      const attr = (node.attributes || []).find(
+        (candidate) =>
+          candidate.type === 'JSXAttribute' &&
+          candidate.name &&
+          candidate.name.type === 'JSXIdentifier' &&
+          candidate.name.name === attrName,
+      );
+      if (!attr || !attr.value) return null;
+      if (attr.value.type === 'Literal') return attr.value.value;
+      return null;
+    }
+
+    function hasAttr(node, attrName) {
+      return (node.attributes || []).some(
+        (candidate) =>
+          candidate.type === 'JSXAttribute' &&
+          candidate.name &&
+          candidate.name.type === 'JSXIdentifier' &&
+          candidate.name.name === attrName,
+      );
+    }
+
+    function isNumericInput(node) {
+      if (node.name.type !== 'JSXIdentifier' || node.name.name !== 'Input') {
+        return false;
+      }
+
+      const type = getLiteralAttrValue(node, 'type');
+      if (type === 'number') return true;
+
+      const inputMode = getLiteralAttrValue(node, 'inputMode');
+      if (inputMode === 'decimal' || inputMode === 'numeric') return true;
+
+      return hasAttr(node, 'step');
+    }
 
     function markIfFormContext(importNode) {
       const source = importNode.source && importNode.source.value;
@@ -85,8 +124,14 @@ module.exports = {
       },
 
       JSXOpeningElement(node) {
-        if (!hasFormContext) return;
         if (node.name.type !== 'JSXIdentifier') return;
+
+        if (isNumericInput(node)) {
+          context.report({ node, messageId: 'numericInput' });
+          return;
+        }
+
+        if (!hasFormContext) return;
 
         if (node.name.name === 'Input') {
           context.report({ node, messageId: 'inputInForm' });
@@ -110,4 +155,3 @@ module.exports = {
     };
   },
 };
-

@@ -19,7 +19,7 @@ export interface InspectorRailProps {
 export function InspectorRail({ children, className }: InspectorRailProps) {
   return (
     <aside
-      className={cn("min-w-0 space-y-2 lg:w-[360px] xl:w-[388px]", className)}
+      className={cn("min-w-0 space-y-3 lg:w-[360px] xl:w-[388px]", className)}
     >
       {children}
     </aside>
@@ -127,7 +127,7 @@ export function PropertyRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 gap-2 py-2.5 sm:grid-cols-[5.75rem_minmax(0,1fr)]",
+        "grid min-w-0 gap-1.5 py-2.5 sm:grid-cols-[5.75rem_minmax(0,1fr)] sm:gap-2",
         className,
       )}
     >

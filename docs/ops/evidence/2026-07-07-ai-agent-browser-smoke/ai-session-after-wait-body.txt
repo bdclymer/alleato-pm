@@ -1,0 +1,74 @@
+PROJECT
+Alleato AI
+Company Directory
+COMPANY-WIDE TOOLS
+Alleato AI
+Company
+Company Directory
+User Management
+Meetings
+Tasks
+Documentation
+Estimates
+Prime Contracts
+Change Events
+Potential Change Orders
+Admin Dashboard
+Company
+Alleato AI
+Select Project
+Alleato AI
+Chat history
+
+Check the latest Daily Deep Read setup. Tell me the latest business date you can see, whether project intelligence should use the full-source Daily Deep Read packet or raw RAG chunks, and whether candidate tasks/risks/decisions should be review-gated before promotion.
+
+The assistant could not get a usable response from the AI provider. This usually means the provider account is out of credits, over quota, or blocked by billing. I saved your question so it is not lost; after the provider billing issue is fixed, retry this message or choose a different model.
+
+Low Confidence
+Low Sources
+Read aloud
+Copy
+View execution trace
+Research plan
+Check internal Alleato sources first for the latest Daily Deep Read setup, packet date, and promotion rules.
+Use current internal health/activity signals to determine whether project intelligence should rely on full packets or raw RAG chunks.
+Only use public web if a gap remains; keep public and internal evidence separate.
+What I found
+Alleato internal evidence
+A Teams health/status message shows the newest current Project Intelligence packet at 2026-06-27T12:05:18.842189+00:00.
+Nearby internal health messages indicate the RAG / intelligence pipeline is degraded, with missing coverage in:
+tasks_extracted
+project_intelligence_updated
+chunks / compiler-job coverage gaps
+One health message explicitly says:
+“Newest current Project Intelligence packet: 2026-06-27T12:05:18.842189+00:00”
+Another message indicates:
+“RAG pipeline health is degraded”
+Internal schema/database introspection failed with:
+PostgreSQL connection/network unreachable
+So any DB-backed corroboration is missing.
+Answers
+Latest business date visible: 2026-06-27
+The strongest internal timestamp I found is 2026-06-27T12:05:18.842189+00:00, which is the latest packet timestamp visible in the sources I could access.
+Should project intelligence use the full-source Daily Deep Read packet or raw RAG chunks?
+Full-source Daily Deep Read packet.
+Reason: the internal health signals show degraded RAG/vectorization/chunk coverage and missing compiler coverage, which makes raw RAG chunks less reliable as the primary source of truth.
+Should candidate tasks/risks/decisions be review-gated before promotion?
+Yes — review-gated before promotion.
+Reason: internal evidence shows the pipeline is missing coverage in extraction/update stages and is degraded; under those conditions, promotion should not be automatic.
+Missing or failed source categories
+Failed internal capability: database/schema introspection failed due to network unreachable.
+Missing internal evidence: I did not find a direct policy document or setup doc that explicitly names “Daily Deep Read,” “full-source packet,” or “review-gated promotion.” The conclusion above is inferred from current internal source-health evidence.
+Public web: not needed for this question; no public-web claims used.
+Operator-ready takeaway
+Business date to anchor on: 2026-06-27
+Operating mode: use the full-source Daily Deep Read packet
+Promotion rule: review-gate candidate tasks, risks, and decisions before promotion
+
+Source coverage note: the backend executive briefing did not return parsed source URLs. Treat uncited claims as lower confidence and inspect the backend tool trace before acting on audit-sensitive details.
+
+Medium Confidence
+Low Sources
+Read aloud
+Copy
+View execution trace

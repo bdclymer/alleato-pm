@@ -6,7 +6,7 @@ import type {
   PaymentApplicationLineItem,
 } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import { calculatePaymentApplicationSummary } from "@/lib/prime-contracts/payment-application-summary";
+import { computePrimePaymentApplication } from "@/lib/invoicing/payment-application";
 
 interface ContractSummary {
   original_contract_value: number;
@@ -28,7 +28,7 @@ export function InvoiceG702Summary({
   contract,
   previousPaymentDue,
 }: InvoiceG702SummaryProps) {
-  const { lines } = calculatePaymentApplicationSummary({
+  const { lines } = computePrimePaymentApplication({
     lineItems,
     contract,
     previousPaymentDue,

@@ -26,6 +26,7 @@ export function projectName(value: string | null | undefined): string {
   // "Multiple (8 projects)" → "Across 8 projects" (no sloppy parentheses).
   const multiple = s.match(/^multiple\s*\((\d+)\s*projects?\)$/i);
   if (multiple) return `Across ${multiple[1]} projects`;
+  if (/^\d+\s+(?:[NSEW]|north|south|east|west)\b/i.test(s)) return s;
   return s.replace(/^\d[\d-]*\s+/, "").trim() || s;
 }
 
@@ -99,22 +100,29 @@ function resolveProjectId(item: BrandonBriefItem): number | null {
 }
 
 // Build a link that lands on the in-app detail page for the source, by type:
-//   meeting → /{projectId}/meetings/{sourceId}  (full meeting detail page)
-//   email / teams / document → /{projectId}/intelligence/sources/{sourceId}
-// Both routes are keyed by document_metadata.id, which is exactly the sourceId
-// the brief carries. We only fall back to the raw external URL (e.g. Fireflies)
-// when we cannot build an in-app link.
+//   meeting → /{projectId}/meetings/{sourceId}  or  /meetings/{sourceId}
+//   email / teams / document
+//           → /{projectId}/intelligence/sources/{sourceId}  or
+//             /intelligence/sources/{sourceId}
+// Every route is keyed by document_metadata.id, which is exactly the sourceId
+// the brief carries. The in-app page is ALWAYS preferred over the raw external
+// URL (Outlook web for emails, the transcript .md for meetings, SharePoint for
+// documents) — those external targets are precisely what owners don't want to
+// land on. Both a project-scoped and a global route exist, so a source with no
+// resolved project still links in-app. We only fall back to the external URL
+// when there is no sourceId to build an in-app link from.
 function citationHref(item: BrandonBriefItem, index: number): string | null {
   const citation = item.citations[index];
   if (!citation) return null;
   const sourceId = citation.sourceId?.trim();
   const projectId = resolveProjectId(item);
 
-  if (sourceId && projectId) {
+  if (sourceId) {
+    const scope = projectId ? `${projectId}/` : "";
     const path =
       citation.source === "Meeting"
-        ? `${projectId}/meetings/${encodeURIComponent(sourceId)}`
-        : `${projectId}/intelligence/sources/${encodeURIComponent(sourceId)}`;
+        ? `${scope}meetings/${encodeURIComponent(sourceId)}`
+        : `${scope}intelligence/sources/${encodeURIComponent(sourceId)}`;
     return `${APP_BASE_URL}/${path}`;
   }
 

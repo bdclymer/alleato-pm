@@ -1,9 +1,15 @@
 import {
+  aggregateApprovedBudgetModificationTotals,
+  buildBudgetLineRollupKey,
   EMPTY_GRAND_TOTALS,
   consumeCostAggregationOnce,
+  extractBudgetLineEditFields,
+  mergeBudgetRowsWithEditableFields,
   normalizeBudgetCode,
   normalizeBudgetCodeLookupKey,
   reduceGrandTotals,
+  resolveBudgetModificationTotal,
+  resolveSovBudgetCodeToCostCodeId,
   type BudgetLineItem,
   type GrandTotals,
 } from "./compute-grand-totals";
@@ -65,6 +71,61 @@ describe("normalizeBudgetCodeLookupKey", () => {
   it("ignores cost-type suffixes while building comparison keys", () => {
     expect(normalizeBudgetCodeLookupKey("03 00 00.L")).toBe("030000");
     expect(normalizeBudgetCodeLookupKey("03-00-00")).toBe("030000");
+  });
+});
+
+describe("resolveSovBudgetCodeToCostCodeId", () => {
+  const pccToCostCodeId = {
+    "project-budget-code-1": "04-2200",
+    "legacy-project-budget-code": "01-3126",
+  };
+  const costCodeIdByLookupKey = new Map([
+    ["099723", "09-9723"],
+    ["033000", "03-3000"],
+  ]);
+
+  it("prefers project_budget_code_id over stale legacy text", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: "project-budget-code-1",
+        budgetCode: "99-9999",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("04-2200");
+  });
+
+  it("falls back to legacy project-budget-code IDs stored in budget_code", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: "legacy-project-budget-code",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("01-3126");
+  });
+
+  it("falls back to normalized text matching for legacy rows", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: "099723",
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBe("09-9723");
+  });
+
+  it("returns null when neither FK nor text exists", () => {
+    expect(
+      resolveSovBudgetCodeToCostCodeId({
+        projectBudgetCodeId: null,
+        budgetCode: null,
+        pccToCostCodeId,
+        costCodeIdByLookupKey,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -182,5 +243,118 @@ describe("consumeCostAggregationOnce", () => {
       approvedBudgetChanges: 0,
       pendingBudgetChanges: 0,
     });
+  });
+});
+
+describe("aggregateApprovedBudgetModificationTotals", () => {
+  it("keeps approved budget modification totals isolated by cost code, type, and sub job", () => {
+    const totals = aggregateApprovedBudgetModificationTotals([
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: null,
+        amount: -123.45,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: null,
+        amount: 23.45,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-b",
+        sub_job_id: null,
+        amount: 50,
+      },
+      {
+        cost_code_id: "01-3120",
+        cost_type_id: "type-a",
+        sub_job_id: "sub-1",
+        amount: 75,
+      },
+    ]);
+
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-a", null)!),
+    ).toBe(-100);
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-b", null)!),
+    ).toBe(50);
+    expect(
+      totals.get(buildBudgetLineRollupKey("01-3120", "type-a", "sub-1")!),
+    ).toBe(75);
+  });
+});
+
+describe("resolveBudgetModificationTotal", () => {
+  it("prefers directly aggregated approved budget modification totals over a stale view value", () => {
+    const key = buildBudgetLineRollupKey("01-3120", "type-a", null)!;
+    const totals = new Map([[key, 123.45]]);
+
+    expect(resolveBudgetModificationTotal(key, totals, 0)).toBe(123.45);
+  });
+
+  it("falls back to the view value when no direct approved budget modification total exists", () => {
+    const totals = new Map<string, number>();
+
+    expect(resolveBudgetModificationTotal("missing", totals, "45.67")).toBe(45.67);
+  });
+});
+
+describe("extractBudgetLineEditFields", () => {
+  it("preserves saved qty, unit cost, and UOM for edit-form prefill", () => {
+    expect(
+      extractBudgetLineEditFields({
+        quantity: "3.0000",
+        unit_of_measure: "ea",
+        unit_cost: "3921.0000",
+      }),
+    ).toEqual({
+      unitQty: 3,
+      uom: "ea",
+      unitCost: 3921,
+    });
+  });
+
+  it("returns undefined fields when the raw budget row does not have edit metadata", () => {
+    expect(extractBudgetLineEditFields({})).toEqual({
+      unitQty: undefined,
+      uom: undefined,
+      unitCost: undefined,
+    });
+  });
+});
+
+describe("mergeBudgetRowsWithEditableFields", () => {
+  it("hydrates view-backed budget rows with quantity, unit cost, and UOM from budget_lines", () => {
+    expect(
+      mergeBudgetRowsWithEditableFields(
+        [
+          { id: "line-1", description: "Line 1" },
+          { id: "line-2", description: "Line 2" },
+        ],
+        [
+          {
+            id: "line-1",
+            quantity: 3,
+            unit_cost: 3921,
+            unit_of_measure: "ea",
+          },
+        ],
+      ),
+    ).toEqual([
+      {
+        id: "line-1",
+        description: "Line 1",
+        quantity: 3,
+        unit_cost: 3921,
+        unit_of_measure: "ea",
+      },
+      {
+        id: "line-2",
+        description: "Line 2",
+      },
+    ]);
   });
 });

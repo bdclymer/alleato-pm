@@ -18,7 +18,7 @@ import {
 const WHERE = "api.assignment-inbox.assign.POST";
 
 const AssignSchema = z.object({
-  sourceTable: z.enum(["document_metadata", "outlook_email_intake"]),
+  sourceTable: z.enum(["document_metadata", "outlook_email_intake", "tasks"]),
   itemId: z.string().trim().min(1),
   projectId: z.number().int().positive(),
   suggestedProjectId: z.number().int().positive().nullable().optional(),
@@ -56,7 +56,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
     });
   }
 
-  let contentType = "document";
+  let contentType: "meeting" | "email" | "teams" | "document" = "document";
   let fromEmail: string | null = null;
   let title: string | null = null;
 
@@ -94,7 +94,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
         details: updateError.message,
       });
     }
-  } else {
+  } else if (body.sourceTable === "outlook_email_intake") {
     const emailId = Number(body.itemId);
     if (!Number.isInteger(emailId) || emailId <= 0) {
       throw new GuardrailError({
@@ -187,27 +187,64 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
         details: updateError.message,
       });
     }
+  } else {
+    const { data: task, error: taskError } = await supabase
+      .from("tasks")
+      .select("id, title, description")
+      .eq("id", body.itemId)
+      .maybeSingle();
+
+    if (taskError || !task) {
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: WHERE,
+        message: "Item not found.",
+        status: 404,
+        details: taskError?.message,
+      });
+    }
+
+    title = task.title ?? task.description ?? null;
+
+    const { error: updateError } = await supabase
+      .from("tasks")
+      .update({
+        project_id: project.id,
+        project_ids: [project.id],
+      })
+      .eq("id", body.itemId);
+
+    if (updateError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: WHERE,
+        message: "Failed to assign the task to the project.",
+        details: updateError.message,
+      });
+    }
   }
 
   // Record the manual assignment so the learning loop can mine it for patterns.
   // Feedback recording must never block the assignment itself.
-  try {
-    await recordAttributionAssignmentFeedback({
-      userId: user.id,
-      projectId: project.id,
-      projectName: project.name,
-      sourceTable: body.sourceTable,
-      sourceRecordId: String(body.itemId),
-      contentType,
-      fromEmail,
-      titleKeywords: extractTitleKeywords(title),
-      suggestedProjectId: body.suggestedProjectId ?? null,
-      matchedSuggestion:
-        body.suggestedProjectId != null &&
-        body.suggestedProjectId === project.id,
-    });
-  } catch (feedbackError) {
-    console.error(`[${WHERE}] feedback recording failed`, feedbackError);
+  if (body.sourceTable !== "tasks") {
+    try {
+      await recordAttributionAssignmentFeedback({
+        userId: user.id,
+        projectId: project.id,
+        projectName: project.name,
+        sourceTable: body.sourceTable,
+        sourceRecordId: String(body.itemId),
+        contentType,
+        fromEmail,
+        titleKeywords: extractTitleKeywords(title),
+        suggestedProjectId: body.suggestedProjectId ?? null,
+        matchedSuggestion:
+          body.suggestedProjectId != null &&
+          body.suggestedProjectId === project.id,
+      });
+    } catch (feedbackError) {
+      console.error(`[${WHERE}] feedback recording failed`, feedbackError);
+    }
   }
 
   return NextResponse.json({

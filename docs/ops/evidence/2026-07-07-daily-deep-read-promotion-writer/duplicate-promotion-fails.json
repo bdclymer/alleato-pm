@@ -1,0 +1,10 @@
+{
+  "error": "Daily Deep Read candidate is not accepted for this project and current packet, or was already promoted.",
+  "code": "PRECONDITION_FAILED",
+  "status": 412,
+  "details": {
+    "candidateId": "b24e1d69-389d-4103-9bec-752c20a1f194",
+    "projectId": 1009,
+    "packetId": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+  }
+}

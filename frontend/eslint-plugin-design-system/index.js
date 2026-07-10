@@ -27,11 +27,13 @@ const noRawTablePrimitives = require('./rules/no-raw-table-primitives');
 const noExternalFetchInApiRoutes = require('./rules/no-external-fetch-in-api-routes');
 const noRawErrorMessageToast = require('./rules/no-raw-error-message-toast');
 const noRawSearchInput = require('./rules/no-raw-search-input');
+const noHandRolledDropdownMenu = require('./rules/no-hand-rolled-dropdown-menu');
 const requireEditableStatusColumn = require('./rules/require-editable-status-column');
 const noEditableTitleColumn = require('./rules/no-editable-title-column');
 const noRawDateInput = require('./rules/no-raw-date-input');
 const noRawDetailField = require('./rules/no-raw-detail-field');
 const noRawDetailGrid = require('./rules/no-raw-detail-grid');
+const noRawPageGrid = require('./rules/no-raw-page-grid');
 const noSupabaseAuthGetuserInApiRoutes = require('./rules/no-supabase-auth-getuser-in-api-routes');
 
 module.exports = {
@@ -62,8 +64,10 @@ module.exports = {
     'no-supabase-auth-getuser-in-api-routes': noSupabaseAuthGetuserInApiRoutes,
     'no-raw-error-message-toast': noRawErrorMessageToast,
     'no-raw-search-input': noRawSearchInput,
+    'no-hand-rolled-dropdown-menu': noHandRolledDropdownMenu,
     'no-raw-detail-field': noRawDetailField,
     'no-raw-detail-grid': noRawDetailGrid,
+    'no-raw-page-grid': noRawPageGrid,
   },
   configs: {
     recommended: {

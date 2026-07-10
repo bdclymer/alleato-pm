@@ -2,19 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds/status-badge";
-import {
-  InlineTable,
-  InlineTableHeader,
-  InlineTableHeaderRow,
-  InlineTableHeaderCell,
-  InlineTableBody,
-  InlineTableRow,
-  InlineTableCell,
-} from "@/components/ds/inline-table";
 import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/table-config/formatters";
+import { ChangeEventLinkedChangeOrderTable } from "./change-event-linked-change-order-table";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,68 +76,44 @@ export function ChangeEventCommitmentPCOsSection({
   if (!isLoading && pcos.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      <SectionHeader
-        title="Commitment Change Orders"
-        count={isLoading ? undefined : pcos.length}
-      />
-      <InlineTable variant="read">
-        <InlineTableHeader>
-          <InlineTableHeaderRow>
-            <InlineTableHeaderCell>CO #</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Title</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Status</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Type</InlineTableHeaderCell>
-            <InlineTableHeaderCell className="text-right">Amount</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Schedule Impact</InlineTableHeaderCell>
-            <InlineTableHeaderCell>Date Created</InlineTableHeaderCell>
-          </InlineTableHeaderRow>
-        </InlineTableHeader>
-        <InlineTableBody>
-          {isLoading ? (
-            <InlineTableRow>
-              <InlineTableCell colSpan={7} className="text-center text-muted-foreground py-4">
-                Loading…
-              </InlineTableCell>
-            </InlineTableRow>
-          ) : (
-            pcos.map((pco) => (
-              <InlineTableRow key={pco.linkId}>
-                <InlineTableCell>
-                  <Link
-                    href={
-                      pco.record_type === "change_order"
-                        ? `/${projectId}/change-orders/commitment/${pco.id}`
-                        : `/${projectId}/commitment-pcos/${pco.id}`
-                    }
-                    className="text-primary hover:underline font-medium"
-                  >
-                    {pco.pco_number ?? "—"}
-                  </Link>
-                </InlineTableCell>
-                <InlineTableCell className="text-foreground">
-                  {pco.title}
-                </InlineTableCell>
-                <InlineTableCell>
-                  <StatusBadge status={pco.status} />
-                </InlineTableCell>
-                <InlineTableCell className="text-muted-foreground capitalize">
-                  {pco.commitment_type === "purchase_order" ? "Purchase Order" : "Subcontract"}
-                </InlineTableCell>
-                <InlineTableCell className="text-right tabular-nums">
-                  {formatCurrency(pco.total_amount)}
-                </InlineTableCell>
-                <InlineTableCell className="text-muted-foreground tabular-nums">
-                  {pco.schedule_impact != null ? `${pco.schedule_impact}d` : "—"}
-                </InlineTableCell>
-                <InlineTableCell className="text-muted-foreground">
-                  {formatDate(pco.created_at)}
-                </InlineTableCell>
-              </InlineTableRow>
-            ))
-          )}
-        </InlineTableBody>
-      </InlineTable>
-    </div>
+    <ChangeEventLinkedChangeOrderTable
+      title="Commitment Change Orders"
+      relatedHeading="Type"
+      isLoading={isLoading}
+      rowCount={pcos.length}
+      rows={pcos.map((pco) => ({
+        key: pco.linkId,
+        number: (
+          <Link
+            href={
+              pco.record_type === "change_order"
+                ? `/${projectId}/change-orders/commitment/${pco.id}`
+                : `/${projectId}/commitment-pcos/${pco.id}`
+            }
+            className="font-medium text-primary hover:underline"
+          >
+            {pco.pco_number ?? "—"}
+          </Link>
+        ),
+        title: <span className="block truncate text-foreground">{pco.title}</span>,
+        status: <StatusBadge status={pco.status} />,
+        related: (
+          <span className="text-muted-foreground capitalize">
+            {pco.commitment_type === "purchase_order" ? "Purchase Order" : "Subcontract"}
+          </span>
+        ),
+        amount: <span className="tabular-nums">{formatCurrency(pco.total_amount)}</span>,
+        schedule: (
+          <span className="text-muted-foreground tabular-nums">
+            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : "—"}
+          </span>
+        ),
+        created: (
+          <span className="text-muted-foreground">
+            {formatDate(pco.created_at)}
+          </span>
+        ),
+      }))}
+    />
   );
 }

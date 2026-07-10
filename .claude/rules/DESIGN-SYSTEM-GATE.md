@@ -27,6 +27,7 @@ Read the output. If the component you are about to write is in that list — **u
 | Date field in an RHF form | `<RHFDateField>` from `@/components/forms/fields` — **ESLint-enforced (Gate 23)**. Never `<Input type="date">`. |
 | Button in a `SectionRuleHeading` actions slot | `<SectionAction>` from `@/components/layout` — enforces outline/sm styling |
 | Two-column main + sidebar grid in a detail page | `<DetailLayout sidebar={...}>` from `@/components/layout` |
+| Any multi-column page layout (1/2/3-col, sidebar) | `<PageScaffold layout="single\|sidebar\|two-column\|three-column">` from `@/components/layout` — **ESLint-enforced (Gate 26)**. Never hand-roll `grid-cols-*` in a `page.tsx`. See `PAGE-LAYOUT-GATE.md`. |
 
 Usage for every component: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
 
@@ -43,6 +44,8 @@ import { PageShell } from "@/components/layout";
 | Create / edit form | `form` |
 | Record detail with tabs | `detail` |
 | Settings / docs / read-heavy | `content` |
+
+**If you are arranging the page into columns yourself, use `PageScaffold` instead of `PageShell`** — it owns the width, header, AND the column layout (`layout="single|sidebar|two-column|three-column"`). Hand-rolling `grid-cols-*` in a `page.tsx` is blocked by ESLint Gate 26. `PageShell` stays correct when the body is one self-contained component that owns its own layout (table pages, forms). See `PAGE-LAYOUT-GATE.md`.
 
 **Never:**
 - `<PageContainer>` + manual `<h1>` on a new page (creates double header)
@@ -137,7 +140,7 @@ The same rule applies to phone (`tel:`), external links, and copy-to-clipboard a
 
 ## The design system docs
 
-Full reference: `frontend/src/design-system/DESIGN.md`
+Full reference: `DESIGN.md` (repo root)
 
 ### Showing an empty state?
 

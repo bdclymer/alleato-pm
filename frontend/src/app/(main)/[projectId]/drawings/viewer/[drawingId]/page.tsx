@@ -11,12 +11,14 @@ import {
   Search,
   Activity,
   X,
+  MoreVertical,
   Eye,
   EyeOff,
   Pencil,
   Highlighter,
   MousePointer2,
   Square,
+  Cloud,
   ArrowUpRight,
   Type,
   Eraser,
@@ -66,12 +68,16 @@ import {
 } from "@/hooks/use-drawing-pins";
 import { LinkPinModal, PIN_TYPE_CONFIG } from "@/components/drawings/LinkPinModal";
 import { DrawingLinksPanel } from "@/components/drawings/DrawingLinksPanel";
+import type {
+  AnnotationTool,
+  HtmlOverlay,
+  LocalAnnotationType,
+} from "@/components/drawings/OsdDrawingViewer";
 
-// Dynamically import to avoid SSR issues (react-pdf requires browser APIs)
-const DrawingViewerWithComments = dynamic(
+const OsdDrawingViewerWithComments = dynamic(
   () =>
-    import("@/components/drawings/DrawingViewerWithComments").then(
-      (mod) => ({ default: mod.DrawingViewerWithComments })
+    import("@/components/drawings/OsdDrawingViewerWithComments").then(
+      (mod) => ({ default: mod.OsdDrawingViewerWithComments })
     ),
   {
     ssr: false,
@@ -85,9 +91,7 @@ const DrawingViewerWithComments = dynamic(
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AnnotationTool = "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
 type RightPanel = "info" | "search" | "activity" | "links" | "filter" | null;
-type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
 type PinFilterType = DrawingMarkupPin["pin_type"];
 type DrawingSearchItem = {
   drawingNumber?: string | null;
@@ -100,6 +104,7 @@ const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: st
   { tool: "pen", icon: <Pencil className="h-4 w-4" />, label: "Pen" },
   { tool: "highlighter", icon: <Highlighter className="h-4 w-4" />, label: "Highlight" },
   { tool: "rectangle", icon: <Square className="h-4 w-4" />, label: "Rectangle" },
+  { tool: "cloud", icon: <Cloud className="h-4 w-4" />, label: "Cloud" },
   { tool: "arrow", icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
   { tool: "text", icon: <Type className="h-4 w-4" />, label: "Text" },
   { tool: "eraser", icon: <Eraser className="h-4 w-4" />, label: "Eraser" },
@@ -122,6 +127,7 @@ const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = 
   { key: "pen", label: "Freehand" },
   { key: "highlighter", label: "Highlights" },
   { key: "rectangle", label: "Rectangles" },
+  { key: "cloud", label: "Clouds" },
   { key: "arrow", label: "Arrows" },
   { key: "text", label: "Text" },
 ];
@@ -164,7 +170,7 @@ function getSearchItemLabel(drawing: DrawingSearchItem) {
 
 // ── Link pin renderer ─────────────────────────────────────────────────────────
 
-function LinkPin({
+function LinkPinShape({
   pin,
   highlighted,
 }: {
@@ -175,18 +181,7 @@ function LinkPin({
   const pinColor = pin.color ?? config?.color ?? "hsl(var(--status-info))";
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: `${pin.x_pct}%`,
-        top: `${pin.y_pct}%`,
-        transform: "translate(-50%, -100%)",
-        zIndex: 25,
-        cursor: "default",
-        pointerEvents: "none",
-      }}
-    >
-      {/* Flag pin shape */}
+    <div className="relative">
       <div
         className={cn(
           "flex items-center gap-1 px-1.5 py-0.5 rounded shadow-sm text-white text-[10px] font-semibold transition-all",
@@ -199,7 +194,6 @@ function LinkPin({
         )}
         {pin.entity_number && <span>{pin.entity_number}</span>}
       </div>
-      {/* Pin tail */}
       <div
         className="mx-auto"
         style={{
@@ -268,6 +262,7 @@ export default function DrawingViewerPage() {
     pen: true,
     highlighter: true,
     rectangle: true,
+    cloud: true,
     arrow: true,
     text: true,
   });
@@ -400,6 +395,12 @@ export default function DrawingViewerPage() {
     }
   }, [activeTool]);
 
+  // Handle "Link" chosen from the action bar shown after drawing a shape (cloud/rectangle/arrow)
+  const handleShapeLinkRequest = useCallback((x: number, y: number, page: number) => {
+    setPendingLinkPos({ x, y, page });
+    setLinkModalOpen(true);
+  }, []);
+
   const handleLinkConfirm = async (input: CreatePinInput) => {
     await createPin.mutateAsync(input);
     toast.success("Link added to drawing");
@@ -430,23 +431,28 @@ export default function DrawingViewerPage() {
       (pin.page === pageInfo.current || pageInfo.total === 0)
   );
 
+  const linkPinOverlays: HtmlOverlay[] = filteredPins.map((pin) => ({
+    id: `link-pin-${pin.id}`,
+    xPct: pin.x_pct,
+    yPct: pin.y_pct,
+    page: pin.page ?? 1,
+    placement: "BOTTOM",
+    zIndex: 25,
+    element: (
+      <div
+        onMouseEnter={() => setHighlightedPinId(pin.id)}
+        onMouseLeave={() => setHighlightedPinId((id) => (id === pin.id ? null : id))}
+      >
+        <LinkPinShape pin={pin} highlighted={highlightedPinId === pin.id} />
+      </div>
+    ),
+  }));
+
   const visibleLocalAnnotationTypes = visibleLayers.localMarkup
     ? (Object.entries(visibleLocalAnnotations)
         .filter(([, visible]) => visible)
         .map(([key]) => key) as LocalAnnotationType[])
     : [];
-
-  const linkPinsOverlay = (
-    <>
-      {filteredPins.map((pin) => (
-        <LinkPin
-          key={pin.id}
-          pin={pin}
-          highlighted={highlightedPinId === pin.id}
-        />
-      ))}
-    </>
-  );
 
   const viewerTool = activeTool;
 
@@ -472,6 +478,7 @@ export default function DrawingViewerPage() {
       pen: visible,
       highlighter: visible,
       rectangle: visible,
+      cloud: visible,
       arrow: visible,
       text: visible,
     });
@@ -523,7 +530,7 @@ export default function DrawingViewerPage() {
                   onClick={handleClose}
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="text-xs">Drawings</span>
+                  <span className="text-xs hidden sm:inline">Drawings</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">Back to Drawings</TooltipContent>
@@ -571,12 +578,12 @@ export default function DrawingViewerPage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-56 h-auto"
+                    className="flex items-center justify-start overflow-hidden gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-[120px] sm:max-w-56 h-auto"
                   >
                     {drawingIdentity?.number && (
                       <span className="text-muted-foreground text-xs shrink-0">{drawingIdentity.number}</span>
                     )}
-                    <span className="truncate">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
+                    <span className="truncate min-w-0">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
                     <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-muted-foreground shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -604,74 +611,121 @@ export default function DrawingViewerPage() {
             )}
 
             {rev && (
-              <>
+              <div className="hidden md:flex items-center">
                 <div className="w-px h-4 bg-muted mx-1" />
                 <span className="text-xs text-muted-foreground shrink-0">Rev {rev.revision_number}</span>
-              </>
+              </div>
             )}
 
             {pageInfo.total > 1 && (
-              <>
+              <div className="hidden md:flex items-center">
                 <div className="w-px h-4 bg-muted mx-1" />
                 <span className="text-xs text-muted-foreground shrink-0">
                   Page {pageInfo.current} / {pageInfo.total}
                 </span>
-              </>
+              </div>
             )}
           </div>
 
           {/* Right: panel toggles + download + close */}
           <div className="flex items-center gap-0.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
-                  onClick={handleDownload}
-                >
-                  <Download />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Download</TooltipContent>
-            </Tooltip>
-
-            <div className="w-px h-4 bg-muted mx-1" />
-
-            {(
-              [
-                { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
-                { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
-                { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
-                { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
-                { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
-              ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
-            ).map(({ panel, icon, label }) => (
-              <Tooltip key={panel!}>
+            {/* Desktop (md+): download + inline panel toggles */}
+            <div className="hidden md:flex items-center gap-0.5">
+              <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost" size="sm"
-                    className={cn(
-                      "h-7 w-7 p-0 relative transition-colors",
-                      activePanel === panel
-                        ? "bg-muted text-white"
-                        : "text-foreground/80 hover:text-foreground hover:bg-muted"
-                    )}
-                    onClick={() => togglePanel(panel)}
-                    aria-label={label}
+                    className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
+                    onClick={handleDownload}
                   >
-                    {icon}
-                    {panel === "links" && pins.length > 0 && (
+                    <Download />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Download</TooltipContent>
+              </Tooltip>
+
+              <div className="w-px h-4 bg-muted mx-1" />
+
+              {(
+                [
+                  { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                  { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
+                  { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
+                  { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
+                  { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
+                ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+              ).map(({ panel, icon, label }) => (
+                <Tooltip key={panel!}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className={cn(
+                        "h-7 w-7 p-0 relative transition-colors",
+                        activePanel === panel
+                          ? "bg-muted text-white"
+                          : "text-foreground/80 hover:text-foreground hover:bg-muted"
+                      )}
+                      onClick={() => togglePanel(panel)}
+                      aria-label={label}
+                    >
+                      {icon}
+                      {panel === "links" && pins.length > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
+                          {pins.length}
+                        </span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{label}</TooltipContent>
+                </Tooltip>
+              ))}
+
+              <div className="w-px h-4 bg-muted mx-1" />
+            </div>
+
+            {/* Mobile (below md): download + panel toggles collapse into one overflow menu */}
+            <div className="flex md:hidden items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost" size="sm"
+                    className="h-7 w-7 p-0 relative text-foreground/80 hover:text-foreground hover:bg-muted"
+                    aria-label="More actions"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                    {pins.length > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
                         {pins.length}
                       </span>
                     )}
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{label}</TooltipContent>
-              </Tooltip>
-            ))}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleDownload}>
+                    <Download className="h-4 w-4 mr-2" /> Download
+                  </DropdownMenuItem>
+                  {(
+                    [
+                      { panel: "links" as RightPanel, icon: <Link className="h-4 w-4 mr-2" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                      { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4 mr-2" />, label: "Filter annotations" },
+                      { panel: "info" as RightPanel, icon: <Info className="h-4 w-4 mr-2" />, label: "Info" },
+                      { panel: "search" as RightPanel, icon: <Search className="h-4 w-4 mr-2" />, label: "Search drawings" },
+                      { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4 mr-2" />, label: "Activity & Comments" },
+                    ] as { panel: RightPanel; icon: React.ReactNode; label: string }[]
+                  ).map(({ panel, icon, label }) => (
+                    <DropdownMenuItem
+                      key={panel!}
+                      onClick={() => togglePanel(panel)}
+                      className={cn(activePanel === panel && "bg-accent")}
+                    >
+                      {icon} {label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <div className="w-px h-4 bg-muted mx-1" />
+              <div className="w-px h-4 bg-muted mx-1" />
+            </div>
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -791,22 +845,21 @@ export default function DrawingViewerPage() {
               </div>
             )}
             {proxyFileUrl && (
-              <DrawingViewerWithComments
+              <OsdDrawingViewerWithComments
                 drawingId={drawingId}
+                projectId={projectId}
                 fileUrl={proxyFileUrl}
-                fileName={drawingIdentity?.title || drawingIdentity?.number || "Drawing"}
-                drawingNumber={drawingIdentity?.number ?? undefined}
-                title={drawingIdentity?.title || drawingIdentity?.number || undefined}
                 showToolbar={false}
-                controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
+                controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "cloud" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
+                onShapeLinkRequest={handleShapeLinkRequest}
                 controlledScale={viewScale}
                 onScaleChange={setViewScale}
                 controlledRotation={viewRotation}
                 onRotationChange={setViewRotation}
                 onPageNumberChange={handlePageNumberChange}
                 onCommentClick={handleCommentClick}
-                linkPinsOverlay={linkPinsOverlay}
+                extraOverlays={linkPinOverlays}
                 showCommentPins={visibleLayers.comments}
                 visibleAnnotationTypes={visibleLocalAnnotationTypes}
                 className="h-full border-none rounded-none bg-background"

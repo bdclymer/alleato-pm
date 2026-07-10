@@ -1,8 +1,11 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
+import {
+  findOpenBillingPeriod,
+  validateBillingPeriodDraft,
+} from "@/lib/invoicing/billing-period-validation";
 
 // GET /api/projects/[projectId]/invoicing/billing-periods
 // List billing periods for a project, ordered by start_date DESC
@@ -59,8 +62,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
 // POST /api/projects/[projectId]/invoicing/billing-periods
 // Create a new billing period for a project
-// Required: start_date, end_date
-// Optional: name, due_date
+// Required: start_date, end_date, due_date
 // Auto-assigns period_number as max(existing) + 1
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/billing-periods#POST",
@@ -87,9 +89,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const body = await request.json();
     const { start_date, end_date, name, due_date } = body;
 
-    if (!start_date || !end_date) {
+    const validationError = validateBillingPeriodDraft({
+      start_date,
+      end_date,
+      due_date,
+    });
+
+    if (validationError) {
       return NextResponse.json(
-        { error: "start_date and end_date are required" },
+        { error: validationError },
         { status: 400 },
       );
     }
@@ -108,15 +116,33 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Auto-assign period_number as max existing + 1
-    const { data: maxRow } = await supabase
+    const { data: existingPeriods, error: existingPeriodsError } = await supabase
       .from("billing_periods")
-      .select("period_number")
+      .select("id, is_closed, period_number")
       .eq("project_id", projectIdNum)
-      .order("period_number", { ascending: false })
-      .limit(1)
-      .single();
+      .order("period_number", { ascending: false });
 
+    if (existingPeriodsError) {
+      return NextResponse.json(
+        {
+          error: "Failed to inspect existing billing periods",
+          details: existingPeriodsError.message,
+        },
+        { status: 500 },
+      );
+    }
+
+    const openPeriod = findOpenBillingPeriod(existingPeriods ?? []);
+    if (openPeriod) {
+      return NextResponse.json(
+        {
+          error: `Close open billing period BP-${String(openPeriod.period_number).padStart(3, "0")} before creating another one.`,
+        },
+        { status: 409 },
+      );
+    }
+
+    const maxRow = (existingPeriods ?? [])[0];
     const nextPeriodNumber = (maxRow?.period_number ?? 0) + 1;
 
     const { data: period, error: insertError } = await supabase

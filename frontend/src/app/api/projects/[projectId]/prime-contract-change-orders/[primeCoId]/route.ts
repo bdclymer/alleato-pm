@@ -18,6 +18,20 @@ interface RouteParams {
 // to prerender this route handler path and throwing PageNotFoundError.
 export const dynamic = "force-dynamic";
 
+type PersonRecord = {
+  id: string;
+  auth_user_id: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+};
+
+function buildPersonName(person: PersonRecord | null | undefined): string | null {
+  if (!person) return null;
+  const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+  return fullName || person.email || null;
+}
+
 /**
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  * Returns the PCCO with related contract info and line items.
@@ -27,8 +41,17 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
   
     const { projectId, primeCoId } = await params;
-    const numericId = Number(primeCoId);
 
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]#GET",
+        message: "Authentication required.",
+      });
+    }
+
+    const numericId = Number(primeCoId);
     if (!Number.isFinite(numericId) || numericId <= 0) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 404 });
     }
@@ -68,8 +91,40 @@ export const GET = withApiGuardrails(
       contractInfo = contract;
     }
 
+    const creatorIdentifier =
+      typeof data.created_by === "string" && data.created_by.trim().length > 0
+        ? data.created_by
+        : null;
+
+    let createdByName: string | null = null;
+    if (creatorIdentifier) {
+      const [{ data: personById, error: personByIdError }, { data: personByAuth, error: personByAuthError }] =
+        await Promise.all([
+          supabase
+            .from("people")
+            .select("id, auth_user_id, first_name, last_name, email")
+            .eq("id", creatorIdentifier)
+            .maybeSingle<PersonRecord>(),
+          supabase
+            .from("people")
+            .select("id, auth_user_id, first_name, last_name, email")
+            .eq("auth_user_id", creatorIdentifier)
+            .maybeSingle<PersonRecord>(),
+        ]);
+
+      if (personByIdError) {
+        return apiErrorResponse(personByIdError);
+      }
+      if (personByAuthError) {
+        return apiErrorResponse(personByAuthError);
+      }
+
+      createdByName = buildPersonName(personById ?? personByAuth);
+    }
+
     return NextResponse.json({
       ...data,
+      created_by_name: createdByName,
       line_items: lineItems ?? [],
       contract: contractInfo,
     });
@@ -146,6 +201,19 @@ export const PUT = withApiGuardrails(
         { error: "No valid fields to update" },
         { status: 400 },
       );
+    }
+
+    // Invariant: a PCCO carries `approved_at` only while its status is "approved".
+    // Approval (stamping `approved_at`) is owned by the dedicated approve route,
+    // which also recalculates the contract's revised value. This route only ever
+    // leaves the approved state, so any status change to a non-approved value must
+    // clear `approved_at` — otherwise a reverted-to-draft row keeps looking
+    // approved (phantom approved date in the budget CO drilldown and detail page).
+    if ("status" in updateData) {
+      const nextStatus = String(updateData.status ?? "").toLowerCase();
+      if (nextStatus !== "approved") {
+        updateData.approved_at = null;
+      }
     }
 
     const { data, error } = await supabase

@@ -19,7 +19,8 @@ classifies the result so a quota/auth/billing problem surfaces within hours
         "status": "ok" | "down",
         "model":  <model probed>,
         "reason": "insufficient_quota" | "auth" | "rate_limit"
-                  | "connection" | "unknown" | "missing_key" | None,
+                  | "connection" | "unknown" | "missing_key"
+                  | "low_credits" | "credit_probe_failed" | None,
         "http_status": <int | None>,
         "detail": <short error string | None>,
     }
@@ -47,6 +48,8 @@ logger = logging.getLogger(__name__)
 # so a quota failure here proves a quota failure everywhere.
 AI_PROVIDER_HEALTH_MODEL = os.getenv("AI_PROVIDER_HEALTH_MODEL", "gpt-4o-mini")
 PROBE_TIMEOUT_SECONDS = int(os.getenv("AI_PROVIDER_HEALTH_TIMEOUT_SECONDS", "20"))
+AI_GATEWAY_MIN_CREDITS_USD = float(os.getenv("AI_GATEWAY_MIN_CREDITS_USD", "1"))
+AI_GATEWAY_WARN_CREDITS_USD = float(os.getenv("AI_GATEWAY_WARN_CREDITS_USD", "5"))
 
 
 def _classify_exception(exc: Exception) -> dict[str, Any]:
@@ -134,6 +137,17 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
         # A successful response object with at least one choice means the
         # provider accepted the request and billed it — the account is live.
         _ = response.choices[0].message
+        credit_result = _check_ai_gateway_credit_floor() if provider_path == "vercel_gateway" else None
+        if credit_result and credit_result["status"] == "down":
+            return {
+                "status": "down",
+                "model": model,
+                "provider_path": provider_path,
+                "reason": credit_result["reason"],
+                "http_status": credit_result.get("http_status"),
+                "detail": credit_result["detail"],
+                "gateway_credits": credit_result.get("gateway_credits"),
+            }
         return {
             "status": "ok",
             "model": model,
@@ -141,6 +155,8 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
             "reason": None,
             "http_status": 200,
             "detail": None,
+            "gateway_credits": credit_result.get("gateway_credits") if credit_result else None,
+            "warnings": credit_result.get("warnings", []) if credit_result else [],
         }
     except Exception as exc:  # noqa: BLE001 — health check must classify, not crash
         verdict = _classify_exception(exc)
@@ -161,6 +177,81 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
         }
 
 
+def _check_ai_gateway_credit_floor() -> dict[str, Any]:
+    """Return a down verdict when AI Gateway is below the operational floor."""
+    api_key = (os.getenv("AI_GATEWAY_API_KEY") or "").strip()
+    if not api_key:
+        return {
+            "status": "down",
+            "reason": "missing_key",
+            "http_status": None,
+            "detail": "AI_GATEWAY_API_KEY is not set on this service",
+        }
+
+    try:
+        response = httpx.get(
+            "https://ai-gateway.vercel.sh/v1/credits",
+            headers={"accept": "application/json", "authorization": f"Bearer {api_key}"},
+            timeout=PROBE_TIMEOUT_SECONDS,
+        )
+        payload = response.json()
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "status": "down",
+            "reason": "credit_probe_failed",
+            "http_status": None,
+            "detail": f"AI Gateway credit probe failed: {exc}",
+        }
+
+    if response.status_code >= 400:
+        detail = payload.get("error", {}).get("message") if isinstance(payload, dict) else None
+        return {
+            "status": "down",
+            "reason": "credit_probe_failed",
+            "http_status": response.status_code,
+            "detail": detail or f"AI Gateway credit probe returned HTTP {response.status_code}",
+        }
+
+    try:
+        balance = float(payload["balance"])
+    except (KeyError, TypeError, ValueError):
+        return {
+            "status": "down",
+            "reason": "credit_probe_failed",
+            "http_status": response.status_code,
+            "detail": f"AI Gateway credit probe returned malformed payload: {payload}",
+        }
+
+    gateway_credits = {
+        "balance": balance,
+        "total_used": payload.get("total_used") if isinstance(payload, dict) else None,
+        "floor": AI_GATEWAY_MIN_CREDITS_USD,
+        "warning_floor": AI_GATEWAY_WARN_CREDITS_USD,
+    }
+    if balance < AI_GATEWAY_MIN_CREDITS_USD:
+        return {
+            "status": "down",
+            "reason": "low_credits",
+            "http_status": 402,
+            "detail": (
+                f"AI Gateway credits are below the hard floor: "
+                f"balance=${balance:.4f}, floor=${AI_GATEWAY_MIN_CREDITS_USD:.2f}"
+            ),
+            "gateway_credits": gateway_credits,
+        }
+
+    warnings = []
+    if balance < AI_GATEWAY_WARN_CREDITS_USD:
+        warnings.append(
+            (
+                f"AI Gateway credits are below the warning floor: "
+                f"balance=${balance:.4f}, warning=${AI_GATEWAY_WARN_CREDITS_USD:.2f}"
+            )
+        )
+
+    return {"status": "ok", "gateway_credits": gateway_credits, "warnings": warnings}
+
+
 _REASON_MESSAGE = {
     "insufficient_quota": (
         "OpenAI account is OUT OF QUOTA (insufficient_quota). The backend "
@@ -178,6 +269,15 @@ _REASON_MESSAGE = {
     ),
     "connection": "Could not reach api.openai.com from the backend (network/timeout).",
     "missing_key": "OPENAI_API_KEY is not set on the backend service.",
+    "low_credits": (
+        "AI Gateway credits are below the configured hard floor. Top up or "
+        "enable autorecharge before backend extraction, embeddings, and packet "
+        "compilation start failing."
+    ),
+    "credit_probe_failed": (
+        "AI Gateway credit balance could not be verified. Treat provider runway "
+        "as unhealthy until the credit probe succeeds."
+    ),
     "unknown": "Backend OpenAI probe failed for an unclassified reason.",
 }
 

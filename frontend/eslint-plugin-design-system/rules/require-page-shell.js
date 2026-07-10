@@ -8,9 +8,10 @@
  *
  * What it checks:
  * - The file exports a default function (a Next.js page)
- * - The file imports PageShell from @/components/layout or UnifiedTablePage from
- *   @/components/tables/unified
- * - The returned JSX contains a <PageShell> or <UnifiedTablePage> element
+ * - The file imports PageShell from @/components/layout, UnifiedTablePage from
+ *   @/components/tables/unified, or an approved feature-owned page shell
+ * - The returned JSX contains a <PageShell>, <UnifiedTablePage>, or approved
+ *   feature-owned page shell element
  *
  * Exceptions (via eslint-disable or path-based):
  * - Files in (auth)/ routes (login, signup pages have custom layouts)
@@ -27,13 +28,13 @@ module.exports = {
     },
     messages: {
       missingPageShell:
-        'Page files must use <PageShell> from "@/components/layout" or <UnifiedTablePage> from "@/components/tables/unified". ' +
+        'Page files must use <PageShell> from "@/components/layout", <UnifiedTablePage> from "@/components/tables/unified", or an approved feature-owned page shell. ' +
         'Do not write raw <div> + manual headings. ' +
         'See CLAUDE.md → "BUILDING A NEW PAGE? START HERE" for variants: ' +
         'dashboard, table, form, detail, content.',
       missingPageShellImport:
         'Page file is missing the shared page shell import. ' +
-        'Add PageShell from "@/components/layout" or UnifiedTablePage from "@/components/tables/unified".',
+        'Add PageShell from "@/components/layout", UnifiedTablePage from "@/components/tables/unified", or an approved feature-owned page shell.',
     },
     schema: [],
   },
@@ -58,9 +59,26 @@ module.exports = {
       // They cannot use PageShell because they render nothing — the redirect is the page.
       'edit/page.tsx',
       'database/page.tsx',
+      '(admin)/pipeline-health/page.tsx',
       // Thin delegation pages: the page exists only to extract URL params and pass them to
       // a feature component that already owns its own PageShell. Adding a second PageShell
       // here would create nested shells.
+      '(admin)/training-docs/page.tsx',
+      '(admin)/training-map/page.tsx',
+      // Thin delegation page: renders ProductBoardClient, which owns its own
+      // PageShell (title + view/filter actions live on the header row there).
+      '(admin)/product-board/page.tsx',
+      // Restored transcript detail: delegates to MeetingDetailContent, which
+      // owns its own full page shell (same shape as the (tables)/ global page).
+      '[projectId]/meetings/[meetingId]/page.tsx',
+      // Restored project meetings list: thin server component delegating to
+      // MeetingsTablePage (owns UnifiedTablePage) / TablePageWrapper on error.
+      '[projectId]/meetings/page.tsx',
+      '(admin)/meeting-templates/page.tsx',
+      '(admin)/meeting-templates/[templateId]/page.tsx',
+      // Thin delegation page: extracts templateId and passes it to
+      // PermissionTemplateDetailPageClient, which owns its own PageShell.
+      '(admin)/user-management/templates/[templateId]/page.tsx',
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',
@@ -77,6 +95,11 @@ module.exports = {
       // Public no-auth pages (e.g. subcontractor RFI response): these live outside the
       // authenticated app shell entirely and use their own lightweight layouts.
       'app/respond/',
+      // Daily Executive Brief: a bespoke, full-viewport editorial document
+      // (masthead + index rail + sections) rendered outside the app shell. It
+      // intentionally does not use PageShell — see daily-brief/build-brief.ts
+      // (body builder) and daily-brief/brief-styles.ts (styles).
+      'daily-brief/page.tsx',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 
@@ -88,9 +111,15 @@ module.exports = {
       // Track imports
       ImportDeclaration(node) {
         const source = node.source.value;
-        if (source === '@/components/layout' || source === '@/components/layout/page-shell') {
+        if (
+          source === '@/components/layout' ||
+          source === '@/components/layout/page-shell' ||
+          source === '@/components/layout/page-scaffold'
+        ) {
           const hasPageShell = node.specifiers.some(
-            s => s.imported && s.imported.name === 'PageShell'
+            s =>
+              s.imported &&
+              (s.imported.name === 'PageShell' || s.imported.name === 'PageScaffold')
           );
           if (hasPageShell) hasSharedPageShellImport = true;
         }
@@ -101,13 +130,23 @@ module.exports = {
           );
           if (hasUnifiedTablePage) hasSharedPageShellImport = true;
         }
+
+        if (source === '@/features/emails/inbox/email-inbox-client') {
+          const hasEmailInboxClient = node.specifiers.some(
+            s => s.imported && s.imported.name === 'EmailInboxClient'
+          );
+          if (hasEmailInboxClient) hasSharedPageShellImport = true;
+        }
       },
 
       // Track JSX usage of page-level shell primitives.
       JSXOpeningElement(node) {
         if (
           node.name.type === 'JSXIdentifier' &&
-          (node.name.name === 'PageShell' || node.name.name === 'UnifiedTablePage')
+          (node.name.name === 'PageShell' ||
+            node.name.name === 'PageScaffold' ||
+            node.name.name === 'UnifiedTablePage' ||
+            node.name.name === 'EmailInboxClient')
         ) {
           hasSharedPageShellJSX = true;
         }

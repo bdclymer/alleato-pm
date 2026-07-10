@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { FormField } from "./FormField";
 import { cn } from "@/lib/utils";
 
@@ -63,10 +63,10 @@ export function NumberField({
             {prefix}
           </span>
         )}
-        <Input
-          type="number"
+        <NumberInput
           value={value ?? ""}
           onChange={handleChange}
+          clearZeroOnFocus
           className={cn(
             error && "border-destructive",
             prefix && "pl-8",

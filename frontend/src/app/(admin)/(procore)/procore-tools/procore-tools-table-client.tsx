@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
-import { AppWindow, Building2, GraduationCap, MoreHorizontal } from "lucide-react";
+import { AppWindow, Building2, GraduationCap, MoreVertical } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -394,7 +394,7 @@ export function ProcoreToolsTableClient({
         },
         rowActions: () => (
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         ),
       }}

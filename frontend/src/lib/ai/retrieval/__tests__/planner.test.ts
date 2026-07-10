@@ -187,8 +187,14 @@ describe("planRetrieval", () => {
     "What is the highest priority Brandon should focus on right now across the business?",
     "What are Brandon's must-do items today?",
     "How does the pipeline look right now?",
+    "Give me an overview of the active projects health",
+    "Give me a portfolio health overview across all projects",
     "Find important insights from today's meetings.",
     "Are any clients upset or showing relationship risk? Use recent meetings, email, and Teams evidence.",
+    "Has there been anything important that's happened today over email or in teams or email or meeting transcripts?",
+    "Anything important happen this week?",
+    "What happened today?",
+    "Have there been any important or exciting things that have happened in the meetings team messages or emails today?",
   ])(
     "delegates broad operator question to executive Deep Agents workflow: %s",
     (message) => {
@@ -276,6 +282,31 @@ describe("planRetrieval", () => {
       ],
     });
     expect(plan.sources.reusePriorBriefing).toBe(true);
+  });
+
+  // Regression for session d87edc77: "tell me more about union collective" was
+  // NOT recognized as a follow-up, fell through to conversational_fallback with
+  // zero sources, and the model returned an empty response. It must now route
+  // to the follow-up path with prior-briefing reuse AND a fresh vector search.
+  it.each([
+    "tell me more about union collective",
+    "more about the permit risk",
+    "what about steel pricing",
+    "go deeper on the FA panel approval",
+  ])("drill-down follow-up %j retrieves fresh grounding", (message) => {
+    const plan = planRetrieval({
+      message,
+      messages: [
+        userMsg("what's the status of our projects"),
+        assistantMsg(
+          "Union Collective is the biggest watch item; permit/earthwork timing could slip...",
+        ),
+        userMsg(message),
+      ],
+    });
+    expect(plan.reason).toBe("followup_to_prior_briefing");
+    expect(plan.sources.reusePriorBriefing).toBe(true);
+    expect(plan.sources.semanticVectorSearch).toBeDefined();
   });
 });
 
@@ -396,5 +427,34 @@ describe("attachments + transactional asks must not status-dump", () => {
       messages: [userMsg(message)],
     });
     expect(plan.responseFormat).toBe("briefing_template");
+  });
+});
+
+describe("outbound send requests must reach the send tools, not retrieval", () => {
+  // Regression for the 2026-07-10 production miss: "Send a Teams message on my
+  // behalf, from Alleato AI, to Brandon Clymer …" was classified source_lookup
+  // and answered with semantic-search hits; sendTeamsMessage was never reached.
+  it.each([
+    "Send a Teams message on my behalf, from Alleato AI, to Brandon Clymer. Use EXACTLY this message text, verbatim.",
+    "Send a Teams message to Brandon saying the meeting moved to 3pm",
+    "Can you message Ronnie on Teams and ask about the joist delivery?",
+    "Send an email to Brandon about the schedule change",
+    "Please send a Teams message to AJ that the budget review moved",
+  ])("outbound send routes to conversational with no retrieval hijack: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.reason).toBe("outbound_message_send_request");
+    expect(plan.responseFormat).toBe("conversational");
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+  });
+
+  it.each([
+    "Send me the important emails from today",
+    "Did we send the updated schedule email to the client?",
+    "Show me the message Ronnie posted in teams about the joists",
+    "Has there been anything important that's happened today over email or in teams or meeting transcripts?",
+    "Dig through the teams messages and emails and figure out where the resignation started",
+  ])("retrieval phrasings that mention send/message stay on retrieval: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.reason).not.toBe("outbound_message_send_request");
   });
 });

@@ -118,3 +118,39 @@ describe("apiFetch browser GET request dedupe", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("apiFetch error sanitization", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
+
+  it("prefers the structured error message over dumped upstream html details", async () => {
+    mockFetch.mockResolvedValue(
+      makeJsonResponse(
+        {
+          error_message: "chat_history query failed: JSON could not be generated",
+          details:
+            "b'<!DOCTYPE html><html><head><title>supabase.co | 522: Connection timed out</title></head><body>Cloudflare Ray ID</body></html>'",
+        },
+        500,
+      ),
+    );
+
+    await expect(apiFetch("/api/test")).rejects.toThrow(
+      "chat_history query failed: JSON could not be generated",
+    );
+  });
+
+  it("extracts a concise message from opaque structured plain-text errors", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        "{'message': 'JSON could not be generated', 'code': 522, 'hint': 'Refer to full message for details', 'details': 'b\\'<html>timeout</html>\\''}",
+        { status: 500, headers: { "Content-Type": "text/plain" } },
+      ),
+    );
+
+    await expect(apiFetch("/api/test")).rejects.toThrow(
+      "JSON could not be generated (code 522)",
+    );
+  });
+});

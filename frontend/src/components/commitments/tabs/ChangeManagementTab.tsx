@@ -4,15 +4,14 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { ExternalLink, FileText, Plus } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 
-import { SectionHeader } from '@/components/ds/section-header'
+import { SectionAction, SectionRuleHeading } from '@/components/layout'
 import { StatusBadge } from '@/components/ds/status-badge'
-import { EmptyState } from '@/components/ds/empty-state'
 import { Text } from '@/components/ds/text'
 import { DataTable } from '@/components/tables/DataTable'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, cn } from '@/lib/utils'
 import { formatDate } from '@/lib/table-config/formatters'
@@ -52,8 +51,10 @@ interface ChangeManagementTabProps {
 // ---------------------------------------------------------------------------
 
 function ChangeEventsSection({ commitmentId, projectId }: ChangeManagementTabProps) {
+  const router = useRouter()
   const [changeEvents, setChangeEvents] = useState<ChangeEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const fetchCEs = async () => {
@@ -74,18 +75,79 @@ function ChangeEventsSection({ commitmentId, projectId }: ChangeManagementTabPro
     fetchCEs()
   }, [commitmentId, projectId])
 
+  // Drop any selected ids that are no longer in the current data set.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === 0) return prev
+      const valid = new Set(changeEvents.map((ce) => ce.id))
+      let changed = false
+      const next = new Set<string>()
+      prev.forEach((id) => {
+        if (valid.has(id)) next.add(id)
+        else changed = true
+      })
+      return changed ? next : prev
+    })
+  }, [changeEvents])
+
+  const allSelected =
+    changeEvents.length > 0 && selectedIds.size === changeEvents.length
+  const someSelected = selectedIds.size > 0 && !allSelected
+
+  const toggleAll = () =>
+    setSelectedIds((prev) =>
+      prev.size === changeEvents.length
+        ? new Set()
+        : new Set(changeEvents.map((ce) => ce.id)),
+    )
+
+  const toggleOne = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
+  const handleAddToChangeOrder = () => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    const params = new URLSearchParams({
+      commitmentId,
+      changeEventIds: ids.join(','),
+    })
+    router.push(`/${projectId}/commitment-pcos/new?${params.toString()}`)
+  }
+
   const columns: ColumnDef<ChangeEvent>[] = useMemo(
     () => [
+      {
+        id: 'select',
+        size: 40,
+        header: () => (
+          <Checkbox
+            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+            onCheckedChange={toggleAll}
+            aria-label="Select all change events"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selectedIds.has(row.original.id)}
+            onCheckedChange={() => toggleOne(row.original.id)}
+            aria-label={`Select change event ${row.original.number}`}
+          />
+        ),
+      },
       {
         accessorKey: 'number',
         header: 'Number',
         cell: ({ row }) => (
           <Link
             href={`/${projectId}/change-events/${row.original.id}`}
-            className="flex items-center gap-1 text-primary hover:underline"
+            className="text-foreground hover:underline"
           >
             {row.original.number}
-            <ExternalLink className="h-3 w-3" />
           </Link>
         ),
       },
@@ -119,7 +181,7 @@ function ChangeEventsSection({ commitmentId, projectId }: ChangeManagementTabPro
         ),
       },
     ],
-    [projectId],
+    [projectId, selectedIds, allSelected, someSelected],
   )
 
   if (isLoading) {
@@ -134,21 +196,31 @@ function ChangeEventsSection({ commitmentId, projectId }: ChangeManagementTabPro
 
   return (
     <section className="space-y-4">
-      <SectionHeader title="Change Events" count={changeEvents.length} />
-      {changeEvents.length === 0 ? (
-        <EmptyState
-          icon={<FileText className="h-5 w-5" />}
-          title="No change events linked"
-          description="Change events will appear here when linked to this commitment's PCOs or change orders."
-        />
-      ) : (
-        <DataTable
-          columns={columns}
-          data={changeEvents}
-          showToolbar={false}
-          showPagination={changeEvents.length > 10}
-        />
+      <SectionRuleHeading label="Change Events" />
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-md bg-muted/40 px-4 py-2">
+          <Text className="text-sm">{selectedIds.size} selected</Text>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+            <Button size="sm" onClick={handleAddToChangeOrder}>
+              Add to change order
+            </Button>
+          </div>
+        </div>
       )}
+      <DataTable
+        columns={columns}
+        data={changeEvents}
+        showToolbar={false}
+        showPagination={changeEvents.length > 10}
+        emptyMessage="No change events linked to this commitment yet."
+      />
     </section>
   )
 }
@@ -277,6 +349,7 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
     () => changeOrders.reduce((sum, co) => sum + (Number(co.amount) || 0), 0),
     [changeOrders],
   )
+  const hasChangeOrders = changeOrders.length > 0
 
   const columns: ColumnDef<ChangeOrder>[] = useMemo(
     () => [
@@ -286,10 +359,9 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
         cell: ({ row }) => (
           <Link
             href={`/${projectId}/change-orders/commitment/${row.original.id}`}
-            className="flex items-center gap-1 text-primary hover:underline"
+            className="text-foreground hover:underline"
           >
             {row.original.number}
-            <ExternalLink className="h-3 w-3" />
           </Link>
         ),
       },
@@ -346,42 +418,42 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        title="Change Orders"
-        count={changeOrders.length}
-        action={{
-          label: '+ Create',
-          onClick: () =>
-            router.push(`/${projectId}/change-orders/commitment/new`),
-        }}
+      <SectionRuleHeading
+        label="Change Orders"
+        actions={
+          <SectionAction
+            onClick={() =>
+              router.push(
+                `/${projectId}/commitment-pcos/new?commitmentId=${commitmentId}`,
+              )
+            }
+          >
+            Create
+          </SectionAction>
+        }
       />
-      {changeOrders.length === 0 ? (
-        <EmptyState
-          icon={<FileText className="h-5 w-5" />}
-          title="No change orders yet"
-          description="Change orders will appear here when created for this commitment."
-        />
-      ) : (
-        <>
-          <ChangeRollupStrip rollup={rollup} />
-          <DataTable
-            columns={columns}
-            data={changeOrders}
-            showToolbar={false}
-            showPagination={changeOrders.length > 10}
-            footerRow={[
-              {
-                value: 'Total',
-                colSpan: 3,
-                align: 'left',
-                className: 'font-medium text-muted-foreground',
-              },
-              { value: formatCurrency(grandTotal), align: 'right' },
-              { value: '', colSpan: 2 },
-            ]}
-          />
-        </>
-      )}
+      {hasChangeOrders && <ChangeRollupStrip rollup={rollup} />}
+      <DataTable
+        columns={columns}
+        data={changeOrders}
+        showToolbar={false}
+        showPagination={changeOrders.length > 10}
+        emptyMessage="No change orders yet."
+        footerRow={
+          hasChangeOrders
+            ? [
+                {
+                  value: 'Total',
+                  colSpan: 3,
+                  align: 'left',
+                  className: 'font-medium text-muted-foreground',
+                },
+                { value: formatCurrency(grandTotal), align: 'right' },
+                { value: '', colSpan: 2 },
+              ]
+            : undefined
+        }
+      />
     </section>
   )
 }

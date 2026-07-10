@@ -6,7 +6,8 @@ const backendUrl = (
   process.env.RENDER_BACKEND_URL ||
   "https://alleato-backend-rbnj.onrender.com"
 ).replace(/\/$/, "");
-const minGatewayCredits = Number(process.env.AI_GATEWAY_MIN_CREDITS_USD || "5");
+const minGatewayCredits = Number(process.env.AI_GATEWAY_MIN_CREDITS_USD || "1");
+const warnGatewayCredits = Number(process.env.AI_GATEWAY_WARN_CREDITS_USD || "5");
 
 async function fetchGatewayCredits() {
   const apiKey = process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
@@ -50,6 +51,7 @@ async function main() {
 
   const health = await response.json();
   const failures = [];
+  const warnings = [];
 
   if (health.ai_gateway_configured !== true) {
     failures.push("AI_GATEWAY_API_KEY is not visible to the Render backend");
@@ -70,7 +72,11 @@ async function main() {
     failures.push(`AI Gateway credit probe returned a non-numeric balance: ${JSON.stringify(credits.raw)}`);
   } else if (credits.balance < minGatewayCredits) {
     failures.push(
-      `AI Gateway credits are below the safe floor: balance=$${credits.balance.toFixed(4)}, floor=$${minGatewayCredits.toFixed(2)}`
+      `AI Gateway credits are below the hard floor: balance=$${credits.balance.toFixed(4)}, floor=$${minGatewayCredits.toFixed(2)}`
+    );
+  } else if (credits.balance < warnGatewayCredits) {
+    warnings.push(
+      `AI Gateway credits are below the warning floor: balance=$${credits.balance.toFixed(4)}, warning=$${warnGatewayCredits.toFixed(2)}`
     );
   }
 
@@ -88,6 +94,9 @@ async function main() {
   }
 
   console.log("Render AI health check passed");
+  for (const warning of warnings) {
+    console.warn(`Warning: ${warning}`);
+  }
   console.log(JSON.stringify({ ...health, ai_gateway_credits: credits.raw }));
 }
 

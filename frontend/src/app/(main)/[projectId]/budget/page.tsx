@@ -10,6 +10,7 @@ import {
   BudgetTabs,
   BudgetFilters,
   BudgetTable,
+  BudgetChangesTab,
   BudgetDetailsTable,
   BudgetModificationModal,
   BudgetViewsModal,
@@ -94,6 +95,7 @@ const EMPTY_GRAND_TOTALS = {
 };
 
 const BUDGET_COLUMN_CONTROLS_SLOT_ID = "budget-column-controls-slot";
+const BUDGET_CHANGES_TOOLBAR_SLOT_ID = "budget-changes-toolbar-slot";
 
 function BudgetTableSkeleton() {
   return (
@@ -256,15 +258,10 @@ function BudgetPageContent() {
     if (!projectId) return;
     try {
       setLoading(true);
-
-      // Fetch budget data and lock status in parallel
-      const [budgetDataResponse] = await Promise.all([
-        apiFetch<{
-          lineItems?: BudgetLineItem[];
-          grandTotals?: typeof EMPTY_GRAND_TOTALS;
-        }>(`/api/projects/${projectId}/budget`),
-        fetchLockStatus(),
-      ]);
+      const budgetDataResponse = await apiFetch<{
+        lineItems?: BudgetLineItem[];
+        grandTotals?: typeof EMPTY_GRAND_TOTALS;
+      }>(`/api/projects/${projectId}/budget`);
 
       setBudgetData(budgetDataResponse.lineItems || []);
       setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
@@ -276,11 +273,19 @@ function BudgetPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [projectId, fetchLockStatus]);
+  }, [projectId]);
+
+  const shouldPreloadBudgetData =
+    activeTab === "budget" || activeTab === "budget-details";
 
   React.useEffect(() => {
     if (projectId) {
-      fetchBudgetData();
+      fetchLockStatus();
+      if (shouldPreloadBudgetData) {
+        fetchBudgetData();
+      } else {
+        setLoading(false);
+      }
       fetchBudgetViews();
       // Load saved quick filter preference
       const savedFilter = loadQuickFilterPreference(projectId);
@@ -289,7 +294,7 @@ function BudgetPageContent() {
     // fetchBudgetViews intentionally omitted from deps to avoid re-fetching on
     // every activeViewId change — only re-fetch when projectId changes.
      
-  }, [projectId, fetchBudgetData]);
+  }, [projectId, fetchBudgetData, fetchLockStatus, shouldPreloadBudgetData]);
 
   // Apply quick filter to budget data
   // Apply filtering and grouping to budget data
@@ -377,13 +382,11 @@ function BudgetPageContent() {
 
     try {
       setLoading(true);
-      const [budgetDataResponse] = await Promise.all([
-        apiFetch<{
-          lineItems?: BudgetLineItem[];
-          grandTotals?: typeof EMPTY_GRAND_TOTALS;
-        }>(`/api/projects/${projectId}/budget`),
-        fetchLockStatus(),
-      ]);
+      await fetchLockStatus();
+      const budgetDataResponse = await apiFetch<{
+        lineItems?: BudgetLineItem[];
+        grandTotals?: typeof EMPTY_GRAND_TOTALS;
+      }>(`/api/projects/${projectId}/budget`);
 
       setBudgetData(budgetDataResponse.lineItems || []);
       setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
@@ -449,7 +452,7 @@ function BudgetPageContent() {
 
     try {
       // Validate format
-      if (!["excel", "csv"].includes(format)) {
+      if (!["excel", "csv", "pdf"].includes(format)) {
         toast.error("Invalid export format");
         return;
       }
@@ -459,11 +462,12 @@ function BudgetPageContent() {
         description: "Gathering budget data...",
       });
 
-      // Call export API
-      const blob = await apiFetchBlob(
-        `/api/projects/${projectId}/budget/export?format=${format}`,
-        { method: "GET" },
-      );
+      // Call export API (PDF renders server-side via its own route)
+      const exportUrl =
+        format === "pdf"
+          ? `/api/projects/${projectId}/budget/export/pdf`
+          : `/api/projects/${projectId}/budget/export?format=${format}`;
+      const blob = await apiFetchBlob(exportUrl, { method: "GET" });
 
       // Update progress
       toast.loading(`Generating ${format.toUpperCase()} file...`, {
@@ -477,7 +481,7 @@ function BudgetPageContent() {
       link.href = url;
 
       // Extract filename from Content-Disposition header or use default
-      const filename = `budget-export.${format === "excel" ? "xlsx" : "csv"}`;
+      const filename = `budget-export.${format === "excel" ? "xlsx" : format}`;
 
       // Update progress before download
       toast.loading("Starting download...", {
@@ -594,6 +598,7 @@ function BudgetPageContent() {
 
   const showViewControls =
     activeTab === "budget" || activeTab === "budget-details";
+  const showBudgetChangesControls = activeTab === "budget-changes";
 
   const handleOpenBuyoutSummaryReport = React.useCallback(() => {
     router.push(`/${projectId}/reporting?report=buyout-summary`);
@@ -622,38 +627,39 @@ function BudgetPageContent() {
     setShowViewsModal(true);
   }, []);
 
-  const handleLineItemSuccess = React.useCallback(() => {
-    // Refresh budget data after creating line items
-    const fetchData = async () => {
-      try {
-        const budgetDataResponse = await apiFetch<{
-          lineItems?: BudgetLineItem[];
-          grandTotals?: typeof EMPTY_GRAND_TOTALS;
-        }>(`/api/projects/${projectId}/budget`);
-        setBudgetData(budgetDataResponse.lineItems || []);
-        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
+  const handleLineItemSuccess = React.useCallback(async () => {
+    // Keep mutation follow-up synchronous from the caller's perspective so
+    // modals and delete flows don't close until fresh budget data is visible.
+    setLoading(true);
+    try {
+      const budgetDataResponse = await apiFetch<{
+        lineItems?: BudgetLineItem[];
+        grandTotals?: typeof EMPTY_GRAND_TOTALS;
+      }>(`/api/projects/${projectId}/budget`);
+      setBudgetData(budgetDataResponse.lineItems || []);
+      setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
 
-        // Also refresh budget details if that tab has been loaded
-        if (detailsRequested) {
-          const detailsDataResponse = await apiFetch<{
-            details?: BudgetDetailLineItem[];
-            lineItems?: BudgetDetailLineItem[];
-          }>(`/api/projects/${projectId}/budget/details`);
-          setBudgetDetailsData(
-            detailsDataResponse.details || detailsDataResponse.lineItems || [],
-          );
-        }
-      } catch (error) {
-        console.error("Failed to refresh budget data:", error);
-        toast.error("Failed to refresh budget", {
-          description:
-            error instanceof Error
-              ? error.message
-              : "Please reload the page.",
-        });
+      // Also refresh budget details if that tab has been loaded
+      if (detailsRequested) {
+        const detailsDataResponse = await apiFetch<{
+          details?: BudgetDetailLineItem[];
+          lineItems?: BudgetDetailLineItem[];
+        }>(`/api/projects/${projectId}/budget/details`);
+        setBudgetDetailsData(
+          detailsDataResponse.details || detailsDataResponse.lineItems || [],
+        );
       }
-    };
-    fetchData();
+    } catch (error) {
+      console.error("Failed to refresh budget data:", error);
+      toast.error("Failed to refresh budget", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please reload the page.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [projectId, detailsRequested]);
 
   const handleInlineCreateLineItem = React.useCallback(async (lineItem: {
@@ -797,7 +803,8 @@ function BudgetPageContent() {
 
   const handleModificationSuccess = () => {
     // Refresh budget data after creating modification
-    handleLineItemSuccess();
+    void handleLineItemSuccess();
+    router.push(`/${projectId}/budget?tab=budget-changes`);
   };
 
   const handleEditLineItem = (lineItem: BudgetLineItem) => {
@@ -931,7 +938,7 @@ function BudgetPageContent() {
           { method: "DELETE" },
         );
         toast.success("Line item deleted");
-        handleLineItemSuccess();
+        await handleLineItemSuccess();
       } catch (error) {
         toast.error("Could not delete line item", {
           description:
@@ -964,14 +971,14 @@ function BudgetPageContent() {
           `${selectedIds.length} line item(s) deleted successfully`,
         );
         setSelectedIds([]);
-        handleLineItemSuccess(); // Refresh data
+        await handleLineItemSuccess();
       } else {
         if (succeeded > 0) {
           toast.error(`Deleted ${succeeded} line item(s), but ${failed} failed`, {
             description: firstError,
           });
           setSelectedIds([]);
-          handleLineItemSuccess();
+          await handleLineItemSuccess();
         } else {
           toast.error("Failed to delete line items", {
             description: firstError,
@@ -1001,11 +1008,12 @@ function BudgetPageContent() {
       // Sensitive write path: preserve actionable server errors so failed budget edits stay visible and traceable.
       await updateBudgetLineItem(projectId, selectedLineItem.id, {
         quantity: data.unitQty,
+        uom: data.uom,
         unitCost: data.unitCost,
         originalAmount: data.originalBudget,
       });
       toast.success("Line item updated successfully");
-      handleLineItemSuccess(); // Refresh data
+      await handleLineItemSuccess();
     } catch (error) {
       toast.error("Failed to update budget", {
         description: formatBudgetUpdateError(error),
@@ -1046,7 +1054,12 @@ function BudgetPageContent() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         controls={
-          showViewControls ? (
+          showBudgetChangesControls ? (
+            <div
+              id={BUDGET_CHANGES_TOOLBAR_SLOT_ID}
+              className="flex min-w-0 items-center"
+            />
+          ) : showViewControls ? (
             <BudgetFilters
               snapshots={budgetSnapshots}
               groups={budgetGroups}
@@ -1088,6 +1101,14 @@ function BudgetPageContent() {
           <div className="flex-1">
             <ChangeHistoryTab projectId={projectId} />
           </div>
+        ) : activeTab === "budget-changes" ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <BudgetChangesTab
+              projectId={projectId}
+              onModificationChanged={handleLineItemSuccess}
+              toolbarSlotId={BUDGET_CHANGES_TOOLBAR_SLOT_ID}
+            />
+          </div>
         ) : activeTab === "budget-details" ? (
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
             <BudgetDetailsTable
@@ -1099,7 +1120,7 @@ function BudgetPageContent() {
           <div className="flex min-h-0 min-w-0 flex-1 -mx-4 sm:-mx-6 lg:-mx-8">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Selection action bar */}
-              {selectedIds.length > 0 && (
+              {selectedIds.length > 0 && !isLocked && (
                 /* eslint-disable-next-line design-system/require-info-alert -- selection action bar with destructive control, not an informational callout */
                 <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <span className="text-sm text-primary font-medium">
@@ -1225,6 +1246,7 @@ function BudgetPageContent() {
             costCode={selectedLineItem.costCode}
             budgetLineId={selectedLineItem.id}
             projectId={projectId}
+            onModificationChanged={handleLineItemSuccess}
           />
 
           <ApprovedCOsModal

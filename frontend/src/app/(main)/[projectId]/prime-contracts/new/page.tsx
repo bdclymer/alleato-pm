@@ -25,6 +25,7 @@ export default function NewContractPage() {
     <PageShell
       variant="form"
       title="Create Prime Contract"
+      description="Enter contract details, financial markup, and SOV line items."
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
       backLabel="Back"
     >

@@ -46,6 +46,15 @@ describe("mapFormToInsert", () => {
       created_by: USER_ID,
     });
   });
+
+  it("adds the SC prefix when the form omits it", () => {
+    const result = mapFormToInsert(
+      { ...BASE_FORM, contractNumber: "001" },
+      PROJECT_ID,
+      USER_ID,
+    );
+    expect(result.contract_number).toBe("SC-001");
+  });
 });
 
 describe("mapRowToDisplay", () => {

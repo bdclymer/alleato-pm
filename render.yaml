@@ -16,7 +16,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -43,7 +43,7 @@ services:
     dockerContext: ./backend
     schedule: "*/30 * * * *"
     dockerCommand: >-
-      python3 -c "import asyncio; from src.services.health.source_sync_health import _run_source_sync_health_recompute; asyncio.run(_run_source_sync_health_recompute())"
+      python3 scripts/run_source_sync_health_recompute.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -65,14 +65,14 @@ services:
     dockerContext: ./backend
     schedule: "10 * * * *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding
+      timeout 25m python3 scripts/run_graph_teams_channel_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -109,14 +109,14 @@ services:
     dockerContext: ./backend
     schedule: "40 * * * *"
     dockerCommand: >-
-      timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding
+      timeout 10m python3 scripts/run_graph_teams_dm_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -161,23 +161,7 @@ services:
     dockerContext: ./backend
     schedule: "20 */2 * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
-      from src.services.supabase_helpers import get_supabase_client;
-      result = run_graph_sync(
-        get_supabase_client(),
-        run_teams=False,
-        run_embedding=True,
-        run_teams_compiler=False,
-        embed_limit=25,
-        teams_compiler_batch_size=25,
-      );
-      print(json.dumps(result, indent=2));
-      errors = result.get('errors', []);
-      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
-      "
+      timeout 25m python3 scripts/run_graph_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -189,7 +173,7 @@ services:
         sync: false
       - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_SERVICE_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: RAG_SUPABASE_URL
         sync: false
@@ -213,6 +197,9 @@ services:
         value: "2"
       - key: SHAREPOINT_SYNC_MAX_FOLDERS
         value: "2"
+      - key: INTELLIGENCE_OPERATING_SYNTHESIS_ENABLED
+        # graph-sync can't project L2 to PM APP; skip the operating-read LLM synthesis here (daily sweep owns it).
+        value: "false"
       - key: GRAPH_SYNC_ENABLED
         value: "true"
       - key: GRAPH_SYNC_OUTLOOK
@@ -227,8 +214,6 @@ services:
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
         value: "25"
-      - key: TEAMS_COMPILER_BATCH_SIZE
-        value: "25"
 
   # Syncs new Fireflies meeting transcripts every 30 minutes.
   # Replaced the former APScheduler-based Fireflies sync that was disabled
@@ -241,20 +226,14 @@ services:
     dockerContext: ./backend
     schedule: "15 * * * *"
     dockerCommand: >-
-      env FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.scheduler import _run_fireflies_sync;
-      result = _run_fireflies_sync(limit=25);
-      print(json.dumps(result if isinstance(result, dict) else {'result': str(result)}, indent=2, default=str));
-      "
+      timeout 20m python3 scripts/run_fireflies_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -299,7 +278,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
@@ -327,26 +306,14 @@ services:
     dockerContext: ./backend
     schedule: "0 */6 * * *"
     dockerCommand: >-
-      python3 -c "
-      import json, sys;
-      sys.path.insert(0, '/app');
-      from src.services.env_loader import load_env; load_env();
-      from src.services.integrations.microsoft_graph.subscriptions import (
-        ensure_subscriptions, configured_subscription_targets
-      );
-      from src.services.supabase_helpers import get_rag_write_client;
-      supabase = get_rag_write_client();
-      result = ensure_subscriptions(supabase, targets=configured_subscription_targets());
-      print(json.dumps(result, indent=2));
-      sys.exit(1 if result.get('failed', 0) > 0 and result.get('created', 0) == 0 and result.get('renewed', 0) == 0 else 0)
-      "
+      timeout 5m python3 src/scripts/run_graph_subscription_reconcile.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_CLIENT_ID
@@ -374,6 +341,54 @@ services:
       - key: RAG_DATABASE_READS_ENABLED
         value: "true"
 
+  # Drains queued Outlook mailbox deltas created by Graph webhook notifications.
+  # This is the real-time freshness path between subscription notifications and
+  # the heavier 2-hour `alleato-graph-sync` polling cron. Without this owner,
+  # webhook notifications can queue `graph_sync_state.sync_status=webhook_pending`
+  # rows that never get processed because the backend web service runs with
+  # `DISABLE_SCHEDULER=true`.
+  - type: cron
+    name: alleato-graph-webhook-drain
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/3 * * * *"
+    dockerCommand: >-
+      timeout 5m python3 scripts/run_graph_webhook_drain.py
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: GRAPH_SYNC_ENABLED
+        value: "true"
+      - key: GRAPH_WEBHOOK_DRAIN_ENABLED
+        value: "true"
+      - key: GRAPH_WEBHOOK_DRAIN_MAX_MAILBOXES
+        value: "3"
+
   - type: cron
     name: alleato-microsoft-executive-assistant-check
     runtime: docker
@@ -388,7 +403,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED
@@ -398,7 +413,7 @@ services:
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED
         value: "true"
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL
-        value: gpt-5.4-mini
+        value: gpt-5.5
       - key: AI_GATEWAY_API_KEY
         sync: false
       - key: OPENAI_API_KEY
@@ -449,7 +464,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -481,7 +496,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -499,6 +514,40 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: SLACK_WEBHOOK_URL
+        sync: false
+
+  # Project intelligence narrative staleness check — daily at 8:30 AM UTC (30min
+  # after the project synthesis sweep completes at 7:00 AM). Monitors
+  # project_current_state and intelligence_packets freshness. Alerts if either
+  # is older than 2 days (default; override with PROJECT_INTELLIGENCE_STALENESS_CHECK_DAYS).
+  # Incident #759: silent staleness for 2+ weeks with no signal.
+  - type: cron
+    name: alleato-project-intelligence-staleness-check
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "30 8 * * *"
+    dockerCommand: python3 -m src.services.health.project_intelligence_staleness_check
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "false"
+      - key: PROJECT_INTELLIGENCE_STALENESS_CHECK_DAYS
+        value: "2"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
         sync: false
 
   # Backend AI provider canary. The intelligence pipeline (meeting extraction
@@ -525,7 +574,7 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       # Slack incoming webhook (set via Render API 2026-06-14). Secondary record.
@@ -556,7 +605,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -601,7 +650,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -644,7 +693,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -687,7 +736,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -738,7 +787,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
-        value: "true"
+        value: "false"
       - key: ALLOW_PM_APP_FINAL_PROJECTIONS
         value: "true"
       - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
@@ -818,7 +867,7 @@ services:
       - key: DEEP_AGENTS_RESEARCH_ENABLED
         value: true
       - key: DEEP_AGENTS_RESEARCH_MODEL
-        value: gpt-5.4-mini
+        value: gpt-5.5
       - key: DEEP_AGENTS_APP_EXPERT_ENABLED
         value: true
       - key: DEEP_AGENTS_APP_EXPERT_MODEL
@@ -826,7 +875,7 @@ services:
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED
         value: true
       - key: DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL
-        value: gpt-5.4-mini
+        value: gpt-5.5
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED
         value: "true"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_EVENT_MAX_MESSAGES

@@ -1,5 +1,6 @@
 import {
   calculateGrandTotals,
+  groupByDivision,
 } from "./budget-grouping";
 import type { BudgetLineItem } from "@/types/budget";
 
@@ -54,5 +55,29 @@ describe("budget grouping totals", () => {
     ]);
 
     expect(totals.budgetModifications).toBe(-50);
+  });
+});
+
+describe("division group titles", () => {
+  it("uses the database division title carried on line items", () => {
+    const groups = groupByDivision([
+      makeLine({
+        id: "line-50",
+        costCode: "50-6500",
+        divisionTitle: "50 Engineering",
+      }),
+    ]);
+
+    expect(groups).toHaveLength(1);
+    // Leading division code is stripped — the group row renders the code itself.
+    expect(groups[0].description).toBe("Engineering");
+  });
+
+  it("falls back to the static CSI map when no database title exists", () => {
+    const groups = groupByDivision([
+      makeLine({ id: "line-03", costCode: "03-3000", divisionTitle: "" }),
+    ]);
+
+    expect(groups[0].description).toBe("Concrete");
   });
 });

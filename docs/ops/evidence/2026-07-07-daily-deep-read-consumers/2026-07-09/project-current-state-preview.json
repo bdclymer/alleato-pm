@@ -1,0 +1,682 @@
+{
+  "packetId": "80b311b5-7bf7-4e7a-922a-40048e4db172",
+  "shouldWrite": false,
+  "records": [
+    {
+      "project_id": 876,
+      "project_name": "Exol Morrisville",
+      "current_summary": "Exol Morrisville: This is the highest-risk project today because schedule credibility, permit timing, owner communications, submittal controls, and material-payment administration are all active at once. Steve’s feedback was that Exol questions are arriving too late or without enough drawing references, so the team was directed to use marked-up drawings and organized question tracking. The permit submittal remains the driving schedule blocker because owner and design changes are delaying submission, and permit submission and approval milestones still need to be inserted into the schedule logic. You set Wednesday as the deadline to finalize and submit a credible schedule to support contract signing the following week. Parker also said crews will be in the building “pretty solidly” over the next several weeks, but the three-week lookahead does not yet show the anticipated electrical contractor work. The submittal log is materially underbuilt for a twenty-five-million-dollar project, with only fourteen items and a need for numbering, workflow logic, and removal of irrelevant entries. Separately, Wargo Interiors exceeded its Kamco supplier credit limit, and the proposed workaround is a joint-check agreement where Alleato cuts material checks jointly to Kamco and Wargo.",
+      "rich": {
+        "healthStatus": "at_risk",
+        "activeRisks": [
+          {
+            "title": "Permit approval delays threaten completion"
+          },
+          {
+            "title": "Incomplete logs could drive procurement delays"
+          },
+          {
+            "title": "Unclear questions could frustrate client"
+          },
+          {
+            "title": "Contract scope structure remains unresolved"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Exol responses to office layout questions"
+          },
+          {
+            "title": "Symbotic-related answers from upcoming call"
+          },
+          {
+            "title": "Agreement applicability across all phases"
+          },
+          {
+            "title": "Design-build amendment approach for added scope"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Expand submittal and procurement logs"
+          },
+          {
+            "title": "Break schedule into detailed sub-activities"
+          },
+          {
+            "title": "Track permit milestones against January completion"
+          },
+          {
+            "title": "Align internally before client communications"
+          },
+          {
+            "title": "Resolve agreement structure and Exhibit B"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Revised office layout drawings and outstanding question lists were issued while crews continue onsite and contract edits remain under review."
+          }
+        ],
+        "financialRead": "No current budget variance was provided; project scale was referenced at $25M and overhead power routing avoids unnecessary underground work concerns.",
+        "scheduleRead": "Crews are expected to remain active over the next few weeks, but the schedule needs more detail and permit milestones to protect January completion.",
+        "fieldRead": "Crews are in the building, electrical contractor mobilization is being coordinated, and charging station power routing was clarified as overhead drops.",
+        "confidence": {
+          "overall": 0.86
+        }
+      }
+    },
+    {
+      "project_id": 31,
+      "project_name": "Uniqlo Phillipsburg NJ",
+      "current_summary": "Uniqlo Phillipsburg NJ: The fire alarm panel and Skypod change order is now priced at $35,100, with $10,530 for materials, $18,603 for labor, installation, and programming, and $5,967 for design, engineering, and permits. Materials include an NFW-50X panel, relays, monitoring modules, wire, mounting hardware, and miscellaneous devices. Kebba’s plan is to complete the work without disrupting current Skypod operations, but the work still requires one additional day after installation to disconnect the Skypod from the main panel and reconnect it to the new subpanel. Yusuke stated that disruption to Skypod operations is unacceptable and requested “option-B” if needed. Formal UQ approval is still required before Alleato proceeds, and Ahmed asked Alleato to confirm the deadline for UQ’s change-order response before cost and schedule are impacted. TPG, HNY, and AUE are not contracted to coordinate the new fire alarm panel, so Alleato, you, and Kebba remain tied to coordination of that scope.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Approval delay could affect cost or schedule"
+          },
+          {
+            "title": "Skypod operations cannot be disrupted"
+          },
+          {
+            "title": "Landlord is requesting fire alarm panel status"
+          },
+          {
+            "title": "Punch list documentation remains incomplete"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether UQ approves the $35,100 fire alarm scope"
+          },
+          {
+            "title": "When UQ must respond before cost or schedule impact"
+          },
+          {
+            "title": "Final timing for the one-day Skypod reconnection work"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "UQ leadership approval for the fire alarm change order"
+          },
+          {
+            "title": "Confirmation of change-order response deadline"
+          },
+          {
+            "title": "MEP and architectural punch list closeout with photos"
+          },
+          {
+            "title": "Skypod cutover sequencing with no operational disruption"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Alleato issued the updated $35,100 fire alarm panel change order with cost breakdown, general conditions, and a revised schedule for UQ review."
+          }
+        ],
+        "financialRead": "Pending change order totals $35,100, including $10,530 materials, $18,603 labor/installation/programming, and $5,967 design/engineering/permits.",
+        "scheduleRead": "Revised schedule was sent; one additional day is needed after installation to move Skypod from the main panel to the new subpanel.",
+        "fieldRead": "Installation plan is intended to avoid Skypod disruption, with remaining closeout photos needed for punch list items.",
+        "confidence": {
+          "overall": 0.87
+        }
+      }
+    },
+    {
+      "project_id": 1008,
+      "project_name": "Champaign Ace Addition",
+      "current_summary": "Champaign Ace Addition: The City of Champaign will reject or hold review unless every drawing sheet includes a minimum two-and-one-half-inch blank City Review Stamp space in the absolute top-right corner, with no text inside the box. Doug also stated that the current stamp-box location is not acceptable and that the full drawing set must be uploaded together as one complete file. Jerome committed to update the drawings and title block and distribute revised files to consultants the same day. Professional design firm registration and CR-number validation remain a gating approval item because the application was mailed after online payment and Illinois processing time is uncertain. The target construction start remains around August 1 or August 3, with weekly meetings through July 23 and bi-weekly meetings beginning July 30. Nick was assigned as the on-site superintendent and primary field contact as construction starts.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "City review cannot proceed cleanly until corrected drawings are uploaded"
+          },
+          {
+            "title": "Design firm registration may delay approvals"
+          },
+          {
+            "title": "Approval timing varies by jurisdiction"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether weekly meetings shift to bi-weekly after July 23"
+          },
+          {
+            "title": "Timing for city approval after corrected plan upload"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Revised title blocks with city-compliant stamp box"
+          },
+          {
+            "title": "Upload corrected plans for city review"
+          },
+          {
+            "title": "Design firm registration for CR number"
+          },
+          {
+            "title": "City approval processing"
+          },
+          {
+            "title": "Updated weekly meeting cadence"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Weekly coordination reported positive momentum, assigned Nick as on-site superintendent, and identified drawing title-block corrections needed for city review."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "Weekly meetings continue until July 23, then may move to bi-weekly; city review remains dependent on corrected drawings and registration.",
+        "fieldRead": "Nick was assigned as on-site superintendent and main field contact; construction communication structure is being clarified.",
+        "confidence": {
+          "overall": 0.78
+        }
+      }
+    },
+    {
+      "project_id": 1009,
+      "project_name": "Union Collective",
+      "current_summary": "Union Collective: The team chose to proceed with a forty-five-kilowatt solar system as a placeholder while designing the roof structure for possible future expansion to two hundred fifty kilowatts, which reduces redesign and schedule-rework risk. The roof strategy is to use or consider steel trusses capable of supporting the two hundred fifty-kilowatt solar load, so the team does not have to repeat structural calculations if the system expands. The building-integrated photovoltaic system was characterized as lower-risk than traditional solar arrays because it installs like standing-seam metal roofing, avoids roof penetrations, and is not expected to create typical wind-uplift or roof-damage issues. Planning documents should be submitted to Union City as one complete package rather than piecemeal to avoid processing delays. Private water and sewer connection locations remain a field-verification blocker because SD1 and 811 do not have exact data, and Andrew is waiting on Elias at VIOX to schedule the site visit before Patrick’s July 16 travel. The landscape plan currently carries about 3,000 square feet of vehicle-use-area landscape above the required amount, and the horse-style fence remains a code issue even though Nate clarified the requirement applies only in the front yard.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Landscape scope may exceed code minimum cost"
+          },
+          {
+            "title": "Fence waiver approval appears unlikely"
+          },
+          {
+            "title": "Roof layout errors could affect structural calculations"
+          },
+          {
+            "title": "Incomplete utility package could delay approvals"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether to remove excess VUA landscaping"
+          },
+          {
+            "title": "Whether to pursue horse-style fence waiver"
+          },
+          {
+            "title": "Finalize bidder-ready landscape plan"
+          },
+          {
+            "title": "Confirm solar design review inputs"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Landscape plan needs cost and code alignment"
+          },
+          {
+            "title": "Masonry estimate is needed for budget check"
+          },
+          {
+            "title": "Solar roof layout must be accurate"
+          },
+          {
+            "title": "Private utility connections need verification"
+          },
+          {
+            "title": "Complete utility documents need submission"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Preconstruction coordination is active, with landscape compliance revisions, early masonry pricing, storefront bid updates, solar/roof design coordination, and utility package planning underway."
+          }
+        ],
+        "financialRead": "Early subcontractor pricing is being gathered to test budget alignment; storefront proposal increased due Low-E glass and longer pull handles, and value engineering was requested from masonry bidders.",
+        "scheduleRead": "Final construction documents are still several weeks away; landscape plan was intended for bidder distribution after near-term review.",
+        "fieldRead": "OAC notes call for site visits to verify private water and sewer connections; solar roof system is being coordinated with structural and electrical review.",
+        "confidence": {
+          "overall": 0.76
+        }
+      }
+    },
+    {
+      "project_id": 1031,
+      "project_name": "Ulta Greenwood",
+      "current_summary": "Ulta Greenwood: Greenwood’s Building Commissioner clarified that the third-party documentation request was for bar joists supporting conveyors that had to be reinforced. The structural cover sheet requires owner-provided bolt inspection, and Bill clarified with professional engineer Jacob Garzini that the special inspection is for column support anchors only. Andrew is already uploading the roof reinforcement third-party inspection to the permit portal. The remaining live commitment is for Bill to arrange the third-party column-support-anchor inspection “soon”.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Permit closeout could be delayed by missing inspection documentation"
+          },
+          {
+            "title": "Inspection scope confusion could create rework"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Confirm if any additional conveyor inspection is required"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Column support anchor inspection needs scheduling"
+          },
+          {
+            "title": "Roof reinforcement inspection upload needs completion"
+          },
+          {
+            "title": "Bar joist inspection documentation must satisfy permit requirements"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Inspection scope was clarified after rough inspection, with third-party documentation needed for reinforced conveyor-support elements and column support anchors."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "Third-party inspection for column support anchors is to be arranged soon; no specific milestone date was provided.",
+        "fieldRead": "Building commissioner clarified inspection expectations for bar joists, reinforced roof support, and column support anchors related to conveyor supports.",
+        "confidence": {
+          "overall": 0.7
+        }
+      }
+    },
+    {
+      "project_id": 754,
+      "project_name": "Goodwill Allisonville Rd IN",
+      "current_summary": "Goodwill Allisonville Rd IN: Goodwill Allisonville Rd IN is nearing closeout, with substantial completion set for August 7. Request for information number 16 is open on the loading dock joists, and Nick Jepson requested quick turnaround because the project is nearing completion. The loading dock joist response could affect remaining construction, closeout, or final progress if the design or engineering team does not respond promptly. The door hardware scope is now defined for CIH pricing: Door 01 is a retrofit with a new exit-only Detex V40EB or V40XEB with integrated local alarm, and Door 02 is a full replacement with the same exit-only alarm device approach. The owner direction is not to perform a like-for-like replacement and not to include exterior trim. Kimley-Horn issued control points and survey benchmark information, but Forefront flagged that the CAD file showed curb elevations without the actual curb geometry shown in the PDF, which may mean a missing reference file.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Late RFI could affect completion"
+          },
+          {
+            "title": "Closeout documents gate retainage release"
+          },
+          {
+            "title": "Survey/CAD mismatch could cause field layout errors"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Confirm door-by-door CIH scope for quote"
+          },
+          {
+            "title": "Respond to RFI #16 on loading dock joists"
+          },
+          {
+            "title": "Confirm updated CAD file resolves curb geometry issue"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Loading dock joist RFI needs quick response"
+          },
+          {
+            "title": "HVAC closeout documents due July 24"
+          },
+          {
+            "title": "CIH door scope needs pricing"
+          },
+          {
+            "title": "Updated CAD file needs field confirmation"
+          },
+          {
+            "title": "Progress billing status needs follow-up"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Project is moving into closeout while several late-stage coordination items remain open, including loading dock joist RFI response, CAD control-point validation, door hardware pricing, and HVAC closeout documents."
+          }
+        ],
+        "financialRead": "Final retainage for Performance Mechanical is tied to accepted closeout documents; subcontractor also asked about progress billing status. An invoice for Goodwill Allisonville Rd IN was received.",
+        "scheduleRead": "Project is nearing completion with substantial completion set for August 7, 2026; RFI #16 was requested on a quick turnaround.",
+        "fieldRead": "Survey control points and benchmark data were issued, an updated CAD file was sent after missing curb geometry was identified, and a crew is planned for site follow-up.",
+        "confidence": {
+          "overall": 0.82
+        }
+      }
+    },
+    {
+      "project_id": 879,
+      "project_name": "McLane Jazz - UT",
+      "current_summary": "McLane Jazz - UT: Exotec and Alleato reached agreement that the sprinkler vertical support will mount to the rear rack uprights, not the front uprights. Exotec confirmed the approved solution uses its standard vertical support on the rear rack uprights. The front-upright option was rejected because robot-arm clearance makes the front upright holes unreachable. Exotec also flagged that the upright holes are nine millimeters, making one-half-inch bolts incompatible. The structural constraint remains that the attachment must load the uprights in vertical shear only and must not create bending. Kebba stated the design had been reviewed with the designer and approved by the JHA, but he also noted the need to confirm the extra weight with the professional-engineer-stamped company.",
+      "rich": {
+        "healthStatus": "on_track",
+        "activeRisks": [
+          {
+            "title": "Front upright attachment conflicts with robot clearance"
+          },
+          {
+            "title": "1/2-inch bolts are incompatible with 9 mm holes"
+          },
+          {
+            "title": "Improper elevation could create bending loads"
+          }
+        ],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Use rear uprights only"
+          },
+          {
+            "title": "Use Exotec-provided standard support"
+          },
+          {
+            "title": "Avoid incompatible bolt sizing"
+          },
+          {
+            "title": "Keep support aligned to prevent bending"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "The vertical sprinkler pipe attachment issue appears resolved, with Exotec confirming rear-rack-upright mounting using the standard support and agreed orientation."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "No schedule impact was stated; final confirmation supports proceeding with installation.",
+        "fieldRead": "Installation direction is to mount vertical sprinkler support 040045-A on rear rack uprights in the approved orientation using Exotec brackets.",
+        "confidence": {
+          "overall": 0.86
+        }
+      }
+    },
+    {
+      "project_id": 1067,
+      "project_name": "Playmakers",
+      "current_summary": "Playmakers: Alleato sent Orion Electric the Playmakers subcontract for signature and requested a certificate of insurance naming Alleato LLC as additional insured plus a W-9. Alleato told Orion the team expected to have an approved permit later that week. Dale asked where Alleato sourced the FRP textured restroom wall panels and said he may buy more to wrap the outside of the bar wall himself to save money. Nick responded with the supplier Alleato used, though the vendor name is not visible in the excerpt. Dale self-performing added FRP scope could affect finish responsibility, warranty control, and the scope boundary with Alleato.",
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Permit approval is still pending"
+          },
+          {
+            "title": "Electrical subcontract compliance documents are outstanding"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether Dale self-installs additional FRP"
+          },
+          {
+            "title": "Whether additional FRP is added at the bar wall"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Orion Electric signed subcontract"
+          },
+          {
+            "title": "Orion Electric COI and W-9"
+          },
+          {
+            "title": "Permit approval expected later in the week"
+          },
+          {
+            "title": "Decision on additional FRP purchase"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Orion Electric received the subcontract for signature, and the FRP panel supplier information was provided for potential additional bar wall material."
+          }
+        ],
+        "financialRead": "No project cost figures provided; Dale is considering self-installing additional FRP to save money.",
+        "scheduleRead": "Team expects an approved permit later in the week, but no confirmed approval date is provided.",
+        "fieldRead": "Interior finish material coordination is active; no field productivity issues are reported.",
+        "confidence": {
+          "overall": 0.49
+        }
+      }
+    },
+    {
+      "project_id": 877,
+      "project_name": "Goodwill Brookville Road",
+      "current_summary": "Goodwill Brookville Road: Tony Courtney sent JT P Excavation the Goodwill Brookville Road subcontract and requested the signed agreement, W-9, current certificate of insurance, and billing contact information. JT P Excavation was asked to schedule its work to begin on or before August 1 at 7705 Brookville Road in Indianapolis. Merritt Contracting sent a portion of its requested documents, and Patrick uploaded the received items to JobPlanner and submitted them to the architect for approval. Merritt still owes additional items, and Patrick committed to upload and submit those once received. Jesse directed Merritt to copy Tony and Douglas Franklin on future Goodwill Brookville Road emails because Tony and Doug will manage the project moving forward.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Permit-system access issue could slow permit coordination"
+          },
+          {
+            "title": "Incomplete submittal package remains pending"
+          },
+          {
+            "title": "Excavation start depends on executed subcontract and documents"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether Accela access issue is resolved"
+          },
+          {
+            "title": "Whether storefront shop drawings are approved"
+          },
+          {
+            "title": "Whether excavation can start by August 1"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Architect approval of uploaded submittals"
+          },
+          {
+            "title": "Remaining Merritt items for upload and approval"
+          },
+          {
+            "title": "Storefront shop drawing review"
+          },
+          {
+            "title": "JT P Excavation signed subcontract and compliance documents"
+          },
+          {
+            "title": "Accela permit access troubleshooting"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Submittals from Merritt were uploaded to JobPlanner and sent to the architect, storefront shop drawings were submitted for review, and the excavation subcontract was issued."
+          }
+        ],
+        "financialRead": "No project cost values provided; excavation subcontract administration is in progress.",
+        "scheduleRead": "JT P Excavation was asked to schedule work to begin on or before August 1, 2026; submittal approvals remain pending.",
+        "fieldRead": "Project appears in submittal, subcontract, and permit-access coordination; no field production status is reported.",
+        "confidence": {
+          "overall": 0.72
+        }
+      }
+    },
+    {
+      "project_id": 865,
+      "project_name": "Goodwill Canton, IL",
+      "current_summary": "Goodwill Canton, IL: Goodwill Canton, IL remains active in the Goodwill transition update, along with Goodwill Galesburg. GW Washington is expected to finish its original scope by July 21, with additional work to follow for electrical panel relocations. Colin is scheduled to travel to Illinois at the end of the week of July 20 and is expected to be ready to start on July 27. Phase II Goodwill projects being re-budgeted at Goodwill’s request are Goodwill Peru, Goodwill Morris, Goodwill Perkins, and Goodwill University–Peoria. La’Kisha recommended giving Chad a heads-up on the transition and said she will meet with Colin and Victor so Goodwill project management continues smoothly.",
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Maintain continuity during GW team transition"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Project was identified as an active GW project during transition planning."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.25
+        }
+      }
+    },
+    {
+      "project_id": 1096,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [
+          {
+            "title": "Whether to explore family office capital conversation"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Review CW waste services statement"
+          },
+          {
+            "title": "Request invoice copies if needed"
+          },
+          {
+            "title": "Decide whether to respond to capital raise outreach"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Sources show routine accounting activity and an unsolicited capital raise outreach, but no construction project operating status."
+          }
+        ],
+        "financialRead": "CW sent a current waste services statement; a third party proposed discussing a potential $2M–$35M capital raise.",
+        "scheduleRead": "Capital raise outreach referenced a 60-day investor alignment window.",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.45
+        }
+      }
+    },
+    {
+      "project_id": 178,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Permit issuance depends on contractor registration documents"
+          },
+          {
+            "title": "Unresolved sprinkler layout comments could delay approval"
+          },
+          {
+            "title": "Loose material quantities are not yet confirmed"
+          },
+          {
+            "title": "Grooved coupling leakage responsibility remains unclear"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether to revise to one vertical pipe per bay"
+          },
+          {
+            "title": "Final pipe and sprinkler head sizes"
+          },
+          {
+            "title": "Final Phase 1 rack installation and laydown plan"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Mack Plumbing COI naming the Village as additional insured"
+          },
+          {
+            "title": "Mack Plumbing state license copy"
+          },
+          {
+            "title": "Loose-material totals and delivery inventory"
+          },
+          {
+            "title": "Hy-Tek rack-install sequencing markup"
+          },
+          {
+            "title": "Sprinkler layout revisions for Exotec requirements"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Permit payment was received, Mack Plumbing registration and insurance documentation are being coordinated, and Exotec raised sprinkler design compliance comments."
+          }
+        ],
+        "financialRead": "Sprinkler permit fee is $9,620.20 and Mack Plumbing registration fee is $100; payment receipt was confirmed for the permit fee.",
+        "scheduleRead": "Phase 1 rack sequencing and laydown review are pending; permit processing still depends on documentation and final review.",
+        "fieldRead": "Work appears in pre-install coordination, with material logistics and rack-mounted sprinkler layout not yet finalized.",
+        "confidence": {
+          "overall": 0.8
+        }
+      }
+    },
+    {
+      "project_id": 34,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Application status cannot be judged from available notes"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Response to township comments"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Review missing township planning notes"
+          },
+          {
+            "title": "Address site plan application feedback"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Township planning notes on the site plan were forwarded to the project team, but the substantive comments were not included."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "An application deadline of June 29 was referenced, but current timing status is not shown.",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.28
+        }
+      }
+    },
+    {
+      "project_id": 38,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [],
+        "whatChanged": [
+          {
+            "title": "The owner call was replaced by an onsite meeting with the owner team."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "",
+        "fieldRead": "Alleato planned to meet the owner team onsite at 1:00 central.",
+        "confidence": {
+          "overall": 0.32
+        }
+      }
+    }
+  ]
+}

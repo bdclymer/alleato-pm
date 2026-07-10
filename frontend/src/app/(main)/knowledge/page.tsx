@@ -1,5 +1,5 @@
-import { KnowledgeBasePage } from "@/features/knowledge/knowledge-base-page";
+import { KnowledgeHomePage } from "@/features/knowledge/knowledge-home-page";
 
 export default function KnowledgePage() {
-  return <KnowledgeBasePage />;
+  return <KnowledgeHomePage />;
 }

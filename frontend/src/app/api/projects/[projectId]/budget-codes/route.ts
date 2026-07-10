@@ -71,6 +71,15 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/budget-codes#GET",
+        message: "Authentication required.",
+      });
+    }
 
     // Fetch project_budget_codes for this project (the chart of accounts)
     const { data: projectBudgetCodesData, error: projectBudgetCodesError } =

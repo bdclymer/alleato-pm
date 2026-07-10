@@ -52,6 +52,7 @@ except ImportError:
 
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from src.services.ingestion.fireflies_reprocessing import reprocess_existing_fireflies_document
 from src.services.pipeline import run_full_pipeline
 from src.services.url_resource_ingestion import UrlIngestionError, UrlResourceIngestionService
 from src.api.admin_endpoints import require_admin_api_key
@@ -121,6 +122,19 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         logger.info("[Pipeline] acquired slot metadata_id=%s", metadata_id)
         run_full_pipeline(metadata_id)
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
+
+
+def _run_fireflies_reprocess_limited(metadata_id: str) -> None:
+    """Run Fireflies-native reprocessing with the shared pipeline semaphore."""
+    logger.info(
+        "[FirefliesReprocess] waiting for slot (%s max) metadata_id=%s",
+        _PIPELINE_MAX_CONCURRENCY,
+        metadata_id,
+    )
+    with _pipeline_semaphore:
+        logger.info("[FirefliesReprocess] acquired slot metadata_id=%s", metadata_id)
+        reprocess_existing_fireflies_document(metadata_id)
+        logger.info("[FirefliesReprocess] released slot metadata_id=%s", metadata_id)
 
 
 app = FastAPI(
@@ -361,17 +375,65 @@ async def health_check() -> Dict[str, Any]:
     except Exception:  # pragma: no cover - never let a probe break /health
         deep_agent_storage = {"durable": None, "roots": {}}
 
+    # App-DB connectivity + DATABASE_URL host-parity. Surfaced here (always HTTP
+    # 200 — this is Render's liveness healthCheckPath, so a down app DB must NOT
+    # flap the web container) so a human/monitor sees the degradation. The 503
+    # readiness signal lives on the separate /health/ready endpoint.
+    app_db: Dict[str, Any] = {"reachable": None}
+    database_url_host: Dict[str, Any] = {}
+    try:
+        from src.services.agents.alleato_ai_tools.db_health import (
+            database_url_host_status,
+            probe_app_db,
+        )
+
+        probe = probe_app_db()
+        app_db = probe.as_dict()
+        database_url_host = database_url_host_status().as_dict()
+    except Exception as exc:  # pragma: no cover - never let a probe break /health
+        app_db = {"reachable": None, "error": str(exc)[:200]}
+
+    degraded = app_db.get("reachable") is False or database_url_host.get("ok") is False
+
     return {
-        "status": "healthy",
+        "status": "degraded" if degraded else "healthy",
         "ai_provider_path": get_ai_provider_path(),
         "ai_gateway_configured": ai_gateway_configured(),
         "ai_gateway_required": ai_gateway_required(),
         "openai_configured": openai_configured(),
         "embedding_provider_configured": embedding_provider_configured(),
         "supabase_service_configured": supabase_service_configured,
+        "app_db": app_db,
+        "database_url_host": database_url_host,
         "deep_agent_storage": deep_agent_storage,
         "timestamp": datetime.now().isoformat()
     }
+
+
+@app.get("/health/ready", tags=["System"], summary="Readiness check (app DB reachable)")
+async def readiness_check() -> JSONResponse:
+    """Readiness probe: 200 only when the app database is reachable, else 503.
+
+    Deliberately NOT wired to Render's `healthCheckPath` (that points at
+    `/health`, which stays 200 on a DB outage so the web container is not
+    restarted for an infra/config problem it cannot fix). Monitors and alerting
+    hit this endpoint to detect the "database unreachable" degraded state.
+    """
+    from src.services.agents.alleato_ai_tools.db_health import (
+        database_url_host_status,
+        probe_app_db,
+    )
+
+    probe = probe_app_db()
+    parity = database_url_host_status()
+    ready = probe.reachable and parity.ok
+    payload = {
+        "ready": ready,
+        "app_db": probe.as_dict(),
+        "database_url_host": parity.as_dict(),
+        "timestamp": datetime.now().isoformat(),
+    }
+    return JSONResponse(status_code=200 if ready else 503, content=payload)
 
 
 @app.get("/api/mcp/status", tags=["System"], summary="Hosted MCP status")
@@ -1299,6 +1361,25 @@ async def pipeline_process_endpoint(
 
 
 @app.post(
+    "/api/ingest/fireflies/process",
+    tags=["Ingestion"],
+    summary="Reprocess an existing Fireflies document through the canonical Fireflies-native path",
+)
+async def fireflies_process_existing_endpoint(
+    payload: PipelineProcessRequest,
+    background_tasks: BackgroundTasks,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Queue Fireflies-native reprocessing for an existing Fireflies meeting row."""
+    background_tasks.add_task(_run_fireflies_reprocess_limited, payload.metadataId)
+    return {
+        "status": "queued",
+        "metadataId": payload.metadataId,
+        "owner": "fireflies_native_reprocess",
+    }
+
+
+@app.post(
     "/api/intelligence/project-synthesize",
     tags=["Intelligence"],
     summary="Synthesize project communications intelligence (emails + Teams)",
@@ -1565,7 +1646,7 @@ async def run_deep_agent_research(
 
     response = run_research_agent(
         request,
-        model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.4-mini"),
+        model=os.getenv("DEEP_AGENTS_RESEARCH_MODEL", "openai:gpt-5.5"),
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
@@ -1595,7 +1676,7 @@ async def run_deep_agent_microsoft_executive_assistant(
         request,
         model=os.getenv(
             "DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL",
-            "openai:gpt-5.4-mini",
+            "openai:gpt-5.5",
         ),
     )
     if response.mode == "unavailable":
@@ -1604,13 +1685,107 @@ async def run_deep_agent_microsoft_executive_assistant(
 
 
 # In-process cache for the source-sync health endpoint.
-# The handler performs 10+ Supabase queries across two projects (MAIN + RAG)
-# and can take 20-30 s on busy instances — far exceeding the Next.js 25 s timeout
-# when retried. Caching for 60 s keeps the UI responsive without stale risk for
-# a status-monitoring endpoint whose meaningful resolution is minutes, not seconds.
+#
+# The handler performs 12+ Supabase queries across two projects (MAIN + RAG),
+# several fetching thousands of rows, and takes 16-22 s on a cold/uncached run —
+# close to (and sometimes past) the Next.js route timeout, which then drops the
+# /rag Source Sync panel to "unavailable" with an empty pipeline.
+#
+# We therefore serve from an in-process cache with **stale-while-revalidate**
+# semantics:
+#   * a fresh entry (younger than the fresh TTL) is returned directly;
+#   * a stale entry is returned IMMEDIATELY while a single background thread
+#     recomputes — so the slow query never sits on the request path once the
+#     cache has been populated even once;
+#   * only a truly cold cache (a fresh process with no entry yet) computes
+#     synchronously, and startup pre-warm (see ``prewarm_source_sync_health``)
+#     makes even that rare.
+# This keeps warm hits ~0.2 s and reliable, instead of one request every TTL
+# paying the full 16-22 s and risking the upstream timeout.
 _SOURCE_SYNC_HEALTH_CACHE: Tuple[float, Dict[str, Any]] | None = None
-_SOURCE_SYNC_HEALTH_CACHE_TTL_S = 60.0
+# A cached entry younger than this is served without triggering a refresh.
+_SOURCE_SYNC_HEALTH_FRESH_TTL_S = 90.0
+# Serializes the cold (no-cache) synchronous compute so concurrent first-hits
+# don't all run the full query.
 _SOURCE_SYNC_HEALTH_CACHE_LOCK = threading.Lock()
+# Dedupes background refreshes to a single in-flight runner at a time.
+_SOURCE_SYNC_HEALTH_REFRESH_LOCK = threading.Lock()
+_SOURCE_SYNC_HEALTH_REFRESHING = False
+
+
+def _compute_source_sync_health_payload() -> Dict[str, Any]:
+    """Run the full (slow) source-sync health query and store it in the cache."""
+    global _SOURCE_SYNC_HEALTH_CACHE  # noqa: PLW0603
+    from src.services.health.source_sync_health import get_source_sync_health
+    from src.services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    payload = get_source_sync_health(client)
+    _SOURCE_SYNC_HEALTH_CACHE = (time.monotonic(), payload)
+    return payload
+
+
+def _source_sync_health_cache_response(
+    cached: Tuple[float, Dict[str, Any]],
+) -> Dict[str, Any]:
+    cached_at, cached_payload = cached
+    age = time.monotonic() - cached_at
+    return {
+        **cached_payload,
+        "cachedAt": cached_payload.get("generatedAt"),
+        "cacheAgeSeconds": round(age, 1),
+    }
+
+
+def _refresh_source_sync_health_in_background() -> None:
+    """Recompute the health payload off the request path, deduped to one runner."""
+    global _SOURCE_SYNC_HEALTH_REFRESHING  # noqa: PLW0603
+    with _SOURCE_SYNC_HEALTH_REFRESH_LOCK:
+        if _SOURCE_SYNC_HEALTH_REFRESHING:
+            return
+        _SOURCE_SYNC_HEALTH_REFRESHING = True
+
+    def _run() -> None:
+        global _SOURCE_SYNC_HEALTH_REFRESHING  # noqa: PLW0603
+        try:
+            _compute_source_sync_health_payload()
+        except Exception as exc:  # pragma: no cover - best-effort background work
+            logger.warning(
+                "[SourceSyncHealthAPI] background refresh failed: %s", exc, exc_info=True
+            )
+        finally:
+            with _SOURCE_SYNC_HEALTH_REFRESH_LOCK:
+                _SOURCE_SYNC_HEALTH_REFRESHING = False
+
+    threading.Thread(
+        target=_run, name="source-sync-health-refresh", daemon=True
+    ).start()
+
+
+def prewarm_source_sync_health() -> None:
+    """Populate the cache at startup so the first /rag load never blocks.
+
+    Runs the compute on a daemon thread; failures are non-fatal (the endpoint
+    falls back to a synchronous cold compute on first request).
+    """
+
+    def _run() -> None:
+        # Hold the cache lock so an early request that misses the cache waits for
+        # this warmup and reuses its result instead of computing in parallel.
+        with _SOURCE_SYNC_HEALTH_CACHE_LOCK:
+            if _SOURCE_SYNC_HEALTH_CACHE is not None:
+                return
+            try:
+                _compute_source_sync_health_payload()
+                logger.info("[SourceSyncHealthAPI] cache pre-warmed at startup")
+            except Exception as exc:  # pragma: no cover - best-effort warmup
+                logger.warning(
+                    "[SourceSyncHealthAPI] startup pre-warm failed (non-critical): %s", exc
+                )
+
+    threading.Thread(
+        target=_run, name="source-sync-health-prewarm", daemon=True
+    ).start()
 
 
 @app.get("/api/health/source-sync", tags=["Health"], summary="Source sync and intelligence health")
@@ -1619,38 +1794,32 @@ async def get_source_sync_health_status(
 ) -> Dict[str, Any]:
     """Return sync freshness, vectorization, task extraction, compiler, and packet health.
 
-    Results are cached in-process for up to 60 seconds to avoid repeated full-table
-    scans across both Supabase projects on every poll interval. The ``cachedAt``
-    field in the response shows the age of the cached result.
+    Served from an in-process cache with stale-while-revalidate semantics: a
+    fresh entry is returned directly, a stale entry is returned immediately while
+    a background thread recomputes, and only a truly cold cache computes
+    synchronously. The ``cacheAgeSeconds`` field reports the age of the served
+    result so callers can see how stale it is.
     """
-    global _SOURCE_SYNC_HEALTH_CACHE  # noqa: PLW0603
-
-    # Fast path: return cached result if still fresh (lock-free read is safe here
-    # because Python GIL guarantees atomic reference reads on CPython).
+    # Fast path: a cached entry exists. Lock-free read is safe — CPython
+    # guarantees atomic reference reads, and the worst case is a redundant
+    # background refresh kick (itself deduped).
     cached = _SOURCE_SYNC_HEALTH_CACHE
     if cached is not None:
-        cached_at, cached_payload = cached
-        age = time.monotonic() - cached_at
-        if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
-            return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+        age = time.monotonic() - cached[0]
+        if age >= _SOURCE_SYNC_HEALTH_FRESH_TTL_S:
+            # Stale: serve now, recompute off the request path.
+            _refresh_source_sync_health_in_background()
+        return _source_sync_health_cache_response(cached)
 
+    # Cold cache (fresh process / pre-warm not finished): compute synchronously,
+    # but only once — concurrent first-hits queue on the lock and reuse the result.
     with _SOURCE_SYNC_HEALTH_CACHE_LOCK:
-        # Re-check under lock — another thread may have refreshed while we waited.
         cached = _SOURCE_SYNC_HEALTH_CACHE
         if cached is not None:
-            cached_at, cached_payload = cached
-            age = time.monotonic() - cached_at
-            if age < _SOURCE_SYNC_HEALTH_CACHE_TTL_S:
-                return {**cached_payload, "cachedAt": cached_payload.get("generatedAt"), "cacheAgeSeconds": round(age, 1)}
+            return _source_sync_health_cache_response(cached)
 
         try:
-            from src.services.health.source_sync_health import get_source_sync_health
-            from src.services.supabase_helpers import get_supabase_client
-
-            client = get_supabase_client()
-            payload = get_source_sync_health(client)
-            _SOURCE_SYNC_HEALTH_CACHE = (time.monotonic(), payload)
-            return payload
+            return _compute_source_sync_health_payload()
         except Exception as exc:
             logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
             raise HTTPException(
@@ -1715,9 +1884,49 @@ async def start_scheduler():
     except Exception as e:
         logger.warning("Scheduler init failed (non-critical): %s", e)
 
+    # Pre-warm the source-sync health cache so the first /rag load is served from
+    # cache (~0.2 s) instead of paying the cold 16-22 s recompute on the request
+    # path. Runs on a daemon thread; failures are non-fatal.
+    try:
+        prewarm_source_sync_health()
+    except Exception as e:  # pragma: no cover - warmup is best-effort
+        logger.warning("Source-sync health pre-warm kickoff failed (non-critical): %s", e)
+
     if alleato_system_mcp_enabled():
         app.state.alleato_system_mcp_lifespan = create_alleato_system_mcp_lifespan()
         await app.state.alleato_system_mcp_lifespan.__aenter__()
+
+
+@app.on_event("startup")
+async def check_database_url_host_parity() -> None:
+    """Flag at boot if DATABASE_URL drifted off the known-good IPv4 pooler host.
+
+    The 2026-07-09 outage was exactly this: the Render env pointed DATABASE_URL
+    at the Supabase IPv6-only direct host and every AI DB tool silently failed.
+    Catch a repeat on deploy instead of discovering it via a wrong AI answer.
+    Never crashes the app — a bad host is a config problem to surface, not a
+    reason to refuse to boot.
+    """
+    try:
+        from src.services.agents.alleato_ai_tools.db_health import (
+            database_url_host_status,
+            emit_db_connectivity_alert,
+            probe_app_db,
+        )
+
+        parity = database_url_host_status()
+        if parity.ok:
+            logger.info("[db-parity] DATABASE_URL host OK (pooler): %s", parity.host)
+            return
+
+        logger.error("[db-parity] DATABASE_URL host check FAILED: %s", parity.detail)
+        # Only page Sentry if the DB is actually unreachable — an unrecognized
+        # host that still connects is worth a log but not an alert storm.
+        probe = probe_app_db()
+        if not probe.reachable:
+            emit_db_connectivity_alert(source="startup_parity", probe=probe)
+    except Exception as exc:  # pragma: no cover - probe must never break startup
+        logger.warning("[db-parity] host parity check skipped: %s", exc)
 
 
 @app.on_event("startup")

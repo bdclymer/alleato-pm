@@ -2,12 +2,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { forwardRef } from "react";
 
 const detailGridClassMap = {
   default:
-    "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(340px,420px)] gap-x-12 gap-y-10",
+    "grid grid-cols-1 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(340px,420px)] lg:gap-x-12",
   compact:
-    "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,380px)] gap-x-10 gap-y-8",
+    "grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(320px,380px)] lg:gap-x-10",
 } as const;
 
 export interface ContentSectionStackProps {
@@ -19,7 +20,7 @@ export function ContentSectionStack({
   children,
   className,
 }: ContentSectionStackProps) {
-  return <div className={cn("space-y-10", className)}>{children}</div>;
+  return <div className={cn("space-y-12", className)}>{children}</div>;
 }
 
 export interface DetailThreeColumnGridProps {
@@ -54,13 +55,13 @@ export function DetailPanel({ children, className }: DetailPanelProps) {
 // ---------------------------------------------------------------------------
 // SummaryPanel — the tinted "summary" container for detail-page sidebars
 // (financial summary, totals, rollups). Owns the very-light-gray surface
-// (#FBFBFB via --surface-summary), rounding, and padding so the background is
+// (#F9F9F9 via --surface-summary), rounding, and padding so the background is
 // defined in ONE place and can never drift. Use this instead of
 // `<DetailPanel className="rounded-lg bg-muted p-6">` for any summary block.
 // ---------------------------------------------------------------------------
 export function SummaryPanel({ children, className }: DetailPanelProps) {
   return (
-    <div className={cn("rounded-lg bg-surface-summary p-6", className)}>
+    <div className={cn("summary-panel rounded-lg bg-surface-summary", className)}>
       {children}
     </div>
   );
@@ -93,26 +94,29 @@ export function SectionRuleHeading({
 // Forces variant="outline" size="sm" so section CTAs always look distinct
 // from heading text. Never pass a raw <Button variant="ghost"> as an action.
 // ---------------------------------------------------------------------------
-export interface SectionActionProps {
+export interface SectionActionProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  onClick?: () => void;
   disabled?: boolean;
-  className?: string;
 }
 
-export function SectionAction({ children, onClick, disabled, className }: SectionActionProps) {
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn("h-7 text-xs", className)}
-    >
-      {children}
-    </Button>
-  );
-}
+export const SectionAction = forwardRef<HTMLButtonElement, SectionActionProps>(
+  ({ children, disabled, className, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        className={cn("h-9 text-xs sm:h-7", className)}
+        {...props}
+      >
+        {children}
+      </Button>
+    );
+  },
+);
+
+SectionAction.displayName = "SectionAction";
 
 export interface LabelValueRowProps {
   label: string;

@@ -104,6 +104,7 @@ export interface Commitment {
   executed_date: string | null;
   description: string | null;
   created_at: string;
+  created_by_name?: string | null;
   updated_at: string;
   original_amount: number;
   approved_change_orders: number;
@@ -114,6 +115,7 @@ export interface Commitment {
   erp_status: string | null;
   ssov_status: string | null;
   // Phase 5 enhancements - Change order aggregations
+  change_order_count?: number;
   pending_change_orders: number;
   draft_change_orders: number;
   // Phase 5 enhancements - Invoice/payment aggregations

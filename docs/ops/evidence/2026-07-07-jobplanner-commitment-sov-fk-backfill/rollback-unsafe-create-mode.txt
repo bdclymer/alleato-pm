@@ -1,0 +1,23 @@
+BEGIN
+          metric          | value
+--------------------------+-------
+ before_po_fk_to_new_pbc  | 5
+ before_sub_fk_to_new_pbc | 33
+ before_created_pbc       | 26
+(3 rows)
+
+ALTER TABLE
+ALTER TABLE
+UPDATE 5
+UPDATE 33
+ALTER TABLE
+ALTER TABLE
+DELETE 26
+         metric          | value
+-------------------------+-------
+ after_po_fk_to_new_pbc  | 0
+ after_sub_fk_to_new_pbc | 0
+ after_created_pbc       | 0
+(3 rows)
+
+COMMIT

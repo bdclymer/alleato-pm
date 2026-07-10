@@ -5,6 +5,47 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
+
+/**
+ * `document_metadata.tags` is a TEXT column, but every downstream consumer
+ * (KnowledgeArticle.tags, the render badges, the edit form's `.join`) treats
+ * it as `string[]`. A raw string slips past `tags.length > 0` and then
+ * `tags.map`/`tags.join` throws at runtime. Normalize at the API boundary so
+ * the `string[] | null` contract is true for every caller.
+ */
+export function normalizeTags(raw: unknown): string[] | null {
+  if (raw == null) return null;
+  if (Array.isArray(raw)) {
+    const cleaned = raw.map((t) => String(t).trim()).filter(Boolean);
+    return cleaned.length > 0 ? cleaned : null;
+  }
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  // Stored as a JSON array string, e.g. '["a","b"]'.
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.map((t) => String(t).trim()).filter(Boolean);
+        return cleaned.length > 0 ? cleaned : null;
+      }
+    } catch (error) {
+      logger.warn({
+        msg: "knowledge.tags_json_parse_failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // fall through to delimiter split
+    }
+  }
+  // Comma- or semicolon-separated text.
+  const cleaned = trimmed
+    .split(/[,;]/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+  return cleaned.length > 0 ? cleaned : null;
+}
+
 async function assertKnowledgeAdmin(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
@@ -100,7 +141,12 @@ export const GET = withApiGuardrails(
       });
     }
 
-    return NextResponse.json({ data: data ?? [] });
+    const normalized = (data ?? []).map((row) => ({
+      ...row,
+      tags: normalizeTags((row as { tags?: unknown }).tags),
+    }));
+
+    return NextResponse.json({ data: normalized });
   },
 );
 

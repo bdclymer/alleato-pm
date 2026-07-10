@@ -28,7 +28,6 @@ const AI_NOTIFICATION_KINDS = new Set([
   "ai_action_ready",
   AI_APPROVAL_QUEUE_NOTIFICATION_KIND,
   "rfi_attention",
-  "change_request_review_needed",
 ]);
 
 const INTERRUPT_EVENT_PATTERNS = [
@@ -105,10 +104,7 @@ export function getAiNotificationDeliveryPlan(
     };
   }
 
-  if (
-    notification.kind === "ai_action_ready" ||
-    notification.kind === "change_request_review_needed"
-  ) {
+  if (notification.kind === "ai_action_ready") {
     return {
       tier: tierOverride ?? "interrupt",
       channels: hasSelectedChannels ? selectedChannels : ["assistant_widget"],
@@ -120,8 +116,8 @@ export function getAiNotificationDeliveryPlan(
     notification.kind === AI_APPROVAL_QUEUE_NOTIFICATION_KIND &&
     isAiApprovalQueueNotification(notification)
   ) {
-    const channels = hasSelectedChannels
-      ? (["approvals_queue", ...selectedChannels] as AiNotificationDeliveryChannel[])
+    const channels: AiNotificationDeliveryChannel[] = hasSelectedChannels
+      ? ["approvals_queue", ...selectedChannels]
       : ["approvals_queue", "in_app", "assistant_widget"];
 
     return {

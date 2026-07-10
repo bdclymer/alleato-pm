@@ -8,7 +8,7 @@ must still explain the current system even before every producer is wired.
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import os
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -24,6 +24,7 @@ COMPILER_BACKLOG_WARNING = 25
 FAILED_JOB_WARNING = 1
 DOCUMENT_HEALTH_SAMPLE_LIMIT = 2500
 CHUNK_HEALTH_SAMPLE_LIMIT = 5000
+CHUNK_DOCUMENT_ID_BATCH_SIZE = 25
 JOB_HEALTH_SAMPLE_LIMIT = 5000
 MAX_RETURNED_SOURCES = 80
 MAX_RETURNED_ALERTS = 80
@@ -76,6 +77,32 @@ GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
 }
 
 GRAPH_PROJECT_DOCUMENT_SOURCES = {"sharepoint"}
+
+NON_EMBEDDING_DOCUMENT_TYPES = {
+    "ai_assistant_task",
+    "meeting_agenda_task",
+}
+NON_RAG_DOCUMENT_SOURCE_SYSTEMS = {
+    "ai_assistant",
+    "meeting_agenda",
+    "synthetic_test",
+}
+TERMINAL_NON_EMBEDDING_STATUSES = {
+    "intentionally_excluded",
+    "metadata_only",
+    "skipped_low_content",
+}
+SOURCE_COMPILATION_SOURCES = {
+    "fireflies",
+    "microsoft_graph",
+    "outlook_email",
+    "teams_message",
+    "teams_chat_export",
+    "onedrive_file",
+    "sharepoint_file",
+}
+RETIRED_COMPILER_VERSION = "ai_intelligence_compiler_v0_1"
+RETIRED_JOB_GRACE_HOURS = 12
 
 
 def _configured_graph_subscription_keys() -> set[Tuple[str, str]]:
@@ -250,7 +277,9 @@ def _chunk_rows_for_documents(supabase: Any, document_ids: Sequence[str]) -> Lis
 
     rows: List[Dict[str, Any]] = []
     chunk_client = get_rag_read_client()
-    batch_size = 100
+    # Document ids can be long Graph/Teams opaque ids. Smaller batches avoid
+    # PostgREST URL/query limits that silently undercount chunk coverage.
+    batch_size = CHUNK_DOCUMENT_ID_BATCH_SIZE
     for start in range(0, len(ids), batch_size):
         batch = ids[start:start + batch_size]
         response = (
@@ -412,6 +441,93 @@ def _document_last_seen_at(document: Dict[str, Any], source: str) -> Optional[da
     )
 
 
+def _requires_embedding_for_health(document: Dict[str, Any]) -> bool:
+    """Return whether a document should count toward embedding backlog health.
+
+    `document_metadata` also stores app-side task stubs, agenda markers, synthetic
+    tests, and terminal low-content rows. Counting those as vector backlog makes
+    RAG look broken even when every embeddable source document has chunks.
+    """
+    status = str(document.get("status") or "").lower()
+    if status in TERMINAL_NON_EMBEDDING_STATUSES:
+        return False
+    if str(document.get("type") or "").lower() in NON_EMBEDDING_DOCUMENT_TYPES:
+        return False
+    if str(document.get("source_system") or "").lower() in NON_RAG_DOCUMENT_SOURCE_SYSTEMS:
+        return False
+    return True
+
+
+def _requires_source_compilation_for_health(document: Dict[str, Any]) -> bool:
+    if not _requires_embedding_for_health(document):
+        return False
+    return _source_key(document) in SOURCE_COMPILATION_SOURCES
+
+
+def _is_retired_source_intelligence_job(job: Dict[str, Any], now: datetime) -> bool:
+    compiler_version = str(job.get("compiler_version") or "")
+    if compiler_version != RETIRED_COMPILER_VERSION:
+        return False
+
+    updated_at = (
+        _parse_datetime(job.get("updated_at"))
+        or _parse_datetime(job.get("finished_at"))
+        or _parse_datetime(job.get("started_at"))
+        or _parse_datetime(job.get("queued_at"))
+    )
+    if updated_at and updated_at > now - timedelta(hours=RETIRED_JOB_GRACE_HOURS):
+        return False
+
+    status = str(job.get("status") or "")
+    job_type = str(job.get("job_type") or "")
+    last_error = str(job.get("last_error") or "")
+    if status == "queued" and job_type == "attribution":
+        return True
+    if status == "failed" and "source_syntheses" in last_error and "row-level security" in last_error:
+        return True
+    return False
+
+
+def _active_source_intelligence_jobs(
+    jobs: Sequence[Dict[str, Any]],
+    now: datetime,
+) -> List[Dict[str, Any]]:
+    return [job for job in jobs if not _is_retired_source_intelligence_job(job, now)]
+
+
+def _is_retired_packet_refresh_job(job: Dict[str, Any], now: datetime) -> bool:
+    if str(job.get("compiler_version") or "") != RETIRED_COMPILER_VERSION:
+        return False
+    if str(job.get("status") or "") != "failed":
+        return False
+    if job.get("trigger_source_document_id") or job.get("trigger_insight_card_id"):
+        return False
+
+    updated_at = (
+        _parse_datetime(job.get("updated_at"))
+        or _parse_datetime(job.get("finished_at"))
+        or _parse_datetime(job.get("started_at"))
+        or _parse_datetime(job.get("queued_at"))
+    )
+    if updated_at and updated_at > now - timedelta(hours=RETIRED_JOB_GRACE_HOURS):
+        return False
+
+    last_error = str(job.get("last_error") or "")
+    return (
+        "max row" in last_error.lower()
+        or "projection row count" in last_error.lower()
+        or "json" in last_error.lower()
+        or "source lifecycle green gate" in last_error.lower()
+    )
+
+
+def _active_packet_refresh_jobs(
+    jobs: Sequence[Dict[str, Any]],
+    now: datetime,
+) -> List[Dict[str, Any]]:
+    return [job for job in jobs if not _is_retired_packet_refresh_job(job, now)]
+
+
 def _health_status(
     *,
     stale_minutes: Optional[int],
@@ -493,7 +609,12 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
     failed_states = [
         state
         for state in parsed_states
-        if state.get("status") == "failed" or state.get("last_error")
+        if state.get("status") == "failed"
+    ]
+    warning_states = [
+        state
+        for state in parsed_states
+        if state.get("status") == "warning" or (state.get("last_error") and state not in failed_states)
     ]
     latest_success = max(
         (state["_last_success"] for state in parsed_states if state.get("_last_success")),
@@ -511,6 +632,8 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
     stale = _age_minutes(latest_success or latest_seen, now)
     last_error = None
     last_error_at = None
+    latest_warning = None
+    latest_warning_at = None
     if failed_states:
         latest_failed = max(
             failed_states,
@@ -518,31 +641,44 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
         )
         last_error = latest_failed.get("last_error") or f"{latest_failed.get('entity_name')} failed"
         last_error_at = latest_failed.get("_updated_at") or latest_failed.get("_last_started")
+    elif warning_states:
+        latest_warning_state = max(
+            warning_states,
+            key=lambda state: state.get("_updated_at") or state.get("_last_started") or datetime.min.replace(tzinfo=timezone.utc),
+        )
+        latest_warning = latest_warning_state.get("last_error") or f"{latest_warning_state.get('entity_name')} warning"
+        latest_warning_at = latest_warning_state.get("_updated_at") or latest_warning_state.get("_last_started")
 
     items_synced = 0
     entity_statuses: Dict[str, str] = {}
     failed_entities: List[str] = []
+    warning_entities: List[str] = []
     for state in parsed_states:
         entity = str(state.get("entity_name") or "unknown")
         entity_statuses[entity] = str(state.get("status") or "unknown")
         if state in failed_states:
             failed_entities.append(entity)
+        elif state in warning_states:
+            warning_entities.append(entity)
         stats = _metadata_dict(state.get("last_stats"))
         items_synced += int(stats.get("upserted") or 0) + int(stats.get("projected") or 0)
+    status = _health_status(
+        stale_minutes=stale,
+        stale_threshold=STALE_ACUMATICA_SYNC_MINUTES,
+        last_error=last_error,
+    )
+    if status == "healthy" and warning_states:
+        status = "warning"
 
     return _source_row(
         source="acumatica_financial_sync",
         resource_id="acumatica_sync_state",
         resource_name="Acumatica financial sync",
-        status=_health_status(
-            stale_minutes=stale,
-            stale_threshold=STALE_ACUMATICA_SYNC_MINUTES,
-            last_error=last_error,
-        ),
+        status=status,
         last_sync_at=latest_seen,
         last_success_at=latest_success,
-        last_error_at=last_error_at,
-        last_error_message=last_error,
+        last_error_at=last_error_at or latest_warning_at,
+        last_error_message=last_error or latest_warning,
         items_synced=items_synced,
         stale_minutes=stale,
         unprocessed_count=0,
@@ -551,6 +687,7 @@ def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime)
         metadata={
             "source": "acumatica_sync_state",
             "failedEntities": failed_entities,
+            "warningEntities": warning_entities,
             "entityStatuses": entity_statuses,
         },
     )
@@ -937,12 +1074,16 @@ def _document_health(
         status = str(document.get("status") or "unknown")
         source_counts[source][f"status:{status}"] += 1
         document_id = str(document.get("id"))
-        if status != "intentionally_excluded" and document_id not in chunk_document_ids:
+        if _requires_embedding_for_health(document) and document_id not in chunk_document_ids:
             source_counts[source]["unembedded"] += 1
         compiler_metadata = _metadata_dict(document.get("source_metadata")).get("intelligence_compiler") or {}
         compiler_status = str(compiler_metadata.get("status") or "")
         metadata_compiled = compiler_status in {"succeeded", "skipped", "needs_review"}
-        if document_id not in compiled_document_ids and not metadata_compiled:
+        if (
+            _requires_source_compilation_for_health(document)
+            and document_id not in compiled_document_ids
+            and not metadata_compiled
+        ):
             source_counts[source]["uncompiled"] += 1
         captured = _document_last_seen_at(document, source)
         if captured and (source not in latest_by_source or captured > latest_by_source[source]):
@@ -964,7 +1105,6 @@ def _document_health(
                         stale_threshold=stale_threshold,
                         last_error=None,
                         unembedded=counts.get("unembedded", 0),
-                        uncompiled=counts.get("uncompiled", 0),
                     ),
                     last_sync_at=last_seen,
                     last_success_at=last_seen,
@@ -1128,10 +1268,9 @@ def _apply_run_ledger_freshness(
         source["status"] = _health_status(
             stale_minutes=stale,
             stale_threshold=stale_threshold,
-            last_error=source.get("lastErrorMessage"),
-            unembedded=source.get("unembeddedCount", 0),
-            uncompiled=source.get("uncompiledCount", 0),
-        )
+                    last_error=source.get("lastErrorMessage"),
+                    unembedded=source.get("unembeddedCount", 0),
+                )
 
 
 def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
@@ -1175,13 +1314,13 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     source_jobs = _table_rows(
         get_rag_read_client(),
         "source_intelligence_jobs",
-        "status,source_document_id,last_error,queued_at,started_at,finished_at,updated_at",
+        "status,source_document_id,last_error,job_type,compiler_version,queued_at,started_at,finished_at,updated_at",
         limit=JOB_HEALTH_SAMPLE_LIMIT,
     )
     packet_jobs = _table_rows(
         get_rag_read_client(),
         "packet_refresh_jobs",
-        "status,last_error,queued_at,started_at,finished_at,updated_at",
+        "status,last_error,compiler_version,trigger_source_document_id,trigger_insight_card_id,queued_at,started_at,finished_at,updated_at",
     )
     tasks = _table_rows(
         supabase,
@@ -1227,6 +1366,8 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         for row in source_jobs
         if row.get("source_document_id") and row.get("status") in {"succeeded", "skipped"}
     }
+    active_source_jobs = _active_source_intelligence_jobs(source_jobs, now)
+    active_packet_jobs = _active_packet_refresh_jobs(packet_jobs, now)
 
     document_counts, document_sources = _document_health(
         documents,
@@ -1259,7 +1400,6 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
                     stale_threshold=STALE_SYNC_MINUTES,
                     last_error=last_error,
                     unembedded=document_counts.get(source, {}).get("unembedded", 0),
-                    uncompiled=document_counts.get(source, {}).get("uncompiled", 0),
                 ),
                 last_sync_at=last_sync,
                 last_success_at=last_sync if not last_error else None,
@@ -1305,6 +1445,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
                     stale_minutes=stale,
                     stale_threshold=STALE_FIREFLIES_MINUTES,
                     last_error=fireflies_errors[0] if fireflies_errors else None,
+                    unembedded=document_counts.get("fireflies", {}).get("unembedded", 0),
                 ),
                 last_sync_at=latest_fireflies,
                 last_success_at=latest_fireflies if not fireflies_errors else None,
@@ -1407,8 +1548,18 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
             if counts.get("uncompiled", 0) > 0
         },
         "firefliesJobsByStage": _counter(fireflies_jobs, "stage"),
-        "sourceJobsByStatus": _counter(source_jobs, "status"),
-        "packetJobsByStatus": _counter(packet_jobs, "status"),
+        "sourceJobsByStatus": _counter(active_source_jobs, "status"),
+        "sourceJobsByStatusRaw": _counter(source_jobs, "status"),
+        "retiredSourceJobsByStatus": _counter(
+            [job for job in source_jobs if _is_retired_source_intelligence_job(job, now)],
+            "status",
+        ),
+        "packetJobsByStatus": _counter(active_packet_jobs, "status"),
+        "packetJobsByStatusRaw": _counter(packet_jobs, "status"),
+        "retiredPacketJobsByStatus": _counter(
+            [job for job in packet_jobs if _is_retired_packet_refresh_job(job, now)],
+            "status",
+        ),
         "tasksBySourceSystem": _counter(tasks, "source_system"),
         "graphSubscriptionsByStatus": _counter(subscriptions, "status"),
         "unconfiguredGraphSubscriptions": len(_unconfigured_graph_subscriptions(subscriptions)),

@@ -346,7 +346,7 @@ export async function summarizeProjectIntelligence(
       schemaName: "project_intelligence_summary",
       schemaDescription:
         "A traceable construction project operating summary with present-state synthesis, current focus, risks, decisions, actions, timeline, and data gaps.",
-      system: `You summarize construction project intelligence for operators.
+      instructions: `You summarize construction project intelligence for operators.
 
 Rules:
 - Write this like an executive project briefing, not a PM widget dump.

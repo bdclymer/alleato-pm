@@ -55,6 +55,7 @@ function aiApprovalNotification(
     entityType: "change_events",
     entityId: "ce-1",
     projectId: 25125,
+    actorId: null,
     metadata: {
       eventType: "ai_change_event_awaiting_approval",
       tier: "interrupt",

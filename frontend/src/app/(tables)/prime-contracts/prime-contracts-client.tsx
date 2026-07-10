@@ -4,7 +4,6 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
+  TablePageActions,
   UnifiedTablePage,
   useUnifiedTableState,
   type FilterValue,
@@ -440,14 +440,15 @@ export function PrimeContractsGlobalClient({
         header={{
           title: "Prime Contracts",
           actions: (
-            <Button
-              size="sm"
-              onClick={() => setPickerOpen(true)}
-              aria-label="Create new prime contract"
-            >
-              <Plus />
-              Create
-            </Button>
+            <TablePageActions
+              addLabel="Create prime contract"
+              addOptions={[
+                {
+                  label: "Create prime contract",
+                  onClick: () => setPickerOpen(true),
+                },
+              ]}
+            />
           ),
         }}
         layout={{

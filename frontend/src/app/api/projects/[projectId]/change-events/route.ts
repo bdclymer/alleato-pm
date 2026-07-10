@@ -43,6 +43,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import {
+  DEFAULT_LINE_ITEM_REVENUE_SOURCE,
+  computeLineItemRevenueRom,
+} from "@/lib/change-events/financial-summary";
 
 /**
  * Helper to get the appropriate Supabase client based on auth method
@@ -73,13 +77,8 @@ interface ChangeEventWithTotals extends ChangeEvent {
   prime_pco_title: string | null
   rfq_title: string | null
   commitment: string | null
+  commitment_id: string | null
   commitment_title: string | null
-}
-
-interface VerticalMarkupRow {
-  percentage: number | null
-  calculation_order: number | null
-  compound: boolean | null
 }
 
 type ChangeEventLineItemAggregateRow = {
@@ -115,44 +114,6 @@ type RouteSupabaseClient = SupabaseClient<Database>
 // Validate UUID-like identifiers before sending them to strict FK filters.
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-}
-
-function computeMarkupAdditions(
-  _baseCost: number,
-  baseRevenue: number,
-  markups: VerticalMarkupRow[]
-): { cost: number; revenue: number } {
-  if (markups.length === 0) {
-    return { cost: 0, revenue: 0 }
-  }
-
-  const sortedMarkups = [...markups].sort(
-    (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0)
-  )
-
-  let runningRevenueBase = baseRevenue
-  let totalRevenueMarkup = 0
-
-  for (const markup of sortedMarkups) {
-    const percentage = Number(markup.percentage || 0)
-    if (!Number.isFinite(percentage) || percentage <= 0) {
-      continue
-    }
-
-    const rate = percentage / 100
-    // Markups (contractor fee, insurance) apply to Revenue ROM only
-    const revenueMarkup = runningRevenueBase * rate
-    totalRevenueMarkup += revenueMarkup
-
-    if (markup.compound) {
-      runningRevenueBase += revenueMarkup
-    }
-  }
-
-  return {
-    cost: 0,
-    revenue: totalRevenueMarkup,
-  }
 }
 
 /**
@@ -208,6 +169,18 @@ export const GET = withApiGuardrails(
   
     const { projectId } = await params
     const { client: supabase } = await getSupabaseClient(request)
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null
+    const user = token
+      ? (await supabase.auth.getUser(token)).data.user
+      : await getApiRouteUser()
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events#GET",
+        message: "Authentication required.",
+      })
+    }
     const { searchParams } = new URL(request.url)
 
     // Parse and validate query parameters
@@ -357,10 +330,19 @@ export const GET = withApiGuardrails(
     const events = data || []
     const eventIds = events.map((event: ChangeEvent) => event.id)
 
-    const { data: projectMarkups } = await supabase
-      .from('vertical_markup')
-      .select('percentage, calculation_order, compound')
-      .eq('project_id', parseInt(projectId, 10))
+    // Per-event revenue settings drive how each line item's revenue rolls up
+    // (an unset revenue source defaults to match-cost — see
+    // computeLineItemRevenueRom). Keyed by change_event_id.
+    const eventRevenueSettings = new Map<
+      string,
+      { expectingRevenue: boolean; revenueSource: string | null }
+    >()
+    for (const event of events as ChangeEvent[]) {
+      eventRevenueSettings.set(String(event.id), {
+        expectingRevenue: event.expecting_revenue !== false,
+        revenueSource: event.line_item_revenue_source ?? null,
+      })
+    }
 
     // Batch fetch line-item level parity data for all rows on page.
     const { data: allLineItems } = eventIds.length
@@ -376,6 +358,10 @@ export const GET = withApiGuardrails(
         rom: number
         total: number
         costRom: number
+        // Sum of cost_rom for line items actually assigned to a commitment —
+        // the dollar amount that flows into the linked subcontract/PO, as
+        // opposed to `contractNumber`/`title` which only label it.
+        committedCost: number
         count: number
         contractId: string | null
         commitmentId: string | null
@@ -389,15 +375,25 @@ export const GET = withApiGuardrails(
         rom: 0,
         total: 0,
         costRom: 0,
+        committedCost: 0,
         count: 0,
         contractId: null,
         commitmentId: null,
         commitmentType: null,
       }
-      existing.rom += item.revenue_rom || 0
+      const revenueSettings = eventRevenueSettings.get(key)
+      existing.rom += computeLineItemRevenueRom({
+        expectingRevenue: revenueSettings?.expectingRevenue ?? true,
+        revenueSource: revenueSettings?.revenueSource,
+        costRom: item.cost_rom,
+        revenueRom: item.revenue_rom,
+      })
       existing.costRom += item.cost_rom || 0
       existing.total += (item.cost_rom || 0) + (item.non_committed_cost || 0)
       existing.count += 1
+      if (item.commitment_id) {
+        existing.committedCost += item.cost_rom || 0
+      }
       if (!existing.contractId && item.contract_id) {
         existing.contractId = item.contract_id
       }
@@ -577,26 +573,24 @@ export const GET = withApiGuardrails(
         const baseRevenueRom = lineItemAgg?.rom || 0
         const baseCostRom = lineItemAgg?.costRom || 0
         const baseNonCommitted = lineItemAgg ? lineItemAgg.total - lineItemAgg.costRom : 0
-        const applyMarkup = event.expecting_revenue !== false
-        const markupAdditions = computeMarkupAdditions(
-          baseCostRom,
-          baseRevenueRom,
-          applyMarkup ? ((projectMarkups || []) as VerticalMarkupRow[]) : []
-        )
-        const revenueRomWithMarkup = baseRevenueRom + markupAdditions.revenue
-        const costRomWithMarkup = baseCostRom + markupAdditions.cost
-        const totalWithMarkup = costRomWithMarkup + baseNonCommitted
+        // Project vertical markup (contractor fee, insurance, etc.) is a
+        // Prime PCO conversion concern — surfaced explicitly in the "Add to
+        // Prime PCO" preview, not baked silently into the list's ROM figures.
+        const total = baseCostRom + baseNonCommitted
 
         return {
           ...event,
-          rom: revenueRomWithMarkup.toFixed(2),
-          total: totalWithMarkup.toFixed(2),
-          cost_rom: costRomWithMarkup.toFixed(2),
+          rom: baseRevenueRom.toFixed(2),
+          total: total.toFixed(2),
+          cost_rom: baseCostRom.toFixed(2),
           lineItemsCount: lineItemAgg?.count ?? event.change_event_line_items?.[0]?.count ?? 0,
           prime_pco: pcoMap.get(String(event.id))?.number ?? null,
           prime_pco_title: pcoMap.get(String(event.id))?.title ?? null,
           rfq_title: rfqMap.get(String(event.id)) || null,
-          commitment: commitmentInfo?.contractNumber ?? contractInfo?.contractNumber ?? null,
+          // Dollar amount tied to the linked commitment (not the contract
+          // number — that's `commitment_title`'s fallback via commitmentInfo).
+          commitment: (lineItemAgg?.committedCost ?? 0).toFixed(2),
+          commitment_id: lineItemAgg?.commitmentId ?? null,
           commitment_title: commitmentInfo?.title ?? contractInfo?.title ?? null,
         }
       }
@@ -731,7 +725,12 @@ export const POST = withApiGuardrails(
       origin: origin || 'Internal',
       origin_id: originId,
       expecting_revenue: expectingRevenue,
-      line_item_revenue_source: lineItemRevenueSource || null,
+      // When revenue is expected but no source was chosen, persist Procore's
+      // default ("Match Revenue to Latest Cost") so revenue mirrors cost and
+      // rolls up (rather than silently staying $0). No revenue expected → null.
+      line_item_revenue_source:
+        lineItemRevenueSource ||
+        (expectingRevenue === false ? null : DEFAULT_LINE_ITEM_REVENUE_SOURCE),
       prime_contract_id: primeContractId != null ? String(primeContractId) : null,
       description: description || null,
       created_at: new Date().toISOString(),

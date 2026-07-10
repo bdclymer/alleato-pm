@@ -1,0 +1,267 @@
+{
+  "generatedAt": "2026-07-09T05:07:50.188Z",
+  "jpProjectId": 7654,
+  "appProjectId": 762,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 9,
+    "adopt": 0,
+    "create": 9,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 11,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 6,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2419,
+      "number": "CR-7654-0009",
+      "title": "Final Contract CO Amount",
+      "statusId": 0,
+      "cost": -16770,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1883,
+      "number": "CR-7654-0002",
+      "title": "Provide and install water cooler with bottle filler",
+      "statusId": 8,
+      "cost": 3600,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1889,
+      "number": "CR-7654-0003",
+      "title": "1 hand dryer for employee bathroom & 4 lights at donation canopy",
+      "statusId": 8,
+      "cost": 2920,
+      "lineItems": 2,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1880,
+      "number": "CR-7654-0001",
+      "title": "Owner walk 2-27 added scope",
+      "statusId": 8,
+      "cost": 28550,
+      "lineItems": 18,
+      "fork": {
+        "prime": 15,
+        "commitment": 11,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2313,
+      "number": "CR-7654-0008",
+      "title": "Demo Break Room Casework",
+      "statusId": 8,
+      "cost": 1350,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2193,
+      "number": "CR-7654-0006",
+      "title": "Owner Walker 4/7/26",
+      "statusId": 8,
+      "cost": 350,
+      "lineItems": 3,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 6, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2222,
+      "number": "CR-7654-0007",
+      "title": "Additional Repairs Due to Termites",
+      "statusId": 8,
+      "cost": 2785,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2589,
+      "number": "CR-7654-0010",
+      "title": "(2) additional high bay fixtures in the sales floor area",
+      "statusId": 8,
+      "cost": 1050,
+      "lineItems": 4,
+      "fork": {
+        "prime": 2,
+        "commitment": 2,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 10, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 2635,
+      "number": "CR-7654-0011",
+      "title": "Owner Request- Additional Drywall & Interior Wall Repairs",
+      "statusId": 8,
+      "cost": 4331.54,
+      "lineItems": 6,
+      "fork": {
+        "prime": 0,
+        "commitment": 4,
+        "unlinked": 2
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 11, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-7654-0002",
+        "commitmentNumber": "SC-7654-0001",
+        "amount": 2280,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0003",
+        "commitmentNumber": "SC-7654-0005",
+        "amount": 2975,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0001",
+        "commitmentNumber": "SC-7654-0002",
+        "amount": 3100,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0005",
+        "commitmentNumber": "SC-7654-0002",
+        "amount": 2490,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0006",
+        "commitmentNumber": "SC-7654-0001",
+        "amount": 1245,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0007",
+        "commitmentNumber": "SC-7654-0004",
+        "amount": -2280,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0004",
+        "commitmentNumber": "SC-7654-0004",
+        "amount": 5780,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0008",
+        "commitmentNumber": "SC-7654-0001",
+        "amount": 2785,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0009",
+        "commitmentNumber": "SC-7654-0001",
+        "amount": 1350,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0010",
+        "commitmentNumber": "SC-7654-0002",
+        "amount": 1050,
+        "twin": null
+      },
+      {
+        "number": "CCO-7654-0011",
+        "commitmentNumber": "SC-7654-0001",
+        "amount": 4331.54,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-7654-0001",
+        "amount": 33807.82,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7654-0002",
+        "amount": 13155.23,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7654-0003",
+        "amount": 390.2,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7654-0004",
+        "amount": 1505.05,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7654-0006",
+        "amount": 1170.6,
+        "twin": null
+      },
+      {
+        "number": "PCCO-7654-0007",
+        "amount": 4829.01,
+        "twin": null
+      }
+    ]
+  }
+}

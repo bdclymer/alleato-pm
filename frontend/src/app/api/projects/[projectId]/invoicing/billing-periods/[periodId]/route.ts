@@ -1,8 +1,11 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
+import {
+  findOpenBillingPeriod,
+  validateBillingPeriodDraft,
+} from "@/lib/invoicing/billing-period-validation";
 
 // GET /api/projects/[projectId]/invoicing/billing-periods/[periodId]
 // Fetch a single billing period
@@ -97,7 +100,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; periodId: string }>(
     // Verify the period exists and belongs to this project
     const { data: existing, error: fetchError } = await supabase
       .from("billing_periods")
-      .select("id")
+      .select("id, period_number, start_date, end_date, due_date, is_closed")
       .eq("id", periodId)
       .eq("project_id", projectIdNum)
       .single();
@@ -120,6 +123,68 @@ export const PATCH = withApiGuardrails<{ projectId: string; periodId: string }>(
         { error: "Billing period not found" },
         { status: 404 },
       );
+    }
+
+    const nextIsClosed =
+      typeof updatePayload.is_closed === "boolean"
+        ? updatePayload.is_closed
+        : (existing.is_closed ?? false);
+    const nextStartDate =
+      Object.prototype.hasOwnProperty.call(updatePayload, "start_date")
+        ? (updatePayload.start_date as string | null)
+        : existing.start_date;
+    const nextEndDate =
+      Object.prototype.hasOwnProperty.call(updatePayload, "end_date")
+        ? (updatePayload.end_date as string | null)
+        : existing.end_date;
+    const nextDueDate =
+      Object.prototype.hasOwnProperty.call(updatePayload, "due_date")
+        ? (updatePayload.due_date as string | null)
+        : existing.due_date;
+
+    const shouldValidateDraft =
+      "start_date" in updatePayload ||
+      "end_date" in updatePayload ||
+      "due_date" in updatePayload ||
+      nextIsClosed === false;
+
+    if (shouldValidateDraft) {
+      const validationError = validateBillingPeriodDraft({
+        start_date: nextStartDate,
+        end_date: nextEndDate,
+        due_date: nextDueDate ?? undefined,
+      });
+
+      if (validationError) {
+        return NextResponse.json({ error: validationError }, { status: 400 });
+      }
+    }
+
+    if (nextIsClosed === false) {
+      const { data: siblingPeriods, error: siblingPeriodsError } = await supabase
+        .from("billing_periods")
+        .select("id, is_closed, period_number")
+        .eq("project_id", projectIdNum);
+
+      if (siblingPeriodsError) {
+        return NextResponse.json(
+          {
+            error: "Failed to inspect sibling billing periods",
+            details: siblingPeriodsError.message,
+          },
+          { status: 500 },
+        );
+      }
+
+      const openSibling = findOpenBillingPeriod(siblingPeriods ?? [], periodId);
+      if (openSibling) {
+        return NextResponse.json(
+          {
+            error: `Close open billing period BP-${String(openSibling.period_number).padStart(3, "0")} before reopening or editing another open period.`,
+          },
+          { status: 409 },
+        );
+      }
     }
 
     const { data: updated, error: updateError } = await supabase

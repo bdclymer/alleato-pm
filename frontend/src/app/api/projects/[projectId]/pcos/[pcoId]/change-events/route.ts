@@ -35,6 +35,14 @@ export const GET = withApiGuardrails(
     }
 
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/pcos/[pcoId]/change-events#GET",
+        message: "Authentication required.",
+      });
+    }
 
     const { data: pcoChangeEvents, error } = await supabase
       .from("pco_change_events")

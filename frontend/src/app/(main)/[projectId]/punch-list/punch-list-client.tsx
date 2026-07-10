@@ -3,13 +3,13 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, Edit, MoreHorizontal, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Download, Edit, MoreVertical, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  PunchItemFormDialog,
+  PunchItemFormSheet,
   type PunchItemFormValues,
-} from "@/components/domain/punch-items/punch-item-form-dialog";
+} from "@/components/domain/punch-items/punch-item-form-sheet";
 import {
   PunchItemPriorityBadge,
   PunchItemStatusBadge,
@@ -347,7 +347,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -501,7 +501,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           enableRowSelection: false,
         }}
       />
-      <PunchItemFormDialog
+      <PunchItemFormSheet
         open={formOpen}
         onOpenChange={setFormOpen}
         onSubmit={handleCreate}
@@ -509,7 +509,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
         mode="create"
         projectId={projectId}
       />
-      <PunchItemFormDialog
+      <PunchItemFormSheet
         open={!!editingItem}
         onOpenChange={(open) => {
           if (!open) setEditingItem(null);

@@ -63,12 +63,17 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
 
     assert result["status"] == "complete"
     assert result["phases"]["embedding"] == "skipped"
+    assert result["source_sync"]["status"] == "complete"
+    assert result["downstream"]["status"] == "complete"
+    assert result["source_sync_errors"] == []
+    assert result["downstream_errors"] == []
     assert result["embed"]["status"] == "skipped"
     assert result["intelligence_extraction"]["status"] == "skipped"
 
 
 def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypatch):
     extraction_calls = []
+    backfill_calls = []
 
     monkeypatch.setattr(sync, "get_graph_client", lambda: _FakeGraph())
     monkeypatch.setenv("GRAPH_SYNC_OUTLOOK", "false")
@@ -108,6 +113,15 @@ def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypa
         },
     )
     monkeypatch.setattr(
+        "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
+        lambda supabase, *, since=None: backfill_calls.append((supabase, since)) or {
+            "scanned": 2,
+            "assigned": 1,
+            "review_staged": 1,
+            "failed": 0,
+        },
+    )
+    monkeypatch.setattr(
         sync,
         "embed_pending_graph_documents",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
@@ -125,8 +139,211 @@ def test_run_graph_sync_runs_intelligence_for_fetch_only_communications(monkeypa
     assert result["status"] == "complete"
     assert result["teams"] == 2
     assert result["phases"]["embedding"] == "skipped"
+    assert result["source_sync"]["teams"] == 2
+    assert result["source_sync"]["communications_synced"] == 2
+    assert result["downstream"]["status"] == "complete"
+    assert result["project_backfill"] == {
+        "scanned": 2,
+        "assigned": 1,
+        "review_staged": 1,
+        "failed": 0,
+    }
     assert result["intelligence_extraction"]["projects"] == 1
     assert extraction_calls
+    assert len(backfill_calls) == 1
+    assert backfill_calls[0][1] is not None
+
+
+def test_run_graph_sync_reports_source_and_downstream_errors_separately(monkeypatch):
+    phase_runs = []
+
+    monkeypatch.setattr(sync, "get_graph_client", lambda: _FakeGraph())
+    monkeypatch.setenv("GRAPH_SYNC_OUTLOOK", "false")
+    monkeypatch.setenv("GRAPH_SYNC_TEAMS", "true")
+    monkeypatch.setenv("GRAPH_SYNC_TEAMS_DM", "false")
+    monkeypatch.setenv("GRAPH_SYNC_ONEDRIVE", "false")
+    monkeypatch.setenv("SHAREPOINT_SYNC_FOLDERS", "")
+    monkeypatch.setenv("TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "1")
+
+    monkeypatch.setattr(
+        sync,
+        "get_all_teams_and_channels",
+        lambda _supabase: [
+            {
+                "team_id": "team-1",
+                "team_name": "Team",
+                "channel_id": "channel-1",
+                "channel_name": "General",
+            }
+        ],
+    )
+    monkeypatch.setattr(sync, "_get_delta_token", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        sync,
+        "_record_graph_phase_run_safe",
+        lambda *_args, **kwargs: phase_runs.append(kwargs),
+    )
+    monkeypatch.setattr(
+        sync,
+        "sync_teams_channel",
+        lambda *_args, **_kwargs: (1, "next-token"),
+    )
+    monkeypatch.setattr(
+        "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
+        lambda _supabase, *, since=None: {"scanned": 1, "assigned": 0, "review_staged": 0, "failed": 0},
+    )
+    monkeypatch.setattr(
+        sync,
+        "embed_pending_graph_documents",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("embed blew up")),
+    )
+    monkeypatch.setattr(
+        "src.services.intelligence.project_synthesizer.synthesize_new_comms_since",
+        lambda _since: {"projects": 0, "cards_written": 0, "synthesis_packets_written": 0, "errors": []},
+    )
+
+    result = sync.run_graph_sync(
+        _FakeSupabase(),
+        run_embedding=True,
+        run_ocr=False,
+        run_attachment_promotion=False,
+    )
+
+    assert result["status"] == "complete_with_errors"
+    assert result["source_sync"]["status"] == "complete"
+    assert result["downstream"]["status"] == "complete_with_errors"
+    assert result["source_sync_errors"] == []
+    assert result["downstream_errors"] == ["Embedding failed: embed blew up"]
+    assert [(run["source"], run["status"]) for run in phase_runs] == [
+        ("microsoft_graph_source_sync", "succeeded"),
+        ("microsoft_graph_downstream", "failed"),
+    ]
+    downstream_metadata = phase_runs[1]["metadata"]
+    assert downstream_metadata["communications_synced"] == 1
+    assert downstream_metadata["project_backfill"] == {
+        "scanned": 1,
+        "assigned": 0,
+        "review_staged": 0,
+        "failed": 0,
+    }
+
+
+def test_downstream_project_backfill_failures_are_downstream_errors(monkeypatch):
+    monkeypatch.setattr(
+        "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
+        lambda _supabase, *, since=None: {
+            "scanned": 2,
+            "assigned": 0,
+            "review_staged": 1,
+            "failed": 1,
+            "errors": [{"document_id": "doc-1", "error": "write failed"}],
+        },
+    )
+    monkeypatch.setattr(
+        "src.services.intelligence.project_synthesizer.synthesize_new_comms_since",
+        lambda _since: {
+            "projects": 0,
+            "cards_written": 0,
+            "synthesis_packets_written": 0,
+            "errors": [],
+        },
+    )
+    monkeypatch.setattr(sync, "compile_outlook_conversations", lambda *_args, **_kwargs: {"compiled": 0})
+    monkeypatch.setattr(sync, "embed_pending_graph_documents", lambda *_args, **_kwargs: {"embedded": 0})
+    monkeypatch.setattr(sync, "embed_pending_attachment_documents", lambda *_args, **_kwargs: {"embedded": 0})
+    monkeypatch.setattr(sync, "embed_pending_fireflies_meetings", lambda **_kwargs: {"embedded": 0})
+
+    result = sync._run_graph_downstream_processing(
+        _FakeSupabase(),
+        sync_started_at=sync.datetime.now(sync.timezone.utc),
+        source_summary={
+            "status": "complete",
+            "sync_emails_enabled": False,
+            "communications_synced": 2,
+        },
+        run_embedding=False,
+        run_ocr=False,
+        run_attachment_promotion=False,
+        embed_limit=5,
+        ocr_batch_size=1,
+        attachment_promotion_limit=1,
+    )
+
+    assert result["status"] == "complete_with_errors"
+    assert result["project_backfill"]["failed"] == 1
+    assert result["errors"] == ["Communication project backfill failed for 1 row(s)"]
+
+
+def test_downstream_project_backfill_skips_when_no_communications_synced(monkeypatch):
+    def fail_backfill(_supabase):
+        raise AssertionError("project backfill should not run without communication sync")
+
+    monkeypatch.setattr(
+        "src.services.ingestion.sync_followups.maybe_run_comm_project_backfill",
+        fail_backfill,
+    )
+    monkeypatch.setattr(sync, "embed_pending_graph_documents", lambda *_args, **_kwargs: {"embedded": 0})
+    monkeypatch.setattr(sync, "embed_pending_attachment_documents", lambda *_args, **_kwargs: {"embedded": 0})
+    monkeypatch.setattr(sync, "embed_pending_fireflies_meetings", lambda **_kwargs: {"embedded": 0})
+
+    result = sync._run_graph_downstream_processing(
+        _FakeSupabase(),
+        sync_started_at=sync.datetime.now(sync.timezone.utc),
+        source_summary={
+            "status": "complete",
+            "sync_emails_enabled": False,
+            "communications_synced": 0,
+        },
+        run_embedding=False,
+        run_ocr=False,
+        run_attachment_promotion=False,
+        embed_limit=5,
+        ocr_batch_size=1,
+        attachment_promotion_limit=1,
+    )
+
+    assert result["status"] == "complete"
+    assert result["project_backfill"] == {
+        "status": "skipped",
+        "reason": "no_new_outlook_or_teams_communications",
+    }
+
+
+def test_downstream_outlook_conversation_compile_errors_are_downstream_errors(monkeypatch):
+    monkeypatch.setenv("GRAPH_COMPILE_OUTLOOK_CONVERSATIONS", "true")
+    monkeypatch.setattr(
+        sync,
+        "compile_outlook_conversations",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("compiler blew up")),
+    )
+    monkeypatch.setattr(sync, "embed_pending_graph_documents", lambda *_args, **_kwargs: {"embedded": 0, "errors": 0})
+    monkeypatch.setattr(sync, "refresh_outlook_intake_vectorization_statuses", lambda **_kwargs: {"updated": 0})
+
+    result = sync._run_graph_downstream_processing(
+        _FakeSupabase(),
+        sync_started_at=sync.datetime.now(sync.timezone.utc),
+        source_summary={
+            "status": "complete",
+            "sync_emails_enabled": True,
+            "outlook_users_selected": ["megan@example.com"],
+            "communications_synced": 0,
+        },
+        run_embedding=True,
+        run_ocr=False,
+        run_attachment_promotion=False,
+        embed_limit=5,
+        ocr_batch_size=1,
+        attachment_promotion_limit=1,
+    )
+
+    assert result["status"] == "complete_with_errors"
+    assert result["phases"]["outlook_conversations"] == "enabled"
+    assert result["outlook_conversations"]["megan@example.com"]["status"] == "failed"
+    assert result["errors"] == [
+        "Outlook conversation compile failed for megan@example.com: compiler blew up"
+    ]
 
 
 def test_ocr_no_text_fetch_times_out_loudly(monkeypatch):

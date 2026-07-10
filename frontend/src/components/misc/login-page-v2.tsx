@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetchWithTimeout } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
+import { resolvePostLoginRedirect } from "@/lib/auth/post-login-redirect-client";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
 import { InfoAlert } from "@/components/ds/InfoAlert";
@@ -58,14 +59,24 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
           ? `?callbackUrl=${encodeURIComponent(validatedCallback)}`
           : "";
       try {
-        const result = await apiFetch<{ redirect?: string }>(
-          `/api/auth/post-login-redirect${query}`,
+        const redirect = await resolvePostLoginRedirect(
+          () =>
+            apiFetchWithTimeout<{ redirect?: string }>(
+              `/api/auth/post-login-redirect${query}`,
+              { cache: "no-store" },
+              8_000,
+            ),
+          validatedCallback,
         );
         setTimeout(() => {
-          router.push(result?.redirect || "/");
+          router.push(redirect);
           router.refresh();
         }, 100);
-      } catch {
+      } catch (redirectError) {
+        console.error("Failed to resolve post-login redirect", {
+          redirectTo: validatedCallback,
+          error: redirectError instanceof Error ? redirectError.message : String(redirectError),
+        });
         setTimeout(() => {
           router.push(validatedCallback || "/");
           router.refresh();
@@ -199,20 +210,12 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="password"
-                    className="text-xs tracking-widest uppercase text-muted-foreground"
-                  >
-                    Password
-                  </Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="text-xs text-muted-foreground/50 hover:text-primary transition-colors"
-                  >
-                    Forgot?
-                  </Link>
-                </div>
+                <Label
+                  htmlFor="password"
+                  className="text-xs tracking-widest uppercase text-muted-foreground"
+                >
+                  Password
+                </Label>
                 <PasswordInput
                   id="password"
                   placeholder="Enter your password"
@@ -241,14 +244,13 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                 </Button>
               </div>
 
-              {/* Sign up */}
+              {/* Forgot password */}
               <p className="text-sm text-center text-muted-foreground pt-1">
-                Don&apos;t have an account?{" "}
                 <Link
-                  href="/auth/sign-up"
+                  href="/auth/forgot-password"
                   className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
-                  Sign up
+                  Forgot your password?
                 </Link>
               </p>
             </form>

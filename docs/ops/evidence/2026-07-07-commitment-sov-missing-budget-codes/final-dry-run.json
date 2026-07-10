@@ -1,0 +1,106 @@
+{
+  "mode": "dry-run",
+  "createMissingBudgetCodes": false,
+  "reportMissingBudgetCodes": true,
+  "disabledCreateModeNote": {
+    "reason": "disabled_by_design",
+    "details": "Missing project_budget_codes are reported only. Creating canonical budget master data from heuristic JobPlanner parent matches is intentionally blocked."
+  },
+  "targetParent": null,
+  "unresolvedRows": 23,
+  "parentCount": 10,
+  "missingBudgetCodeCandidateCount": 0,
+  "missingBudgetCodeRowCount": 0,
+  "missingBudgetCodesToCreate": [],
+  "createdBudgetCodes": 0,
+  "resolvedUpdates": 0,
+  "resolvedByTable": {},
+  "reasonCounts": {
+    "missing_jobplanner_project_match": 9,
+    "weak_parent_match": 14
+  },
+  "missingBudgetCodeCandidates": [],
+  "updateSample": [],
+  "parentMatchSample": [
+    {
+      "parentId": "316640d6-c78a-4530-a678-8eb29cc80bf5",
+      "contractNumber": "000068",
+      "localProjectId": 31,
+      "jpProjectId": 3729,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 15,
+          "id": 5212,
+          "number": "PO-3729-0005",
+          "title": "Fire Alarm Connection",
+          "company": "S.A. Comunale CO., Inc"
+        }
+      ]
+    },
+    {
+      "parentId": "c1198e63-1709-4b0f-a0ea-c60782d68ea6",
+      "contractNumber": "SC-000365",
+      "localProjectId": 761,
+      "jpProjectId": 5347,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 4936,
+          "number": "SC-5347-0005",
+          "title": "TBD ",
+          "company": "KascoFab"
+        }
+      ]
+    },
+    {
+      "parentId": "af7f6b15-f3f0-43ea-818a-7bcba2f12ebc",
+      "contractNumber": "SC-000152",
+      "localProjectId": 24109,
+      "jpProjectId": 2603,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 2383,
+          "number": "SC-2603-0020",
+          "title": "Masonry",
+          "company": "Rock Solid Masonry, LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "8c4239e6-36d3-4d94-b07d-ed3c3e3d5493",
+      "contractNumber": "SC-000332",
+      "localProjectId": 761,
+      "jpProjectId": 5347,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 4936,
+          "number": "SC-5347-0005",
+          "title": "TBD ",
+          "company": "KascoFab"
+        }
+      ]
+    },
+    {
+      "parentId": "40d567e2-d1b9-4cd0-94cf-b7156f7d1170",
+      "contractNumber": "SC-000355",
+      "localProjectId": 761,
+      "jpProjectId": 5347,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 6195,
+          "number": "SC-5347-0007",
+          "title": "Fire Sprinkler ",
+          "company": "Mountain Valley Fire Protection LLC"
+        }
+      ]
+    }
+  ]
+}

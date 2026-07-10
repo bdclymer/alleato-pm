@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Search, UserPlus, Settings, Link, Shield, Trash2 } from "lucide-react";
+import { UserPlus, Settings, Link, Shield, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
-import { Input } from "@/components/ui/input";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -49,11 +49,11 @@ const ACTION_META: Record<
   AuditAction,
   { label: string; icon: React.ElementType; color: string }
 > = {
-  member_invited: { label: "Invited member", icon: UserPlus, color: "text-blue-600 bg-blue-50" },
-  member_removed: { label: "Removed member", icon: Trash2, color: "text-red-600 bg-red-50" },
-  role_changed: { label: "Changed role", icon: Shield, color: "text-purple-600 bg-purple-50" },
-  integration_connected: { label: "Connected integration", icon: Link, color: "text-green-600 bg-green-50" },
-  integration_disconnected: { label: "Disconnected integration", icon: Link, color: "text-yellow-600 bg-yellow-50" },
+  member_invited: { label: "Invited member", icon: UserPlus, color: "text-primary bg-primary/10" },
+  member_removed: { label: "Removed member", icon: Trash2, color: "text-destructive bg-destructive/10" },
+  role_changed: { label: "Changed role", icon: Shield, color: "text-primary bg-primary/10" },
+  integration_connected: { label: "Connected integration", icon: Link, color: "text-success bg-success/10" },
+  integration_disconnected: { label: "Disconnected integration", icon: Link, color: "text-warning bg-warning/10" },
   settings_changed: { label: "Changed settings", icon: Settings, color: "text-muted-foreground bg-muted" },
   project_created: { label: "Created project", icon: Settings, color: "text-primary bg-primary/10" },
 };
@@ -156,15 +156,11 @@ export default function AuditLogPage() {
     <div className="px-8 py-8 max-w-4xl">
       {/* Filters */}
       <div className="flex items-center gap-3 mb-5">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search events..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-8 pl-8 text-sm"
-          />
-        </div>
+        <ExpandableSearch
+          value={search}
+          onChange={setSearch}
+          placeholder="Search events..."
+        />
 
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="h-8 w-48 text-xs">

@@ -1,0 +1,26 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-41-36-255Z-8271630d
+
+[1/5] realworld-last-five-emails … ✗ fail (13795ms, 1 tools)
+    ! judge email_operator score 2 < 4: The answer does list five recent emails with timestamps, but it goes beyond a simple source lookup by inventing or overstating response-path judgments and ownership guidance not warranted by the prompt. It also includes noisy evidence text, and some recommendations are not well supported.
+[2/5] realworld-urgent-inbox … ✓ pass (10373ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✓ pass (8551ms, 1 tools)
+[4/5] realworld-outlook-arrived-today … ✗ fail (10003ms, 1 tools)
+    ! mustIncludeAny missing one of: "email", "Outlook", "received", "attention", "no emails"
+[5/5] realworld-email-reply-triage … ✗ fail (6518ms, 1 tools)
+    ! judge email_operator score 3 < 4: The assistant identified one likely reply-needed email and avoided claiming anything was sent, but it was too vague to be operationally useful. It did not name the watch/no-reply items, gave only thin evidence, and relied on generic guidance instead of a concrete inbox triage result for today’s emails.
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-41-36-255Z-8271630d/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-41-36-255Z-8271630d/summary.md
+Pass: 2/5

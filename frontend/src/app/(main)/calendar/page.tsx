@@ -1,4 +1,4 @@
-import ComponentsAppsCalendar from '@/components/apps/calendar/components-apps-calendar';
+import ComponentsAppsCalendar from '@/components/apps/calendar/calendar-dynamic';
 import { Metadata } from 'next';
 import React from 'react';
 

@@ -73,6 +73,106 @@ describe("budget line PATCH route", () => {
       expect.objectContaining({ error_code: "AUTH_EXPIRED" }),
     );
   });
+
+  it("persists unit_of_measure when the client submits it", async () => {
+    const updateSpy = jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: {
+              id: "line-1",
+              quantity: 3,
+              unit_cost: 3921,
+              unit_of_measure: "ea",
+              description: "Line item",
+              original_amount: 11763,
+              updated_at: "2026-07-03T22:00:00.000Z",
+              updated_by: "user-1",
+            },
+            error: null,
+          }),
+        }),
+      }),
+    });
+
+    createClientMock.mockResolvedValue({
+      auth: {
+        getUser: jest.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: jest.fn((table: string) => {
+        if (table === "projects") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { budget_locked: false },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        if (table === "budget_lines") {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest
+                  .fn()
+                  .mockResolvedValueOnce({
+                    data: {
+                      id: "line-1",
+                      project_id: 42,
+                      quantity: null,
+                      unit_cost: null,
+                      unit_of_measure: null,
+                      description: "Line item",
+                      original_amount: 11763,
+                    },
+                    error: null,
+                  }),
+              }),
+            }),
+            update: updateSpy,
+          };
+        }
+
+        throw new Error(`Unexpected table ${table}`);
+      }),
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await PATCH(
+      makePatchRequest({
+        quantity: 3,
+        unit_of_measure: "ea",
+        unit_cost: 3921,
+        original_amount: 11763,
+      }),
+      {
+        params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        quantity: 3,
+        unit_cost: 3921,
+        unit_of_measure: "ea",
+        original_amount: 11763,
+      }),
+    );
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        lineItem: expect.objectContaining({
+          unit_of_measure: "ea",
+        }),
+      }),
+    );
+  });
 });
 
 // ─── DELETE route guards ────────────────────────────────────────────────────
@@ -147,16 +247,19 @@ function buildSupabaseMock(
         eq: jest.fn().mockResolvedValue(step.delete),
       });
     } else if ("listResult" in step) {
-      // For chains like .select().eq().neq().eq() that resolve as a list,
-      // the final `.eq()` returns the awaited value.
+      // Support both list chains that resolve immediately after `.eq()` and
+      // longer chains like `.eq().neq().eq()`.
+      const resolved = Promise.resolve(step.listResult);
       const terminal = jest.fn().mockResolvedValue(step.listResult);
       builder.eq = jest.fn().mockImplementation(function chain(this: unknown) {
-        // After the first .eq, return an object whose .neq().eq() resolves.
         return {
           eq: terminal,
           neq: jest.fn().mockReturnValue({
             eq: terminal,
           }),
+          then: resolved.then.bind(resolved),
+          catch: resolved.catch.bind(resolved),
+          finally: resolved.finally.bind(resolved),
         };
       });
     }
@@ -287,6 +390,67 @@ describe("budget line DELETE route — Procore-parity guards", () => {
     expect(body.details?.modifications?.[0]?.status).toBe("draft");
   });
 
+  it("blocks delete with 409 LINE_HAS_CHANGE_EVENT_REFERENCES when change-event lines still reference the budget line", async () => {
+    createClientMock.mockResolvedValue(
+      buildSupabaseMock({
+        projects: [
+          { single: { data: { budget_locked: false }, error: null } },
+        ],
+        budget_lines: [
+          {
+            single: {
+              data: {
+                id: "line-1",
+                project_id: 42,
+                original_amount: 0,
+                cost_code_id: "cc-1",
+                cost_type_id: "ct-1",
+              },
+              error: null,
+            },
+          },
+        ],
+        budget_modifications: [
+          { listResult: { data: [], error: null } },
+        ],
+        change_event_line_items: [
+          {
+            listResult: {
+              data: [
+                {
+                  id: "ce-line-1",
+                  change_event_id: "ce-1",
+                  budget_line_id: "line-1",
+                  budget_code_id: "line-1",
+                },
+              ],
+              error: null,
+            },
+          },
+        ],
+      }),
+    );
+
+    const response = await DELETE(makeDeleteRequest(), {
+      params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+    });
+
+    expect(response.status).toBe(409);
+    const body = (await response.json()) as {
+      details?: {
+        code?: string;
+        references?: Array<{ id: string; change_event_id: string }>;
+      };
+      error_message?: string;
+    };
+    expect(body.details?.code).toBe("LINE_HAS_CHANGE_EVENT_REFERENCES");
+    expect(body.details?.references?.[0]).toEqual({
+      id: "ce-line-1",
+      change_event_id: "ce-1",
+    });
+    expect(body.error_message).toMatch(/change event line item/i);
+  });
+
   it("allows delete when unlocked, $0 original budget, and no active mods", async () => {
     createClientMock.mockResolvedValue(
       buildSupabaseMock({
@@ -310,6 +474,9 @@ describe("budget line DELETE route — Procore-parity guards", () => {
           { delete: { error: null } },
         ],
         budget_modifications: [
+          { listResult: { data: [], error: null } },
+        ],
+        change_event_line_items: [
           { listResult: { data: [], error: null } },
         ],
       }),

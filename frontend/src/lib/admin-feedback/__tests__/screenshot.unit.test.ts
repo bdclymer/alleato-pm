@@ -1,4 +1,7 @@
+/** @jest-environment jsdom */
+
 import {
+  shouldProtectCaptureRoot,
   isEmptyCapture,
   renderWithRetry,
   withTimeout,
@@ -105,5 +108,33 @@ describe("withTimeout", () => {
     await expect(withTimeout(neverSettles, 20, "Screenshot render")).rejects.toThrow(
       "Screenshot render timed out after 20ms",
     );
+  });
+});
+
+describe("shouldProtectCaptureRoot", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+    jest.restoreAllMocks();
+  });
+
+  it("protects the selected capture root and its containing dialog subtree", () => {
+    const dialog = document.createElement("div");
+    dialog.setAttribute("role", "dialog");
+    const content = document.createElement("section");
+    dialog.appendChild(content);
+    document.body.appendChild(dialog);
+
+    expect(shouldProtectCaptureRoot(content, content)).toBe(true);
+    expect(shouldProtectCaptureRoot(content, dialog)).toBe(true);
+    expect(shouldProtectCaptureRoot(content, document.body)).toBe(true);
+  });
+
+  it("does not protect unrelated floating UI", () => {
+    const root = document.createElement("section");
+    const otherDialog = document.createElement("div");
+    otherDialog.setAttribute("role", "dialog");
+    document.body.append(root, otherDialog);
+
+    expect(shouldProtectCaptureRoot(root, otherDialog)).toBe(false);
   });
 });

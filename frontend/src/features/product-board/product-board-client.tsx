@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -16,15 +17,22 @@ import { EmptyState } from "@/components/ds";
 import { ErrorState } from "@/components/ds/error-state";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, LayoutGrid, Table2 } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { useUnifiedTableState } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import { useProductBoard, type BoardItem } from "./use-product-board";
 import { BoardColumn } from "./board-column";
-import { BoardCard, BoardCardOverlay } from "./board-card";
+import { BoardCardOverlay } from "./board-card";
 import { BoardFilterBar, type BoardFilters } from "./board-filter-bar";
 import { loadCardViewSettings, saveCardViewSettings, type CardViewSettings } from "./card-view-settings";
 import { BoardUnifiedTable } from "./board-unified-table";
+import { matchesBoardCaptureTopics } from "./topics";
+import {
+  matchesBoardItemType,
+  matchesBoardTextMetadata,
+} from "./metadata";
 
 interface ProductBoardClientProps {
   readonly?: boolean;
@@ -36,23 +44,60 @@ function filterItems(items: BoardItem[], filters: BoardFilters): BoardItem[] {
       const q = filters.search.toLowerCase();
       if (!item.title.toLowerCase().includes(q) && !item.comment?.toLowerCase().includes(q)) return false;
     }
+    if (!matchesBoardCaptureTopics(item, filters.topics)) return false;
     if (filters.assigneeId && item.assignee_id !== filters.assigneeId) return false;
     if (filters.priority && item.severity !== filters.priority) return false;
     if (filters.labelColor) {
       const meta = (item.metadata as { labels?: { color: string }[] } | null) ?? {};
       if (!meta.labels?.some((l) => l.color === filters.labelColor)) return false;
     }
+    if (!matchesBoardTextMetadata(item, "tool", filters.tool)) return false;
+    if (!matchesBoardTextMetadata(item, "category", filters.category)) return false;
+    if (!matchesBoardItemType(item, filters.type)) return false;
     return true;
   });
 }
 
 type ViewMode = "board" | "table";
 
+function hasActiveBoardFilters(filters: BoardFilters): boolean {
+  return Boolean(
+    filters.search ||
+    filters.assigneeId ||
+    filters.priority ||
+    filters.labelColor ||
+    filters.topics?.length ||
+    filters.tool ||
+    filters.category ||
+    filters.type,
+  );
+}
+
 export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { items, isLoading, error, activeId, setActiveId, updateStatus, reorder } = useProductBoard();
   const [filters, setFilters] = useState<BoardFilters>({});
   const [cardSettings, setCardSettings] = useState<CardViewSettings>(loadCardViewSettings);
-  const [viewMode, setViewMode] = useState<ViewMode>("board");
+  const viewState = useUnifiedTableState({
+    entityKey: "product-board",
+    searchParams,
+    pathname,
+    router,
+      defaults: {
+        view: "board",
+        allowedViews: ["board", "table"],
+        page: 1,
+        perPage: 25,
+        search: "",
+        sortBy: null,
+        sortDirection: "asc",
+        visibleColumns: [],
+        filters: {},
+      },
+    });
+  const viewMode = viewState.currentView as ViewMode;
 
   function updateCardSettings(patch: Partial<CardViewSettings>) {
     setCardSettings((prev) => {
@@ -67,6 +112,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   );
 
   const filteredItems = useMemo(() => filterItems(items, filters), [items, filters]);
+  const activeFilters = hasActiveBoardFilters(filters);
   const activeItem = items.find((i) => i.id === activeId);
 
   function handleDragStart({ active }: DragStartEvent) {
@@ -123,57 +169,44 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     }
   }
 
-  const inFlight = useMemo(
-    () => items.filter((i) => i.board_status === "planned" || i.board_status === "in_progress").length,
-    [items],
-  );
-  const shipped = useMemo(
-    () => items.filter((i) => i.board_status === "shipped").length,
-    [items],
-  );
-
-  const viewToggle = (
-    <div className="inline-flex shrink-0 items-center rounded-md bg-muted p-0.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setViewMode("board")}
-        className={cn(
-          "h-6 gap-1.5 px-2 text-[11px] font-medium",
-          viewMode === "board"
-            ? "bg-background text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <LayoutGrid className="h-3 w-3" />
-        Board
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setViewMode("table")}
-        className={cn(
-          "h-6 gap-1.5 px-2 text-[11px] font-medium",
-          viewMode === "table"
-            ? "bg-background text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <Table2 className="h-3 w-3" />
-        Table
-      </Button>
-    </div>
-  );
-
-  const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
-      {viewToggle}
-      <span className="hidden text-[11px] text-muted-foreground/60 sm:inline-flex items-center gap-3 pl-2">
-        <span><span className="font-medium text-foreground/80 tabular-nums">{inFlight}</span> in motion</span>
-        <span className="text-muted-foreground/30" aria-hidden>·</span>
-        <span><span className="font-medium text-foreground/80 tabular-nums">{shipped}</span> shipped</span>
-      </span>
-      <div className="flex-1" />
+  const headerActions = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="inline-flex shrink-0 items-center rounded-md bg-muted p-0.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            viewState.setCurrentView("board");
+            viewState.setSearchParams({ view: "board" });
+          }}
+          className={cn(
+            "h-6 gap-1.5 px-2 text-[11px] font-medium",
+            viewMode === "board"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <LayoutGrid className="h-3 w-3" />
+          Board
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            viewState.setCurrentView("table");
+            viewState.setSearchParams({ view: "table" });
+          }}
+          className={cn(
+            "h-6 gap-1.5 px-2 text-[11px] font-medium",
+            viewMode === "table"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Table2 className="h-3 w-3" />
+          Table
+        </Button>
+      </div>
       <ExpandableSearch
         value={filters.search ?? ""}
         onChange={(v) => setFilters((f) => ({ ...f, search: v || undefined }))}
@@ -189,81 +222,82 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     </div>
   );
 
-  // Table view — UnifiedTablePage handles its own loading/error/empty states
-  if (viewMode === "table") {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <BoardUnifiedTable
-          items={items}
-          isLoading={isLoading}
-          error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
-        />
-      </div>
-    );
-  }
+  let body: React.ReactNode;
 
-  // Board view early returns
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
+  if (viewMode === "table") {
+    // Table view — UnifiedTablePage handles its own loading/error/empty states
+    body = (
+      <BoardUnifiedTable
+        items={filteredItems}
+        isLoading={isLoading}
+        error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
+        isFiltered={activeFilters}
+      />
+    );
+  } else if (isLoading) {
+    body = (
+      <div className="overflow-x-auto pb-6">
+        <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
           {BOARD_STATUSES.map((status) => (
             <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
           ))}
         </div>
       </div>
     );
-  }
-
-  if (error) return <ErrorState title="Couldn't load the board" description={error.message} />;
-
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <EmptyState
-          icon={<Lightbulb />}
-          title="No feature requests yet"
-          description="Submit ideas via the feedback button — they'll appear here automatically."
-        />
-      </div>
+  } else if (error) {
+    body = <ErrorState title="Couldn't load the board" description={error.message} />;
+  } else if (filteredItems.length === 0) {
+    body = (
+      <EmptyState
+        icon={<Lightbulb />}
+        title={activeFilters ? "No items match the current filters" : "No feature requests yet"}
+        description={activeFilters ? "Try clearing or adjusting the tool, category, or type filters." : "Submit ideas via the feedback button — they'll appear here automatically."}
+      />
     );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {toolbar}
-
+  } else {
+    body = (
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-3 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
-          {BOARD_STATUSES.map((status) => (
-            <BoardColumn
-              key={status}
-              status={status}
-              label={BOARD_STATUS_LABELS[status]}
-              items={filteredItems
-                .filter((i) => i.board_status === status)
-                .sort((a, b) => a.position - b.position)}
-              allItems={items
-                .filter((i) => i.board_status === status)
-                .sort((a, b) => a.position - b.position)}
-              readonly={readonly}
-              cardSettings={cardSettings}
-            />
-          ))}
+        <div className="overflow-x-auto pb-6">
+          <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
+            {BOARD_STATUSES.map((status) => (
+              <BoardColumn
+                key={status}
+                status={status}
+                label={BOARD_STATUS_LABELS[status]}
+                items={filteredItems
+                  .filter((i) => i.board_status === status)
+                  .sort((a, b) => a.position - b.position)}
+                allItems={items
+                  .filter((i) => i.board_status === status)
+                  .sort((a, b) => a.position - b.position)}
+                readonly={readonly}
+                cardSettings={cardSettings}
+              />
+            ))}
+          </div>
         </div>
 
         <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.18,0.67,0.6,1.22)" }}>
           {activeItem ? <BoardCardOverlay item={activeItem} /> : null}
         </DragOverlay>
       </DndContext>
-    </div>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="dashboard"
+      title="Roadmap"
+      actions={headerActions}
+      contentClassName="space-y-4 pt-2"
+      containerPaddingClassName="px-4 sm:pl-6 sm:pr-0 lg:pl-8 lg:pr-0 pt-2 pb-4"
+    >
+      <div className="min-w-0">{body}</div>
+    </PageShell>
   );
 }

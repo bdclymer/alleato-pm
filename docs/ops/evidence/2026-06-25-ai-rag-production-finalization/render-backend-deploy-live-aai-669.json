@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-06-25T22:18:28.848Z",
+  "serviceId": "srv-d8271ohj2pic739klb7g",
+  "targetCommit": "df7491e71627416a1d06a24a8a640adf4ede0c9f",
+  "final": {
+    "id": "dep-d8uqhm3rjlhs73bkjld0",
+    "status": "live",
+    "createdAt": "2026-06-25T22:16:56.263333Z",
+    "finishedAt": "2026-06-25T22:18:00.535476Z"
+  },
+  "polls": [
+    {
+      "polled_at": "2026-06-25T22:17:28.210Z",
+      "target": {
+        "id": "dep-d8uqhm3rjlhs73bkjld0",
+        "status": "build_in_progress",
+        "createdAt": "2026-06-25T22:16:56.263333Z"
+      }
+    },
+    {
+      "polled_at": "2026-06-25T22:17:58.551Z",
+      "target": {
+        "id": "dep-d8uqhm3rjlhs73bkjld0",
+        "status": "update_in_progress",
+        "createdAt": "2026-06-25T22:16:56.263333Z"
+      }
+    },
+    {
+      "polled_at": "2026-06-25T22:18:28.848Z",
+      "target": {
+        "id": "dep-d8uqhm3rjlhs73bkjld0",
+        "status": "live",
+        "createdAt": "2026-06-25T22:16:56.263333Z",
+        "finishedAt": "2026-06-25T22:18:00.535476Z"
+      }
+    }
+  ]
+}

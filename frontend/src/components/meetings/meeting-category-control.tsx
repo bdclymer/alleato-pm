@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api-client";
+import { DetailPropertyItem } from "@/components/ui/detail-property-bar";
 
 /** Categories already in use across meetings — offered as quick-fill suggestions. */
 const CATEGORY_SUGGESTIONS = [
@@ -74,30 +75,24 @@ export function MeetingCategoryControl({
   return (
     <>
       {category ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
+        <DetailPropertyItem
+          icon={Tag}
           onClick={openDialog}
           aria-label="Edit category"
-          className="inline-flex h-auto items-center gap-1.5 px-0 py-0 hover:bg-transparent"
         >
-          <Tag className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {category}
           </span>
-        </Button>
+        </DetailPropertyItem>
       ) : (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="inline-flex h-auto items-center gap-2 px-0 text-xs font-medium text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+        <DetailPropertyItem
+          icon={Tag}
           onClick={openDialog}
+          muted
+          aria-label="Add meeting category"
         >
-          <Tag className="h-3.5 w-3.5" />
           Add category
-        </Button>
+        </DetailPropertyItem>
       )}
 
       <Modal open={dialogOpen} onOpenChange={setDialogOpen}>

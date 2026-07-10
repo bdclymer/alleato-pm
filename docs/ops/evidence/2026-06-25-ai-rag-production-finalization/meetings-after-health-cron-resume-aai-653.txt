@@ -1,0 +1,108 @@
+
+> alleato-procore@0.1.0 rag:verify:meetings
+> node scripts/verify/verify_meeting_vectorization_health.mjs
+
+{
+  "metadata": {
+    "total_meetings": 1735,
+    "latest_meeting_at": "2026-06-25T19:00:00.000Z"
+  },
+  "summaryMetadata": {
+    "total_rag_metadata": 40098,
+    "embedded_summaries": 4863,
+    "latest_summary_embedding_at": "2026-06-25T21:05:23.670Z"
+  },
+  "recent": {
+    "recent_meetings": 75
+  },
+  "chunks": {
+    "total_chunks": 39299,
+    "embedded_chunks": 39299,
+    "docs_with_embedded_chunks": 2142,
+    "latest_chunk_embedding_at": "2026-06-25T21:05:25.283Z"
+  },
+  "recentChunkCoverage": {
+    "recent_meetings": 75,
+    "recent_meetings_with_chunks": 73,
+    "recent_meetings_with_embedded_chunks": 73,
+    "transcript_expected_meetings": 0,
+    "transcript_expected_meetings_with_embedded_transcript_chunks": 0,
+    "recent_chunks": 1609,
+    "recent_embedded_chunks": 1609,
+    "latest_recent_chunk_embedding_at": "2026-06-25T21:05:25.283Z"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "error",
+      "count": 13226,
+      "oldest_created_at": "2025-12-08T03:10:57.967Z",
+      "newest_updated_at": "2026-06-25T19:52:32.383Z"
+    },
+    {
+      "stage": "done",
+      "count": 10825,
+      "oldest_created_at": "2025-12-08T00:49:42.482Z",
+      "newest_updated_at": "2026-06-25T19:02:18.947Z"
+    },
+    {
+      "stage": "embedded",
+      "count": 3053,
+      "oldest_created_at": "2025-12-08T03:11:31.063Z",
+      "newest_updated_at": "2026-05-14T18:05:18.072Z"
+    },
+    {
+      "stage": "raw_ingested",
+      "count": 81,
+      "oldest_created_at": "2026-05-13T20:56:06.145Z",
+      "newest_updated_at": "2026-06-22T22:43:23.479Z"
+    },
+    {
+      "stage": "chunked",
+      "count": 15,
+      "oldest_created_at": "2025-12-08T03:11:28.752Z",
+      "newest_updated_at": "2026-05-13T01:18:00.556Z"
+    },
+    {
+      "stage": "segmented",
+      "count": 6,
+      "oldest_created_at": "2026-03-18T19:06:06.850Z",
+      "newest_updated_at": "2026-06-25T19:53:30.273Z"
+    }
+  ],
+  "probes": {
+    "documentChunkSearch": {
+      "result_count": 5,
+      "max_similarity": 1
+    },
+    "embeddingProvider": {
+      "ok": true,
+      "providers": [
+        "ai-gateway"
+      ]
+    }
+  },
+  "warnings": [
+    "Direct OpenAI embedding probe returned 429. Body: {\n    \"error\": {\n        \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.\",\n        \"type\": \"insufficient_quota\",\n        \"param\": null,\n        . Check OpenAI billing/quota. AI Gateway is currently the working provider; direct OpenAI should not be treated as the primary path.",
+    "13226 Fireflies ingestion jobs are in error stage; inspect grouped error messages before relying on meeting recall."
+  ],
+  "failures": [
+    "Only 73 of 75 meetings from the last 14 days have embedded chunks (97.3%, required ≥100%). New meetings are NOT being vectorized. AI Strategist is missing recent context.",
+    "Only 73 of 75 meetings from the last 14 days have embedded document_chunks (97.3%, required ≥100%). AI Strategist semanticSearch is missing recent meeting context."
+  ]
+}
+
+WARNINGS:
+   - Direct OpenAI embedding probe returned 429. Body: {
+    "error": {
+        "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.",
+        "type": "insufficient_quota",
+        "param": null,
+        . Check OpenAI billing/quota. AI Gateway is currently the working provider; direct OpenAI should not be treated as the primary path.
+   - 13226 Fireflies ingestion jobs are in error stage; inspect grouped error messages before relying on meeting recall.
+
+MEETING VECTORIZATION HEALTH: FAIL
+The AI Strategist is degraded or about to be. Fix these now:
+
+   FAIL: Only 73 of 75 meetings from the last 14 days have embedded chunks (97.3%, required ≥100%). New meetings are NOT being vectorized. AI Strategist is missing recent context.
+   FAIL: Only 73 of 75 meetings from the last 14 days have embedded document_chunks (97.3%, required ≥100%). AI Strategist semanticSearch is missing recent meeting context.
+

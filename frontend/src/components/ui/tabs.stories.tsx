@@ -31,30 +31,26 @@ export const Default = {
   ),
 };
 
-export const LineVariant = {
+export const ComfortableSpacing = {
   render: () => (
-    <Tabs defaultValue="summary" className="w-full max-w-2xl">
-      <TabsList variant="line">
-        <TabsTrigger value="summary">Summary</TabsTrigger>
-        <TabsTrigger value="budget">Budget</TabsTrigger>
-        <TabsTrigger value="commitments">Commitments</TabsTrigger>
-        <TabsTrigger value="rfis">RFIs</TabsTrigger>
-        <TabsTrigger value="submittals">Submittals</TabsTrigger>
+    <Tabs defaultValue="general" className="w-full max-w-4xl">
+      <TabsList spacing="comfortable" className="justify-start">
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="responses">Responses</TabsTrigger>
+        <TabsTrigger value="workflow-templates">Workflow Templates</TabsTrigger>
+        <TabsTrigger value="imports">Imports</TabsTrigger>
       </TabsList>
-      <TabsContent value="summary" className="mt-6">
-        <p className="text-sm text-muted-foreground">Project summary view.</p>
+      <TabsContent value="general" className="mt-4">
+        <p className="text-sm text-muted-foreground">General settings content.</p>
       </TabsContent>
-      <TabsContent value="budget" className="mt-6">
-        <p className="text-sm text-muted-foreground">Budget and cost tracking.</p>
+      <TabsContent value="responses" className="mt-4">
+        <p className="text-sm text-muted-foreground">Responses settings content.</p>
       </TabsContent>
-      <TabsContent value="commitments" className="mt-6">
-        <p className="text-sm text-muted-foreground">Subcontracts and purchase orders.</p>
+      <TabsContent value="workflow-templates" className="mt-4">
+        <p className="text-sm text-muted-foreground">Workflow template settings content.</p>
       </TabsContent>
-      <TabsContent value="rfis" className="mt-6">
-        <p className="text-sm text-muted-foreground">Requests for information.</p>
-      </TabsContent>
-      <TabsContent value="submittals" className="mt-6">
-        <p className="text-sm text-muted-foreground">Submittal log and approvals.</p>
+      <TabsContent value="imports" className="mt-4">
+        <p className="text-sm text-muted-foreground">Import settings content.</p>
       </TabsContent>
     </Tabs>
   ),

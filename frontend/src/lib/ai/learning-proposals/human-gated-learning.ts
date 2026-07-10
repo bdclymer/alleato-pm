@@ -242,7 +242,7 @@ async function extractLearningCandidates(
       description:
         "Memory or Skill Library candidates that require human review before use.",
     }),
-    system: `You propose learning candidates for a construction project management assistant.
+    instructions: `You propose learning candidates for a construction project management assistant.
 
 Return only candidates that should be reviewed by a human before becoming durable memory or Skill Library behavior.
 

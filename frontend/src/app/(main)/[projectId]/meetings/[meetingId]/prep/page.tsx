@@ -16,7 +16,7 @@ import { PageShell } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Editor } from "@/components/ai-chat/text-editor";
-import { useMeeting } from "@/hooks/use-meetings";
+import { useMeetingDetail } from "@/hooks/use-meetings";
 import {
   useMeetingPrep,
   useSaveMeetingPrep,
@@ -31,7 +31,7 @@ export default function MeetingPrepPage() {
   const projectId = params.projectId as string;
   const meetingId = params.meetingId as string;
 
-  const { data: meetingResult, isLoading: meetingLoading } = useMeeting(
+  const { data: meetingResult, isLoading: meetingLoading } = useMeetingDetail(
     projectId,
     meetingId
   );
@@ -43,7 +43,8 @@ export default function MeetingPrepPage() {
   const generatePrep = useGenerateMeetingPrep(projectId, meetingId);
   const { confirm, ConfirmDialog } = useConfirm();
 
-  const meeting = meetingResult?.data;
+  const meeting = meetingResult?.meeting;
+  const attendees = meetingResult?.attendees ?? [];
   const prep = prepResult?.data;
 
   const [content, setContent] = useState("");
@@ -136,14 +137,14 @@ export default function MeetingPrepPage() {
     );
   }
 
-  const formattedDate = meeting.date
-    ? format(new Date(meeting.date), "EEEE, MMMM d, yyyy 'at' h:mm a")
+  const formattedDate = meeting.meeting_date
+    ? format(new Date(`${meeting.meeting_date}T12:00:00`), "EEEE, MMMM d, yyyy")
     : "Date TBD";
 
   return (
     <PageShell
       variant="content"
-      title={meeting.title ?? ""}
+      title={meeting.name}
       description={formattedDate}
       onBack={() => router.back()}
       backLabel="Back to Meetings"
@@ -204,7 +205,7 @@ export default function MeetingPrepPage() {
                 className="-mt-2"
                 onClick={() => {
                   setContent(
-                    `# Meeting Prep: ${meeting.title}\n\n## Agenda\n\n- \n\n## Notes\n\n`
+                    `# Meeting Prep: ${meeting.name}\n\n## Agenda\n\n- \n\n## Notes\n\n`
                   );
                 }}
               >
@@ -230,20 +231,29 @@ export default function MeetingPrepPage() {
           {/* Meeting Details */}
           <SidebarSection title="Meeting Details">
             <div className="space-y-2 text-sm">
-              {meeting.participants && (
+              {attendees.length > 0 && (
                 <div>
                   <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-1">
                     Attendees
                   </p>
-                  <p>{meeting.participants}</p>
+                  <p>
+                    {attendees
+                      .map((attendee) =>
+                        [attendee.person.first_name, attendee.person.last_name]
+                          .filter(Boolean)
+                          .join(" "),
+                      )
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
                 </div>
               )}
-              {meeting.description && (
+              {meeting.overview && (
                 <div>
                   <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider mb-1">
                     Purpose
                   </p>
-                  <p>{meeting.description}</p>
+                  <p>{meeting.overview}</p>
                 </div>
               )}
             </div>

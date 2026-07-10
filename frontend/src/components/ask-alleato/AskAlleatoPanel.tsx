@@ -35,12 +35,12 @@ export function AskAlleatoPanel({
           onValueChange={(value) => onActiveTabChange(value as AskAlleatoPanelTab)}
           className="gap-0"
         >
-          <TabsList className="grid h-auto w-full grid-cols-2 rounded-none border-b bg-transparent p-0" variant="default">
-            <TabsTrigger value="feedback" className="rounded-none border-b-2 border-transparent py-3 data-[state=active]:border-primary data-[state=active]:shadow-none">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="feedback">
               <MessageSquare className="size-3.5" />
               Feedback
             </TabsTrigger>
-            <TabsTrigger value="ai" className="rounded-none border-b-2 border-transparent py-3 data-[state=active]:border-primary data-[state=active]:shadow-none">
+            <TabsTrigger value="ai">
               <Sparkles className="size-3.5" />
               Alleato AI
             </TabsTrigger>

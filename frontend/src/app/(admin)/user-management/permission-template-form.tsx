@@ -1,58 +1,101 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { FieldPath } from "react-hook-form";
+import { useForm } from "react-hook-form";
+
+import { Form } from "@/components/ui/form";
+import { FormActions, FormGrid, FormSection, FormServerError } from "@/components/forms";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import {
   ALL_GRANULAR_FLAGS,
   GRANULAR_FLAG_LABELS,
 } from "@/lib/permissions-shared";
 import type {
-  PermissionModule,
-  PermissionLevel,
-  PermissionTemplate,
   GranularFlag,
+  PermissionLevel,
+  PermissionModule,
+  PermissionTemplate,
 } from "@/lib/permissions-shared";
-
-const MODULES: { key: PermissionModule; label: string }[] = [
-  { key: "directory",     label: "Directory" },
-  { key: "budget",        label: "Budget" },
-  { key: "contracts",     label: "Contracts" },
-  { key: "documents",     label: "Documents" },
-  { key: "schedule",      label: "Schedule" },
-  { key: "submittals",    label: "Submittals" },
-  { key: "rfis",          label: "RFIs" },
-  { key: "change_orders", label: "Change Orders" },
-];
+import {
+  PERMISSION_TEMPLATE_GROUPS,
+  PERMISSION_TEMPLATE_MODULES,
+  getPermissionTemplateToolsByGroup,
+} from "./permission-template-config";
+import type { PermissionTemplateModuleTool } from "./permission-template-config";
 
 const LEVELS: PermissionLevel[] = ["none", "read", "write", "admin"];
 
-type RulesState = Record<PermissionModule, PermissionLevel[]>;
+const LEVEL_OPTIONS = LEVELS.map((level) => ({
+  value: level,
+  label: level.charAt(0).toUpperCase() + level.slice(1),
+}));
+
+/** Expands a single "highest" level back into the cumulative array stored in rules_json. */
+const LEVEL_EXPANSION: Record<PermissionLevel, PermissionLevel[]> = {
+  none: ["none"],
+  read: ["read"],
+  write: ["read", "write"],
+  admin: ["read", "write", "admin"],
+};
+
+type RulesState = PermissionTemplate["rules_json"];
 
 function defaultRules(): RulesState {
   return Object.fromEntries(
-    MODULES.map(({ key }) => [key, ["read"]])
+    PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [moduleKey, ["read"]])
   ) as RulesState;
 }
 
-function templateToRulesState(rules_json: Record<PermissionModule, PermissionLevel[]>): RulesState {
+function templateToRulesState(rules_json: PermissionTemplate["rules_json"]): RulesState {
   return Object.fromEntries(
-    MODULES.map(({ key }) => [key, rules_json[key] ?? ["read"]])
+    PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [
+      moduleKey,
+      rules_json[moduleKey] ?? ["read"],
+    ])
   ) as RulesState;
+}
+
+function highestLevelOf(levels: PermissionLevel[]): PermissionLevel {
+  if (levels.includes("admin")) return "admin";
+  if (levels.includes("write")) return "write";
+  if (levels.includes("read")) return "read";
+  return "none";
+}
+
+interface FormValues {
+  name: string;
+  description: string;
+  /** Highest level selected per module (expanded back to arrays on submit). */
+  levels: Record<PermissionModule, PermissionLevel>;
+  /** Whether each granular flag is enabled. */
+  flags: Record<GranularFlag, boolean>;
+}
+
+function buildDefaultValues(template?: PermissionTemplate): FormValues {
+  const rules = template ? templateToRulesState(template.rules_json) : defaultRules();
+  const enabledFlags = new Set(template?.granular_flags ?? []);
+
+  return {
+    name: template?.name ?? "",
+    description: template?.description ?? "",
+    levels: Object.fromEntries(
+      PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [
+        moduleKey,
+        highestLevelOf(rules[moduleKey]),
+      ])
+    ) as Record<PermissionModule, PermissionLevel>,
+    flags: Object.fromEntries(
+      ALL_GRANULAR_FLAGS.map((flag) => [flag, enabledFlags.has(flag)])
+    ) as Record<GranularFlag, boolean>,
+  };
 }
 
 interface Props {
   template?: PermissionTemplate;
+  includeAccessControls?: boolean;
   onSave: (data: {
     name: string;
     description: string;
@@ -62,157 +105,115 @@ interface Props {
   onCancel: () => void;
 }
 
-export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
-  const [name, setName] = useState(template?.name ?? "");
-  const [description, setDescription] = useState(template?.description ?? "");
-  const [rules, setRules] = useState<RulesState>(
-    template ? templateToRulesState(template.rules_json) : defaultRules()
-  );
-  const [granularFlags, setGranularFlags] = useState<Set<GranularFlag>>(
-    new Set(template?.granular_flags ?? [])
-  );
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function PermissionTemplateForm({
+  template,
+  includeAccessControls = true,
+  onSave,
+  onCancel,
+}: Props) {
+  const form = useForm<FormValues>({
+    defaultValues: buildDefaultValues(template),
+  });
 
-  function getHighestLevel(module: PermissionModule): PermissionLevel {
-    const levels = rules[module];
-    if (levels.includes("admin")) return "admin";
-    if (levels.includes("write")) return "write";
-    if (levels.includes("read")) return "read";
-    return "none";
-  }
+  async function onSubmit(values: FormValues) {
+    form.clearErrors("root");
 
-  function setHighestLevel(module: PermissionModule, level: PermissionLevel) {
-    const expansion: Record<PermissionLevel, PermissionLevel[]> = {
-      none:  ["none"],
-      read:  ["read"],
-      write: ["read", "write"],
-      admin: ["read", "write", "admin"],
-    };
-    setRules((prev) => ({ ...prev, [module]: expansion[level] }));
-  }
+    if (!values.name.trim()) {
+      form.setError("root", { message: "Name is required" });
+      return;
+    }
 
-  function toggleFlag(flag: GranularFlag) {
-    setGranularFlags((prev) => {
-      const next = new Set(prev);
-      if (next.has(flag)) {
-        next.delete(flag);
-      } else {
-        next.add(flag);
-      }
-      return next;
-    });
-  }
+    const rules_json = Object.fromEntries(
+      PERMISSION_TEMPLATE_MODULES.map(({ moduleKey }) => [
+        moduleKey,
+        LEVEL_EXPANSION[values.levels[moduleKey]],
+      ])
+    ) as RulesState;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) { setError("Name is required"); return; }
-    setSaving(true);
-    setError(null);
+    const granular_flags = ALL_GRANULAR_FLAGS.filter((flag) => values.flags[flag]);
+
     try {
       await onSave({
-        name: name.trim(),
-        description: description.trim(),
-        rules_json: rules,
-        granular_flags: Array.from(granularFlags),
+        name: values.name.trim(),
+        description: values.description.trim(),
+        rules_json,
+        granular_flags,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
-      setSaving(false);
+      form.setError("root", {
+        message: err instanceof Error ? err.message : "Save failed",
+      });
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="tpl-name">Name</Label>
-          <Input
-            id="tpl-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-8">
+        <FormSection title="Template Details">
+          <RHFTextField
+            control={form.control}
+            name="name"
+            label="Name"
             placeholder="e.g. Site Superintendent"
           />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="tpl-desc">Description</Label>
-          <Textarea
-            id="tpl-desc"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+          <RHFTextareaField
+            control={form.control}
+            name="description"
+            label="Description"
             placeholder="Describe who this template is for..."
             rows={2}
           />
-        </div>
-      </div>
+        </FormSection>
 
-      {/* Module access */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Module Access</p>
-        <div className="rounded-md border border-border divide-y divide-border">
-          {MODULES.map(({ key, label }) => (
-            <div
-              key={key}
-              className="flex items-center justify-between px-4 py-3"
-            >
-              <span className="text-sm text-foreground">{label}</span>
-              <Select
-                value={getHighestLevel(key)}
-                onValueChange={(v) => setHighestLevel(key, v as PermissionLevel)}
-              >
-                <SelectTrigger className="w-32 h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEVELS.map((level) => (
-                    <SelectItem key={level} value={level}>
-                      {level.charAt(0).toUpperCase() + level.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-        </div>
-      </div>
+        {includeAccessControls ? (
+          <>
+            {PERMISSION_TEMPLATE_GROUPS.map((group) => {
+              const groupModules = getPermissionTemplateToolsByGroup(group.key).filter(
+                (tool): tool is PermissionTemplateModuleTool => tool.kind === "module",
+              );
 
-      {/* Granular flags */}
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Granular Access</p>
-        <p className="text-xs text-muted-foreground">
-          Fine-grained capabilities layered on top of module access levels.
-        </p>
-        <div className="rounded-md border border-border divide-y divide-border">
-          {ALL_GRANULAR_FLAGS.map((flag) => (
-            <label
-              key={flag}
-              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
-            >
-              <Checkbox
-                checked={granularFlags.has(flag)}
-                onCheckedChange={() => toggleFlag(flag)}
-              />
-              <span className="text-sm text-foreground">
-                {GRANULAR_FLAG_LABELS[flag]}
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
+              if (groupModules.length === 0) return null;
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+              return (
+                <FormSection key={group.key} title={group.label}>
+                  <FormGrid columns={2}>
+                    {groupModules.map((tool) => (
+                      <RHFSelectField
+                        key={tool.id}
+                        control={form.control}
+                        name={`levels.${tool.moduleKey}` as FieldPath<FormValues>}
+                        label={tool.label}
+                        options={LEVEL_OPTIONS}
+                      />
+                    ))}
+                  </FormGrid>
+                </FormSection>
+              );
+            })}
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving…" : template ? "Save Changes" : "Create Template"}
-        </Button>
-      </div>
-    </form>
+            <FormSection title="Granular Access">
+              <FormGrid columns={1}>
+                {ALL_GRANULAR_FLAGS.map((flag) => (
+                  <RHFCheckboxField
+                    key={flag}
+                    control={form.control}
+                    name={`flags.${flag}` as FieldPath<FormValues>}
+                    label={GRANULAR_FLAG_LABELS[flag]}
+                  />
+                ))}
+              </FormGrid>
+            </FormSection>
+          </>
+        ) : null}
+
+        <FormServerError message={form.formState.errors.root?.message} />
+
+        <FormActions
+          onCancel={onCancel}
+          isSubmitting={form.formState.isSubmitting}
+          submitLabel={template ? "Save Changes" : "Create Template"}
+        />
+      </form>
+    </Form>
   );
 }

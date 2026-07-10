@@ -4,6 +4,7 @@ import {
   optionalPercent,
   optionalPositiveNumber,
 } from "./common";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 /**
  * Commitment Status enum values matching the subcontracts.status DB constraint.
@@ -45,7 +46,8 @@ export const SovLineItemSchema = z.object({
   lineNumber: optionalNumber, // maps to '#'
   changeEventLineItem: z.string().trim().optional(),
   budgetCode: z.string().trim().optional(),
-  budgetCodeId: z.string().trim().optional(), // FK to budget_codes
+  budgetCodeId: z.string().trim().optional(), // FK to project_budget_codes
+  projectBudgetCodeId: z.string().trim().optional(),
   budgetCodeLabel: z.string().trim().optional(), // display label
   description: z.string().trim().optional(),
   amount: optionalPositiveNumber,
@@ -96,7 +98,8 @@ export const CreateSubcontractSchema = z.object({
   contractNumber: z
     .string()
     .min(1, "Contract number is required")
-    .max(50, "Contract number must be 50 characters or less"),
+    .max(50, "Contract number must be 50 characters or less")
+    .transform((value) => normalizeCommitmentContractNumber(value, "SC-")),
 
   // Optional fields with validation
   executed: z.boolean(),

@@ -1,15 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  Building2,
+  CalendarDays,
+  CircleDot,
+  Clock3,
   Copy,
+  Eye,
   ExternalLink,
   Mail,
-  MoreHorizontal,
+  MoreVertical,
+  Pencil,
   Trash2,
+  UserCircle2,
+  Users,
 } from "lucide-react";
 
 import {
@@ -25,13 +32,17 @@ import {
 } from "@/components/layout";
 import {
   DetailField,
-  DetailFieldGrid,
   EditableDetailField,
   EmptyState,
   EntityAttachments,
+  InlineEditField,
   StatusBadge,
 } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import {
+  DetailPropertyBar,
+  DetailPropertyItem,
+} from "@/components/ui/detail-property-bar";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -75,6 +86,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 import { SubmittalAIReviewPanel } from "./submittal-ai-review-panel";
+import { SubmittalExportPopover } from "./submittal-export-popover";
 import { parseAIReviewResponseComment } from "@/lib/submittals/ai-review/response-comment";
 import {
   normalizeSubmittalDetailTab,
@@ -91,7 +103,7 @@ const RESPONSE_STATUSES = [
   "Reviewed - No Exception",
 ] as const;
 
-const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
+const STEP_TYPES = ["Submitter", "Approver", "Reviewer"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -180,6 +192,27 @@ function getStepState(
   return "done";
 }
 
+/**
+ * A step can only be actionable once every earlier step is done — workflow
+ * steps get a Pending response row as soon as they're added (see
+ * workflow-steps#POST), so an approver's own state is "in-progress" the
+ * moment they're added even if a submitter/reviewer ahead of them hasn't
+ * responded yet. This folds in step order so only the current step shows
+ * as active; later steps are forced back to "not-started" (greyed out)
+ * until their turn.
+ */
+function getEffectiveStepState(
+  steps: SubmittalDetail["submittal_workflow_steps"],
+  index: number,
+): StepState {
+  const ownState = getStepState(steps[index]);
+  if (ownState !== "in-progress") return ownState;
+  const priorStepsDone = steps
+    .slice(0, index)
+    .every((step) => getStepState(step) === "done");
+  return priorStepsDone ? "in-progress" : "not-started";
+}
+
 function getHistoryRecordMetadata(
   metadata: unknown,
 ): Record<string, unknown> | null {
@@ -187,33 +220,6 @@ function getHistoryRecordMetadata(
     return null;
   }
   return metadata as Record<string, unknown>;
-}
-
-// ─── Ball in Court Chip ───────────────────────────────────────────────────────
-
-function BallInCourtChip({
-  userId,
-  users,
-}: {
-  userId: string;
-  users: AuthUser[];
-}) {
-  const name = resolveUserName(users, userId);
-  if (!name) return null;
-  const initials = getInitials(name);
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Currently with
-      </span>
-      <span className="flex items-center gap-1.5 rounded-full bg-primary px-3 py-1">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-foreground/20 text-[9px] font-bold text-primary-foreground shrink-0">
-          {initials}
-        </span>
-        <span className="text-sm font-medium text-primary-foreground">{name}</span>
-      </span>
-    </div>
-  );
 }
 
 type WorkflowStep = SubmittalDetail["submittal_workflow_steps"][number];
@@ -323,7 +329,11 @@ function WorkflowBuilder({
 }: WorkflowBuilderProps) {
   const router = useRouter();
   const [userId, setUserId] = React.useState("");
-  const [stepType, setStepType] = React.useState<string>("Approver");
+  // The first step in a workflow is the submitter; every step after that
+  // defaults to an approver.
+  const [stepType, setStepType] = React.useState<string>(
+    currentSteps.length === 0 ? "Submitter" : "Approver",
+  );
   const [templateName, setTemplateName] = React.useState("");
   const [savingTemplate, setSavingTemplate] = React.useState(false);
   const mutation = useAddWorkflowStep(projectId, submittalId);
@@ -546,6 +556,7 @@ export function SubmittalDetailClient({
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
+  const [isEditMode, setIsEditMode] = React.useState(false);
   const { profile: currentUserProfile } = useCurrentUserProfile();
 
   const { users, allUsers } = useAuthUsers(String(projectId));
@@ -623,7 +634,7 @@ export function SubmittalDetailClient({
   }
 
   const tabFromUrl = normalizeSubmittalDetailTab(
-    searchParams.get("tab") ?? searchParams.get("view"),
+    searchParams?.get("tab") ?? searchParams?.get("view") ?? null,
   );
   const [activeTab, setActiveTab] =
     React.useState<SubmittalDetailTab>(tabFromUrl);
@@ -639,8 +650,8 @@ export function SubmittalDetailClient({
   const currentUser = allUsers.find((user) => user.id === currentUserId) ?? null;
   const currentUserPersonId =
     currentUser?.person_id ?? currentUserProfile?.personId ?? null;
-  const aiReviewWorkflowResponseStep = workflowSteps.find((step) => {
-    const isActive = getStepState(step) === "in-progress";
+  const aiReviewWorkflowResponseStep = workflowSteps.find((step, index) => {
+    const isActive = getEffectiveStepState(workflowSteps, index) === "in-progress";
     return (
       isActive &&
       currentUserId &&
@@ -666,7 +677,7 @@ export function SubmittalDetailClient({
 
     const nextParams = new URLSearchParams(
       typeof window === "undefined"
-        ? searchParams.toString()
+        ? (searchParams?.toString() ?? "")
         : window.location.search,
     );
     if (nextTab === "details") {
@@ -794,6 +805,20 @@ export function SubmittalDetailClient({
     ? `${String(submittal.submittal_number).padStart(2, "0")}: `
     : "";
   const pageTitle = `${numberPrefix}${submittal.title}`;
+  const responsibleContractorLabel =
+    submittal.responsible_contractor?.name ??
+    companyOptions.find((option) => option.value === submittal.responsible_contractor_id)?.label ??
+    (submittal.responsible_contractor_id ? "Unknown contractor" : null);
+  const submittedByLabel =
+    submittal.received_from ??
+    receivedFromOptions.find((option) => option.value === submittal.received_from_id)?.label ??
+    (submittal.received_from_id ? "Unknown contact" : null);
+  const managerLabel = submittal.submittal_manager_id
+    ? resolveUserName(allUsers, submittal.submittal_manager_id) || "Unknown manager"
+    : null;
+  const ballInCourtLabel = submittal.ball_in_court
+    ? resolveUserName(allUsers, submittal.ball_in_court) || "Unknown assignee"
+    : null;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -813,20 +838,48 @@ export function SubmittalDetailClient({
         onBack={() => router.push(`/${projectId}/submittals`)}
         actions={
           <div className="flex items-center gap-2">
+            <SubmittalExportPopover
+              projectId={projectId}
+              submittalId={submittal.id}
+              submittalNumber={submittal.submittal_number}
+              submittalTitle={submittal.title}
+              attachments={submittal.attachments}
+            />
+            {!submittal.deleted_at && (
+              <Button
+                variant={isEditMode ? "default" : "outline"}
+                size="sm"
+                aria-label={isEditMode ? "Switch to view mode" : "Switch to edit mode"}
+                onClick={() => setIsEditMode((v) => !v)}
+              >
+                {isEditMode ? (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    View
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </>
+                )}
+              </Button>
+            )}
             {submittal.status !== "Closed" && !submittal.deleted_at && (
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 aria-label="Email submittal"
                 onClick={() => setDistributeOpen(true)}
               >
                 <Mail className="h-4 w-4" />
+                Email
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="More actions">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -834,16 +887,16 @@ export function SubmittalDetailClient({
                   onClick={handleDuplicate}
                   disabled={duplicateMutation.isPending}
                 >
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className="h-4 w-4" />
                   Duplicate
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
+                  variant="destructive"
                   onClick={handleDelete}
                   disabled={deleteMutation.isPending}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -861,159 +914,226 @@ export function SubmittalDetailClient({
               onTabClick={handleTabChange}
             />
 
+            <DetailPropertyBar className="mb-0 pb-0 pt-6">
+              <DetailPropertyItem icon={CircleDot}>
+                {submittal.status}
+              </DetailPropertyItem>
+              <DetailPropertyItem
+                icon={Building2}
+                muted={!submittal.responsible_contractor_id}
+                title={responsibleContractorLabel ?? undefined}
+              >
+                <InlineEditField
+                  label="Responsible contractor"
+                  type="select"
+                  value={submittal.responsible_contractor_id ?? ""}
+                  display={responsibleContractorLabel ?? undefined}
+                  emptyLabel="Assign contractor"
+                  options={companyOptions}
+                  onSave={(value) =>
+                    handleSaveField("responsible_contractor_id", value || null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-44"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem
+                icon={UserCircle2}
+                muted={!submittal.received_from_id}
+                title={submittedByLabel ?? undefined}
+              >
+                <InlineEditField
+                  label="Submitted by"
+                  type="select"
+                  value={submittal.received_from_id ?? ""}
+                  display={submittedByLabel ?? undefined}
+                  emptyLabel={
+                    submittal.responsible_contractor_id
+                      ? "Assign submitter"
+                      : "Select contractor first"
+                  }
+                  options={receivedFromOptions}
+                  onSave={(value) =>
+                    handleSaveField("received_from_id", value || null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-44"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem
+                icon={Users}
+                muted={!submittal.submittal_manager_id}
+                title={managerLabel ?? undefined}
+              >
+                <InlineEditField
+                  label="Manager"
+                  type="select"
+                  value={submittal.submittal_manager_id ?? ""}
+                  display={managerLabel ?? undefined}
+                  emptyLabel="Assign manager"
+                  options={[
+                    { value: "", label: "None" },
+                    ...users.map((user) => ({
+                      value: user.id,
+                      label:
+                        `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
+                        user.email,
+                    })),
+                  ]}
+                  onSave={(value) =>
+                    handleSaveField("submittal_manager_id", value || null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-40"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem
+                icon={Users}
+                muted={!submittal.ball_in_court}
+                title={ballInCourtLabel ?? undefined}
+              >
+                <InlineEditField
+                  label="Ball in court"
+                  type="select"
+                  value={submittal.ball_in_court ?? ""}
+                  display={ballInCourtLabel ?? undefined}
+                  emptyLabel="Assign owner"
+                  options={[
+                    { value: "", label: "None" },
+                    ...users.map((user) => ({
+                      value: user.id,
+                      label:
+                        `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() ||
+                        user.email,
+                    })),
+                  ]}
+                  onSave={(value) => handleSaveField("ball_in_court", value || null)}
+                  disabled={!isEditMode}
+                  className="min-w-40"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem icon={CalendarDays} muted={!submittal.sent_date}>
+                <InlineEditField
+                  label="Issue date"
+                  type="date"
+                  value={submittal.sent_date ?? ""}
+                  display={submittal.sent_date ? formatDate(submittal.sent_date) : undefined}
+                  emptyLabel="Set issue date"
+                  onSave={(value) => handleSaveField("sent_date", value || null)}
+                  disabled={!isEditMode}
+                  className="min-w-36"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem icon={CalendarDays} muted={!submittal.final_due_date}>
+                <InlineEditField
+                  label="Final due date"
+                  type="date"
+                  value={submittal.final_due_date ?? ""}
+                  display={
+                    submittal.final_due_date
+                      ? formatDate(submittal.final_due_date)
+                      : undefined
+                  }
+                  emptyLabel="Set final due date"
+                  onSave={(value) =>
+                    handleSaveField("final_due_date", value || null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-36"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem
+                icon={CalendarDays}
+                muted={!submittal.required_on_site_date}
+              >
+                <InlineEditField
+                  label="Required on site date"
+                  type="date"
+                  value={submittal.required_on_site_date ?? ""}
+                  display={
+                    submittal.required_on_site_date
+                      ? formatDate(submittal.required_on_site_date)
+                      : undefined
+                  }
+                  emptyLabel="Set required on site date"
+                  onSave={(value) =>
+                    handleSaveField("required_on_site_date", value || null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-36"
+                />
+              </DetailPropertyItem>
+              <DetailPropertyItem icon={Clock3} muted={submittal.lead_time == null}>
+                <InlineEditField
+                  label="Lead time"
+                  type="number"
+                  value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
+                  display={
+                    submittal.lead_time != null
+                      ? `${submittal.lead_time} day${submittal.lead_time === 1 ? "" : "s"}`
+                      : undefined
+                  }
+                  emptyLabel="Set lead time"
+                  onSave={(value) =>
+                    handleSaveField("lead_time", value ? parseInt(value, 10) : null)
+                  }
+                  disabled={!isEditMode}
+                  className="min-w-28"
+                />
+              </DetailPropertyItem>
+            </DetailPropertyBar>
+
             {activeTab === "details" && (
           <ContentSectionStack className="pt-6">
             <DetailLayout
+              sidebarAt="lg"
               sidebar={
-                <>
-                  {/* Ball in Court */}
-                  {submittal.ball_in_court && (
-                    <BallInCourtChip userId={submittal.ball_in_court} users={allUsers} />
-                  )}
-
-                  {/* Workflow progress */}
-                  {workflowSteps.length > 0 && (() => {
-                    const completed = workflowSteps.filter(s => getStepState(s) === "done").length;
-                    return (
-                      <SummaryPanel>
-                        <SectionRuleHeading label="Workflow Progress" />
-                        <div className="space-y-3 text-sm">
-                          {workflowSteps.map((step, i) => {
-                            const state = getStepState(step);
-                            return (
-                              <SummaryValueRow
-                                key={step.id}
-                                label={`${i + 1}. ${step.step_type} Review`}
-                                value={state === "done" ? "Done" : state === "in-progress" ? "Active" : state === "rejected" ? "Rejected" : "Waiting"}
-                              />
-                            );
-                          })}
-                          <SummaryValueRow
-                            label="Total"
-                            value={`${completed} of ${workflowSteps.length} complete`}
-                            bold
-                            border
-                          />
-                        </div>
-                      </SummaryPanel>
-                    );
-                  })()}
-
-                  {/* Parties and Responsibility */}
-                  <DetailPanel>
-                    <SectionRuleHeading label="Parties and Responsibility" />
-                    <div className="space-y-3 text-sm">
-                      <EditableDetailField
-                        label="Responsible Contractor"
-                        type="select"
-                        value={submittal.responsible_contractor_id ?? ""}
-                        display={submittal.responsible_contractor?.name ?? undefined}
-                        emptyPlaceholder="Select contractor"
-                        options={companyOptions}
-                        onSave={(v) => handleSaveField("responsible_contractor_id", v || null)}
-                      />
-                      <EditableDetailField
-                        label="Submitted By"
-                        type="select"
-                        value={submittal.received_from_id ?? ""}
-                        display={
-                          submittal.received_from ??
-                          (submittal.received_from_id
-                            ? resolveUserName(allUsers, submittal.received_from_id)
-                            : undefined)
-                        }
-                        emptyPlaceholder={
-                          submittal.responsible_contractor_id
-                            ? "Select contact"
-                            : "Select contractor first"
-                        }
-                        options={receivedFromOptions}
-                        onSave={(v) => handleSaveField("received_from_id", v || null)}
-                      />
-                      <EditableDetailField
-                        label="Manager"
-                        type="select"
-                        value={submittal.submittal_manager_id ?? ""}
-                        display={submittal.submittal_manager_id ? resolveUserName(allUsers, submittal.submittal_manager_id) ?? "" : ""}
-                        emptyPlaceholder="Assign manager"
-                        options={[
-                          { value: "", label: "None" },
-                          ...users.map((u) => ({
-                            value: u.id,
-                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
-                          })),
-                        ]}
-                        onSave={(v) => handleSaveField("submittal_manager_id", v || null)}
-                      />
-                      <EditableDetailField
-                        label="Ball in Court"
-                        type="select"
-                        value={submittal.ball_in_court ?? ""}
-                        display={submittal.ball_in_court ? resolveUserName(allUsers, submittal.ball_in_court) ?? "" : ""}
-                        emptyPlaceholder="Assign person"
-                        options={[
-                          { value: "", label: "None" },
-                          ...users.map((u) => ({
-                            value: u.id,
-                            label: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
-                          })),
-                        ]}
-                        onSave={(v) => handleSaveField("ball_in_court", v || null)}
-                      />
-                    </div>
-                  </DetailPanel>
-
-                  {/* Dates and Timeline */}
-                  <DetailPanel>
-                    <SectionRuleHeading label="Dates and Timeline" />
-                    <div className="space-y-3 text-sm">
-                      <EditableDetailField
-                        label="Issue Date"
-                        type="date"
-                        value={submittal.sent_date ?? ""}
-                        display={submittal.sent_date ? formatDate(submittal.sent_date) : undefined}
-                        emptyPlaceholder="Set date"
-                        onSave={(v) => handleSaveField("sent_date", v || null)}
-                      />
-                      <DetailField
-                        label="Receive Date"
-                        value={submittal.created_at ? formatDate(submittal.created_at) : ""}
-                        emptyPlaceholder="Unavailable"
-                      />
-                      <EditableDetailField
-                        label="Final Due Date"
-                        type="date"
-                        value={submittal.final_due_date ?? ""}
-                        display={submittal.final_due_date ? formatDate(submittal.final_due_date) : undefined}
-                        emptyPlaceholder="Set date"
-                        onSave={(v) => handleSaveField("final_due_date", v || null)}
-                      />
-                      <EditableDetailField
-                        label="Lead Time"
-                        type="number"
-                        value={submittal.lead_time != null ? String(submittal.lead_time) : ""}
-                        display={submittal.lead_time != null ? `${submittal.lead_time} days` : undefined}
-                        emptyPlaceholder="Set days"
-                        onSave={(v) => handleSaveField("lead_time", v ? parseInt(v, 10) : null)}
-                      />
-                      <EditableDetailField
-                        label="Required on Site Date"
-                        type="date"
-                        value={submittal.required_on_site_date ?? ""}
-                        display={submittal.required_on_site_date ? formatDate(submittal.required_on_site_date) : undefined}
-                        emptyPlaceholder="Set date"
-                        onSave={(v) => handleSaveField("required_on_site_date", v || null)}
-                      />
-                    </div>
-                  </DetailPanel>
-                </>
+                workflowSteps.length > 0 ? (() => {
+                  const completed = workflowSteps.filter(
+                    (step) => getStepState(step) === "done",
+                  ).length;
+                  return (
+                    <SummaryPanel>
+                      <SectionRuleHeading label="Workflow Progress" />
+                      <div className="space-y-3 text-sm">
+                        {workflowSteps.map((step, index) => {
+                          const state = getEffectiveStepState(workflowSteps, index);
+                          return (
+                            <SummaryValueRow
+                              key={step.id}
+                              label={`${index + 1}. ${step.step_type} Review`}
+                              value={
+                                state === "done"
+                                  ? "Done"
+                                  : state === "in-progress"
+                                    ? "Active"
+                                    : state === "rejected"
+                                      ? "Rejected"
+                                      : "Waiting"
+                              }
+                            />
+                          );
+                        })}
+                        <SummaryValueRow
+                          label="Total"
+                          value={`${completed} of ${workflowSteps.length} complete`}
+                          bold
+                          border
+                        />
+                      </div>
+                    </SummaryPanel>
+                  );
+                })() : undefined
               }
               footer={
                 <DetailPanel>
                   <SectionRuleHeading
                     label="Workflow"
                     actions={
-                      <SectionAction onClick={() => setShowAddStep(s => !s)}>
+                      <SectionAction
+                        onClick={() => setShowAddStep((s) => !s)}
+                        disabled={!isEditMode}
+                      >
                         {showAddStep ? "Cancel" : "+ Add Step"}
                       </SectionAction>
                     }
@@ -1021,7 +1141,7 @@ export function SubmittalDetailClient({
                   {workflowSteps.length > 0 ? (
                     <div className="mt-1 overflow-hidden rounded-md border border-border">
                       {workflowSteps.map((step, idx) => {
-                        const state = getStepState(step);
+                        const state = getEffectiveStepState(workflowSteps, idx);
                         const responder = step.submittal_responses?.[0]?.responder_id;
                         const responderName = responder ? resolveUserName(allUsers, responder) : null;
                         const isActive = state === "in-progress";
@@ -1081,7 +1201,7 @@ export function SubmittalDetailClient({
                   ) : (
                     !showAddStep && (
                       <EmptyState
-                        icon={<MoreHorizontal />}
+                        icon={<Users />}
                         title="No workflow steps"
                         description="Add steps to define the review process."
                       />
@@ -1119,12 +1239,14 @@ export function SubmittalDetailClient({
                         label="Number"
                         value={submittal.submittal_number ?? ""}
                         onSave={(v) => handleSaveField("submittal_number", v)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Spec Section"
                         value={submittal.specification_section ?? ""}
                         emptyPlaceholder="e.g. 08-1113"
                         onSave={(v) => handleSaveField("specification_section", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Package"
@@ -1137,6 +1259,7 @@ export function SubmittalDetailClient({
                           ...submittalPackages.map((p) => ({ value: p.id, label: p.name })),
                         ]}
                         onSave={(v) => handleSaveField("submittal_package_id", v || null)}
+                        disabled={!isEditMode}
                       />
                       <EditableDetailField
                         label="Revision"
@@ -1144,6 +1267,7 @@ export function SubmittalDetailClient({
                         value={submittal.revision != null ? String(submittal.revision) : ""}
                         display={submittal.revision != null ? `Rev ${submittal.revision}` : undefined}
                         onSave={(v) => handleSaveField("revision", v ? parseInt(v, 10) : 0)}
+                        disabled={!isEditMode}
                       />
                       <DetailField label="Linked Drawings">
                         <DropdownMenu>
@@ -1151,6 +1275,7 @@ export function SubmittalDetailClient({
                             <Button
                               type="button"
                               variant="link"
+                              disabled={!isEditMode}
                               className="h-auto px-0 text-sm text-primary decoration-primary/30 underline-offset-2 hover:decoration-primary"
                             >
                               Drawing
@@ -1196,6 +1321,7 @@ export function SubmittalDetailClient({
                         value={submittal.description ?? ""}
                         emptyPlaceholder="Add a description"
                         onSave={(v) => handleSaveField("description", v || null)}
+                        disabled={!isEditMode}
                       />
                     </div>
                   </DetailPanel>

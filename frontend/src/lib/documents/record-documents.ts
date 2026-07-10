@@ -1,6 +1,24 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parse } from "node-html-parser";
 
 import type { Database } from "@/types/database.types";
+import {
+  BRANDED_FOOTER_MARGIN,
+  buildBrandedDocumentHtml,
+  buildBrandedFooterTemplate,
+} from "@/lib/documents/branded-letterhead";
+import {
+  renderLegalBulletList,
+  renderLegalClause,
+  renderLegalInlineValueOrBlank,
+  renderLegalParagraph,
+  renderLegalSpacer,
+  renderLegalSignatureBlock,
+  renderLegalTable,
+} from "@/lib/documents/legal-template-primitives";
 
 export type DocumentRecordType =
   | "prime-contract"
@@ -102,6 +120,9 @@ interface VendorRecipientRow {
   contact_email: string | null;
   contact_name: string | null;
   name: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 interface CommitmentBaseRow {
@@ -127,6 +148,7 @@ interface CommitmentBaseRow {
   bill_to?: string | null;
   ship_to?: string | null;
   ship_via?: string | null;
+  prime_contract_id?: string | null;
   inclusions?: string | null;
   exclusions?: string | null;
   invoice_contact_ids?: string[] | null;
@@ -203,6 +225,48 @@ interface ProjectRow {
   address: string | null;
   project_number: string | null;
   company_id: string | null;
+  state?: string | null;
+  summary_metadata?: {
+    city?: string | null;
+    postal_code?: string | null;
+  } | null;
+}
+
+interface CompanyProfileRow {
+  id: string;
+  name: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  title?: string | null;
+}
+
+interface ContactProfile {
+  name: string | null;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+interface CommitmentContractTemplateData {
+  ownerName: string | null;
+  contractorNotice: ContactProfile & {
+    companyName: string | null;
+    addressLine1: string | null;
+    addressLine2: string | null;
+  };
+  counterpartyNotice: ContactProfile & {
+    companyName: string | null;
+    addressLine1: string | null;
+    addressLine2: string | null;
+  };
+  contractorSignerName: string | null;
+  contractorSignerTitle: string | null;
+}
+
+export interface DocumentPdfOptions {
+  footerTemplate?: string;
+  marginBottom?: string;
 }
 
 export interface DocumentRecipientSuggestion {
@@ -254,7 +318,10 @@ export interface DocumentBundle {
     name: string;
     address: string;
     jobNumber: string;
+    addressLine1?: string | null;
+    addressLine2?: string | null;
   };
+  commitmentContractTemplate?: CommitmentContractTemplateData;
   sections: DocumentSection[];
   totals: Array<{ label: string; value: string }>;
   lineItems: DocumentLineItem[];
@@ -440,289 +507,583 @@ function getTotal(bundle: DocumentBundle, label: string): string {
   return bundle.totals.find((item) => item.label === label)?.value ?? "$0.00";
 }
 
-function renderSubcontractCommitmentHtml(bundle: DocumentBundle): string {
-  const effectiveDate = formatLegalDate(bundle.effectiveDate);
-  const contractor = bundle.parties?.contractor || "Alleato, LLC";
-  const subcontractor = bundle.parties?.counterparty || "Not set";
-  const projectName = bundle.project?.name || "Not set";
-  const projectAddress = bundle.project?.address || "Not set";
-  const projectJobNumber = bundle.project?.jobNumber || "Not set";
+let cachedCommitmentTemplateHtml: string | null = null;
 
+function getCommitmentTemplateHtml(): string {
+  if (cachedCommitmentTemplateHtml) {
+    return cachedCommitmentTemplateHtml;
+  }
+
+  cachedCommitmentTemplateHtml = readFileSync(
+    path.join(process.cwd(), "src", "lib", "documents", "templates", "commitment-subcontract-template.html"),
+    "utf8",
+  );
+  return cachedCommitmentTemplateHtml;
+}
+
+function formatAddressLine2(
+  city: string | null | undefined,
+  state: string | null | undefined,
+  postalCode?: string | null,
+): string | null {
+  const parts = [city, state].map((value) => value?.trim()).filter(Boolean);
+  const base = parts.join(", ");
+  const zip = postalCode?.trim();
+  if (base && zip) return `${base} ${zip}`;
+  return base || zip || null;
+}
+
+function formatContactName(person: PersonRow | null | undefined): string | null {
+  if (!person) return null;
+  const value = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+  return value || null;
+}
+
+function getContactPhone(person: PersonRow | null | undefined): string | null {
+  return person?.phone_business || person?.phone_mobile || null;
+}
+
+function pickAuthorizedSigner(people: PersonRow[]): PersonRow | null {
+  return (
+    people.find((person) => /\b(ceo|president|owner)\b/i.test(person.job_title || "")) ??
+    null
+  );
+}
+
+function applyTextReplacements(html: string, replacements: Array<[RegExp, string]>) {
+  let output = html;
+  for (const [pattern, replacement] of replacements) {
+    output = output.replace(pattern, replacement);
+  }
+  return output;
+}
+
+function isMeaningfulValue(value: string | null | undefined): value is string {
+  return Boolean(value && value.trim() && value.trim() !== "Not set");
+}
+
+function replaceHtmlRangeByMarkers(
+  html: string,
+  startMarker: string,
+  endMarker: string,
+  replacement: string,
+): string {
+  const startTextIndex = html.indexOf(startMarker);
+  const endTextIndex = html.indexOf(endMarker);
+  if (startTextIndex === -1 || endTextIndex === -1 || endTextIndex <= startTextIndex) {
+    return html;
+  }
+
+  const startTagIndex = html.lastIndexOf("<p", startTextIndex);
+  const endTagIndex = html.lastIndexOf("<p", endTextIndex);
+  if (startTagIndex === -1 || endTagIndex === -1 || endTagIndex <= startTagIndex) {
+    return html;
+  }
+
+  return `${html.slice(0, startTagIndex)}${replacement}${html.slice(endTagIndex)}`;
+}
+
+function removeEmptyParagraphs(html: string): string {
+  const root = parse(`<div>${html}</div>`);
+
+  for (const paragraph of root.querySelectorAll("p")) {
+    const text = paragraph.text
+      .replace(/\u00a0/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const hasMeaningfulText = text.length > 0;
+    const hasNonBreakContent = paragraph.querySelector("table, img, svg, ul, ol") !== null;
+    const isLegacyArtifact = text === "," || text === "Cell:";
+
+    if ((!hasMeaningfulText || isLegacyArtifact) && !hasNonBreakContent) {
+      paragraph.remove();
+    }
+  }
+
+  return root.querySelector("div")?.innerHTML ?? html;
+}
+
+function buildCommitmentNoticeHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
+
+  const renderNoticeLines = (
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) =>
+    [
+      notice?.name,
+      notice?.companyName,
+      notice?.email,
+      notice?.addressLine1,
+      notice?.addressLine2,
+      notice?.phone ? `Phone: ${notice.phone}` : null,
+    ]
+      .filter(isMeaningfulValue)
+      .map((line) => renderLegalParagraph(renderHtmlValue(line), { marginBottom: "0.08in" }))
+      .join("");
+
+  const renderNoticeBlock = (
+    label: string,
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) =>
+    `
+      ${renderLegalParagraph(renderHtmlValue(label), { bold: true, marginBottom: "0.08in" })}
+      <table cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">
+        <col style="width:21%;" />
+        <col style="width:79%;" />
+        <tr valign="top">
+          <td style="border:none;padding:0;"></td>
+          <td style="border:none;padding:0;">
+            ${renderNoticeLines(notice)}
+          </td>
+        </tr>
+      </table>
+    `;
+
+  return `
+    ${renderLegalSpacer({ marginBottom: "0in" })}
+    ${renderNoticeBlock("If to Subcontractor:", counterpartyNotice)}
+    ${renderLegalSpacer({ marginBottom: "0.14in" })}
+    ${renderNoticeBlock("If to Contractor:", contractorNotice)}
+    ${renderLegalSpacer({ marginBottom: "0in" })}
+  `;
+}
+
+function buildCommitmentExhibitAHtml(bundle: DocumentBundle): string {
   const description = getSectionField(bundle, "Overview", "Description");
-  const accountingMethod = getSectionField(bundle, "Overview", "Accounting Method");
   const paymentTerms = getSectionField(bundle, "Commercial Terms", "Payment Terms");
-  const retainage = getSectionField(bundle, "Commercial Terms", "Retainage");
+  const originalAmount = getTotal(bundle, "Original Amount");
   const startDate = getSectionField(bundle, "Dates", "Start Date");
   const estimatedCompletion = getSectionField(bundle, "Dates", "Estimated Completion");
-  const actualCompletion = getSectionField(bundle, "Dates", "Actual Completion");
-  const signedReceived = getSectionField(bundle, "Dates", "Signed Received");
-
   const inclusions = bundle.listSections.find((section) => section.title === "Inclusions")?.items ?? [];
   const exclusions = bundle.listSections.find((section) => section.title === "Exclusions")?.items ?? [];
 
-  const lineItemsTable = bundle.lineItems.length
-    ? `
-      <table>
-        <thead>
-          <tr>
-            <th>Line</th>
-            <th>Description</th>
-            <th>Qty</th>
-            <th>Unit</th>
-            <th>Unit Cost</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${bundle.lineItems
-            .map(
-              (item) => `
-                <tr>
-                  <td>${renderHtmlValue(item.lineNumber)}</td>
-                  <td>${renderHtmlValue(item.description)}</td>
-                  <td>${renderHtmlValue(item.quantity)}</td>
-                  <td>${renderHtmlValue(item.unit)}</td>
-                  <td>${renderHtmlValue(item.unitCost)}</td>
-                  <td>${renderHtmlValue(item.total)}</td>
-                </tr>
-              `,
-            )
-            .join("")}
-        </tbody>
-      </table>
-    `
-    : "<p class=\"muted\">No line items added.</p>";
+  const lineItemsRows = bundle.lineItems.map((item) => [
+    item.lineNumber ?? "",
+    item.description ?? "",
+    item.quantity ?? "",
+    item.unit ?? "",
+    item.total ?? "",
+  ]);
 
-  const renderExhibitList = (items: string[]) =>
-    items.length > 0
-      ? `<ul>${items.map((item) => `<li>${renderHtmlValue(item)}</li>`).join("")}</ul>`
-      : "<p class=\"muted\">No items specified.</p>";
+  return `
+    ${renderLegalParagraph('EXHIBIT "A"', { align: "center", marginTop: "0in", marginBottom: "0in", bold: true, className: "legal-page-break" })}
+    ${renderLegalParagraph("SUBCONTRACTOR SCOPE OF WORK", { align: "center", marginTop: "0in", marginBottom: "0in", bold: true })}
+    ${renderLegalSpacer({ marginBottom: "0in" })}
+    ${renderLegalParagraph(
+      `Subcontractor shall furnish all necessary equipment, material, and labor required for commitment ${renderHtmlValue(bundle.number)} on ${renderHtmlValue(bundle.project?.name || "the project")}.`,
+      { marginBottom: "0.1in" },
+    )}
+    ${renderLegalParagraph(
+      `Project address: ${renderHtmlValue(bundle.project?.addressLine1 || bundle.project?.address || "Not set")}${bundle.project?.addressLine2 ? `, ${renderHtmlValue(bundle.project.addressLine2)}` : ""}`,
+      { marginBottom: "0.1in" },
+    )}
+    ${renderLegalParagraph(
+      `Contract amount: ${renderHtmlValue(originalAmount)}${isMeaningfulValue(paymentTerms) ? ` • Payment terms: ${renderHtmlValue(paymentTerms)}` : ""}`,
+      { marginBottom: "0.1in" },
+    )}
+    ${
+      isMeaningfulValue(description)
+        ? renderLegalParagraph(`Commitment description: ${renderHtmlValue(description)}`, { marginBottom: "0.1in" })
+        : ""
+    }
+    ${renderLegalParagraph("Scope line items", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalTable({
+      headers: ["Line", "Description", "Qty", "Unit", "Amount"],
+      rows: lineItemsRows,
+      widths: ["10%", "54%", "12%", "10%", "14%"],
+      headerAlign: ["left", "left", "center", "center", "right"],
+      rowAlign: ["left", "left", "center", "center", "right"],
+      className: "contract-scope-table",
+      emptyMessage: "No line items found.",
+    })}
+    ${renderLegalParagraph("Inclusions", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalBulletList(inclusions, { className: "contract-bullet-list" })}
+    ${renderLegalParagraph("Exclusions", { bold: true, marginBottom: "0.08in" })}
+    ${renderLegalBulletList(exclusions, { className: "contract-bullet-list" })}
+    ${renderLegalParagraph(
+      `<span style="text-decoration:underline;">Date of commencement of Subcontractor’s Work:</span> ${renderLegalInlineValueOrBlank(startDate, "200px")}`,
+      { marginTop: "0.14in", marginBottom: "0.08in" },
+    )}
+    ${renderLegalParagraph(
+      `<span style="text-decoration:underline;">The Work of this Subcontract shall be substantially completed not later than:</span> ${renderLegalInlineValueOrBlank(estimatedCompletion, "200px")}`,
+      { marginBottom: "0.08in" },
+    )}
+  `;
+}
 
-  return `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charSet="utf-8" />
-      <title>${renderHtmlValue(bundle.filename)}</title>
-      <style>
-        * { box-sizing: border-box; }
-        body {
-          margin: 0;
-          font-family: "Times New Roman", Georgia, serif;
-          color: #111827;
-          background: #ffffff;
-          line-height: 1.45;
-          font-size: 12pt;
-        }
-        .page {
-          max-width: 820px;
-          margin: 0 auto;
-          padding: 30px 28px 40px;
-        }
-        .title {
-          text-align: center;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          margin: 0 0 18px;
-          font-size: 18pt;
-          font-weight: 700;
-        }
-        p { margin: 0 0 10px; }
-        .section-title {
-          margin: 18px 0 8px;
-          font-size: 12pt;
-          font-weight: 700;
-          text-transform: uppercase;
-        }
-        .subsection-title {
-          margin: 14px 0 6px;
-          font-size: 11pt;
-          font-weight: 700;
-        }
-        .letter-list {
-          padding-left: 18px;
-          margin: 0 0 12px;
-        }
-        .letter-list li {
-          margin: 6px 0;
-        }
-        .money-grid,
-        .dates-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 8px 18px;
-          margin: 8px 0 14px;
-        }
-        .money-grid div,
-        .dates-grid div {
-          border-bottom: 1px solid #d1d5db;
-          padding: 4px 0;
-        }
-        .label {
-          font-weight: 700;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 8px;
-        }
-        th, td {
-          border: 1px solid #d1d5db;
-          padding: 7px 8px;
-          vertical-align: top;
-          font-size: 10.5pt;
-        }
-        th {
-          background: #f3f4f6;
-          text-align: left;
-          font-weight: 700;
-        }
-        ul {
-          margin: 0;
-          padding-left: 20px;
-        }
-        li { margin: 4px 0; }
-        .signature-grid {
-          display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 18px;
-          margin-top: 18px;
-        }
-        .signature-block {
-          border: 1px solid #d1d5db;
-          padding: 12px;
-          min-height: 155px;
-        }
-        .sig-line {
-          margin-top: 26px;
-          border-bottom: 1px solid #111827;
-          height: 20px;
-        }
-        .muted {
-          color: #6b7280;
-        }
-        .exhibit {
-          margin-top: 24px;
-          padding-top: 14px;
-          border-top: 1px solid #9ca3af;
-          page-break-inside: avoid;
-        }
-        .footer {
-          margin-top: 18px;
-          text-align: right;
-          color: #6b7280;
-          font-size: 10pt;
-        }
-        @media print {
-          .exhibit {
-            page-break-before: always;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <main class="page">
-        <h1 class="title">Construction Subcontract</h1>
+function buildCommitmentLegalClausesHtml(bundle: DocumentBundle): string {
+  const contractorNotice = bundle.commitmentContractTemplate?.contractorNotice;
+  const counterpartyNotice = bundle.commitmentContractTemplate?.counterpartyNotice;
 
-        <p>
-          THIS CONSTRUCTION SUBCONTRACT ("Agreement") is made effective as of the ${renderHtmlValue(effectiveDate)}
-          by and between ${renderHtmlValue(contractor)} ("Contractor") and ${renderHtmlValue(subcontractor)} ("Subcontractor").
-        </p>
+  const renderNoticeBlock = (
+    label: string,
+    notice: CommitmentContractTemplateData["contractorNotice"] | undefined,
+  ) => {
+    const lines = [
+      notice?.name,
+      notice?.companyName,
+      notice?.email,
+      notice?.addressLine1,
+      notice?.addressLine2,
+      notice?.phone ? `Cell: ${notice.phone}` : null,
+    ]
+      .filter(isMeaningfulValue)
+      .map((line) => renderLegalParagraph(renderHtmlValue(line), { marginBottom: "0in" }));
 
-        <h2 class="section-title">Recitals</h2>
-        <ol class="letter-list" type="A">
-          <li>
-            Contractor is engaged by the Owner to furnish labor and materials and perform work required for the following Project:
-            <p><span class="label">Project Name:</span> ${renderHtmlValue(projectName)}</p>
-            <p><span class="label">Project Address:</span> ${renderHtmlValue(projectAddress)}</p>
-            <p><span class="label">Project Job Number:</span> ${renderHtmlValue(projectJobNumber)}</p>
-          </li>
-          <li>Subcontractor has agreed to furnish labor and materials and perform the Work required by Contractor.</li>
-          <li>The parties agree to reduce to writing all prior oral and written agreements regarding the subject matter of this Agreement.</li>
-        </ol>
+    return [
+      renderLegalParagraph(label, { bold: true, marginBottom: "0.08in" }),
+      ...lines,
+    ].join("");
+  };
 
-        <p>NOW, THEREFORE, for good and valuable consideration, the receipt and sufficiency of which are acknowledged, the parties agree as follows:</p>
+  return [
+    renderLegalClause({
+      letter: "c",
+      title: "Attorneys Fees.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "If any litigation is brought under this Agreement or which relates to this Agreement, in addition to any other relief to which the prevailing party is entitled to recover, the Prevailing Party is entitled to recover and the Non-Prevailing Party shall pay, all expenses, court costs and attorneys’ fees of the Prevailing Party. For the purposes of this paragraph “Prevailing Party” shall mean the party that receives all, or substantially all of the relief requested in the litigation.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "d",
+      title: "Receipts and Release of Liens.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Before payment will be made, Subcontractor shall furnish evidence of payment for work done, and for labor, materials, equipment, and fixtures furnished through the date covered by each payment. Prior to any payment hereunder, Subcontractor shall execute a sworn waiver or release of lien for all Work performed and materials furnished for which payment will be (in form provided by Contractor).",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "e",
+      title: "No Diversion.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Subcontractor agrees that monies received for its performance hereunder shall be held in trust for the payment of labor and material purchased or contracted by Subcontractor and said monies shall not be diverted to satisfy obligations of Subcontractor on other contracts.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "f",
+      title: "Other Contracts of the Parties.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Should one or more other contracts now or hereafter exist between the parties hereto or with any firm, partnership or corporation having common ownership with such parties concerning this or any other construction projects, and a breach by Subcontractor of this or any other such contracts occurs, then Contractor may, at its option, consider such breach a breach of all such contracts. In such event, Contractor may terminate any or all of the contracts so breached and/or withhold monies due or to become due on any such contract(s), and apply the same toward amounts owed Contractor or any damages suffered by Contractor on such contracts.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "g",
+      title: "Non-Assignment or Transfer.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Neither this Agreement nor any payment to become due hereunder shall be assigned by Subcontractor without the prior written consent of Contractor, and any assignment without such consent shall vest no rights in the assignee against Contractor.",
+          { marginBottom: "0.06in" },
+        ),
+        renderLegalParagraph(
+          "Subcontractor shall not sublet the whole or any part of this Subcontract without the prior written consent of Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "h",
+      title: "Notice.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "All notices or other communications hereunder shall not be binding on any party hereto unless in writing and delivered to the party at the address set forth below. Notices shall be deemed duly delivered upon hand delivery, receipt of email transmission thereof, or receipt of express or overnight delivery thereof at the addresses specified below or two (2) days after deposit thereof in the United States mails, postage prepaid, certified, or registered mail.",
+          { marginBottom: "0.08in" },
+        ),
+        renderLegalSpacer({ marginBottom: "0.05in" }),
+        renderNoticeBlock("If to Subcontractor:", counterpartyNotice),
+        renderLegalSpacer({ marginBottom: "0.1in" }),
+        renderNoticeBlock("If to Contractor:", contractorNotice),
+      ],
+    }),
+    renderLegalClause({
+      letter: "i",
+      title: "Merger.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement and the Documents contain the entire understanding of the parties and incorporates all previous written and oral representations, agreements, and understandings. Contractor and Subcontractor have participated in the negotiation of this Agreement and neither Contractor nor Subcontractor shall be deemed the drafter of this Agreement.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "j",
+      title: "Unenforceable Provisions.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "If any term, covenant or warranty, paragraph, clause, condition, or provision of this Agreement is held by a court of competent jurisdiction to be invalid, void, or unenforceable, the remainder of the provisions of this Agreement shall remain in full force and effect and shall in no way be affected, impaired, or invalidated thereby, and these unenforceable provisions were omitted.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "k",
+      title: "Applicable Law Forum and Dispute Resolution.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement shall be construed under the laws of the State of Indiana.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "l",
+      title: "Waiver.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Contractor’s failure to exercise any or all of its remedies hereunder upon default of the Subcontractor shall not act as a waiver of any other remedy available to Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "m",
+      title: "Remedies Not Exclusive.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "All of the rights, benefits and remedies provided to Owner and Contractor by this Agreement, or by any instrument or document executed pursuant to this Agreement, shall be cumulative and shall not be exclusive of any rights, remedies and benefits allowed by law or equity to Owner and Contractor.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "n",
+      title: "Changes in Writing.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "No changes or modifications of this Agreement shall be valid unless in writing and signed by all of the parties to this Agreement. No waiver of any provision of this Agreement shall be valid unless in writing and signed by the person or party against whom charged.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "o",
+      title: "Authorized Signatures.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "The execution and delivery of this Agreement have been duly authorized by all necessary action of Subcontractor. Subcontractor has full power and capacity to execute, deliver, and perform this Agreement and each of the Subcontract Documents to be delivered by Subcontractor or its representatives in connection herewith.",
+          { marginBottom: "0.08in" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "p",
+      title: "Additional Subcontract Documents.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "Additional documents and attachments made part of this Subcontract are as follows:",
+          { marginBottom: "0.08in" },
+        ),
+        renderLegalBulletList(
+          [
+            "Exhibit A Subcontractor Scope of Work",
+            "Exhibit B Insurance Requirements",
+            "Exhibit C Billing Processing and Payment Schedule",
+            "Exhibit D Schedule of Work",
+          ],
+          { className: "contract-bullet-list" },
+        ),
+      ],
+    }),
+    renderLegalClause({
+      letter: "q",
+      title: "Counterparts.",
+      bodyHtml: [
+        renderLegalParagraph(
+          "This Agreement may be executed in any number of counterparts, each of which shall be deemed an original, but all of which together shall constitute one and the same instrument.",
+          { marginBottom: "0in" },
+        ),
+      ],
+    }),
+  ].join("");
+}
 
-        <h2 class="section-title">1. Subcontractor's Obligations</h2>
-        <p><span class="label">Scope of Work.</span> Subcontractor shall perform the Work in accordance with this Agreement and all referenced subcontract documents.</p>
-        <p><span class="label">Description.</span> ${renderHtmlValue(description)}</p>
-        <p><span class="label">Accounting Method.</span> ${renderHtmlValue(accountingMethod)}</p>
+function buildCommitmentSignatureHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
 
-        <h2 class="section-title">2. Contract Price and Payment Procedures</h2>
-        <div class="money-grid">
-          <div><span class="label">Original Amount:</span> ${renderHtmlValue(getTotal(bundle, "Original Amount"))}</div>
-          <div><span class="label">Billed To Date:</span> ${renderHtmlValue(getTotal(bundle, "Billed To Date"))}</div>
-          <div><span class="label">Balance To Finish:</span> ${renderHtmlValue(getTotal(bundle, "Balance To Finish"))}</div>
-          <div><span class="label">Retainage:</span> ${renderHtmlValue(retainage)}</div>
-        </div>
-        <p><span class="label">Payment Terms.</span> ${renderHtmlValue(paymentTerms)}</p>
+  return renderLegalSignatureBlock({
+    leftTitle: `"Subcontractor"`,
+    leftCompany: counterpartyNotice?.companyName || bundle.parties?.counterparty || "Not set",
+    leftSignerName: counterpartyNotice?.name,
+    leftSignerTitle: counterpartyNotice?.title,
+    leftSignedDate: "",
+    rightTitle: `"Contractor"`,
+    rightCompany: contractorNotice?.companyName || bundle.parties?.contractor || "Alleato Group",
+    rightSignerName: templateData?.contractorSignerName || contractorNotice?.name || "",
+    rightSignerTitle: templateData?.contractorSignerTitle || contractorNotice?.title || "",
+    rightSignedDate: "",
+  });
+}
 
-        <h2 class="section-title">3. Schedule of Values</h2>
-        ${lineItemsTable}
+function buildCommitmentProjectFactsHtml(bundle: DocumentBundle): string {
+  const rows = [
+    {
+      label: "Project Name:",
+      value: bundle.project?.name || "Not set",
+    },
+    {
+      label: "Project Address:",
+      value: `${bundle.project?.addressLine1 || bundle.project?.address || "Not set"}${
+        bundle.project?.addressLine2 ? `<br />${renderHtmlValue(bundle.project.addressLine2)}` : ""
+      }`,
+    },
+    {
+      label: "Project Job Number:",
+      value: bundle.project?.jobNumber || "Not set",
+    },
+  ];
 
-        <h2 class="section-title">4. Project Dates</h2>
-        <div class="dates-grid">
-          <div><span class="label">Start Date:</span> ${renderHtmlValue(startDate)}</div>
-          <div><span class="label">Estimated Completion:</span> ${renderHtmlValue(estimatedCompletion)}</div>
-          <div><span class="label">Actual Completion:</span> ${renderHtmlValue(actualCompletion)}</div>
-          <div><span class="label">Signed Received:</span> ${renderHtmlValue(signedReceived)}</div>
-        </div>
+  return `
+    <table class="contract-project-facts" cellpadding="0" cellspacing="0" role="presentation">
+      <tbody>
+        ${rows
+          .map(
+            (row) => `
+              <tr>
+                <td class="contract-project-facts__bullet">&bull;</td>
+                <td class="contract-project-facts__label"><strong>${renderHtmlValue(row.label)}</strong></td>
+                <td class="contract-project-facts__value">${row.value}</td>
+              </tr>
+            `,
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+}
 
-        <h2 class="section-title">5. Execution</h2>
-        <p>IN WITNESS WHEREOF, the parties have executed this Agreement effective as of the date first written above.</p>
-        <div class="signature-grid">
-          <div class="signature-block">
-            <p class="label">Contractor</p>
-            <p>${renderHtmlValue(contractor)}</p>
-            <div class="sig-line"></div>
-            <p>Name / Signature</p>
-            <div class="sig-line"></div>
-            <p>Date</p>
-          </div>
-          <div class="signature-block">
-            <p class="label">Subcontractor</p>
-            <p>${renderHtmlValue(subcontractor)}</p>
-            <div class="sig-line"></div>
-            <p>Name / Signature</p>
-            <div class="sig-line"></div>
-            <p>Date</p>
-          </div>
-        </div>
+function buildCommitmentProjectRecitalsHtml(bundle: DocumentBundle): string {
+  const ownerName = bundle.commitmentContractTemplate?.ownerName || "Not set";
 
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit A</h2>
-          <h3 class="subsection-title">Subcontractor Scope of Work</h3>
-          ${renderExhibitList(inclusions)}
-        </section>
+  return `
+    <p align="justify">
+      A. Contractor is the General Contractor or Design-Builder engaged by
+      <u>${renderHtmlValue(ownerName)}</u> ("Owner") to furnish labor and materials and
+      perform work required by Owner for the following project ("Project"):
+    </p>
+    ${buildCommitmentProjectFactsHtml(bundle)}
+  `;
+}
 
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit B</h2>
-          <h3 class="subsection-title">Exclusions and Clarifications</h3>
-          ${renderExhibitList(exclusions)}
-        </section>
+function renderCommitmentContractHtml(bundle: DocumentBundle): string {
+  const templateData = bundle.commitmentContractTemplate;
+  const templateRoot = parse(getCommitmentTemplateHtml());
+  templateRoot.querySelector('div[title="header"]')?.remove();
+  templateRoot.querySelector('div[title="footer"]')?.remove();
 
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit C</h2>
-          <h3 class="subsection-title">Billing Processing and Payment Schedule</h3>
-          <p>${renderHtmlValue(paymentTerms)}</p>
-          <p class="muted">Detailed billing package requirements and pay application timing follow project policy.</p>
-        </section>
+  const projectAddressLine1 = bundle.project?.addressLine1 || bundle.project?.address || "Not set";
+  const projectAddressLine2 = bundle.project?.addressLine2 || "Not set";
+  const contractorName = bundle.parties?.contractor || "Alleato Group";
+  const counterpartyName = bundle.parties?.counterparty || "Not set";
+  const ownerName = templateData?.ownerName || "Not set";
+  const contractorNotice = templateData?.contractorNotice;
+  const counterpartyNotice = templateData?.counterpartyNotice;
 
-        <section class="exhibit">
-          <h2 class="section-title">Exhibit D</h2>
-          <h3 class="subsection-title">Schedule of Work</h3>
-          <p><span class="label">Start Date:</span> ${renderHtmlValue(startDate)}</p>
-          <p><span class="label">Estimated Completion:</span> ${renderHtmlValue(estimatedCompletion)}</p>
-        </section>
+  const contractorNoticeName = contractorNotice?.name || "";
+  const contractorNoticeCompany = contractorNotice?.companyName || contractorName;
+  const contractorNoticeEmail = contractorNotice?.email || "";
+  const contractorNoticeAddressLine1 = contractorNotice?.addressLine1 || "";
+  const contractorNoticeAddressLine2 = contractorNotice?.addressLine2 || "";
+  const contractorNoticePhone = contractorNotice?.phone || "";
 
-        <p class="footer">Generated by Alleato</p>
-      </main>
-    </body>
-  </html>`;
+  const counterpartyNoticeName = counterpartyNotice?.name || "";
+  const counterpartyNoticeCompany = counterpartyNotice?.companyName || counterpartyName;
+  const counterpartyNoticeEmail = counterpartyNotice?.email || "";
+  const counterpartyNoticeAddressLine1 = counterpartyNotice?.addressLine1 || "";
+  const counterpartyNoticeAddressLine2 = counterpartyNotice?.addressLine2 || "";
+  const counterpartyNoticePhone = counterpartyNotice?.phone || "";
+
+  const bodyHtml = applyTextReplacements(templateRoot.querySelector("body")?.innerHTML ?? templateRoot.toString(), [
+    [/the 1st day of August, 2024/g, formatLegalDate(bundle.effectiveDate)],
+    [/Alleato\s*Group/g, contractorName],
+    [/Deem,\s*LLC/g, counterpartyName],
+    [/Goodwill\s*Industries of Central Indiana,\s*Llc/g, ownerName],
+    [/Goodwill\s*Bart/g, bundle.project?.name || "Not set"],
+    [/940\s*N Marr Road/g, projectAddressLine1],
+    [/Columbus,&nbsp;Indiana\s*47201/g, projectAddressLine2],
+    [/24-104/g, bundle.project?.jobNumber || "Not set"],
+    [/Chad(?:&nbsp;|\s+)Gooding/g, counterpartyNoticeName],
+    [/cgooding@deemfirst\.com/g, counterpartyNoticeEmail],
+    [/11201(?:&nbsp;|\s+)USA(?:&nbsp;|\s+)Pkwy/g, counterpartyNoticeAddressLine1],
+    [/Fishers(?:&nbsp;|\s+)Indiana(?:&nbsp;|\s+)46037/g, counterpartyNoticeAddressLine2],
+    [/\(317\)\s*491-2449/g, counterpartyNoticePhone],
+    [/Nick(?:&nbsp;|\s+)Jepson/g, contractorNoticeName],
+    [/njepson@alleatogroup\.com/g, contractorNoticeEmail],
+    [/Fishers(?:,|&nbsp;|\s)+Indiana(?:&nbsp;|\s)+46037/g, counterpartyNoticeAddressLine2],
+    [/Fishers,\s*Indiana\s*46037/g, counterpartyNoticeAddressLine2],
+    [/Cell:\s*\(727\)\s*603-1265/g, contractorNoticePhone ? `Cell: ${contractorNoticePhone}` : ""],
+    [/Brandon\s*Clymer/g, templateData?.contractorSignerName || ""],
+    [/President/g, templateData?.contractorSignerTitle || ""],
+    [/ProcoreSubcontractorSignHere/g, ""],
+    [/ProcoreSubcontractorPrintHere/g, ""],
+    [/ProcoreSubcontractorTitleHere/g, ""],
+    [/ProcoreSubcontractorSignedDate/g, ""],
+    [/ProcoreGeneralContractorSignHere/g, ""],
+    [/ProcoreGeneralContractorSignedDate/g, ""],
+    [/RECITALS:/g, "RECITALS"],
+  ]);
+
+  const recitalsNormalizedBody = replaceHtmlRangeByMarkers(
+    bodyHtml,
+    "A.\n\tContractor is the General Contractor or Design-Builder engaged by",
+    "B.\n\tSubcontractor has agreed",
+    buildCommitmentProjectRecitalsHtml(bundle),
+  );
+
+  const clausesNormalizedBody = replaceHtmlRangeByMarkers(
+    recitalsNormalizedBody,
+    "c.\n\tAttorneys Fees.",
+    "IN TENDING TO BE LEGALLY BOUND",
+    buildCommitmentLegalClausesHtml(bundle),
+  );
+
+  const signatureNormalizedBody = replaceHtmlRangeByMarkers(
+    clausesNormalizedBody,
+    "TENDING TO BE LEGALLY BOUND",
+    "EXHIBIT\n&quot;A&quot;",
+    buildCommitmentSignatureHtml(bundle),
+  );
+
+  const exhibitNormalizedBody = replaceHtmlRangeByMarkers(
+    signatureNormalizedBody,
+    "EXHIBIT\n&quot;A&quot;",
+    "EXHIBIT\n&quot;B&quot;",
+    buildCommitmentExhibitAHtml(bundle),
+  );
+
+  const normalizedBody = exhibitNormalizedBody
+    .replace(/<p[^>]*>,<\/p>/g, "<p></p>")
+    .replace(/<p[^>]*>\s*,\s*<\/p>/g, contractorNoticeAddressLine1 ? `<p>${renderHtmlValue(contractorNoticeAddressLine1)}</p>` : "<p></p>")
+    .replace(/<p[^>]*>\s*<\/p>\s*<p[^>]*>Cell:\s*<\/p>/g, "<p></p><p></p>");
+
+  const cleanedBody = removeEmptyParagraphs(normalizedBody);
+
+  return buildBrandedDocumentHtml({
+    title: bundle.title,
+    renderHeading: false,
+    renderFooterInBody: false,
+    bodyHtml: `<div class="contract-template">${cleanedBody}</div>`,
+    contentWidth: "6.5in",
+  });
 }
 
 export function renderDocumentHtml(bundle: DocumentBundle): string {
-  if (bundle.recordType === "commitment" && bundle.commitmentType === "subcontract") {
-    return renderSubcontractCommitmentHtml(bundle);
+  if (bundle.recordType === "commitment") {
+    return renderCommitmentContractHtml(bundle);
   }
 
   const sectionsHtml = bundle.sections
@@ -1000,6 +1361,17 @@ export function renderDocumentHtml(bundle: DocumentBundle): string {
   </html>`;
 }
 
+export function getDocumentPdfOptions(bundle: DocumentBundle): DocumentPdfOptions {
+  if (bundle.recordType === "commitment") {
+    return {
+      footerTemplate: buildBrandedFooterTemplate(),
+      marginBottom: BRANDED_FOOTER_MARGIN,
+    };
+  }
+
+  return {};
+}
+
 export function renderDocumentEmailHtml(
   bundle: DocumentBundle,
   customMessage: string,
@@ -1271,7 +1643,7 @@ async function loadCommitmentBundle(
   if (base.contract_company_id) {
     const { data: vendorData, error: vendorError } = await supabase
       .from("companies")
-      .select("id, contact_email, contact_name, name")
+      .select("id, contact_email, contact_name, name, address, city, state")
       .eq("id", base.contract_company_id)
       .single();
 
@@ -1284,21 +1656,107 @@ async function loadCommitmentBundle(
 
   const { data: projectData } = await supabase
     .from("projects")
-    .select('id, name, address, project_number, company_id')
+    .select('id, name, address, project_number, company_id, state, summary_metadata')
     .eq("id", base.project_id)
     .single();
 
   const project = (projectData ?? null) as ProjectRow | null;
-  let contractorName = "Alleato, LLC";
-  if (project?.company_id) {
-    const { data: contractorCompany } = await supabase
-      .from("companies")
-      .select("name")
-      .eq("id", project.company_id)
-      .single();
 
-    contractorName = contractorCompany?.name || contractorName;
+  const [projectPrimeContractResult, vendorPeopleResult] = await Promise.all([
+    base.prime_contract_id
+      ? supabase
+          .from("prime_contracts")
+          .select("id, client_id, contract_company_id, contractor_id")
+          .eq("id", base.prime_contract_id)
+          .single()
+      : supabase
+          .from("prime_contracts")
+          .select("id, client_id, contract_company_id, contractor_id")
+          .eq("project_id", base.project_id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+    base.contract_company_id
+      ? supabase
+          .from("people")
+          .select("id, first_name, last_name, email, job_title, phone_business, phone_mobile, company_id")
+          .eq("company_id", base.contract_company_id)
+          .order("created_at", { ascending: true })
+          .limit(5)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (projectPrimeContractResult.error && projectPrimeContractResult.error.code !== "PGRST116") {
+    throw new Error(`Failed to load project contract context: ${projectPrimeContractResult.error.message}`);
   }
+
+  if (vendorPeopleResult.error) {
+    throw new Error(`Failed to load vendor contacts: ${vendorPeopleResult.error.message}`);
+  }
+
+  const projectPrimeContract = projectPrimeContractResult.data;
+  const vendorPeople = (vendorPeopleResult.data ?? []) as PersonRow[];
+  const vendorPrimaryContact = vendorPeople[0] ?? null;
+
+  const companyIds = Array.from(
+    new Set(
+      [
+        vendor?.id,
+        project?.company_id,
+        projectPrimeContract?.client_id,
+        projectPrimeContract?.contract_company_id,
+        projectPrimeContract?.contractor_id,
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  );
+
+  const companyProfilesById = new Map<string, CompanyProfileRow>();
+  if (companyIds.length > 0) {
+    const { data: companyProfiles, error: companyProfilesError } = await supabase
+      .from("companies")
+      .select("id, name, address, city, state, title")
+      .in("id", companyIds);
+
+    if (companyProfilesError) {
+      throw new Error(`Failed to load related companies: ${companyProfilesError.message}`);
+    }
+
+    for (const profile of companyProfiles ?? []) {
+      companyProfilesById.set(profile.id, profile as CompanyProfileRow);
+    }
+  }
+
+  const contractorCompany =
+    (project?.company_id ? companyProfilesById.get(project.company_id) : null) ??
+    (projectPrimeContract?.contractor_id ? companyProfilesById.get(projectPrimeContract.contractor_id) : null) ??
+    (projectPrimeContract?.contract_company_id
+      ? companyProfilesById.get(projectPrimeContract.contract_company_id)
+      : null) ??
+    null;
+  const ownerCompany =
+    (projectPrimeContract?.client_id ? companyProfilesById.get(projectPrimeContract.client_id) : null) ??
+    (projectPrimeContract?.contract_company_id
+      ? companyProfilesById.get(projectPrimeContract.contract_company_id)
+      : null) ??
+    null;
+
+  const contractorCompanyId = contractorCompany?.id ?? null;
+  const contractorPeopleResult = contractorCompanyId
+    ? await supabase
+        .from("people")
+        .select("id, first_name, last_name, email, job_title, phone_business, phone_mobile, company_id")
+        .eq("company_id", contractorCompanyId)
+        .order("created_at", { ascending: true })
+        .limit(20)
+    : { data: [], error: null };
+
+  if (contractorPeopleResult.error) {
+    throw new Error(`Failed to load contractor contacts: ${contractorPeopleResult.error.message}`);
+  }
+
+  const contractorPeople = (contractorPeopleResult.data ?? []) as PersonRow[];
+  const contractorSigner = pickAuthorizedSigner(contractorPeople);
+  const contractorName = contractorCompany?.name || "Alleato Group";
 
   const contactRecipients = await fetchPeopleSuggestions(
     supabase,
@@ -1356,6 +1814,36 @@ async function loadCommitmentBundle(
       name: project?.name || "Not set",
       address: project?.address || "Not set",
       jobNumber: project?.project_number || String(base.project_id),
+      addressLine1: project?.address || "Not set",
+      addressLine2:
+        formatAddressLine2(
+          project?.summary_metadata?.city ?? null,
+          project?.state ?? null,
+          project?.summary_metadata?.postal_code ?? null,
+        ) || null,
+    },
+    commitmentContractTemplate: {
+      ownerName: ownerCompany?.name || null,
+      contractorNotice: {
+        companyName: contractorCompany?.name || contractorName,
+        name: null,
+        title: null,
+        email: null,
+        phone: null,
+        addressLine1: contractorCompany?.address || null,
+        addressLine2: formatAddressLine2(contractorCompany?.city, contractorCompany?.state),
+      },
+      counterpartyNotice: {
+        companyName: vendor?.name || null,
+        name: formatContactName(vendorPrimaryContact),
+        title: vendorPrimaryContact?.job_title || null,
+        email: vendorPrimaryContact?.email || vendor?.contact_email || null,
+        phone: getContactPhone(vendorPrimaryContact),
+        addressLine1: vendor?.address || null,
+        addressLine2: formatAddressLine2(vendor?.city, vendor?.state),
+      },
+      contractorSignerName: formatContactName(contractorSigner),
+      contractorSignerTitle: contractorSigner?.job_title || null,
     },
     sections: [
       {

@@ -1,0 +1,108 @@
+[
+  {
+    "metadata_id": "01KVD86PYMPG69CHFZ9CPZRQRC",
+    "ok": true,
+    "result": {
+      "metadataId": "01KVD86PYMPG69CHFZ9CPZRQRC",
+      "parser": {
+        "metadataId": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "segmentCount": 8,
+        "meetingSummaryLength": 3773
+      },
+      "embedder": {
+        "metadataId": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "chunkCount": 29,
+        "segmentCount": 8
+      },
+      "extractor": {
+        "metadataId": "01KVD86PYMPG69CHFZ9CPZRQRC",
+        "insights": 24,
+        "decisions": 8,
+        "risks": 11,
+        "opportunities": 5,
+        "tasks": 5,
+        "tasksAttempted": 5,
+        "tasksSkipped": 0,
+        "signalsWritten": 0,
+        "signalsPromoted": 0,
+        "signalProjectionStatus": "blocked",
+        "signalProjectionError": "Blocked intelligence_promote_signal_candidate: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: insight_card_evidence=1, insight_card_targets=1, insight_cards=1."
+      },
+      "intelligence_compiler": {
+        "status": "projection_blocked",
+        "error": "Blocked project_operating_snapshot_projection: PM app final projection writes are disabled. Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet projection runs after high-churn work is isolated from the PM DB. Requested rows: project_operating_snapshots=1.",
+        "non_blocking": true
+      },
+      "status": "done"
+    }
+  },
+  {
+    "metadata_id": "01KVV1ZXBWSG077B23VWVA0F7V",
+    "ok": true,
+    "result": {
+      "metadataId": "01KVV1ZXBWSG077B23VWVA0F7V",
+      "parser": {
+        "metadataId": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "segmentCount": 37,
+        "meetingSummaryLength": 4100
+      },
+      "embedder": {
+        "metadataId": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "chunkCount": 99,
+        "segmentCount": 40
+      },
+      "extractor": {
+        "metadataId": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "insights": 0,
+        "decisions": 0,
+        "risks": 0,
+        "opportunities": 0,
+        "tasks": 5,
+        "tasksAttempted": 5,
+        "tasksSkipped": 0,
+        "signalsWritten": 0,
+        "signalsPromoted": 0,
+        "signalProjectionStatus": null,
+        "signalProjectionError": null
+      },
+      "intelligence_compiler": {
+        "status": "succeeded",
+        "source_document_id": "01KVV1ZXBWSG077B23VWVA0F7V",
+        "source": {
+          "status": "succeeded",
+          "project_id": null,
+          "target_id": null,
+          "attribution_candidate_id": null,
+          "signal_candidate_id": null,
+          "packet_refresh_job_id": null,
+          "source_synthesis_id": "936db506-24f6-408b-90b0-5e88aa7f190c",
+          "project_daily_delta_id": null,
+          "operating_projection": null,
+          "operating_projection_skipped": null,
+          "project_review_reason": null,
+          "confidence": "low",
+          "confidence_score": 0.0,
+          "task_extraction_status": "no_actionable_tasks",
+          "task_signal_candidate_id": null,
+          "tasks_created_count": 0,
+          "read_proof": {
+            "status": "full_source_read",
+            "scope": "full_transcript",
+            "source_text_table": "rag_document_metadata",
+            "source_text_field": "content",
+            "source_hash": "7c8bfcdff8db7b791e8920335d95b020c82e3f998c7ce9c85d572355899bf563",
+            "content_chars": 213792,
+            "transcript_marker_present": true,
+            "model_stage": "source_intelligence.process_source_document",
+            "compiler_version": "ai_intelligence_compiler_v0_1",
+            "read_at": "2026-06-25T21:18:09.776912+00:00",
+            "truncated": false
+          }
+        },
+        "promotion": null,
+        "packet": null
+      },
+      "status": "done"
+    }
+  }
+]

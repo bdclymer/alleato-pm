@@ -35,7 +35,7 @@ describe("prompt diagnostics", () => {
       messages: [{ role: "user", content: "hello" }],
     });
 
-    expect(payload.system).toBe("You are Alleato AI.");
+    expect(payload.instructions).toBe("You are Alleato AI.");
     expect(payload.messages).toHaveLength(1);
   });
 

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,8 @@ export function buildKnowledgeTableColumns(options: {
       label: "Status",
       defaultVisible: true,
       sortable: true,
+      // Ingestion status is system-derived, not user-editable.
+      editable: false,
       sortValue: (item) => item.status ?? "uploaded",
       render: (item) => (
         <StatusBadge status={item.status ?? "uploaded"} />
@@ -86,7 +88,7 @@ export function buildKnowledgeTableColumns(options: {
       label: "Tags",
       defaultVisible: true,
       render: (item) => {
-        const tagList = item.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
+        const tagList = item.tags ?? [];
         if (tagList.length === 0) return null;
         return (
           <div className="flex max-w-48 flex-wrap gap-1">
@@ -103,7 +105,7 @@ export function buildKnowledgeTableColumns(options: {
           </div>
         );
       },
-      csvValue: (item) => item.tags ?? "",
+      csvValue: (item) => item.tags?.join(", ") ?? "",
     },
     {
       id: "file_name",
@@ -160,7 +162,7 @@ export function buildKnowledgeTableColumns(options: {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

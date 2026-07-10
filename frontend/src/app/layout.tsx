@@ -14,6 +14,7 @@ import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recov
 import { VeltAuthProvider } from "@/components/velt/VeltAuthProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { DEFAULT_APP_METADATA_TITLE } from "@/lib/app-metadata";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,7 +29,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Alleato AI - Project Management",
+  title: DEFAULT_APP_METADATA_TITLE,
   description: "Modern construction management platform powered by AI.",
   icons: {
     icon: "/Alleato Favicon.png",
@@ -40,6 +41,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // viewport-fit=cover lets env(safe-area-inset-*) extend into the notch and
+  // home-indicator regions on iOS. The app already uses safe-area insets in a
+  // handful of sticky/fixed surfaces (form action bars, chat composer, the
+  // mobile bottom nav); without this they resolve to 0 and the insets are dead.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -54,10 +60,6 @@ export default function RootLayout({
       className={`${inter.variable} font-sans`}
       data-scroll-behavior="smooth"
     >
-      <head>
-        <link rel="preconnect" href="https://cdn.velt.dev" />
-        <link rel="dns-prefetch" href="https://cdn.velt.dev" />
-      </head>
       <body
         className="font-sans antialiased text-foreground"
         suppressHydrationWarning

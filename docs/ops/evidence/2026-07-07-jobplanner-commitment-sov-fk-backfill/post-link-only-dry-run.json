@@ -1,0 +1,1399 @@
+{
+  "mode": "dry-run",
+  "createMissingBudgetCodes": false,
+  "reportMissingBudgetCodes": true,
+  "disabledCreateModeNote": {
+    "reason": "disabled_by_design",
+    "details": "Missing project_budget_codes are reported only. Creating canonical budget master data from heuristic JobPlanner parent matches is intentionally blocked."
+  },
+  "targetParent": null,
+  "unresolvedRows": 61,
+  "parentCount": 34,
+  "missingBudgetCodeCandidateCount": 26,
+  "missingBudgetCodeRowCount": 38,
+  "missingBudgetCodesToCreate": [
+    {
+      "project_id": 67,
+      "cost_code_id": "03-4500",
+      "cost_type_id": "74fe174b-d28d-4b63-98cc-a83ef6a3fb49",
+      "description": "Precast Architectural Concrete - Material",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 1008,
+      "cost_code_id": "02-2113",
+      "cost_type_id": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "description": "Site Surveys - Expense",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 1008,
+      "cost_code_id": "50-8500",
+      "cost_type_id": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "description": "Miscellaneous Engineering - Expense",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "10-2813",
+      "cost_type_id": "74fe174b-d28d-4b63-98cc-a83ef6a3fb49",
+      "description": "Toilet Accessories - Material",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "23-3000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "HVAC Air Distribution - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "09-6513",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Resilient Base - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 1012,
+      "cost_code_id": "50-7000",
+      "cost_type_id": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "description": "Fire Protection Enginerring - Expense",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "09-9123",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Interior Painting - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 865,
+      "cost_code_id": "12-3500",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Specialty Casework - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 865,
+      "cost_code_id": "12-3500",
+      "cost_type_id": "f3f04b56-0bd1-5c8e-a57b-7c46c5b45b18",
+      "description": "Specialty Casework - Labor",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 798,
+      "cost_code_id": "06-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Rough Carpentry - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 865,
+      "cost_code_id": "22-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Plumbing Piping - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 870,
+      "cost_code_id": "11-1300",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Loading Dock Equipment - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 869,
+      "cost_code_id": "26-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Med-Volt Elect Distribution - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 754,
+      "cost_code_id": "01-4523",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Testing and Inspections - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 870,
+      "cost_code_id": "03-3500",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Concrete Finishing - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "22-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Plumbing Piping - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 833,
+      "cost_code_id": "12-3000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Casework - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 869,
+      "cost_code_id": "11-1300",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Loading Dock Equipment - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "06-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Rough Carpentry - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 25108,
+      "cost_code_id": "09-9123",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Interior Painting - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 869,
+      "cost_code_id": "12-3000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Casework - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 869,
+      "cost_code_id": "09-9123",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Interior Painting - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "09-5100",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Acoustical Ceilings - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "02-4113",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Selective Site Demolition - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    },
+    {
+      "project_id": 868,
+      "cost_code_id": "26-1000",
+      "cost_type_id": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "description": "Med-Volt Elect Distribution - Subcontract",
+      "description_mode": "concatenated",
+      "is_active": true
+    }
+  ],
+  "createdBudgetCodes": 0,
+  "resolvedUpdates": 0,
+  "resolvedByTable": {},
+  "reasonCounts": {
+    "missing_jobplanner_project_match": 9,
+    "missing_project_budget_code": 38,
+    "weak_parent_match": 14
+  },
+  "missingBudgetCodeCandidates": [
+    {
+      "projectId": 67,
+      "costCodeId": "03-4500",
+      "costTypeId": "74fe174b-d28d-4b63-98cc-a83ef6a3fb49",
+      "costTypeCode": "M",
+      "description": "Precast Architectural Concrete - Material",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "purchase_order_sov_items",
+          "id": "18aa1e57-87b2-4ca0-8723-475264b8aa7a",
+          "parentId": "510f289c-1af2-41c6-a32a-2f4749d66b0a",
+          "legacyBudgetCode": "03-4500",
+          "normalizedBudgetCode": "03-4500",
+          "sourceLineIds": [
+            33609
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 1008,
+      "costCodeId": "02-2113",
+      "costTypeId": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "costTypeCode": "X",
+      "description": "Site Surveys - Expense",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "purchase_order_sov_items",
+          "id": "327cf11b-61c4-4b1c-8254-9b441a25f31f",
+          "parentId": "02966cb1-7bd5-4821-aadc-de4489d086af",
+          "legacyBudgetCode": "02-2113",
+          "normalizedBudgetCode": "02-2113",
+          "sourceLineIds": [
+            32627
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 1008,
+      "costCodeId": "50-8500",
+      "costTypeId": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "costTypeCode": "X",
+      "description": "Miscellaneous Engineering - Expense",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "purchase_order_sov_items",
+          "id": "d44eb8f5-4885-4697-b849-7968defa71f6",
+          "parentId": "f4a11d79-820f-4caa-a94b-9ae5f693a6dc",
+          "legacyBudgetCode": "50-8500",
+          "normalizedBudgetCode": "50-8500",
+          "sourceLineIds": [
+            30105,
+            30106
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "purchase_order_sov_items",
+          "id": "317f99fa-3956-4491-a39c-87216164c6aa",
+          "parentId": "f4a11d79-820f-4caa-a94b-9ae5f693a6dc",
+          "legacyBudgetCode": "50-8500",
+          "normalizedBudgetCode": "50-8500",
+          "sourceLineIds": [
+            30105,
+            30106
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "10-2813",
+      "costTypeId": "74fe174b-d28d-4b63-98cc-a83ef6a3fb49",
+      "costTypeCode": "M",
+      "description": "Toilet Accessories - Material",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "purchase_order_sov_items",
+          "id": "c9ef80fd-57d4-438b-88f4-f431e9150c3a",
+          "parentId": "49777ad9-c96e-4fd0-af71-b4d39762fdfd",
+          "legacyBudgetCode": "10-2813",
+          "normalizedBudgetCode": "10-2813",
+          "sourceLineIds": [
+            34451
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "23-3000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "HVAC Air Distribution - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "c4e0d209-73a0-4385-9129-f7fc141ad8d8",
+          "parentId": "52e0828f-d567-4619-ae48-97c1d441f9e7",
+          "legacyBudgetCode": "23-3000",
+          "normalizedBudgetCode": "23-3000",
+          "sourceLineIds": [
+            34438
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "09-6513",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Resilient Base - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "dad91854-7aa9-4fab-bf43-f2e27a01f492",
+          "parentId": "9c5c728e-17fc-4405-a8e4-2eacd2861fca",
+          "legacyBudgetCode": "09-6513",
+          "normalizedBudgetCode": "09-6513",
+          "sourceLineIds": [
+            34470
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 1012,
+      "costCodeId": "50-7000",
+      "costTypeId": "87bfbc8a-fbfd-442d-8b9c-3b2a7985509e",
+      "costTypeCode": "X",
+      "description": "Fire Protection Enginerring - Expense",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "2fc0f890-cd56-4d55-8298-04c6ecf792ec",
+          "parentId": "d4786578-d3e0-4455-9047-81c0162d4e64",
+          "legacyBudgetCode": "50-7000",
+          "normalizedBudgetCode": "50-7000",
+          "sourceLineIds": [
+            26852
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "09-9123",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Interior Painting - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "385eb1c2-5607-469a-b8de-12bf3adfa5d6",
+          "parentId": "1f860de3-b689-4cde-8fc6-2e150d6f9c1d",
+          "legacyBudgetCode": "09-9123",
+          "normalizedBudgetCode": "09-9123",
+          "sourceLineIds": [
+            34481
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 865,
+      "costCodeId": "12-3500",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Specialty Casework - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "64b27a0f-9d96-4391-ac83-3b48d0146769",
+          "parentId": "7721db9b-e59b-4a9e-9f71-6da509d67374",
+          "legacyBudgetCode": "12-3500",
+          "normalizedBudgetCode": "12-3500",
+          "sourceLineIds": [
+            31629
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "0b93705c-0218-415f-86b2-96625e289f1b",
+          "parentId": "7721db9b-e59b-4a9e-9f71-6da509d67374",
+          "legacyBudgetCode": "12-3500",
+          "normalizedBudgetCode": "12-3500",
+          "sourceLineIds": [
+            31630
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 865,
+      "costCodeId": "12-3500",
+      "costTypeId": "f3f04b56-0bd1-5c8e-a57b-7c46c5b45b18",
+      "costTypeCode": "L",
+      "description": "Specialty Casework - Labor",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "79ad5a58-f77c-4d00-8d49-ef9f8c39508a",
+          "parentId": "7721db9b-e59b-4a9e-9f71-6da509d67374",
+          "legacyBudgetCode": "12-3500",
+          "normalizedBudgetCode": "12-3500",
+          "sourceLineIds": [
+            31631
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 798,
+      "costCodeId": "06-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Rough Carpentry - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 4,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "3d3198c8-c301-4f5d-90fb-d17c64d91f03",
+          "parentId": "f4736bc9-38b0-435e-8fd9-3649226a96f1",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            19002
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "3376c186-b212-4beb-b091-a35898fccf8a",
+          "parentId": "f4736bc9-38b0-435e-8fd9-3649226a96f1",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            19003
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "28069f42-5f52-4fc2-a80c-143570f0d38e",
+          "parentId": "f4736bc9-38b0-435e-8fd9-3649226a96f1",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            19004
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "f6a50f44-9b94-43b9-a2b8-e5455379e00f",
+          "parentId": "f4736bc9-38b0-435e-8fd9-3649226a96f1",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            19001
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 865,
+      "costCodeId": "22-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Plumbing Piping - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "394f0797-bf0d-4f44-8944-0fb419d6248b",
+          "parentId": "59e1a0f1-592e-4c15-b030-cd8764a91765",
+          "legacyBudgetCode": "22-1000",
+          "normalizedBudgetCode": "22-1000",
+          "sourceLineIds": [
+            29156
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 870,
+      "costCodeId": "11-1300",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Loading Dock Equipment - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "8f0b742a-76ef-43ba-ba22-7e85218b6edb",
+          "parentId": "5f77dad7-352a-414b-95ba-601858e3b192",
+          "legacyBudgetCode": "11-1300",
+          "normalizedBudgetCode": "11-1300",
+          "sourceLineIds": [
+            30036
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 869,
+      "costCodeId": "26-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Med-Volt Elect Distribution - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 4,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "ad3669cd-11f1-49f7-b488-56e47235c282",
+          "parentId": "6988a3fa-9e2c-46d8-b0d2-3b4621c32cc2",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            33020
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "95944eb0-b1d7-451e-82f5-57245f95e7dc",
+          "parentId": "6988a3fa-9e2c-46d8-b0d2-3b4621c32cc2",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            33021
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "309173b1-b7c9-4eeb-8310-2f5d18008e13",
+          "parentId": "6988a3fa-9e2c-46d8-b0d2-3b4621c32cc2",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            33019
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "de8f2fe3-b1c7-4d4c-9f68-17dbd1f6fca4",
+          "parentId": "6988a3fa-9e2c-46d8-b0d2-3b4621c32cc2",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            33022
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 754,
+      "costCodeId": "01-4523",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Testing and Inspections - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "e605e9ca-682d-4c71-8972-ac07ee769d04",
+          "parentId": "fb151ddc-099c-437f-a6e9-95ec8d561f63",
+          "legacyBudgetCode": "01-4523",
+          "normalizedBudgetCode": "01-4523",
+          "sourceLineIds": [
+            32569
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 870,
+      "costCodeId": "03-3500",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Concrete Finishing - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "359ad0e2-07ad-4f89-941e-56699462b16b",
+          "parentId": "56183f43-c275-4256-85bf-0105af419333",
+          "legacyBudgetCode": "03-3500",
+          "normalizedBudgetCode": "03-3500",
+          "sourceLineIds": [
+            33896
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "cc2ff2fd-7ab7-4411-97d9-57e8e329b14e",
+          "parentId": "56183f43-c275-4256-85bf-0105af419333",
+          "legacyBudgetCode": "03-3500",
+          "normalizedBudgetCode": "03-3500",
+          "sourceLineIds": [
+            33897
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "22-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Plumbing Piping - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "bd5efc7f-5cc6-4ce2-bc31-5ce773c8bb5c",
+          "parentId": "d43e31ea-c724-4a07-b5b6-806a310af225",
+          "legacyBudgetCode": "22-1000",
+          "normalizedBudgetCode": "22-1000",
+          "sourceLineIds": [
+            34162
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "ece93cc9-15f2-49f7-b4ab-1342ae75b949",
+          "parentId": "d43e31ea-c724-4a07-b5b6-806a310af225",
+          "legacyBudgetCode": "22-1000",
+          "normalizedBudgetCode": "22-1000",
+          "sourceLineIds": [
+            34163
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 833,
+      "costCodeId": "12-3000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Casework - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "bf95ef28-68a6-431b-874a-c6447ba917b2",
+          "parentId": "43ee7008-a224-46d3-b3a7-2af72c2b1133",
+          "legacyBudgetCode": "12-3000",
+          "normalizedBudgetCode": "12-3000",
+          "sourceLineIds": [
+            20448
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 869,
+      "costCodeId": "11-1300",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Loading Dock Equipment - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "4784197a-c24f-4a3b-b7d9-80ccd37f293d",
+          "parentId": "22b37d7b-0cdf-4585-9463-26abdceb082e",
+          "legacyBudgetCode": "11-1300",
+          "normalizedBudgetCode": "11-1300",
+          "sourceLineIds": [
+            33013
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "06-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Rough Carpentry - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "4922747e-1278-4ec2-9f2a-8a5a18b49449",
+          "parentId": "5fa53091-5895-4af6-bdab-a2b9ec27f065",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            33883
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "29af5300-4447-4483-b3d7-e4928efdce78",
+          "parentId": "5fa53091-5895-4af6-bdab-a2b9ec27f065",
+          "legacyBudgetCode": "06-1000",
+          "normalizedBudgetCode": "06-1000",
+          "sourceLineIds": [
+            33953
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 25108,
+      "costCodeId": "09-9123",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Interior Painting - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "d1d5dadf-6853-4ec9-84d9-d9e85526633e",
+          "parentId": "90f9382d-e94e-4fe2-95ed-ca8fce04ca76",
+          "legacyBudgetCode": "09-9123",
+          "normalizedBudgetCode": "09-9123",
+          "sourceLineIds": [
+            24097
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 869,
+      "costCodeId": "12-3000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Casework - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "e4d47e7f-7e48-4f14-bc2a-0bb4bd6c6a94",
+          "parentId": "3e12074b-522c-48dc-ba18-a7b46d866275",
+          "legacyBudgetCode": "12-3000",
+          "normalizedBudgetCode": "12-3000",
+          "sourceLineIds": [
+            33028
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 869,
+      "costCodeId": "09-9123",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Interior Painting - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "2d311e45-a59b-409d-800f-88eaabd5a785",
+          "parentId": "38480ead-593e-4f3c-a363-2b2283756dd7",
+          "legacyBudgetCode": "09-9123",
+          "normalizedBudgetCode": "09-9123",
+          "sourceLineIds": [
+            33049
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "09-5100",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Acoustical Ceilings - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "d7bebbf1-1cb8-426f-b064-5af1ee6a5e1e",
+          "parentId": "dcf35dfd-6c29-4e48-b0d3-deef1fa3b6c7",
+          "legacyBudgetCode": "09-5100",
+          "normalizedBudgetCode": "09-5100",
+          "sourceLineIds": [
+            34150
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "02-4113",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Selective Site Demolition - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 1,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "3220b802-3ba6-42a9-8b78-73efd2f946c1",
+          "parentId": "dcf35dfd-6c29-4e48-b0d3-deef1fa3b6c7",
+          "legacyBudgetCode": "02-4113",
+          "normalizedBudgetCode": "02-4113",
+          "sourceLineIds": [
+            33882
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    },
+    {
+      "projectId": 868,
+      "costCodeId": "26-1000",
+      "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+      "costTypeCode": "S",
+      "description": "Med-Volt Elect Distribution - Subcontract",
+      "descriptionMode": "concatenated",
+      "rowCount": 2,
+      "rows": [
+        {
+          "table": "subcontract_sov_items",
+          "id": "76770cf8-9e88-47f3-b2a3-b3ebac055eeb",
+          "parentId": "00692857-a8a3-435b-bf69-93a19c0fe100",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            34152
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        },
+        {
+          "table": "subcontract_sov_items",
+          "id": "b3441640-b6a3-4488-b60e-641734e960dc",
+          "parentId": "00692857-a8a3-435b-bf69-93a19c0fe100",
+          "legacyBudgetCode": "26-1000",
+          "normalizedBudgetCode": "26-1000",
+          "sourceLineIds": [
+            34158
+          ],
+          "proofQuality": "source_cost_type_and_amount"
+        }
+      ]
+    }
+  ],
+  "updateSample": [],
+  "parentMatchSample": [
+    {
+      "parentId": "316640d6-c78a-4530-a678-8eb29cc80bf5",
+      "contractNumber": "000068",
+      "localProjectId": 31,
+      "jpProjectId": 3729,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 15,
+          "id": 5212,
+          "number": "PO-3729-0005",
+          "title": "Fire Alarm Connection",
+          "company": "S.A. Comunale CO., Inc"
+        }
+      ]
+    },
+    {
+      "parentId": "510f289c-1af2-41c6-a32a-2f4749d66b0a",
+      "contractNumber": "000116",
+      "localProjectId": 67,
+      "jpProjectId": 5296,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 125,
+          "id": 9389,
+          "number": "PO-5296-0007",
+          "title": "Precast Design work",
+          "company": "County Prestress"
+        }
+      ]
+    },
+    {
+      "parentId": "02966cb1-7bd5-4821-aadc-de4489d086af",
+      "contractNumber": "000107",
+      "localProjectId": 1008,
+      "jpProjectId": 8530,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 125,
+          "id": 8972,
+          "number": "PO-8530-0003",
+          "title": "Survey Services",
+          "company": "SKS Engineers, LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "f4a11d79-820f-4caa-a94b-9ae5f693a6dc",
+      "contractNumber": "000101",
+      "localProjectId": 1008,
+      "jpProjectId": 8530,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 7841,
+          "number": "PO-8530-0002",
+          "title": "Civil Engineering Services",
+          "company": "Kaskaskia Engineering Group, LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "49777ad9-c96e-4fd0-af71-b4d39762fdfd",
+      "contractNumber": "000124",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9646,
+          "number": "PO-8143-0001",
+          "title": "Restroom Accessories",
+          "company": "Georgia Specialties, LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "52e0828f-d567-4619-ae48-97c1d441f9e7",
+      "contractNumber": "SC-000438",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9636,
+          "number": "SC-8143-0005",
+          "title": "HVAC-Extend Ductwork",
+          "company": "Standard Heating & Cooling"
+        }
+      ]
+    },
+    {
+      "parentId": "9c5c728e-17fc-4405-a8e4-2eacd2861fca",
+      "contractNumber": "SC-000439",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9651,
+          "number": "SC-8143-0006",
+          "title": "Interior Flooring",
+          "company": "CertaPro Painters of Central Illinois"
+        },
+        {
+          "score": 35,
+          "id": 9660,
+          "number": "SC-8143-0007",
+          "title": "Interior Painting",
+          "company": "CertaPro Painters of Central Illinois"
+        },
+        {
+          "score": 15,
+          "id": 9468,
+          "number": "SC-8143-0001",
+          "title": "Demo, Interior Framing, Drywall, Ceilings, and Miscellaneous Carpentry",
+          "company": "Allied Construction Services, Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "d4786578-d3e0-4455-9047-81c0162d4e64",
+      "contractNumber": "SC-000350",
+      "localProjectId": 1012,
+      "jpProjectId": 7551,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 6576,
+          "number": "SC-7551-0001",
+          "title": "Fire Sprinkler System Design",
+          "company": "Christopher William Lopez"
+        }
+      ]
+    },
+    {
+      "parentId": "1f860de3-b689-4cde-8fc6-2e150d6f9c1d",
+      "contractNumber": "SC-000440",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 145,
+          "id": 9660,
+          "number": "SC-8143-0007",
+          "title": "Interior Painting",
+          "company": "CertaPro Painters of Central Illinois"
+        },
+        {
+          "score": 35,
+          "id": 9651,
+          "number": "SC-8143-0006",
+          "title": "Interior Flooring",
+          "company": "CertaPro Painters of Central Illinois"
+        }
+      ]
+    },
+    {
+      "parentId": "c1198e63-1709-4b0f-a0ea-c60782d68ea6",
+      "contractNumber": "SC-000365",
+      "localProjectId": 761,
+      "jpProjectId": 5347,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 4936,
+          "number": "SC-5347-0005",
+          "title": "TBD ",
+          "company": "KascoFab"
+        }
+      ]
+    },
+    {
+      "parentId": "af7f6b15-f3f0-43ea-818a-7bcba2f12ebc",
+      "contractNumber": "SC-000152",
+      "localProjectId": 24109,
+      "jpProjectId": 2603,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 2383,
+          "number": "SC-2603-0020",
+          "title": "Masonry",
+          "company": "Rock Solid Masonry, LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "7721db9b-e59b-4a9e-9f71-6da509d67374",
+      "contractNumber": "SC-000404",
+      "localProjectId": 865,
+      "jpProjectId": 8109,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 8509,
+          "number": "SC-8109-0006",
+          "title": "Breakroom Cabinets/ Windowsill work",
+          "company": "Appletree Woodworks, Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "f4736bc9-38b0-435e-8fd9-3649226a96f1",
+      "contractNumber": "SC-000236",
+      "localProjectId": 798,
+      "jpProjectId": 4246,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 55,
+          "id": 3489,
+          "number": "SC-4246-0001",
+          "title": "Shoring, Ceiling Demo, Truss Repair, Drywall, Paint, Insulation, Floor protection, Wall Protection, Final Clean",
+          "company": "Right Image Construction LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "59e1a0f1-592e-4c15-b030-cd8764a91765",
+      "contractNumber": "SC-000381",
+      "localProjectId": 865,
+      "jpProjectId": 8109,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 7574,
+          "number": "SC-8109-0001",
+          "title": "Plumbing Scope: Demo & install new plumbing fixtures in breakroom, employee and retail restrooms",
+          "company": "Dries Plumbing Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "5f77dad7-352a-414b-95ba-601858e3b192",
+      "contractNumber": "SC-000391",
+      "localProjectId": 870,
+      "jpProjectId": 8105,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 7817,
+          "number": "SC-8105-0007",
+          "title": "Dock Shelters",
+          "company": "Wayne Dalton Sales & Service Division of Overhead"
+        }
+      ]
+    },
+    {
+      "parentId": "8c4239e6-36d3-4d94-b07d-ed3c3e3d5493",
+      "contractNumber": "SC-000332",
+      "localProjectId": 761,
+      "jpProjectId": 5347,
+      "reason": "weak_parent_match",
+      "top": [
+        {
+          "score": 35,
+          "id": 4936,
+          "number": "SC-5347-0005",
+          "title": "TBD ",
+          "company": "KascoFab"
+        }
+      ]
+    },
+    {
+      "parentId": "6988a3fa-9e2c-46d8-b0d2-3b4621c32cc2",
+      "contractNumber": "SC-000421",
+      "localProjectId": 869,
+      "jpProjectId": 8126,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9104,
+          "number": "SC-8126-0003",
+          "title": "Electrical Improvements & Hand Dryer Installation",
+          "company": "360 Electric, LLC"
+        },
+        {
+          "score": 15,
+          "id": 9112,
+          "number": "SC-8126-0005",
+          "title": "Flooring/Baseboards",
+          "company": "CertaPro Painters of Central Illinois"
+        }
+      ]
+    },
+    {
+      "parentId": "fb151ddc-099c-437f-a6e9-95ec8d561f63",
+      "contractNumber": "SC-000418",
+      "localProjectId": 754,
+      "jpProjectId": 8189,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 145,
+          "id": 8939,
+          "number": "SC-8189-0022",
+          "title": "Materials Testing",
+          "company": "Patriot Engineering and Environmental, Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "56183f43-c275-4256-85bf-0105af419333",
+      "contractNumber": "SC-000427",
+      "localProjectId": 870,
+      "jpProjectId": 8105,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 125,
+          "id": 9476,
+          "number": "SC-8105-0012",
+          "title": "Asphalt",
+          "company": "Tazewell County Asphalt Company"
+        }
+      ]
+    },
+    {
+      "parentId": "d43e31ea-c724-4a07-b5b6-806a310af225",
+      "contractNumber": "SC-000435",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9570,
+          "number": "SC-8143-0004",
+          "title": "Plumbing",
+          "company": "Dries Plumbing Inc."
+        },
+        {
+          "score": 15,
+          "id": 9469,
+          "number": "SC-8143-0002",
+          "title": "Cabinetry & Millwork",
+          "company": "Appletree Woodworks, Inc."
+        },
+        {
+          "score": 15,
+          "id": 9468,
+          "number": "SC-8143-0001",
+          "title": "Demo, Interior Framing, Drywall, Ceilings, and Miscellaneous Carpentry",
+          "company": "Allied Construction Services, Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "43ee7008-a224-46d3-b3a7-2af72c2b1133",
+      "contractNumber": "SC-000276",
+      "localProjectId": 833,
+      "jpProjectId": 3192,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 125,
+          "id": 3995,
+          "number": "SC-3192-0001",
+          "title": "Royal Theatre Apartment",
+          "company": "PRIMARY COMMERCIAL SERVICES"
+        }
+      ]
+    },
+    {
+      "parentId": "22b37d7b-0cdf-4585-9463-26abdceb082e",
+      "contractNumber": "SC-000420",
+      "localProjectId": 869,
+      "jpProjectId": 8126,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9103,
+          "number": "SC-8126-0002",
+          "title": "Dock Equipment",
+          "company": "Wayne Dalton Sales & Service Division of Overhead"
+        }
+      ]
+    },
+    {
+      "parentId": "5fa53091-5895-4af6-bdab-a2b9ec27f065",
+      "contractNumber": "SC-000428",
+      "localProjectId": 868,
+      "jpProjectId": 8143,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9469,
+          "number": "SC-8143-0002",
+          "title": "Cabinetry & Millwork",
+          "company": "Appletree Woodworks, Inc."
+        },
+        {
+          "score": 15,
+          "id": 9468,
+          "number": "SC-8143-0001",
+          "title": "Demo, Interior Framing, Drywall, Ceilings, and Miscellaneous Carpentry",
+          "company": "Allied Construction Services, Inc."
+        },
+        {
+          "score": 15,
+          "id": 9570,
+          "number": "SC-8143-0004",
+          "title": "Plumbing",
+          "company": "Dries Plumbing Inc."
+        }
+      ]
+    },
+    {
+      "parentId": "90f9382d-e94e-4fe2-95ed-ca8fce04ca76",
+      "contractNumber": "SC-000320",
+      "localProjectId": 25108,
+      "jpProjectId": 3620,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 145,
+          "id": 5832,
+          "number": "SC-3620-0011",
+          "title": "Painting",
+          "company": "Inline Painting LLC"
+        }
+      ]
+    },
+    {
+      "parentId": "3e12074b-522c-48dc-ba18-a7b46d866275",
+      "contractNumber": "SC-000422",
+      "localProjectId": 869,
+      "jpProjectId": 8126,
+      "reason": "matched",
+      "top": [
+        {
+          "score": 160,
+          "id": 9109,
+          "number": "SC-8126-0004",
+          "title": "Cabinetry /Millwork",
+          "company": "Appletree Woodworks, Inc."
+        }
+      ]
+    }
+  ]
+}

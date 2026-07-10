@@ -9,7 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
-import { Input } from "@/components/ui/input"
+import { NumberInput } from "@/components/ui/number-input"
 
 interface Props<TFieldValues extends FieldValues> {
   control: Control<TFieldValues>
@@ -34,10 +34,13 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
   step = 1,
   disabled,
 }: Props<TFieldValues>) {
-  const parseNumberValue = (raw: string): number => {
-    if (raw.trim() === "") return Number.NaN
+  const parseNumberValue = (raw: string): number | null => {
+    // Empty (or non-numeric) input becomes null, never NaN. NaN in form state
+    // blocks submit on nullable/optional number fields (you can no longer unset
+    // them) and surfaces "received nan" instead of a clean required-field error.
+    if (raw.trim() === "") return null
     const parsed = Number(raw)
-    return Number.isNaN(parsed) ? Number.NaN : parsed
+    return Number.isNaN(parsed) ? null : parsed
   }
 
   return (
@@ -50,8 +53,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
           {description && <FormDescription>{description}</FormDescription>}
 
           <FormControl>
-            <Input
-              type="number"
+            <NumberInput
               name={field.name}
               ref={field.ref}
               value={field.value ?? ""}
@@ -62,6 +64,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
               max={max}
               step={step}
               disabled={disabled}
+              clearZeroOnFocus
             />
           </FormControl>
 

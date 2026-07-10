@@ -152,7 +152,6 @@ import {
   EditModeActions,
   SplitButton,
   MoneyField,
-  PageTabsV2,
 } from "@/components/ds";
 
 import { cn } from "@/lib/utils";
@@ -324,7 +323,6 @@ function Preview({
 
 export default function DesignSystemComponentsPage() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [activeTabV2, setActiveTabV2] = useState("tab1");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [switchChecked, setSwitchChecked] = useState(true);
@@ -856,31 +854,17 @@ export default function DesignSystemComponentsPage() {
         </p>
       </SubSection>
 
-      {/* PageTabsV2 */}
-      <SubSection title="PageTabsV2 (pill style)">
-        <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-1">
-          {["Tab 1", "Tab 2", "Tab 3"].map((label, i) => {
-            const key = `tab${i + 1}`;
-            const isActive = activeTabV2 === key;
-            return (
-              <Button
-                key={key}
-                type="button"
-                variant="ghost"
-                onClick={() => setActiveTabV2(key)}
-                className={`inline-flex h-[calc(100%-1px)] items-center justify-center rounded-md border px-4 py-1 text-sm font-medium whitespace-nowrap transition-all ${
-                  isActive
-                    ? "bg-background text-foreground shadow-xs border-border"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {label}
-              </Button>
-            );
-          })}
-        </div>
+      {/* Section Tabs */}
+      <SubSection title="Section Tabs (pill style)">
+        <Tabs defaultValue="tab1" className="max-w-sm">
+          <TabsList>
+            <TabsTrigger value="tab1">Tab 1</TabsTrigger>
+            <TabsTrigger value="tab2">Tab 2</TabsTrigger>
+            <TabsTrigger value="tab3">Tab 3</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <p className="text-xs text-muted-foreground">
-          Alternative pill-style variant. Imported from <code className="rounded bg-muted px-1 py-0.5 font-mono">@/components/layout</code>.
+          Use these for section-level content inside a page. Page-level navigation should use <code className="rounded bg-muted px-1 py-0.5 font-mono">PageTabs</code>.
         </p>
       </SubSection>
 

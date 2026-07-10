@@ -53,6 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CommitmentsHelpSheet } from "@/components/commitments/CommitmentsHelpSheet";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import {
   SummaryTab,
@@ -67,6 +68,7 @@ import {
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
 import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import { handleFormError } from "@/lib/handle-form-error";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
@@ -221,15 +223,10 @@ export function SubcontractorInvoiceDetail({
     }
   }
 
-  async function handleExportPdf() {
-    const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
+  const { exportPdf: handleExportPdf } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/pdf`,
+    filename: `subcontract-invoice-${invoice?.invoice_number || `APP-${invoiceId}`}`,
+  });
 
   // Opens and pre-fills the email dialog for invoice delivery.
   function handleEmailInvoice() {
@@ -361,7 +358,7 @@ export function SubcontractorInvoiceDetail({
 
   if (isLoading) {
     return (
-      <PageShell variant="detailWide" title="Loading invoice…">
+      <PageShell variant="detail" title="Loading invoice…">
         <div className="px-6 py-4">
           <p className="text-sm text-muted-foreground">Loading…</p>
         </div>
@@ -371,7 +368,7 @@ export function SubcontractorInvoiceDetail({
 
   if (error || !invoice) {
     return (
-      <PageShell variant="detailWide" title="Invoice not found">
+      <PageShell variant="detail" title="Invoice not found">
         <div className="px-6 py-4 space-y-3">
           <p className="text-sm text-muted-foreground">
             {error instanceof Error
@@ -417,7 +414,7 @@ export function SubcontractorInvoiceDetail({
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="detail"
       title={title}
       description={
         invoice.contract_number
@@ -428,7 +425,8 @@ export function SubcontractorInvoiceDetail({
       backLabel={backLabel}
       contentClassName="space-y-4"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <CommitmentsHelpSheet buttonVariant="ghost" />
           {canInviteSubcontractor && (
             <Button
               size="sm"

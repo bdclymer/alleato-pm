@@ -1,5 +1,6 @@
 import {
   ASSISTANT_WIDGET_TYPES,
+  buildAssistantWidgetsFromPrompt,
   isAssistantWidgetPayload,
   type AssistantWidgetDataPart,
   type CommitmentDraftWidgetPayload,
@@ -25,6 +26,24 @@ describe("assistant widget registry", () => {
     expect([...ASSISTANT_WIDGET_RENDERER_TYPES].sort()).toEqual(
       [...ASSISTANT_WIDGET_TYPES].sort(),
     );
+  });
+
+  it("generates the guided change-event workflow widget instead of a generic action preview", () => {
+    const widgets = buildAssistantWidgetsFromPrompt({
+      prompt: "Can you help me create a new change event?",
+      selectedProjectId: 25125,
+    });
+
+    expect(widgets).toHaveLength(1);
+    expect(widgets[0]?.type).toBe("change_event_workflow");
+    expect(widgets[0]).toMatchObject({
+      id: "change-event-workflow",
+      title: "Change event workflow",
+      draft: {
+        projectId: 25125,
+        readyForPreview: false,
+      },
+    });
   });
 
   it("accepts the source-specific meeting insights widget data part", () => {

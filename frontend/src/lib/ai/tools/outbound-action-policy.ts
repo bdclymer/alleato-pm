@@ -1,5 +1,7 @@
-import type { Tool, ToolExecutionOptions, ToolSet } from "ai";
+import type { Tool, ToolSet } from "ai";
 import type { ToolTracePayload } from "./tool-utils";
+
+type ToolContext = Record<string, unknown>;
 
 const OUTBOUND_ACTION_POLICY_FLAG = "ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED";
 
@@ -49,6 +51,12 @@ export function isOutboundActionPolicyEnabled(): boolean {
 
 export function createDeniedToolResult(toolName: string, reason: OutboundActionDenialReason, message: string): OutboundActionDeniedResult {
   return { __toolDenied: true, reason, message, toolName, policy: "outbound-action-policy" };
+}
+
+function isDeniedDecision(
+  decision: OutboundActionPolicyDecision,
+): decision is Extract<OutboundActionPolicyDecision, { allowed: false }> {
+  return decision.allowed === false;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -130,14 +138,19 @@ export function wrapToolSetWithOutboundActionPolicy<TTools extends ToolSet>(tool
     Object.entries(tools).map(([toolName, definition]) => {
       const execute = definition.execute;
       if (!execute) return [toolName, definition];
-      const wrappedExecute = async (input: Record<string, unknown>, executionOptions?: ToolExecutionOptions) => {
+      type ExecuteInput = Parameters<NonNullable<typeof execute>>[0];
+      type ExecuteOptions = Parameters<NonNullable<typeof execute>>[1];
+      const wrappedExecute = async (
+        input: ExecuteInput,
+        executionOptions?: ExecuteOptions,
+      ) => {
         const decision = policy.beforeToolCall({ toolName, input });
-        if (!decision.allowed) {
+        if (isDeniedDecision(decision)) {
           const denied = createDeniedToolResult(toolName, decision.reason, decision.message);
           options.onTrace?.({ tool: toolName, input, output: denied, timestamp: new Date().toISOString() });
           return denied;
         }
-        const output = await execute(input as never, executionOptions as ToolExecutionOptions);
+        const output = await execute(input, executionOptions as ExecuteOptions);
         const safeOutput = (() => {
           try {
             return policy.afterToolCall({ toolName, input, output, decision });
@@ -150,7 +163,17 @@ export function wrapToolSetWithOutboundActionPolicy<TTools extends ToolSet>(tool
         }
         return safeOutput;
       };
-      return [toolName, { ...(definition as Tool<Record<string, unknown>, unknown>), execute: wrappedExecute }];
+      return [
+        toolName,
+        {
+          ...(definition as Tool<
+            Record<string, unknown>,
+            unknown,
+            ToolContext
+          >),
+          execute: wrappedExecute,
+        },
+      ];
     }),
   );
   return wrapped as TTools;

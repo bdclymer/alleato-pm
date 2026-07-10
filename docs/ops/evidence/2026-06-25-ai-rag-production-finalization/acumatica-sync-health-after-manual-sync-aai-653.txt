@@ -1,0 +1,8 @@
+
+> alleato-procore@0.1.0 verify:acumatica-sync-health
+> node scripts/verify/verify-acumatica-sync-health.mjs
+
+Render cron: not_suspended 0 0,12 * * * python3 scripts/run_acumatica_financial_sync.py
+Latest run: acumatica_project_budgets drift_sentinel Thu Jun 25 2026 17:24:27 GMT-0400 (Eastern Daylight Time)
+Checked entities: 12
+Acumatica sync health verifier: PASS

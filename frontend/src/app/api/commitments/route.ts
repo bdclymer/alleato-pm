@@ -77,6 +77,7 @@ interface UnifiedCommitmentRow {
   id: string | null;
   commitment_type: string | null;
   created_at: string | null;
+  created_by: string | null;
 }
 
 interface CoAggRow {
@@ -89,6 +90,7 @@ interface CoTotals {
   approved: number;
   pending: number;
   draft: number;
+  count: number;
 }
 
 interface PurchaseOrderScopeRow {
@@ -113,6 +115,7 @@ function mapRowToCommitment(
   paymentsIssued: number,
   erpStatus: string | null,
   ssovStatus: string | null,
+  createdByName: string | null,
   scopeRecord?: {
     costCodes: string[];
     tradeNames: string[];
@@ -157,9 +160,11 @@ function mapRowToCommitment(
     executed_date: row.contract_date,
     retention_percentage: row.default_retainage_percent,
     created_at: row.created_at || new Date().toISOString(),
+    created_by_name: createdByName,
     updated_at: row.updated_at || new Date().toISOString(),
     erp_status: erpStatus,
     ssov_status: ssovStatus,
+    change_order_count: coTotals.count,
     pending_change_orders: pendingCOs,
     draft_change_orders: draftCOs,
     invoiced_amount: invoicedAmount,
@@ -279,7 +284,7 @@ export const GET = withApiGuardrails(
 
     let baseQuery = supabase
       .from("commitments_unified")
-      .select("id, commitment_type, created_at", { count: "exact" })
+      .select("id, commitment_type, created_at, created_by", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
     if (deleted === "exclude") {
@@ -313,6 +318,19 @@ export const GET = withApiGuardrails(
     if (baseError) throw baseError;
 
     const orderedBaseRows = (baseRows || []) as UnifiedCommitmentRow[];
+    const createdByAuthUserIdByCommitmentId = new Map<string, string | null>();
+    for (const row of orderedBaseRows) {
+      if (row.id) {
+        createdByAuthUserIdByCommitmentId.set(row.id, row.created_by ?? null);
+      }
+    }
+    const createdByAuthUserIds = Array.from(
+      new Set(
+        orderedBaseRows
+          .map((row) => row.created_by)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
     const subcontractIds = orderedBaseRows
       .filter((row) => row.id && row.commitment_type === "subcontract")
       .map((row) => row.id as string);
@@ -328,6 +346,7 @@ export const GET = withApiGuardrails(
       changeOrderRows,
       subcontractSovRows,
       purchaseOrderSovRows,
+      creatorRows,
     ] = await Promise.all([
       subcontractIds.length > 0
         ? supabase
@@ -366,6 +385,12 @@ export const GET = withApiGuardrails(
             .select("purchase_order_id,budget_code,description,amount,line_number")
             .in("purchase_order_id", purchaseOrderIds)
         : Promise.resolve({ data: [], error: null }),
+      createdByAuthUserIds.length > 0
+        ? supabase
+            .from("people")
+            .select("auth_user_id, first_name, last_name")
+            .in("auth_user_id", createdByAuthUserIds)
+        : Promise.resolve({ data: [], error: null }),
     ]);
 
     if (subcontractRows.error) throw subcontractRows.error;
@@ -374,6 +399,16 @@ export const GET = withApiGuardrails(
     if (changeOrderRows.error) throw changeOrderRows.error;
     if (subcontractSovRows.error) throw subcontractSovRows.error;
     if (purchaseOrderSovRows.error) throw purchaseOrderSovRows.error;
+    if (creatorRows.error) throw creatorRows.error;
+
+    const creatorNameByAuthUserId = new Map<string, string>();
+    for (const row of creatorRows.data || []) {
+      if (!row.auth_user_id) continue;
+      const name =
+        [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
+        null;
+      if (name) creatorNameByAuthUserId.set(row.auth_user_id, name);
+    }
 
     const subcontractSovSummaryRows: CommitmentScopeLine[] = (subcontractSovRows.data || []).map((row) => ({
       commitmentId: row.subcontract_id,
@@ -418,9 +453,15 @@ export const GET = withApiGuardrails(
     const coTotalsById = new Map<string, CoTotals>();
     for (const co of (changeOrderRows.data || []) as CoAggRow[]) {
       if (!co.contract_id) continue;
-      const existing = coTotalsById.get(co.contract_id) ?? { approved: 0, pending: 0, draft: 0 };
+      const existing = coTotalsById.get(co.contract_id) ?? {
+        approved: 0,
+        pending: 0,
+        draft: 0,
+        count: 0,
+      };
       const amount = Number(co.amount) || 0;
       const status = (co.status || "draft").toLowerCase();
+      existing.count += 1;
       if (status === "approved" || status === "executed") {
         existing.approved += amount;
       } else if (status === "pending") {
@@ -431,7 +472,12 @@ export const GET = withApiGuardrails(
       coTotalsById.set(co.contract_id, existing);
     }
 
-    const emptyCoTotals: CoTotals = { approved: 0, pending: 0, draft: 0 };
+    const emptyCoTotals: CoTotals = {
+      approved: 0,
+      pending: 0,
+      draft: 0,
+      count: 0,
+    };
     const purchaseOrderScopeById = new Map<string, PurchaseOrderScopeRow>();
     for (const row of (purchaseOrderScopeRows.data || []) as PurchaseOrderScopeRow[]) {
       if (row.id) purchaseOrderScopeById.set(row.id, row);
@@ -490,6 +536,9 @@ export const GET = withApiGuardrails(
           paymentsIssued,
           null,
           null,
+          creatorNameByAuthUserId.get(
+            createdByAuthUserIdByCommitmentId.get(row.id) ?? "",
+          ) ?? null,
           scopeRecordsById.get(row.id),
         ),
       );
@@ -506,6 +555,9 @@ export const GET = withApiGuardrails(
           paymentsIssued,
           null,
           null,
+          creatorNameByAuthUserId.get(
+            createdByAuthUserIdByCommitmentId.get(row.id) ?? "",
+          ) ?? null,
           scopeRecordsById.get(row.id),
         ),
       );

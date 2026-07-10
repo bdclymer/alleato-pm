@@ -33,7 +33,9 @@ export interface ChangeEvent {
   prime_pco_title?: string | null;
   cost_rom?: number | null;
   rfq_title?: string | null;
+  /** Committed-cost dollar amount (numeric string), not the contract number. */
   commitment?: string | null;
+  commitment_id?: string | null;
   commitment_title?: string | null;
   sent_to_prime_pco?: boolean | null;
   sent_to_commitment_pco?: boolean | null;

@@ -16,6 +16,7 @@
     "lint": "eslint . --cache --cache-strategy content",
     "lint:errors": "eslint . --quiet --cache --cache-strategy content",
     "set-admin": "node scripts/set-admin.mjs",
+    "changelog:draft": "node ../scripts/changelog/draft-release.mjs",
     "typecheck": "rm -f tsconfig.tsbuildinfo && node scripts/run-typecheck-bounded.mjs",
     "audit:db": "tsx scripts/audit/audit-db-inserts.ts",
     "audit:db:mappers": "tsx scripts/audit/audit-db-mappers.ts",
@@ -29,6 +30,7 @@
     "map:components": "depcruise --output-type ddot --exclude 'node_modules|__tests__|\\.test\\.' src/components | dot -Tsvg > ../docs/archive/2026-06-22-docs-migration/codebase-map/graphs/components.svg",
     "audit:forms": "node --require tsx/cjs scripts/audit/audit-form-field-standards.ts",
     "audit:forms:components": "node scripts/audit/audit-form-components.mjs",
+    "audit:tabs": "node scripts/audit/audit-tab-primitive-usage.mjs",
     "audit:dead-code": "knip --config knip.json --no-exit-code",
     "audit:dead-code:json": "knip --config knip.json --reporter json --no-exit-code",
     "test": "playwright test --config=config/playwright/playwright.config.ts",
@@ -74,11 +76,13 @@
     "guardrails:changed": "cd .. && GUARDRAIL_ENFORCE_RAW_ERRORS=true node scripts/check-changed-route-guardrails.mjs",
     "quality:changed": "npm run lint:changed:debt && npm run typecheck:changed && npm run guardrails:unsafe-patterns && GUARDRAIL_ENFORCE_RAW_ERRORS=true npm run guardrails:changed",
     "quality": "npm run typecheck && npm run lint:errors && npm run audit:db && npm run audit:forms",
-    "quality:build-routes": "node scripts/build/check-nonprod-routes.mjs && node scripts/check-pages-router-bridges.mjs",
+    "quality:build-routes": "node scripts/build/check-critical-build-contracts.mjs && node scripts/build/check-nonprod-routes.mjs && node scripts/check-pages-router-bridges.mjs",
     "quality:fix": "npm run typecheck && npm run lint:fix && npm run audit:db && npm run audit:forms",
     "log:ts-errors": "npx tsx scripts/log-typescript-errors.ts",
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs",
     "audit:modals": "node scripts/audit-modals.mjs",
+    "audit:inline-numeric-inputs": "node scripts/audit-inline-numeric-inputs.mjs",
+    "audit:consistency": "node scripts/audit/ui-consistency-audit.mjs",
     "design:ratchet": "node scripts/design-system/check-ratchet.mjs",
     "design:ratchet:update-baseline": "node scripts/design-system/check-ratchet.mjs --write-baseline",
     "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs",
@@ -90,10 +94,10 @@
     "ai:contract:all": "jest --config jest.contract.config.js"
   },
   "dependencies": {
-    "@ai-sdk/devtools": "^0.0.15",
-    "@ai-sdk/mcp": "^1.0.36",
-    "@ai-sdk/openai": "^3.0.25",
-    "@ai-sdk/react": "^3.0.177",
+    "@ai-sdk/devtools": "^1.0.2",
+    "@ai-sdk/mcp": "^2.0.7",
+    "@ai-sdk/openai": "^4.0.8",
+    "@ai-sdk/react": "^4.0.16",
     "@arizeai/openinference-instrumentation-openai": "^4.1.0",
     "@chat-adapter/slack": "^4.21.0",
     "@chat-adapter/state-memory": "^4.21.0",
@@ -128,6 +132,10 @@
     "@lexical/selection": "^0.35.0",
     "@lexical/utils": "^0.35.0",
     "@lexical/yjs": "^0.35.0",
+    "@liveblocks/client": "^3.22.0",
+    "@liveblocks/node": "^3.22.0",
+    "@liveblocks/react": "^3.22.0",
+    "@liveblocks/react-ui": "^3.22.0",
     "@once-ui-system/core": "^1.6.0",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "^2.7.1",
@@ -186,7 +194,7 @@
     "@xyflow/react": "^12.10.0",
     "adaptivecards": "^3.0.6",
     "agentation": "^3.0.2",
-    "ai": "^6.0.175",
+    "ai": "^7.0.15",
     "ansi-to-react": "^6.2.6",
     "bcrypt-ts": "^8.0.1",
     "canvas-confetti": "^1.9.4",
@@ -238,6 +246,7 @@
     "openseadragon": "^5.0.1",
     "orderedmap": "^2.1.1",
     "papaparse": "^5.5.3",
+    "pdf-lib": "^1.17.1",
     "pg": "8.20.0",
     "postgres": "^3.4.8",
     "posthog-js": "^1.374.3",
@@ -392,5 +401,12 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@opentelemetry/sdk-trace-base": "^2.7.1",
+      "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
+      "@opentelemetry/sdk-node": "^0.208.0"
+    }
   }
 }

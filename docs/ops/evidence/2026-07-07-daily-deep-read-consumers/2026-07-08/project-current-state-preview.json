@@ -1,0 +1,930 @@
+{
+  "packetId": "de33f4f6-cd43-4202-8c82-5ac1a48a75cf",
+  "shouldWrite": true,
+  "records": [
+    {
+      "project_id": 67,
+      "project_name": "Vermillion Rise Warehouse",
+      "current_summary": "Vermillion Rise Warehouse: Footings for three mechanical equipment pads are poured; slab pours and indoor trash-compactor slab are planned next week; underground plumbing and roof-drain work continue. Electrical gear lead time dropped from **28 weeks to 8–10 weeks** by switching suppliers, enabling electricians to mobilize next week. Permit approval still depends on state clearance; the county is reportedly ready once the state approves.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Permit delay could constrain formal progress"
+          },
+          {
+            "title": "Roof hatch leak correction remains in progress"
+          },
+          {
+            "title": "Added paving scope may increase cost"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Approve proposed parking resurfacing and emergency road scope"
+          },
+          {
+            "title": "Confirm use of contingency for electrical rush fee"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "State approval remains outstanding"
+          },
+          {
+            "title": "Architectural and plumbing updates are still expected"
+          },
+          {
+            "title": "Parking and emergency road scope needs review"
+          },
+          {
+            "title": "Trailer AC is prioritized"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Mechanical pad footings are poured, slabs are planned next week, electrical gear lead time improved, and state permit approval remains pending."
+          }
+        ],
+        "financialRead": "Electrical gear rush fee of about $20,000 was deferred to contingency; proposed paving and emergency road work adds about $11,000.",
+        "scheduleRead": "Footings for three mechanical pads are complete; slab pours are scheduled next week; work is continuing while state approval is pending.",
+        "fieldRead": "HVAC and underground plumbing are underway; heater demolition has started; subcontractors are aligned with no stated blockers.",
+        "confidence": {
+          "overall": 0.82
+        }
+      }
+    },
+    {
+      "project_id": 1009,
+      "project_name": "Union Collective",
+      "current_summary": "Union Collective: Target is late-July permit submission, roughly one month of permit review, and September construction/earthwork to avoid winter impacts. Steel budgets are being refreshed off `Union Collective_PROGRESS SET_2026-06-26.pdf`; G&H Welding’s prior quote was **$820,000**, while R.A.D. Fabrication’s pricing included **$950,109** for structural steel/decking install plus separate stairs/rail/ladder numbers.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Solar decision affects roofing layout and electrical room sizing"
+          },
+          {
+            "title": "Utility assumptions could drive cost if existing lines cannot be reused"
+          },
+          {
+            "title": "Landscape ordinance requirements may add cost"
+          },
+          {
+            "title": "Permit submission depends on timely design decisions"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "45 kW solar system versus larger system"
+          },
+          {
+            "title": "Use of existing utility lines"
+          },
+          {
+            "title": "Final landscape scope near code minimum"
+          },
+          {
+            "title": "Horse-style fence waiver strategy"
+          },
+          {
+            "title": "Final truss system approach"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Issue landscape plan to bidders"
+          },
+          {
+            "title": "Push back on excess VUA landscaping"
+          },
+          {
+            "title": "Review horse-style fence requirement"
+          },
+          {
+            "title": "Finalize solar system direction"
+          },
+          {
+            "title": "Verify existing water and sewer lines"
+          },
+          {
+            "title": "Collect revised steel and trade budgets"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Preconstruction estimating and design coordination advanced with updated drawings, revised steel pricing, landscape plan distribution, and OAC decisions still pending."
+          }
+        ],
+        "financialRead": "Budgeting is active: R.A.D. listed structural steel and decking at $950,109.00 and updated 2nd level rail post pricing to $14,516.00; G&H earlier budgeted structural steel at $820,000.00, and multiple bidders were asked to revise pricing from updated drawings.",
+        "scheduleRead": "OAC notes target permit submission in late July, about one month of review, and a September construction start; Grand Rapids hearing is tracking for late July with no commission concerns noted.",
+        "fieldRead": "Project is in preconstruction/design coordination; current work includes CAD/drawing sharing, steel budget refinement, landscape planning, and scope alignment.",
+        "confidence": {
+          "overall": 0.8
+        }
+      }
+    },
+    {
+      "project_id": 754,
+      "project_name": "Goodwill Allisonville Rd IN",
+      "current_summary": "Goodwill Allisonville Rd IN: Sign permits are approved, access-panel locations are acceptable, and sign install is scheduled for **July 20–22** except donation letters tied to canopy readiness. HVAC closeout package is requested by **July 24**, with retainage release tied to accepted documents.",
+      "rich": {
+        "healthStatus": "on_track",
+        "activeRisks": [
+          {
+            "title": "Donation letters depend on canopy readiness"
+          },
+          {
+            "title": "CAD curb mismatch could affect site layout accuracy"
+          },
+          {
+            "title": "Retainage release depends on accepted closeout documents"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Donation canopy completion date"
+          },
+          {
+            "title": "CIH scope confirmation for Door 01 and Door 02"
+          },
+          {
+            "title": "Whether additional CAD/XREF data is needed"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Confirm canopy completion date"
+          },
+          {
+            "title": "Collect HVAC closeout documents by July 24"
+          },
+          {
+            "title": "Confirm Performance Mechanical progress billing status"
+          },
+          {
+            "title": "Resolve missing curb information in CAD file"
+          },
+          {
+            "title": "Finalize CIH door hardware pricing"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "The project is moving into closeout while sign/access panel coordination remains aligned with early August turnover."
+          }
+        ],
+        "financialRead": "Kimley-Horn invoice totals $14,350.00; HVAC retainage release is tied to receipt and acceptance of closeout documents, and Performance Mechanical asked whether all progress billings were received.",
+        "scheduleRead": "Substantial completion is set for August 7, building turnover is planned for the first week of August, and SignCraft installation is scheduled July 20–22 with permits approved.",
+        "fieldRead": "2x2 donation canopy access panel size and locations are accepted; truss interference concern was resolved based on the flat canopy ceiling interpretation.",
+        "confidence": {
+          "overall": 0.78
+        }
+      }
+    },
+    {
+      "project_id": 877,
+      "project_name": "Goodwill Brookville Road",
+      "current_summary": "Goodwill Brookville Road: Tony Courtney and Douglas Franklin are taking over project management correspondence. Koontz-Wagner still needs the fully executed subcontract, W-9, and COI before submittals and vendor pricing can be locked.",
+      "rich": {
+        "healthStatus": "at_risk",
+        "activeRisks": [
+          {
+            "title": "Unsigned subcontract delays submittals"
+          },
+          {
+            "title": "Vendor pricing may not be locked without executed agreement"
+          },
+          {
+            "title": "Incomplete project records could slow handoff"
+          },
+          {
+            "title": "Unreturned change order could delay precast coordination"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Approval of ATMI shear wall design change order"
+          },
+          {
+            "title": "Execution path for Koontz-Wagner subcontract"
+          },
+          {
+            "title": "Handling of Revision #2 pricing by separate change order"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Obtain signed Koontz-Wagner subcontract"
+          },
+          {
+            "title": "Collect W-9 and insurance certificate"
+          },
+          {
+            "title": "Return ATMI precast change order"
+          },
+          {
+            "title": "Receive remaining project records from Merritt"
+          },
+          {
+            "title": "Copy Tony Courtney and Douglas Franklin on future emails"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Project responsibility is shifting while key subcontract, document, and change-order items remain unresolved."
+          }
+        ],
+        "financialRead": "Koontz-Wagner contract amount remains based on Revision #1 with Revision #2 intended for separate change order; ATMI change order has no stated amount in the source.",
+        "scheduleRead": "Koontz-Wagner needs a fully executed contract before requesting and sending submittals; ATMI is waiting on the returned change order.",
+        "fieldRead": "No field progress evidence provided; current activity is project handoff, documentation gathering, subcontract execution, and engineering change-order coordination.",
+        "confidence": {
+          "overall": 0.74
+        }
+      }
+    },
+    {
+      "project_id": 1067,
+      "project_name": "Playmakers",
+      "current_summary": "Playmakers: Long-lead materials were purchased: **$8,825.98** at Lowe’s, **$503.97** at Home Depot, and **$5,934.00** at FRP Specialties, totaling **$15,263.95** across listed purchases. Permit is in final reviewer queue, roofing permit remains in progress, and the NOC is critical to start.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Work start delayed by permit processing"
+          },
+          {
+            "title": "NOC delay blocks mobilization"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Completed NOC acceptance"
+          },
+          {
+            "title": "Final building permit release"
+          },
+          {
+            "title": "Roofing permit release"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Dale to complete and return the NOC"
+          },
+          {
+            "title": "Track final building permit review"
+          },
+          {
+            "title": "Track roofing permit progress"
+          },
+          {
+            "title": "Reconcile credit card material purchases"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Flooring and ceiling tile selections were confirmed, and long-lead materials were purchased; start readiness now hinges on permits and the Notice of Commencement."
+          }
+        ],
+        "financialRead": "Long-lead purchases documented: Lowe’s $8,825.98, Home Depot $503.97, and FRP Specialties $5,934.00, totaling $15,263.95 on Jesse’s credit card.",
+        "scheduleRead": "Building permit is in final reviewer queue with no confirmed completion date; roofing permit remains in progress and NOC is needed to get started.",
+        "fieldRead": "Slate gray flooring, ceiling tile, kitchen LED addition, urinals, faux stone, and black FRP/trim are moving through approval and procurement.",
+        "confidence": {
+          "overall": 0.82
+        }
+      }
+    },
+    {
+      "project_id": 876,
+      "project_name": "Exol Morrisville",
+      "current_summary": "Exol Morrisville: Status was reported green; mobilization began, fiber install is underway, and chargers are being assembled. Phase 2 construction is targeted around the 22nd, dependent on permit approval or acceptable risk to start.",
+      "rich": {
+        "healthStatus": "on_track",
+        "activeRisks": [
+          {
+            "title": "Phase 2 start depends on permit approval or risk acceptance"
+          },
+          {
+            "title": "Temporary power is limited to select areas"
+          },
+          {
+            "title": "Dock door infill is needed before permanent charger installation"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Confirm Phase 2 design revisions"
+          },
+          {
+            "title": "Resolve demising wall and daylight details"
+          },
+          {
+            "title": "Decide temporary charger stand placement"
+          },
+          {
+            "title": "Confirm acceptable risk to start Phase 2 before permit approval"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Phase 2 revisions need consolidated review"
+          },
+          {
+            "title": "Structural feedback remains pending"
+          },
+          {
+            "title": "Electrical items with Symbotic need resolution"
+          },
+          {
+            "title": "Temporary power routing needs coordination"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "The project was reported green, mobilization began, fiber installation is underway, and charger assembly has started."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "Phase 1 is starting with MDF room and air farm work; Phase 2 design is targeted through the 22nd with construction start dependent on permit status.",
+        "fieldRead": "Mobilization has begun; fiber is being installed; chargers are being assembled; dock leveler removal and CME wall forming are continuing.",
+        "confidence": {
+          "overall": 0.86
+        }
+      }
+    },
+    {
+      "project_id": 761,
+      "project_name": "Ulta Beauty Fresno",
+      "current_summary": "Ulta Beauty Fresno: HCI does not have a markup showing working vs. non-working RTUs/fans; Alleato is still seeking facility verification. Citadel Roofing payment is being processed, but there is a small amount discrepancy between **$2,327.03** and **$2,326.72**.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Shutdown troubleshooting lacks verified equipment status"
+          },
+          {
+            "title": "No marked-up drawing is available from HCI"
+          },
+          {
+            "title": "Facility knowledge may be the only current source"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Determine source of RTU and fan status documentation"
+          },
+          {
+            "title": "Confirm which units and fans require attention"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Facility pretest records are needed"
+          },
+          {
+            "title": "Working and non-working units need verification"
+          },
+          {
+            "title": "Mike and Luke need to identify affected units"
+          },
+          {
+            "title": "Citadel Roofing payment follow-through needs confirmation"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "The team is trying to identify which BAS, RTU, HVAC, and fan equipment was working or failed during the shutdown, but the requested markup is not available from HCI."
+          }
+        ],
+        "financialRead": "Citadel Roofing had an outstanding balance around $2,327; accounting said the bill was set up and the check would be mailed the next day.",
+        "scheduleRead": "No project schedule impact was stated, but the shutdown support is waiting on equipment status verification.",
+        "fieldRead": "BAS/HVAC issue identification is incomplete; facility records or Luke/Mike follow-up are needed to target the affected units and fans.",
+        "confidence": {
+          "overall": 0.78
+        }
+      }
+    },
+    {
+      "project_id": 31,
+      "project_name": "Uniqlo Phillipsburg NJ",
+      "current_summary": "Uniqlo Phillipsburg NJ: Estimate must be broken out by scope item by **July 17** for landlord/vendor responsibility alignment. FA cost breakdown was expected July 8, and formal UQ approval must come through Yusuke after submission.",
+      "rich": {
+        "healthStatus": "at_risk",
+        "activeRisks": [
+          {
+            "title": "FA panel approval delay holds updated schedule"
+          },
+          {
+            "title": "Landlord pressure on C/O and permit documentation"
+          },
+          {
+            "title": "Punch-list closeout responses are overdue"
+          },
+          {
+            "title": "Skypod disruption must be avoided"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Approval of FA panel change order"
+          },
+          {
+            "title": "Option that avoids Skypod disruption"
+          },
+          {
+            "title": "Timing threshold before costs or schedule are impacted"
+          },
+          {
+            "title": "Acceptance of FA drawings and permit path"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Provide FA cost breakdown"
+          },
+          {
+            "title": "Secure UQ approval for FA payments"
+          },
+          {
+            "title": "Issue updated FA scope schedule after approval"
+          },
+          {
+            "title": "Respond to landlord on C/O and permit status"
+          },
+          {
+            "title": "Submit punch-list closeout report with photos"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Fire alarm panel scope, cost approval, permit documentation, and punch-list closeout remain open while the landlord is requesting status."
+          }
+        ],
+        "financialRead": "Yusuke needs a detailed FA cost breakdown for leadership approval and payment agreement before Alleato issues the updated schedule.",
+        "scheduleRead": "A new schedule for FA panel scope will be issued only after cost approval; landlord is asking for inspection C/O status, FA filing status, drawings, and permit copy.",
+        "fieldRead": "Sprinkler closeout tracking is referenced, but current blockers are FA panel coordination and missing MEP/architectural punch-list closeout documentation.",
+        "confidence": {
+          "overall": 0.84
+        }
+      }
+    },
+    {
+      "project_id": 178,
+      "project_name": "Superior Beverae Exotec",
+      "current_summary": "Superior Beverae Exotec: Hy-Tek has no more detailed rack install schedule yet and is using roughly **125 chimneys per week** as planning basis. Mack Plumbing is waiting on contract/billing direction and flagged grooved-coupling leak risk.",
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "No detailed install schedule available"
+          },
+          {
+            "title": "Prior issues with similar vertical piping approach"
+          },
+          {
+            "title": "Potential leakage concerns with grooved couplings"
+          },
+          {
+            "title": "Subcontract documentation not fully settled"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether to use one vertical pipe per bay"
+          },
+          {
+            "title": "How leaking grooved couplings would be replaced or corrected"
+          },
+          {
+            "title": "Final progress billing approach"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Finalize Mack contract"
+          },
+          {
+            "title": "Clarify progress billing process"
+          },
+          {
+            "title": "Provide loose-material delivery inventory"
+          },
+          {
+            "title": "Resolve COI and license requirements if still open"
+          },
+          {
+            "title": "Confirm install schedule detail"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Coordination advanced on install planning, fire suppression design, subcontract administration, and material concerns."
+          }
+        ],
+        "financialRead": "Mack asked when to expect the contract and how progress billings should be handled.",
+        "scheduleRead": "Hy-Tek stated no detailed install schedule yet; rough plan is about 125 chimneys per week.",
+        "fieldRead": "Fire suppression vertical layout is under review, with Exotec recommending one vertical pipe per bay to avoid issues seen on McLane.",
+        "confidence": {
+          "overall": 0.74
+        }
+      }
+    },
+    {
+      "project_id": 879,
+      "project_name": "McLane Jazz - UT",
+      "current_summary": "McLane Jazz - UT: Alleato accepted rear-upright-only sprinkler support after Exotec confirmed front uprights cannot be used. Support height must match the horizontal beam to avoid bending moment risk.",
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Incorrect placement could create bending on uprights"
+          },
+          {
+            "title": "Front upright attachment is not accessible to robot arm"
+          },
+          {
+            "title": "Upright hole sizes do not support 1/2-inch bolts"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Approval of the revised compliant support layout"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Revise the installation drawing to rear-upright support"
+          },
+          {
+            "title": "Align vertical support at horizontal beam height"
+          },
+          {
+            "title": "Avoid incompatible bolt assumptions"
+          },
+          {
+            "title": "Maintain vertical shear load path only"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Exotec clarified the sprinkler support must mount to rear uprights only, and Alleato agreed to avoid front uprights and use the Exotec bracket approach."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "",
+        "fieldRead": "Sprinkler pipe support method is being corrected for rack compatibility and installation constraints.",
+        "confidence": {
+          "overall": 0.72
+        }
+      }
+    },
+    {
+      "project_id": 43,
+      "project_name": "Westfield Collective",
+      "current_summary": "Westfield Collective: Incentive applications for TIF, CID, and IRB/sales tax exemption are available, but the owner/developer package needs sources/uses, pro forma, capital stack, equity status, financing terms, and construction cost support.",
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [
+          {
+            "title": "TIF, CID, and IRB application package status"
+          },
+          {
+            "title": "Capital stack and financing support"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Pay or verify status of temp fence invoice"
+          },
+          {
+            "title": "Prepare sources and uses detail"
+          },
+          {
+            "title": "Prepare timing and phasing plan"
+          },
+          {
+            "title": "Prepare 10-year operating pro forma"
+          },
+          {
+            "title": "Document capital stack details"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Sources show an equipment rental invoice and a forwarded request for incentive application support materials."
+          }
+        ],
+        "financialRead": "National Construction invoice totals $8,680.70 for temporary fence rental; separate incentive request asks for sources and uses, operating pro forma, and financing details.",
+        "scheduleRead": "The incentive request asks for a timing and phasing plan.",
+        "fieldRead": "Temporary fence rental was billed for the Westfield Collective job site.",
+        "confidence": {
+          "overall": 0.34
+        }
+      }
+    },
+    {
+      "project_id": 53,
+      "project_name": "Crate Escapes",
+      "current_summary": "Crate Escapes: Partial conditional lien waiver exposure is documented at **$341,841.15**, tied to the payment/application and work covered up to the waiver date.",
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Complete any unsigned waiver fields"
+          },
+          {
+            "title": "Obtain notarization where required"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Sources only show partial conditional lien waiver/payment documentation."
+          }
+        ],
+        "financialRead": "Partial conditional lien waivers reference payment amounts including $293,709.88 and $341,841.15 for the Crate Escapes facility work.",
+        "scheduleRead": "",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.22
+        }
+      }
+    },
+    {
+      "project_id": 1096,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Union may not push dirt until mid-September if permit timing holds"
+          },
+          {
+            "title": "General condition labor is being consumed before field start"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Confirm coding approach for non-job charges"
+          },
+          {
+            "title": "Ownership needs to make the solar decision for Union"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "June transactions need correct cost coding"
+          },
+          {
+            "title": "Unassigned card charges need disposition"
+          },
+          {
+            "title": "Union general condition labor burn needs monitoring"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "June transaction coding was kicked back for correction, and a recruiting agreement was routed for signature."
+          }
+        ],
+        "financialRead": "Accounting workflow shows unresolved coding for June transactions; Union labor burn was flagged as a concern.",
+        "scheduleRead": "Union permit submission was discussed for late July, with full release expected late August or early September and pressure to submit earlier.",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.62
+        }
+      }
+    },
+    {
+      "project_id": 38,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "on_track",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Review and certify retainage payment"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Payment documentation shows toilet partitions and washroom accessories work billed as complete, with retainage cleanup remaining."
+          }
+        ],
+        "financialRead": "Contract sum is $3,733.09 with no change orders; work is shown 100% complete and $373.31 retainage is currently due in the later payment application.",
+        "scheduleRead": "",
+        "fieldRead": "Washroom accessories material and labor are shown as fully complete.",
+        "confidence": {
+          "overall": 0.58
+        }
+      }
+    },
+    {
+      "project_id": 820,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Verify whether the utility bill belongs to this project"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Only a residential TECO utility bill is provided, with no clear project operating evidence."
+          }
+        ],
+        "financialRead": "TECO bill shows $110.39 due for Brandon Clymer at a Tampa residential address, but no project tie is evident.",
+        "scheduleRead": "",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.12
+        }
+      }
+    },
+    {
+      "project_id": 816,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Old unpaid balances could carry late charges"
+          }
+        ],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Confirm invoice payment status"
+          },
+          {
+            "title": "Reconcile Graybar totals against project commitments"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Four Graybar invoices were provided for 2023 electrical gear and panelboard materials tied to PO-001."
+          }
+        ],
+        "financialRead": "Invoices total $73,384.88 including tax, with Net 30 terms.",
+        "scheduleRead": "",
+        "fieldRead": "Switchboard and panelboard components were shipped from factory in 2023.",
+        "confidence": {
+          "overall": 0.28
+        }
+      }
+    },
+    {
+      "project_id": 1031,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Large payable pending approval"
+          },
+          {
+            "title": "Retainage remains outstanding"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Whether to release the $306,306.62 current payment"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Review and approve payment application"
+          },
+          {
+            "title": "Confirm final execution of payment certificate"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Siemens submitted payment application 003 for the Ulta Beauty sprinkler scope."
+          }
+        ],
+        "financialRead": "Contract sum to date is $429,999.06 after net deductive changes; current payment due is $306,306.62 with $42,999.92 retainage balance.",
+        "scheduleRead": "Subcontract line items are reported as 100% complete.",
+        "fieldRead": "Project management, engineering, labor, material, and misc./equipment are reported complete.",
+        "confidence": {
+          "overall": 0.42
+        }
+      }
+    },
+    {
+      "project_id": 800,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "unknown",
+        "activeRisks": [
+          {
+            "title": "Past-due service invoice if unpaid"
+          }
+        ],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Confirm $292.50 invoice payment status"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Lyons Fire and Safety invoiced for fire alarm programming-related service at the Greenwood site."
+          }
+        ],
+        "financialRead": "Invoice balance is $292.50 under Net 30 terms with a 09/23/2023 due date.",
+        "scheduleRead": "",
+        "fieldRead": "Technician removed a tamper and removed a device from programming.",
+        "confidence": {
+          "overall": 0.3
+        }
+      }
+    },
+    {
+      "project_id": 34,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "watch",
+        "activeRisks": [
+          {
+            "title": "Approval is still pending"
+          },
+          {
+            "title": "Land and infrastructure commitments are material"
+          }
+        ],
+        "openDecisions": [
+          {
+            "title": "Final Port parcel approval"
+          },
+          {
+            "title": "Final structure for seller-financed infrastructure"
+          }
+        ],
+        "needsAttention": [
+          {
+            "title": "Advance Port parcel negotiations"
+          },
+          {
+            "title": "Prepare for July 28 city meeting"
+          },
+          {
+            "title": "Clarify infrastructure financing terms"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Team discussed active land negotiations, project economics, and a planned city approval meeting."
+          }
+        ],
+        "financialRead": "Discussed $5.075 million land purchase, $2.75 million infrastructure, $1.9 million seller financing, and $60 million hotel budget.",
+        "scheduleRead": "July 28 city meeting is planned for Port approval.",
+        "fieldRead": "Port parcel negotiations are active.",
+        "confidence": {
+          "overall": 0.63
+        }
+      }
+    },
+    {
+      "project_id": 1008,
+      "project_name": null,
+      "current_summary": null,
+      "rich": {
+        "healthStatus": "on_track",
+        "activeRisks": [],
+        "openDecisions": [],
+        "needsAttention": [
+          {
+            "title": "Watch for city verification email"
+          }
+        ],
+        "whatChanged": [
+          {
+            "title": "Ace Hardware job was submitted to the City of Champaign and assigned project number BS-26-2149."
+          }
+        ],
+        "financialRead": "",
+        "scheduleRead": "City submission has been made as of 2026-07-08.",
+        "fieldRead": "",
+        "confidence": {
+          "overall": 0.66
+        }
+      }
+    }
+  ]
+}

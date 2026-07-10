@@ -2,55 +2,20 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  createBudgetCodeMatcher,
+  resolveBudgetDrilldownTargets,
+} from "@/lib/budget/drilldown-matching";
 
 type TypeFilter = "all" | "commitment" | "change_order";
 
 const PENDING_SUBCONTRACT_STATUSES = ["out for signature", "pending"];
 const PENDING_PO_STATUSES = ["draft", "sent", "acknowledged"];
 
-interface RuntimeCommitmentsClient {
-  from: (tableName: "commitments") => {
-    select: (selectedColumns: "id") => {
-      eq: (column: "project_id", value: number) => {
-        in: (
-          column: "id",
-          values: string[],
-        ) => Promise<{
-          data: Array<{ id: string }> | null;
-          error: { message: string } | null;
-        }>;
-      };
-    };
-  };
-}
-
 type PendingRowsResult = {
   data: unknown[] | null;
   error: { message: string } | null;
 };
-
-/**
- * Resolve budget cost code from query params.
- */
-async function resolveCostCodeId(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  projectIdNum: number,
-  budgetLineId: string | null,
-  costCodeParam: string | null,
-): Promise<string | null> {
-  if (costCodeParam && costCodeParam.trim().length > 0) return costCodeParam;
-  if (!budgetLineId) return null;
-
-  const { data: budgetLine, error } = await supabase
-    .from("budget_lines")
-    .select("cost_code_id")
-    .eq("id", budgetLineId)
-    .eq("project_id", projectIdNum)
-    .single();
-
-  if (error || !budgetLine) return null;
-  return budgetLine.cost_code_id ?? null;
-}
 
 /**
  * GET /api/projects/[projectId]/budget/pending-cost-changes
@@ -78,15 +43,24 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         ? requestedType
         : "all";
 
-    const costCodeId = await resolveCostCodeId(
+    const { costCodeIds: targetCostCodes } = await resolveBudgetDrilldownTargets(
       supabase,
       projectIdNum,
       budgetLineId,
       costCodeParam,
     );
-    if (!costCodeId) {
+    if (targetCostCodes.length === 0) {
       return NextResponse.json({ changes: [] });
     }
+
+    // Stored budget codes come in mixed formats ("50-5500.S", "505500",
+    // project_budget_codes UUIDs) — match by normalized lookup key, never
+    // exact string equality.
+    const matchesTarget = await createBudgetCodeMatcher(
+      supabase,
+      projectIdNum,
+      targetCostCodes,
+    );
 
     const queries: Array<Promise<PendingRowsResult>> = [];
 
@@ -100,9 +74,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
               id,
               amount,
               description,
+              budget_code,
               subcontract_id,
               subcontracts!inner(
                 project_id,
+                id,
                 status,
                 contract_number,
                 created_at
@@ -110,7 +86,6 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             `,
             )
             .eq("subcontracts.project_id", projectIdNum)
-            .eq("budget_code", costCodeId)
             .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES);
 
           return {
@@ -129,9 +104,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
               id,
               amount,
               description,
+              budget_code,
               purchase_order_id,
               purchase_orders!inner(
                 project_id,
+                id,
                 status,
                 contract_number,
                 created_at
@@ -139,7 +116,6 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             `,
             )
             .eq("purchase_orders.project_id", projectIdNum)
-            .eq("budget_code", costCodeId)
             .in("purchase_orders.status", PENDING_PO_STATUSES);
 
           return {
@@ -169,17 +145,21 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       type: "commitment" | "commitment_change_order";
       commitmentType?: "subcontract" | "purchase_order";
       requestedDate: string | null;
+      detailHref: string | null;
     }> = [];
 
     if (typeFilter === "all" || typeFilter === "commitment") {
-      const subcontractRows = (results[index++].data ?? []) as Array<Record<string, unknown>>;
-      const poRows = (results[index++].data ?? []) as Array<Record<string, unknown>>;
+      const subcontractRows = ((results[index++].data ?? []) as Array<Record<string, unknown>>)
+        .filter((row) => matchesTarget(row.budget_code as string | null));
+      const poRows = ((results[index++].data ?? []) as Array<Record<string, unknown>>)
+        .filter((row) => matchesTarget(row.budget_code as string | null));
 
       for (const row of subcontractRows) {
         const parent = Array.isArray(row.subcontracts)
           ? row.subcontracts[0]
           : row.subcontracts;
         const parentObj = parent as Record<string, unknown> | null;
+        const parentId = typeof parentObj?.id === "string" ? parentObj.id : null;
         changes.push({
           id: String(row.id),
           number: String(parentObj?.contract_number ?? ""),
@@ -189,6 +169,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           type: "commitment",
           commitmentType: "subcontract",
           requestedDate: (parentObj?.created_at as string | null) ?? null,
+          detailHref: parentId ? `/${projectIdNum}/commitments/${parentId}` : null,
         });
       }
 
@@ -197,6 +178,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           ? row.purchase_orders[0]
           : row.purchase_orders;
         const parentObj = parent as Record<string, unknown> | null;
+        const parentId = typeof parentObj?.id === "string" ? parentObj.id : null;
         changes.push({
           id: String(row.id),
           number: String(parentObj?.contract_number ?? ""),
@@ -206,82 +188,86 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           type: "commitment",
           commitmentType: "purchase_order",
           requestedDate: (parentObj?.created_at as string | null) ?? null,
+          detailHref: parentId ? `/${projectIdNum}/commitments/${parentId}` : null,
         });
       }
     }
 
     if (typeFilter === "all" || typeFilter === "change_order") {
-      const { data: coLineRows, error: coLineError } = await supabase
-        .from("commitment_change_order_lines")
-        .select("id, amount, description, commitment_change_order_id")
-        .eq("cost_code_id", costCodeId);
+      // Fetch pending CO parents scoped to this project's commitments first,
+      // then only their lines — never an unscoped commitment_change_order_lines
+      // scan. NOTE: there is no `commitments` table — commitments_unified is
+      // the UNION view over subcontracts + purchase_orders.
+      const { data: coParents, error: coParentError } = await supabase
+        .from("contract_change_orders")
+        .select("id, contract_id, change_order_number, status, requested_date, created_at, project_id")
+        .or(`project_id.eq.${projectIdNum},project_id.is.null`)
+        .like("status", "Pending%");
 
-      if (coLineError) {
+      if (coParentError) {
         return NextResponse.json(
-          { error: "Failed to fetch pending cost changes", details: coLineError.message },
+          { error: "Failed to fetch pending cost changes", details: coParentError.message },
           { status: 500 },
         );
       }
 
-      const changeOrderIds = Array.from(
+      const nullProjectContractIds = Array.from(
         new Set(
-          (coLineRows ?? [])
-            .map((row) => row.commitment_change_order_id)
+          (coParents ?? [])
+            .filter((row) => row.project_id == null)
+            .map((row) => row.contract_id)
             .filter((id): id is string => typeof id === "string" && id.length > 0),
         ),
       );
 
-      if (changeOrderIds.length > 0) {
-        const { data: coParents, error: coParentError } = await supabase
-          .from("contract_change_orders")
-          .select("id, contract_id, change_order_number, status, requested_date, created_at")
-          .in("id", changeOrderIds)
-          .like("status", "Pending%");
+      const allowedCommitmentIds = new Set<string>();
+      if (nullProjectContractIds.length > 0) {
+        const { data: commitments, error: commitmentsError } = await supabase
+          .from("commitments_unified")
+          .select("id")
+          .eq("project_id", projectIdNum)
+          .in("id", nullProjectContractIds);
 
-        if (coParentError) {
+        if (commitmentsError) {
           return NextResponse.json(
-            { error: "Failed to fetch pending cost changes", details: coParentError.message },
+            {
+              error: "Failed to fetch pending cost changes",
+              details: commitmentsError.message,
+            },
             { status: 500 },
           );
         }
 
-        const commitmentIds = Array.from(
-          new Set(
-            (coParents ?? [])
-              .map((row) => row.contract_id)
-              .filter((id): id is string => typeof id === "string" && id.length > 0),
-          ),
-        );
+        for (const row of commitments ?? []) {
+          if (row.id) allowedCommitmentIds.add(row.id);
+        }
+      }
 
-        let allowedCommitmentIds = new Set<string>();
-        if (commitmentIds.length > 0) {
-          const runtimeSupabase = supabase as unknown as RuntimeCommitmentsClient;
-          const { data: commitments, error: commitmentsError } = await runtimeSupabase
-            .from("commitments")
-            .select("id")
-            .eq("project_id", projectIdNum)
-            .in("id", commitmentIds);
+      const parentById = new Map(
+        (coParents ?? [])
+          .filter(
+            (row) =>
+              Number(row.project_id) === projectIdNum ||
+              (row.project_id == null && allowedCommitmentIds.has(row.contract_id)),
+          )
+          .map((row) => [row.id, row]),
+      );
 
-          if (commitmentsError) {
-            return NextResponse.json(
-              {
-                error: "Failed to fetch pending cost changes",
-                details: commitmentsError.message,
-              },
-              { status: 500 },
-            );
-          }
+      if (parentById.size > 0) {
+        const { data: coLineRows, error: coLineError } = await supabase
+          .from("commitment_change_order_lines")
+          .select("id, amount, description, cost_code_id, commitment_change_order_id")
+          .in("commitment_change_order_id", Array.from(parentById.keys()));
 
-          allowedCommitmentIds = new Set((commitments ?? []).map((row) => row.id));
+        if (coLineError) {
+          return NextResponse.json(
+            { error: "Failed to fetch pending cost changes", details: coLineError.message },
+            { status: 500 },
+          );
         }
 
-        const parentById = new Map(
-          (coParents ?? [])
-            .filter((row) => allowedCommitmentIds.has(row.contract_id))
-            .map((row) => [row.id, row]),
-        );
-
         for (const row of coLineRows ?? []) {
+          if (!matchesTarget(row.cost_code_id)) continue;
           const parent = parentById.get(row.commitment_change_order_id);
           if (!parent) continue;
 
@@ -293,6 +279,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             status: parent.status ?? "pending",
             type: "commitment_change_order",
             requestedDate: parent.requested_date ?? parent.created_at ?? null,
+            detailHref: `/${projectIdNum}/change-orders/commitment/${parent.id}`,
           });
         }
       }

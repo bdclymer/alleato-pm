@@ -1,6 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 
 import { useCompanies } from "@/hooks/use-companies";
@@ -39,11 +43,46 @@ const DEFAULT_MARKUPS: MarkupFormItem[] = [
   },
 ];
 
+// Permissive schema: only Contract # and Title are required (identical to the
+// legacy inline validation). `.passthrough()` keeps every other field — SOV
+// items, dates, markups, privacy — untouched so zodResolver never strips or
+// coerces the payload the create/update handlers rely on. The `.refine` checks
+// the trimmed value without mutating the stored (untrimmed) string.
+const contractFormSchema = z
+  .object({
+    number: z
+      .string()
+      .refine((value) => value.trim().length > 0, "Contract # is required."),
+    title: z
+      .string()
+      .refine((value) => value.trim().length > 0, "Title is required."),
+  })
+  .passthrough();
+
 interface PrimeContractFormStateArgs {
   initialData?: Partial<ContractFormData>;
   projectId: string;
   mode?: "create" | "edit";
   onSubmit: (data: ContractFormData, attachmentFiles?: File[]) => Promise<void>;
+}
+
+function buildDefaultValues(
+  initialData?: Partial<ContractFormData>,
+): ContractFormData {
+  // Markups live in their own state (they are not RHF fields), so keep them out
+  // of the form store to avoid a stale duplicate.
+  const { markups: _markups, ...rest } = initialData ?? {};
+  void _markups;
+  return {
+    number: "",
+    title: "",
+    status: "draft",
+    executed: false,
+    isPrivate: false,
+    accountingMethod: "amount",
+    sovItems: [],
+    ...rest,
+  } as ContractFormData;
 }
 
 export function usePrimeContractFormState({
@@ -52,14 +91,32 @@ export function usePrimeContractFormState({
   mode = "edit",
   onSubmit,
 }: PrimeContractFormStateArgs) {
-  const [formData, setFormData] = React.useState<Partial<ContractFormData>>({
-    accountingMethod: "amount",
-    sovItems: [],
-    ...initialData,
+  const form = useForm<ContractFormData>({
+    // Single narrowing cast: the schema is intentionally `.passthrough()` so it
+    // never strips/coerces the payload, which makes its inferred output a
+    // {number,title} + index-signature type. ContractFormData is assignable to
+    // that, so a single cast narrows it without a double type-escape.
+    resolver: zodResolver(contractFormSchema) as Resolver<ContractFormData>,
+    defaultValues: buildDefaultValues(initialData),
+    mode: "onSubmit",
   });
-  const [validationErrors, setValidationErrors] = React.useState<
-    Partial<Record<"number" | "title", string>>
-  >({});
+
+  const { getValues, setValue } = form;
+
+  // Live views of the array/complex fields the SOV + attachment surfaces read.
+  const watchedSovItems = (form.watch("sovItems") ?? []) as SOVLineItem[];
+  const watchedAccountingMethod = form.watch("accountingMethod") ?? "amount";
+  const watchedAttachments = form.watch("attachments") ?? [];
+  const watchedOwnerCompanyId = form.watch("ownerCompanyId");
+
+  const setSovItems = React.useCallback(
+    (updater: (prev: SOVLineItem[]) => SOVLineItem[]) => {
+      const prev = (getValues("sovItems") ?? []) as SOVLineItem[];
+      setValue("sovItems", updater(prev), { shouldDirty: true });
+    },
+    [getValues, setValue],
+  );
+
   const [pendingAttachmentFiles, setPendingAttachmentFiles] = React.useState<
     File[]
   >([]);
@@ -112,15 +169,12 @@ export function usePrimeContractFormState({
   const [selectedSovItems, setSelectedSovItems] = React.useState<Set<string>>(
     new Set(),
   );
-  const [showAddCompany, setShowAddCompany] = React.useState(false);
-  const [newCompanyName, setNewCompanyName] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
 
   const {
     options: companyOptions,
     isLoading: companiesLoading,
     error: companiesError,
-    createCompany,
   } = useCompanies();
 
   const { users: projectUsers } = useProjectUsers(projectId);
@@ -141,28 +195,12 @@ export function usePrimeContractFormState({
     }
   }, [companiesError]);
 
+  // Owner/Client drives the contract company id (kept in sync, same as legacy).
   React.useEffect(() => {
-    if (
-      !formData.ownerCompanyId ||
-      formData.contractCompanyId === formData.ownerCompanyId
-    ) {
-      return;
-    }
-
-    setFormData((prev) => {
-      if (
-        !prev.ownerCompanyId ||
-        prev.contractCompanyId === prev.ownerCompanyId
-      ) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        contractCompanyId: prev.ownerCompanyId,
-      };
-    });
-  }, [formData.contractCompanyId, formData.ownerCompanyId]);
+    if (!watchedOwnerCompanyId) return;
+    if (getValues("contractCompanyId") === watchedOwnerCompanyId) return;
+    setValue("contractCompanyId", watchedOwnerCompanyId, { shouldDirty: true });
+  }, [watchedOwnerCompanyId, getValues, setValue]);
 
   React.useEffect(() => {
     const nextMarkups = JSON.parse(initialMarkupsKey) as
@@ -187,10 +225,11 @@ export function usePrimeContractFormState({
           })
           .filter((n) => n > 0);
         const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
-        setFormData((prev) => ({
-          ...prev,
-          number: `PC-${String(next).padStart(3, "0")}`,
-        }));
+        if (!getValues("number")) {
+          setValue("number", `PC-${String(next).padStart(3, "0")}`, {
+            shouldDirty: false,
+          });
+        }
       } catch (error) {
         reportNonCriticalFailure({
           area: "prime-contract-create",
@@ -204,7 +243,7 @@ export function usePrimeContractFormState({
     };
 
     void fetchNextContractNumber();
-  }, [mode, projectId, initialData?.number]);
+  }, [mode, projectId, initialData?.number, getValues, setValue]);
 
   const fetchBudgetCodes = React.useCallback(async () => {
     if (!projectId) return [];
@@ -302,8 +341,8 @@ export function usePrimeContractFormState({
 
   // SOV items for display: user-entered items only (no auto-computed markup rows)
   const sovDisplayItems = React.useMemo(
-    () => [...(formData.sovItems || [])],
-    [formData.sovItems],
+    () => [...watchedSovItems],
+    [watchedSovItems],
   );
 
   React.useEffect(() => {
@@ -351,100 +390,49 @@ export function usePrimeContractFormState({
     void fetchCostCodes();
   }, [showCreateBudgetCodeModal]);
 
-  const handleSubmit = React.useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      const errors: Partial<Record<"number" | "title", string>> = {};
-      if (!formData.number?.trim()) {
-        errors.number = "Contract # is required.";
-      }
-      if (!formData.title?.trim()) {
-        errors.title = "Title is required.";
-      }
-
-      if (Object.keys(errors).length > 0) {
-        setValidationErrors(errors);
-        return;
-      }
-
-      // Business rule: cannot approve a contract with $0 value
-      if (formData.status === "approved") {
-        const baseItems = (formData.sovItems || []).filter((item) => !item.isGroup && !item.isMarkup);
+  // Validated-submit handler — passed to `form.handleSubmit(...)` by the form.
+  // Number/Title are enforced by the Zod resolver; the $0-approval business rule
+  // stays here (cross-field) so behavior is identical to the legacy handler.
+  const submitHandler = React.useCallback(
+    async (values: ContractFormData) => {
+      if (values.status === "approved") {
+        const baseItems = (values.sovItems || []).filter(
+          (item) => !item.isGroup && !item.isMarkup,
+        );
         const sovTotal = baseItems.reduce((sum, item) => {
-          if (formData.accountingMethod === "unit_quantity") {
+          if (values.accountingMethod === "unit_quantity") {
             return sum + (item.quantity ?? 0) * (item.unitCost ?? 0);
           }
           return sum + (item.amount || 0);
         }, 0);
         if (sovTotal <= 0) {
-          toast.error("Cannot approve a contract with $0 value. Add SOV line items with amounts before approving.");
+          toast.error(
+            "Cannot approve a contract with $0 value. Add SOV line items with amounts before approving.",
+          );
           return;
         }
       }
 
       const submitData: ContractFormData = {
-        ...(formData as ContractFormData),
+        ...values,
         // Markups are never auto-applied to the SOV — persist only user-entered lines.
-        sovItems: [...(formData.sovItems || [])],
+        sovItems: [...(values.sovItems || [])],
         markups,
       };
-      await onSubmit(submitData, pendingAttachmentFiles);
-    },
-    [
-      formData,
-      markups,
-      onSubmit,
-      pendingAttachmentFiles,
-    ],
-  );
-
-  const updateFormData = React.useCallback(
-    (updates: Partial<ContractFormData>) => {
-      setFormData((prev) => ({ ...prev, ...updates }));
-    },
-    [],
-  );
-
-  const clearValidationError = React.useCallback(
-    (field: "number" | "title") => {
-      setValidationErrors((prev) => {
-        if (!prev[field]) {
-          return prev;
-        }
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    },
-    [],
-  );
-
-  const handleCreateCompany = React.useCallback(async () => {
-    if (!newCompanyName.trim()) return;
-
-    setIsCreating(true);
-    try {
-      const newCompany = await createCompany({
-        name: newCompanyName.trim(),
-      });
-
-      if (newCompany) {
-        updateFormData({
-          ownerCompanyId: newCompany.id,
-          contractCompanyId: newCompany.id,
+      try {
+        await onSubmit(submitData, pendingAttachmentFiles);
+      } catch (error) {
+        form.setError("root", {
+          type: "server",
+          message:
+            error instanceof Error
+              ? error.message
+              : "The contract could not be saved. Please try again.",
         });
-        toast.success("Company created");
-        setNewCompanyName("");
-        setShowAddCompany(false);
       }
-    } catch (error) {
-      console.error("Error creating company:", error);
-      toast.error("Failed to create company");
-    } finally {
-      setIsCreating(false);
-    }
-  }, [createCompany, newCompanyName, updateFormData]);
+    },
+    [markups, onSubmit, pendingAttachmentFiles, form],
+  );
 
   const getCostTypeLabel = React.useCallback((type: string) => {
     const types: Record<string, string> = {
@@ -500,23 +488,20 @@ export function usePrimeContractFormState({
         return next;
       });
 
-      setFormData((prev) => {
-        const items = prev.sovItems || [];
+      const accountingMethod = getValues("accountingMethod");
+      setSovItems((items) => {
         const firstEmptyRow = items.find((row) => !row.budgetCodeId);
 
         if (firstEmptyRow) {
-          return {
-            ...prev,
-            sovItems: items.map((row) =>
-              row.id === firstEmptyRow.id
-                ? {
-                    ...row,
-                    budgetCodeId: budgetCode.id,
-                    budgetCodeLabel: budgetCode.fullLabel,
-                  }
-                : row,
-            ),
-          };
+          return items.map((row) =>
+            row.id === firstEmptyRow.id
+              ? {
+                  ...row,
+                  budgetCodeId: budgetCode.id,
+                  budgetCodeLabel: budgetCode.fullLabel,
+                }
+              : row,
+          );
         }
 
         const newLine: SOVLineItem = {
@@ -525,17 +510,13 @@ export function usePrimeContractFormState({
           budgetCodeLabel: budgetCode.fullLabel,
           description: "",
           amount: 0,
-          quantity: prev.accountingMethod === "unit_quantity" ? 1 : undefined,
-          unitCost: prev.accountingMethod === "unit_quantity" ? 0 : undefined,
-          unitOfMeasure:
-            prev.accountingMethod === "unit_quantity" ? "" : undefined,
+          quantity: accountingMethod === "unit_quantity" ? 1 : undefined,
+          unitCost: accountingMethod === "unit_quantity" ? 0 : undefined,
+          unitOfMeasure: accountingMethod === "unit_quantity" ? "" : undefined,
           billedToDate: 0,
           amountRemaining: 0,
         };
-        return {
-          ...prev,
-          sovItems: [...items, newLine],
-        };
+        return [...items, newLine];
       });
 
       setShowCreateBudgetCodeModal(false);
@@ -548,26 +529,25 @@ export function usePrimeContractFormState({
     } finally {
       setIsCreating(false);
     }
-  }, [availableCostCodes, newBudgetCodeData, projectId]);
+  }, [availableCostCodes, newBudgetCodeData, projectId, getValues, setSovItems]);
 
   const handleBudgetCodeSelect = React.useCallback(
     (rowId: string, code: BudgetCode) => {
-      setFormData((prev) => ({
-        ...prev,
-        sovItems: (prev.sovItems || []).map((row) =>
+      setSovItems((items) =>
+        items.map((row) =>
           row.id === rowId
             ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
             : row,
         ),
-      }));
+      );
       setOpenBudgetCodePopover(null);
     },
-    [],
+    [setSovItems],
   );
 
   const addSOVLine = React.useCallback(() => {
-    setFormData((prev) => {
-      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+    const isUnitQuantity = getValues("accountingMethod") === "unit_quantity";
+    setSovItems((items) => {
       const newLine: SOVLineItem = {
         id: `sov-${Date.now()}`,
         budgetCodeId: "",
@@ -580,12 +560,12 @@ export function usePrimeContractFormState({
         billedToDate: 0,
         amountRemaining: 0,
       };
-      return { ...prev, sovItems: [...(prev.sovItems || []), newLine] };
+      return [...items, newLine];
     });
-  }, []);
+  }, [getValues, setSovItems]);
 
   const addSOVGroup = React.useCallback(() => {
-    setFormData((prev) => {
+    setSovItems((items) => {
       const newGroup: SOVLineItem = {
         id: `sov-group-${Date.now()}`,
         isGroup: true,
@@ -594,48 +574,44 @@ export function usePrimeContractFormState({
         billedToDate: 0,
         amountRemaining: 0,
       };
-      return { ...prev, sovItems: [...(prev.sovItems || []), newGroup] };
+      return [...items, newGroup];
     });
-  }, []);
+  }, [setSovItems]);
 
   const updateSOVLine = React.useCallback(
     (id: string, updates: Partial<SOVLineItem>) => {
-      setFormData((prev) => {
-        const items = prev.sovItems || [];
-        const isUnitQuantity = prev.accountingMethod === "unit_quantity";
-        return {
-          ...prev,
-          sovItems: items.map((item) =>
-            item.id === id
-              ? {
-                  ...item,
-                  ...updates,
-                  amount:
-                    isUnitQuantity && (updates.quantity || updates.unitCost)
-                      ? (updates.quantity ?? item.quantity ?? 0) *
-                        (updates.unitCost ?? item.unitCost ?? 0)
-                      : (updates.amount ?? item.amount),
-                }
-              : item,
-          ),
-        };
-      });
+      const isUnitQuantity = getValues("accountingMethod") === "unit_quantity";
+      setSovItems((items) =>
+        items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...updates,
+                amount:
+                  isUnitQuantity && (updates.quantity || updates.unitCost)
+                    ? (updates.quantity ?? item.quantity ?? 0) *
+                      (updates.unitCost ?? item.unitCost ?? 0)
+                    : (updates.amount ?? item.amount),
+              }
+            : item,
+        ),
+      );
     },
-    [],
+    [getValues, setSovItems],
   );
 
-  const removeSOVLine = React.useCallback((id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      sovItems: (prev.sovItems || []).filter((item) => item.id !== id),
-    }));
-    setSelectedSovItems((prev) => {
-      if (!prev.has(id)) return prev;
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  }, []);
+  const removeSOVLine = React.useCallback(
+    (id: string) => {
+      setSovItems((items) => items.filter((item) => item.id !== id));
+      setSelectedSovItems((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    },
+    [setSovItems],
+  );
 
   const toggleSovItemSelection = React.useCallback((id: string) => {
     setSelectedSovItems((prev) => {
@@ -649,7 +625,7 @@ export function usePrimeContractFormState({
   const toggleAllSovItems = React.useCallback(
     (checked: boolean) => {
       if (checked) {
-        const nonGroupIds = (formData.sovItems || [])
+        const nonGroupIds = ((getValues("sovItems") ?? []) as SOVLineItem[])
           .filter((item) => !item.isGroup)
           .map((item) => item.id);
         setSelectedSovItems(new Set(nonGroupIds));
@@ -657,25 +633,22 @@ export function usePrimeContractFormState({
         setSelectedSovItems(new Set());
       }
     },
-    [formData.sovItems],
+    [getValues],
   );
 
   const bulkRemoveSovLines = React.useCallback(() => {
-    setFormData((prev) => ({
-      ...prev,
-      sovItems: (prev.sovItems || []).filter(
-        (item) => !selectedSovItems.has(item.id),
-      ),
-    }));
+    setSovItems((items) => items.filter((item) => !selectedSovItems.has(item.id)));
     setSelectedSovItems(new Set());
-  }, [selectedSovItems]);
+  }, [selectedSovItems, setSovItems]);
 
   const toggleSovAccountingMethod = React.useCallback(() => {
-    setFormData((prev) => {
-      const nextMethod =
-        prev.accountingMethod === "unit_quantity" ? "amount" : "unit_quantity";
+    const nextMethod =
+      getValues("accountingMethod") === "unit_quantity"
+        ? "amount"
+        : "unit_quantity";
 
-      const nextItems = (prev.sovItems || []).map((item) => {
+    setSovItems((items) =>
+      items.map((item) => {
         if (item.isGroup) return item;
 
         if (nextMethod === "unit_quantity") {
@@ -690,18 +663,12 @@ export function usePrimeContractFormState({
           };
         }
 
-        const amount =
-          item.amount ?? (item.quantity ?? 0) * (item.unitCost ?? 0);
+        const amount = item.amount ?? (item.quantity ?? 0) * (item.unitCost ?? 0);
         return { ...item, amount };
-      });
-
-      return {
-        ...prev,
-        accountingMethod: nextMethod,
-        sovItems: nextItems,
-      };
-    });
-  }, []);
+      }),
+    );
+    setValue("accountingMethod", nextMethod, { shouldDirty: true });
+  }, [getValues, setValue, setSovItems]);
 
   const handleImportFromBudgetSuccess = React.useCallback(
     (items: unknown[]) => {
@@ -745,10 +712,7 @@ export function usePrimeContractFormState({
         };
       });
 
-      setFormData((prev) => ({
-        ...prev,
-        sovItems: [...(prev.sovItems || []), ...mapped],
-      }));
+      setSovItems((prev) => [...prev, ...mapped]);
 
       if (unmappedCount > 0) {
         toast.warning(
@@ -760,7 +724,7 @@ export function usePrimeContractFormState({
         );
       }
     },
-    [budgetCodes],
+    [budgetCodes, setSovItems],
   );
 
   const handleImportEstimateWorkbookSuccess = React.useCallback(
@@ -807,10 +771,7 @@ export function usePrimeContractFormState({
         };
       });
 
-      setFormData((prev) => ({
-        ...prev,
-        sovItems: [...(prev.sovItems || []), ...mapped],
-      }));
+      setSovItems((prev) => [...prev, ...mapped]);
 
       if (unmappedCount > 0) {
         toast.warning(
@@ -822,7 +783,7 @@ export function usePrimeContractFormState({
         );
       }
     },
-    [],
+    [setSovItems],
   );
 
   const handleAttachmentListChange = React.useCallback(
@@ -831,38 +792,46 @@ export function usePrimeContractFormState({
         nextFiles.map((file) => `${file.name}:${file.size}:${file.type || ""}`),
       );
 
-      updateFormData({ attachments: nextFiles });
+      setValue("attachments", nextFiles, { shouldDirty: true });
       setPendingAttachmentFiles((prev) =>
         prev.filter((file) =>
           remaining.has(`${file.name}:${file.size}:${file.type || ""}`),
         ),
       );
     },
-    [updateFormData],
+    [setValue],
   );
 
-  const handleFilesSelected = React.useCallback((files: File[]) => {
-    if (files.length === 0) return;
+  const handleFilesSelected = React.useCallback(
+    (files: File[]) => {
+      if (files.length === 0) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      attachments: [
-        ...(prev.attachments || []),
-        ...files.map((file) => ({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        })),
-      ],
-    }));
-    setPendingAttachmentFiles((prev) => [...prev, ...files]);
-  }, []);
+      const current = getValues("attachments") ?? [];
+      setValue(
+        "attachments",
+        [
+          ...current,
+          ...files.map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          })),
+        ],
+        { shouldDirty: true },
+      );
+      setPendingAttachmentFiles((prev) => [...prev, ...files]);
+    },
+    [getValues, setValue],
+  );
 
   const handleAutoFill = React.useCallback(() => {
     if (!isDevelopment) return;
     const autoFillData = getAutoFillData("primeContract");
-    updateFormData(autoFillData);
-  }, [updateFormData]);
+    form.reset(
+      { ...getValues(), ...autoFillData } as ContractFormData,
+      { keepDefaultValues: true },
+    );
+  }, [form, getValues]);
 
   const filteredBudgetCodes = React.useMemo(
     () =>
@@ -874,7 +843,7 @@ export function usePrimeContractFormState({
     [budgetCodeSearchQuery, budgetCodes],
   );
 
-  const isUnitQuantityMode = formData.accountingMethod === "unit_quantity";
+  const isUnitQuantityMode = watchedAccountingMethod === "unit_quantity";
   const sovColumnCount = isUnitQuantityMode ? 9 : 7;
 
   const sovTotals = React.useMemo(() => {
@@ -893,9 +862,17 @@ export function usePrimeContractFormState({
     };
   }, [sovDisplayItems]);
 
+  // Legacy-shaped view for the SOV + attachment surfaces (they read only these).
+  const formData: Partial<ContractFormData> = {
+    accountingMethod: watchedAccountingMethod,
+    sovItems: watchedSovItems,
+    attachments: watchedAttachments,
+  };
+
   return {
+    form,
+    submitHandler,
     formData,
-    validationErrors,
     budgetCodes,
     loadingBudgetCodes,
     openBudgetCodePopover,
@@ -911,17 +888,11 @@ export function usePrimeContractFormState({
     companyOptions,
     companiesLoading,
     userOptions,
-    showAddCompany,
-    newCompanyName,
     isCreating,
     filteredBudgetCodes,
     isUnitQuantityMode,
     sovColumnCount,
     sovTotals,
-    handleSubmit,
-    updateFormData,
-    clearValidationError,
-    handleCreateCompany,
     getCostTypeLabel,
     toggleDivision,
     handleCreateBudgetCode,
@@ -947,8 +918,6 @@ export function usePrimeContractFormState({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setShowAddCompany,
-    setNewCompanyName,
     markups,
     setMarkups,
     sovDisplayItems,

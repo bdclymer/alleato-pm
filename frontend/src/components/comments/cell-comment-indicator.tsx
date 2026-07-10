@@ -1,6 +1,5 @@
 "use client";
 
-import { MessageSquarePlus } from "lucide-react";
 import { VeltCommentTool } from "@veltdev/react";
 
 interface CellCommentIndicatorProps {
@@ -30,9 +29,9 @@ export function CellCommentIndicator({
     >
       <span
         aria-label="Comment on cell"
-        className="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-muted-foreground/30 opacity-0 transition-colors hover:bg-muted/50 hover:text-muted-foreground group-hover/cell:opacity-100"
+        className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center opacity-0 transition-opacity group-hover/cell:opacity-100"
       >
-        <MessageSquarePlus className="h-3 w-3" />
+        <span className="h-1.5 w-1.5 rounded-full bg-foreground/35 transition-colors hover:bg-foreground/60" />
       </span>
     </VeltCommentTool>
   );

@@ -359,3 +359,6 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
     runAt: nowIso,
   });
 });
+
+// Vercel cron invocations are HTTP GET (vercel.com/docs/cron-jobs); auth still requires CRON_SECRET.
+export const GET = POST;

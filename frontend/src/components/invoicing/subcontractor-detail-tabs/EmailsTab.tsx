@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { Mail } from "lucide-react";
 
+import { ErrorState } from "@/components/ds";
+import { SectionRuleHeading } from "@/components/layout/spacing";
+import { apiFetch } from "@/lib/api-client";
+import {
+  EmailDetailSheet,
+  type EmailDetailRecord,
+} from "@/features/emails/email-detail-sheet";
 import {
   Table,
   TableBody,
@@ -15,14 +22,41 @@ import {
 import { formatDateTime } from "./shared";
 
 interface EmailRow {
-  id: number;
+  id: string;
   sent_by_email: string | null;
   to_recipients: string[];
   cc_recipients: string[];
   subject: string | null;
+  body: string | null;
+  body_missing_reason: string | null;
   email_type: string;
   sent_at: string;
   status: string;
+}
+
+interface EmailsResponse {
+  data: EmailRow[];
+}
+
+function formatEmailType(value: string): string {
+  return value.replace(/[-_]/g, " ");
+}
+
+function emailToDetailRecord(email: EmailRow): EmailDetailRecord {
+  return {
+    id: email.id,
+    subject: email.subject ?? "Untitled email",
+    body: email.body ?? email.body_missing_reason,
+    bodyText: email.body ?? email.body_missing_reason,
+    fromName: null,
+    fromEmail: email.sent_by_email,
+    toList: email.to_recipients,
+    ccList: email.cc_recipients,
+    status: email.status,
+    sentAt: email.sent_at,
+    sourceLabel: "Invoice email",
+    relatedLabel: formatEmailType(email.email_type),
+  };
 }
 
 export function EmailsTab({
@@ -34,35 +68,56 @@ export function EmailsTab({
 }) {
   const [rows, setRows] = useState<EmailRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<EmailRow | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     (async () => {
       setLoading(true);
+      setLoadError(null);
       try {
-        const res = await fetch(
+        const body = await apiFetch<EmailsResponse>(
           `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/emails`,
         );
-        const body = await res.json();
-        if (res.ok) setRows(body.data ?? []);
+        if (!cancelled) setRows(body.data ?? []);
+      } catch (error) {
+        if (!cancelled) {
+          setRows([]);
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Email history could not be loaded.",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, invoiceId]);
+
+  const selectedEmailDetail = selectedEmail
+    ? emailToDetailRecord(selectedEmail)
+    : null;
 
   return (
     <section className="space-y-4">
-      <div>
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-sm font-semibold text-foreground">Emails</h2>
-        <p className="text-xs text-muted-foreground">
-          History of emails sent for this invoice.
-        </p>
-      </div>
+      <SectionRuleHeading label="Emails" />
       {loading ? (
         <div className="py-8 text-center text-sm text-muted-foreground">
           Loading…
         </div>
+      ) : loadError ? (
+        <ErrorState
+          title="Email history could not be loaded"
+          error={loadError}
+          className="py-8"
+        />
       ) : rows.length === 0 ? (
         <div className="py-12 text-center space-y-2">
           <Mail className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -82,7 +137,20 @@ export function EmailsTab({
           </TableHeader>
           <TableBody>
             {rows.map((r) => (
-              <TableRow key={r.id}>
+              <TableRow
+                key={r.id}
+                tabIndex={0}
+                role="button"
+                aria-label={`Open email details for ${r.subject ?? "untitled email"}`}
+                className="cursor-pointer hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => setSelectedEmail(r)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedEmail(r);
+                  }
+                }}
+              >
                 <TableCell className="text-muted-foreground">
                   {formatDateTime(r.sent_at)}
                 </TableCell>
@@ -94,7 +162,7 @@ export function EmailsTab({
                   {r.subject ?? "—"}
                 </TableCell>
                 <TableCell className="capitalize">
-                  {r.email_type.replace(/_/g, " ")}
+                  {formatEmailType(r.email_type)}
                 </TableCell>
                 <TableCell className="capitalize">{r.status}</TableCell>
               </TableRow>
@@ -102,6 +170,13 @@ export function EmailsTab({
           </TableBody>
         </Table>
       )}
+      <EmailDetailSheet
+        email={selectedEmailDetail}
+        open={Boolean(selectedEmail)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedEmail(null);
+        }}
+      />
     </section>
   );
 }

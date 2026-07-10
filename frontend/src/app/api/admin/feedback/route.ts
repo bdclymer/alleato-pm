@@ -23,8 +23,13 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 import { logger } from "@/lib/logger";
+import {
+  expandFeedbackStatusAliases,
+  normalizeFeedbackStoredStatus,
+} from "@/app/(admin)/feedback-inbox/status-aliases";
 
 const feedbackPayloadSchema = z.object({
+  category: z.string().trim().min(1).max(100).nullable().optional(),
   title: z.string().trim().min(1).max(200).optional(),
   comment: z.string().trim().min(1).max(5000),
   pageUrl: z.string().url(),
@@ -51,6 +56,11 @@ const feedbackPayloadSchema = z.object({
   }),
   screenshotDataUrl: z.string().trim().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  // Quick-capture default is OFF: saving a feedback item just persists a row so
+  // many can be batched in the inbox without spawning a GitHub issue (and the
+  // autofix workflow it triggers) per capture. Set true to also open an issue
+  // immediately. Promotion of a saved item later goes through the PUT handler.
+  createIssue: z.boolean().optional().default(false),
 });
 
 type FeedbackInsert =
@@ -299,6 +309,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
   const agentContext = toolContext ? toJsonValue(contextToAgentPayload(toolContext)) : null;
 
   const insertPayload: FeedbackInsert = {
+    category: payload.category ?? null,
     created_by: requestUser.id,
     project_id: payload.projectId ?? null,
     page_url: payload.pageUrl,
@@ -350,116 +361,129 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
 
   let githubIssue: { number: number; url: string; state: string } | null = null;
   let githubWarning: GitHubWarningPayload | null = null;
+  let teamsWarning: string | null = null;
 
-  try {
-    githubIssue = await createGitHubIssue({
+  // Quick-capture (createIssue = false) is the default: the row is saved as
+  // "open" and nothing else fires — no GitHub issue, no autofix workflow, no
+  // Teams ping — so a batch of captures can be triaged/promoted later from the
+  // feedback inbox. Only opt-in submissions create an issue on the spot.
+  if (payload.createIssue) {
+    try {
+      githubIssue = await createGitHubIssue({
+        title,
+        comment: payload.comment,
+        pageUrl: payload.pageUrl,
+        pagePath: payload.pagePath,
+        pageTitle: payload.pageTitle ?? null,
+        requestType: payload.requestType,
+        severity: payload.severity,
+        targetId: payload.target.id ?? null,
+        targetSelector: payload.target.selector,
+        targetTag: payload.target.tagName ?? null,
+        targetText: payload.target.text ?? null,
+        domPath: payload.target.domPath ?? null,
+        screenshotUrl,
+        projectId: payload.projectId ?? null,
+        metadata: payload.metadata ?? {},
+        toolContext,
+      });
+    } catch (error) {
+      githubWarning = classifyGitHubIssueFailure(error);
+      logger.warn({
+        msg: "[AdminFeedback] GitHub issue creation failed",
+        feedbackId: inserted.id,
+        warningCode: githubWarning.code,
+        warningMessage: githubWarning.message,
+        warningDetails: githubWarning.details,
+      });
+    }
+
+    if (!githubIssue && !githubWarning) {
+      githubWarning = {
+        code: "not_configured",
+        message:
+          "GitHub feedback integration is not configured in this environment.",
+      };
+      logger.warn({
+        msg: "[AdminFeedback] GitHub issue creation skipped",
+        feedbackId: inserted.id,
+        warningCode: githubWarning.code,
+        warningMessage: githubWarning.message,
+      });
+    }
+
+    if (githubIssue) {
+      await serviceSupabase
+        .from("admin_feedback_items")
+        .update({
+          github_issue_number: githubIssue.number,
+          github_issue_url: githubIssue.url,
+          github_issue_state: githubIssue.state,
+          status: "submitted",
+        })
+        .eq("id", inserted.id);
+    } else if (githubWarning) {
+      await serviceSupabase
+        .from("admin_feedback_items")
+        .update({ status: "github_failed" })
+        .eq("id", inserted.id);
+    }
+
+    const metadataRecord =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>)
+        : {};
+    const submitterEmail =
+      typeof metadataRecord.submitterEmail === "string"
+        ? metadataRecord.submitterEmail
+        : null;
+    const submitterName =
+      typeof metadataRecord.submitterName === "string"
+        ? metadataRecord.submitterName
+        : null;
+    const videoRecordingUrl =
+      typeof metadataRecord.videoRecordingUrl === "string"
+        ? metadataRecord.videoRecordingUrl
+        : null;
+    const requestOrigin = new URL(request.url).origin;
+    const inboxBase =
+      process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
+      requestOrigin;
+
+    const teamsResult = await notifyTeamsWebhook({
+      requestId,
+      feedbackId: inserted.id,
       title,
       comment: payload.comment,
+      requestType: payload.requestType,
+      severity: payload.severity,
       pageUrl: payload.pageUrl,
       pagePath: payload.pagePath,
       pageTitle: payload.pageTitle ?? null,
-      requestType: payload.requestType,
-      severity: payload.severity,
-      targetId: payload.target.id ?? null,
-      targetSelector: payload.target.selector,
-      targetTag: payload.target.tagName ?? null,
-      targetText: payload.target.text ?? null,
-      domPath: payload.target.domPath ?? null,
       screenshotUrl,
-      projectId: payload.projectId ?? null,
-      metadata: payload.metadata ?? {},
-      toolContext,
+      videoRecordingUrl,
+      submitterEmail,
+      submitterName,
+      githubIssueUrl: githubIssue?.url ?? null,
+      inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
     });
-  } catch (error) {
-    githubWarning = classifyGitHubIssueFailure(error);
-    logger.warn({
-      msg: "[AdminFeedback] GitHub issue creation failed",
-      feedbackId: inserted.id,
-      warningCode: githubWarning.code,
-      warningMessage: githubWarning.message,
-      warningDetails: githubWarning.details,
-    });
+
+    teamsWarning =
+      teamsResult.ok || teamsResult.reason === "not_configured"
+        ? null
+        : (teamsResult.details ?? "Teams webhook delivery failed.");
   }
-
-  if (!githubIssue && !githubWarning) {
-    githubWarning = {
-      code: "not_configured",
-      message:
-        "GitHub feedback integration is not configured in this environment.",
-    };
-    logger.warn({
-      msg: "[AdminFeedback] GitHub issue creation skipped",
-      feedbackId: inserted.id,
-      warningCode: githubWarning.code,
-      warningMessage: githubWarning.message,
-    });
-  }
-
-  if (githubIssue) {
-    await serviceSupabase
-      .from("admin_feedback_items")
-      .update({
-        github_issue_number: githubIssue.number,
-        github_issue_url: githubIssue.url,
-        github_issue_state: githubIssue.state,
-        status: "submitted",
-      })
-      .eq("id", inserted.id);
-  } else if (githubWarning) {
-    await serviceSupabase
-      .from("admin_feedback_items")
-      .update({ status: "github_failed" })
-      .eq("id", inserted.id);
-  }
-
-  const metadataRecord =
-    metadata && typeof metadata === "object" && !Array.isArray(metadata)
-      ? (metadata as Record<string, unknown>)
-      : {};
-  const submitterEmail =
-    typeof metadataRecord.submitterEmail === "string"
-      ? metadataRecord.submitterEmail
-      : null;
-  const submitterName =
-    typeof metadataRecord.submitterName === "string"
-      ? metadataRecord.submitterName
-      : null;
-  const videoRecordingUrl =
-    typeof metadataRecord.videoRecordingUrl === "string"
-      ? metadataRecord.videoRecordingUrl
-      : null;
-  const requestOrigin = new URL(request.url).origin;
-  const inboxBase =
-    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || requestOrigin;
-
-  const teamsResult = await notifyTeamsWebhook({
-    requestId,
-    feedbackId: inserted.id,
-    title,
-    comment: payload.comment,
-    requestType: payload.requestType,
-    severity: payload.severity,
-    pageUrl: payload.pageUrl,
-    pagePath: payload.pagePath,
-    pageTitle: payload.pageTitle ?? null,
-    screenshotUrl,
-    videoRecordingUrl,
-    submitterEmail,
-    submitterName,
-    githubIssueUrl: githubIssue?.url ?? null,
-    inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
-  });
 
   return NextResponse.json({
     feedbackId: inserted.id,
     title,
     screenshotUrl,
+    // "captured" (not persisted as a status) tells the client this was a
+    // save-only quick capture so it can show the right confirmation.
+    captured: !payload.createIssue,
     githubIssue,
     githubWarning,
-    teamsWarning:
-      teamsResult.ok || teamsResult.reason === "not_configured"
-        ? null
-        : (teamsResult.details ?? "Teams webhook delivery failed."),
+    teamsWarning,
   });
 });
 
@@ -468,8 +492,11 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
 // ---------------------------------------------------------------------------
 
 const listQuerySchema = z.object({
+  category: z.string().optional(),
   status: z.string().optional(),
+  excludeStatus: z.string().optional(),
   requestType: z.string().optional(),
+  excludeBoardItems: z.coerce.boolean().optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -486,24 +513,47 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     );
   }
 
-  const { status, requestType, limit = 100, offset = 0 } = parsed.data;
+  const {
+    category,
+    status,
+    excludeStatus,
+    requestType,
+    excludeBoardItems,
+    limit = 100,
+    offset = 0,
+  } = parsed.data;
   const serviceSupabase = createServiceClient();
 
   let query = serviceSupabase
     .from("admin_feedback_items")
     .select(
-      "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
+      "id, category, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (status) {
-    const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+    const statuses = [
+      ...new Set(
+        status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .flatMap((value) => expandFeedbackStatusAliases(value)),
+      ),
+    ];
     if (statuses.length === 1) {
       query = query.eq("status", statuses[0]);
     } else if (statuses.length > 1) {
       query = query.in("status", statuses);
+    }
+  } else if (excludeStatus) {
+    const excludedStatuses = excludeStatus.split(",").map((s) => s.trim()).filter(Boolean);
+    if (excludedStatuses.length === 1) {
+      query = query.neq("status", excludedStatuses[0]);
+    } else if (excludedStatuses.length > 1) {
+      query = query.not("status", "in", `(${excludedStatuses.join(",")})`);
     }
   } else {
     // Always exclude archived items unless explicitly requested
@@ -512,6 +562,13 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
   if (requestType) {
     query = query.eq("request_type", requestType);
+  }
+
+  if (category) {
+    query = query.eq("category", category);
+  }
+  if (excludeBoardItems) {
+    query = query.neq("page_path", "/product-board");
   }
 
   const { data, error, count } = await query;
@@ -560,14 +617,14 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "deferred", "resolved", "closed", "archived"]).optional(),
+  category: z.string().trim().min(1).max(100).nullable().optional(),
+  severity: z.enum(ADMIN_FEEDBACK_SEVERITIES).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "pr_created", "deferred", "resolved", "verified", "closed", "archived"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
-  resolved: "closed",
-};
+const LEGACY_STATUS_FALLBACKS: Record<string, string> = {};
 
 export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
   await requireAdminUser("/api/admin/feedback#PATCH");
@@ -592,7 +649,12 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
   }
 
   const serviceSupabase = createServiceClient();
-  const mergedUpdates: Record<string, unknown> = { ...updates };
+  const mergedUpdates: Record<string, unknown> = {
+    ...updates,
+    ...(updates.status
+      ? { status: normalizeFeedbackStoredStatus(updates.status) }
+      : {}),
+  };
 
   if (metadata) {
     const { data: existingItem, error: existingError } = await serviceSupabase
@@ -617,7 +679,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
     .from("admin_feedback_items")
     .update(mergedUpdates)
     .eq("id", id)
-    .select("id, status, title")
+    .select("id, category, severity, status, title")
     .single();
 
   if (
@@ -632,7 +694,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
       .from("admin_feedback_items")
       .update(fallbackUpdates)
       .eq("id", id)
-      .select("id, status, title")
+      .select("id, category, severity, status, title")
       .single();
     data = fallbackResult.data;
     error = fallbackResult.error;
@@ -646,7 +708,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
     throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PATCH", message: details.message });
   }
 
-  if (data?.status === "resolved") {
+  if (data?.status === "closed") {
     try {
       const { data: fullItem } = await serviceSupabase
         .from("admin_feedback_items")
@@ -678,7 +740,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
         });
       }
     } catch (learningError) {
-      logger.error({ msg: "[AdminFeedback] Resolved learning ingestion failed", data: learningError });
+      logger.error({ msg: "[AdminFeedback] Verified learning ingestion failed", data: learningError });
     }
   }
 

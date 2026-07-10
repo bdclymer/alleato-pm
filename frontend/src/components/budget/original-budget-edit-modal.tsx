@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
+import { EmptyState, ErrorState } from "@/components/ds";
+import { History, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,13 +21,11 @@ import { apiFetch } from "@/lib/api-client";
 import {
   BaseSidebar,
   SidebarBody,
-  SidebarFooter,
 } from "@/components/budget/modals/BaseSidebar";
 import {
-  BUDGET_PRIMARY_TABS_LIST_CLASS,
-  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
   budgetRadioCardClass,
 } from "@/components/budget/modals/style-tokens";
+import { UNITS_OF_MEASURE, normalizeUomCode } from "@/constants/budget";
 
 interface HistoryEntry {
   id: string;
@@ -64,19 +64,19 @@ interface OriginalBudgetEditModalProps {
   }) => void | Promise<void>;
 }
 
-const UOM_OPTIONS = [
-  { value: "ea", label: "Each" },
-  { value: "lf", label: "Linear Feet" },
-  { value: "sf", label: "Square Feet" },
-  { value: "cy", label: "Cubic Yards" },
-  { value: "ls", label: "Lump Sum" },
-  { value: "hr", label: "Hours" },
-  { value: "day", label: "Days" },
-  { value: "ton", label: "Tons" },
-  { value: "gal", label: "Gallons" },
-];
-
 type CalculationMethod = "manual" | "calculated";
+
+function getInitialCalculationMethod(lineItem: {
+  unitQty?: number;
+  uom?: string;
+  unitCost?: number;
+}): CalculationMethod {
+  return lineItem.unitQty != null ||
+    lineItem.unitCost != null ||
+    Boolean(lineItem.uom?.trim())
+    ? "calculated"
+    : "manual";
+}
 
 function toEditableNumberString(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "";
@@ -109,9 +109,9 @@ export function OriginalBudgetEditModal({
 
   // Form state
   const [calculationMethod, setCalculationMethod] =
-    useState<CalculationMethod>("manual");
+    useState<CalculationMethod>(getInitialCalculationMethod(lineItem));
   const [unitQty, setUnitQty] = useState(toEditableNumberString(lineItem.unitQty));
-  const [uom, setUom] = useState(lineItem.uom || "");
+  const [uom, setUom] = useState(normalizeUomCode(lineItem.uom));
   const [unitCost, setUnitCost] = useState(toEditableNumberString(lineItem.unitCost));
   const [originalBudget, setOriginalBudget] = useState(
     toEditableNumberString(lineItem.originalBudgetAmount),
@@ -120,7 +120,7 @@ export function OriginalBudgetEditModal({
 
   const hasChanges =
     parseNumberOrDefault(unitQty, lineItem.unitQty ?? 0) !== (lineItem.unitQty ?? 0) ||
-    uom !== (lineItem.uom || "") ||
+    uom !== normalizeUomCode(lineItem.uom) ||
     parseNumberOrDefault(unitCost, lineItem.unitCost ?? 0) !== (lineItem.unitCost ?? 0) ||
     parseNumberOrDefault(originalBudget, lineItem.originalBudgetAmount) !==
       lineItem.originalBudgetAmount;
@@ -144,12 +144,11 @@ export function OriginalBudgetEditModal({
   // component is conditionally rendered only while selectedLineItem is non-null and
   // always unmounts on cancel, so `open` transitioning false→true is the only signal
   // we need.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (open) {
-      setCalculationMethod("manual");
+      setCalculationMethod(getInitialCalculationMethod(lineItem));
       setUnitQty(toEditableNumberString(lineItem.unitQty));
-      setUom(lineItem.uom || "");
+      setUom(normalizeUomCode(lineItem.uom));
       setUnitCost(toEditableNumberString(lineItem.unitCost));
       setOriginalBudget(toEditableNumberString(lineItem.originalBudgetAmount));
     }
@@ -258,20 +257,14 @@ export function OriginalBudgetEditModal({
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as "original" | "history")}
-        className="flex h-full flex-col gap-0"
+        className="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div className="px-4 sm:px-8 pt-1">
-          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
-            <TabsTrigger
-              value="original"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="original">
               Original Budget
             </TabsTrigger>
-            <TabsTrigger
-              value="history"
-              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
-            >
+            <TabsTrigger value="history">
               History
             </TabsTrigger>
           </TabsList>
@@ -280,7 +273,7 @@ export function OriginalBudgetEditModal({
         <SidebarBody className="bg-background">
           <TabsContent value="original" className="m-0">
             <div className="space-y-6 p-6">
-            <div className="space-y-1 rounded-lg border border-border bg-muted/40 px-4 py-4">
+            <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Line Item
               </p>
@@ -302,7 +295,7 @@ export function OriginalBudgetEditModal({
               </div>
             )}
 
-            <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Current Budget</span>
               <span className="text-2xl font-semibold text-foreground">
                 {currentBudgetValue.toLocaleString("en-US", {
@@ -377,9 +370,8 @@ export function OriginalBudgetEditModal({
                     >
                       Unit Qty
                     </Label>
-                    <Input
+                    <NumberInput
                       id="budget-unit-qty"
-                      type="number"
                       value={unitQty}
                       onChange={(e) => setUnitQty(e.target.value)}
                       className="mt-1"
@@ -405,9 +397,9 @@ export function OriginalBudgetEditModal({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none">Select</SelectItem>
-                        {UOM_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
+                        {UNITS_OF_MEASURE.map((option) => (
+                          <SelectItem key={option.code} value={option.code}>
+                            {option.code} - {option.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -452,7 +444,7 @@ export function OriginalBudgetEditModal({
                 </div>
 
                 {calculationMethod === "calculated" && (
-                  <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+                  <div className="rounded-lg bg-muted/40 px-4 py-3 text-sm text-foreground">
                     <span className="font-medium">Formula:</span>{" "}
                     {unitQty || "0"} × {formatCurrencyDisplay(unitCost)} ={" "}
                     {formatCurrencyDisplay(originalBudget)}
@@ -460,31 +452,40 @@ export function OriginalBudgetEditModal({
                 )}
               </>
             )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={onClose}>
+                {isAggregatedRow ? "Close" : "Cancel"}
+              </Button>
+              {!isAggregatedRow && (
+                <Button onClick={handleSave} disabled={saving || !hasChanges}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              )}
+            </div>
             </div>
           </TabsContent>
 
           <TabsContent value="history" className="m-0">
             <div className="space-y-4 p-6">
             {loading && (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Loading history...
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             )}
 
-            {error && (
-              <div className="rounded-md border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <ErrorState error={error} />}
 
             {!loading && !error && history.length === 0 && (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No changes recorded yet
-              </div>
+              <EmptyState
+                icon={<History />}
+                title="No history yet"
+                description="Changes to this budget line will appear here."
+              />
             )}
 
             {!loading && !error && history.length > 0 && (
-              <div className="overflow-hidden rounded-lg border border-border">
+              <div className="overflow-hidden">
                 <div className="divide-y divide-border">
                   {history.map((entry) => (
                     <div key={entry.id} className="space-y-1 px-4 py-4">
@@ -535,19 +536,6 @@ export function OriginalBudgetEditModal({
           </TabsContent>
         </SidebarBody>
       </Tabs>
-
-      <SidebarFooter className="bg-muted">
-        <div className="flex items-center justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            {activeTab === "history" || isAggregatedRow ? "Close" : "Cancel"}
-          </Button>
-          {activeTab === "original" && !isAggregatedRow && (
-            <Button onClick={handleSave} disabled={saving || !hasChanges}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          )}
-        </div>
-      </SidebarFooter>
     </BaseSidebar>
   );
 }

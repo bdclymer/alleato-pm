@@ -3,6 +3,12 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+  type ResolvedCommitmentSovBudgetCode,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 import type { Database } from "@/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -10,6 +16,8 @@ interface LineItemInput {
   id?: string;
   line_number: number | null;
   budget_code: string | null;
+  project_budget_code_id?: string | null;
+  projectBudgetCodeId?: string | null;
   description: string | null;
   amount: number | null;
   billed_to_date: number | null;
@@ -85,40 +93,29 @@ async function fetchCommitmentType(
 }
 
 /**
- * Procore rule: a commitment's Schedule of Values is editable at any time
- * UNLESS the commitment is Approved. Enforced server-side so the lock cannot be
- * bypassed by calling the API directly.
+ * Commitment SOV edits are blocked once invoice workflow has started. Enforced
+ * server-side so the lock cannot be bypassed by calling the API directly.
  */
 async function assertCommitmentEditable(
   supabase: DbClient,
   commitmentId: string,
+  commitmentType: CommitmentType,
 ): Promise<void> {
-  const { data, error } = await supabase
-    .from("commitments_unified")
-    .select("status")
-    .eq("id", commitmentId)
-    .single();
+  const lock = await getCommitmentSovLockStateForCommitment(supabase, {
+    commitmentId,
+    commitmentType,
+  });
 
-  if (error || !data) {
+  if (lock.locked) {
     throw new GuardrailError({
-      code: "INVALID_PAYLOAD",
-      where: `${ROUTE_WHERE}#commitment-status`,
-      message: "Commitment not found.",
-      cause: error,
-      status: 404,
-    });
-  }
-
-  if ((data.status ?? "").trim().toLowerCase() === "approved") {
-    throw new GuardrailError({
-      code: "INVALID_PAYLOAD",
-      where: `${ROUTE_WHERE}#approved-locked`,
-      message: "This commitment is Approved — its schedule of values is locked.",
+      code: "PRECONDITION_FAILED",
+      where: `${ROUTE_WHERE}#invoice-locked`,
+      message: lock.message ?? "This commitment schedule of values is locked.",
       details: {
-        reason:
-          "Procore allows SOV edits only while a commitment is not Approved. Change the status first.",
+        errorCode: "COMMITMENT_SOV_LOCKED_AFTER_INVOICE_SUBMISSION",
+        reason: lock.reason,
       },
-      status: 409,
+      status: 412,
     });
   }
 }
@@ -233,11 +230,13 @@ function buildSubcontractSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): SubcontractSovUpdate & SubcontractSovInsert {
   return {
     subcontract_id: commitmentId,
     line_number: lineNumber,
-    budget_code: item.budget_code || null,
+    budget_code: budgetCode.displayBudgetCode,
+    project_budget_code_id: budgetCode.projectBudgetCodeId,
     description: item.description || "",
     amount: item.amount ?? 0,
     billed_to_date: item.billed_to_date ?? 0,
@@ -253,11 +252,13 @@ function buildPurchaseOrderSovData(
   commitmentId: string,
   lineNumber: number,
   item: LineItemInput,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): PurchaseOrderSovUpdate & PurchaseOrderSovInsert {
   return {
     purchase_order_id: commitmentId,
     line_number: lineNumber,
-    budget_code: item.budget_code || null,
+    budget_code: budgetCode.displayBudgetCode,
+    project_budget_code_id: budgetCode.projectBudgetCodeId,
     description: item.description || "",
     amount: item.amount ?? 0,
     billed_to_date: item.billed_to_date ?? 0,
@@ -275,9 +276,10 @@ async function upsertSovItem(
   item: LineItemInput,
   lineNumber: number,
   isExisting: boolean,
+  budgetCode: ResolvedCommitmentSovBudgetCode,
 ): Promise<SovRow> {
   if (commitmentType === "subcontract") {
-    const itemData = buildSubcontractSovData(commitmentId, lineNumber, item);
+    const itemData = buildSubcontractSovData(commitmentId, lineNumber, item, budgetCode);
     const result =
       item.id && isExisting
         ? await supabase
@@ -301,7 +303,7 @@ async function upsertSovItem(
     return result.data;
   }
 
-  const itemData = buildPurchaseOrderSovData(commitmentId, lineNumber, item);
+  const itemData = buildPurchaseOrderSovData(commitmentId, lineNumber, item, budgetCode);
   const result =
     item.id && isExisting
       ? await supabase
@@ -440,8 +442,7 @@ export const PUT = withApiGuardrails(
       ? normalizeCommitmentType(bodyCommitmentType, "subcontract")
       : await fetchCommitmentType(supabase, commitmentId);
 
-    // Procore: block all SOV writes when the commitment is Approved.
-    await assertCommitmentEditable(supabase, commitmentId);
+    await assertCommitmentEditable(supabase, commitmentId, commitmentType);
 
     // Fetch existing line items (with billed_to_date + amount so we can lock invoiced lines)
     const existingItems = await fetchExistingSovItems(
@@ -507,6 +508,12 @@ export const PUT = withApiGuardrails(
       });
     }
 
+    const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+      supabase,
+      numericProjectId,
+      ROUTE_WHERE,
+    );
+
     await deleteSovItems(supabase, commitmentType, idsToDelete);
 
     // Upsert line items
@@ -516,6 +523,14 @@ export const PUT = withApiGuardrails(
     for (let i = 0; i < lineItems.length; i++) {
       const item = lineItems[i];
       const lineNumber = item.line_number ?? i + 1;
+      const budgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+        budgetCodes: projectBudgetCodes,
+        lineNumber,
+        where: ROUTE_WHERE,
+        submittedBudgetCode: item.budget_code,
+        submittedProjectBudgetCodeId:
+          item.project_budget_code_id ?? item.projectBudgetCodeId ?? null,
+      });
 
       try {
         const upsertedItem = await upsertSovItem(
@@ -525,6 +540,7 @@ export const PUT = withApiGuardrails(
           item,
           lineNumber,
           Boolean(item.id && existingIds.has(item.id)),
+          budgetCode,
         );
         upsertedItems.push(upsertedItem);
       } catch (error) {

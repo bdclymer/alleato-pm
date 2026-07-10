@@ -8,6 +8,7 @@ import {
   detectCrossSourceInvestigationRequest,
   detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
+  isBroadTemporalCatchupQuestion,
 } from "@/lib/ai/detect-rag-request";
 import type { RetrievalPlan, SubAgent } from "./types";
 
@@ -38,10 +39,40 @@ function isTransactionalCreateRequest(message: string): boolean {
   return TRANSACTIONAL_CREATE_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+// Outbound send requests ("send a Teams message to Brandon", "send an email to
+// the client on my behalf") must reach the model's send/draft tools. They
+// mention channel words (teams, email, message) that the cross-source and
+// source-lookup detectors below treat as retrieval corpora — without this
+// guard a verbatim "Send a Teams message on my behalf" request was answered
+// with semantic-search results instead of a send (production miss 2026-07-10).
+// "send me/us ..." is a request to RECEIVE information and stays on retrieval.
+// Send verbs only count when they lead the request (allowing a polite prefix):
+// mid-sentence or interrogative "send" ("did we send the schedule email?") is
+// retrieval, not an action. "…on my behalf" marks a send even mid-sentence.
+const OUTBOUND_SEND_PATTERNS = [
+  /^(?:please\s+|can you\s+(?:please\s+)?|could you\s+(?:please\s+)?|would you\s+(?:please\s+)?|go ahead and\s+)?(?:send|shoot|fire off|post)\b(?!\s+(?:me|us)\b)[\s\S]{0,80}\b(?:message|chat|dm|email|e-mail|note|reply|invite)\b/i,
+  /\b(?:send|shoot|fire off|post)\b(?!\s+(?:me|us)\b).{0,50}\b(?:message|email|e-mail|chat|dm)\b.{0,60}\bon my behalf\b/i,
+  /^(?:please\s+|can you\s+(?:please\s+)?|could you\s+(?:please\s+)?|would you\s+(?:please\s+)?|go ahead and\s+)?(?:dm|ping|message)\s+\w+.{0,30}\b(?:on|in|via|over)\s+teams\b/i,
+];
+
+function isOutboundSendRequest(message: string): boolean {
+  const text = message.trim();
+  return OUTBOUND_SEND_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 const FOLLOWUP_PHRASES = [
   /\b(source|cite|citation|evidence)\b/i,
   /\b(why|how come|why did)\b/i,
   /\b(more detail|elaborate|expand)\b/i,
+  // "tell me more about union collective", "more on the permit risk", "what
+  // about steel pricing" — the single most common way a user drills into a
+  // subject the prior turn just named. Without these, such a turn fell through
+  // to conversational_fallback with ZERO retrieval and the model returned an
+  // empty response. See the trace in docs/architecture/AI-RAG-ARCHITECTURE.md.
+  /\btell me more\b/i,
+  /\b(more|read more|learn more|know more) (about|on|regarding)\b/i,
+  /\bwhat about\b/i,
+  /\b(go deeper|dig (in|deeper)|drill (in|down)|deep[- ]?dive)\b/i,
 ];
 
 const FINANCIAL_KEYWORDS = /\b(budget|cost|margin|invoice|payment|exposure|cash|retention|forecast)\b/i;
@@ -52,6 +83,16 @@ const EXECUTIVE_DEEP_AGENT_PATTERNS: Array<{
   pattern: RegExp;
   intent: ReturnType<typeof classifyAssistantIntent>;
 }> = [
+  {
+    pattern:
+      /\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b.{0,80}\b(health|status|overview|risk|risks|read|briefing)\b/i,
+    intent: "latest_status",
+  },
+  {
+    pattern:
+      /\b(health|status|overview|risk|risks|read|briefing)\b.{0,80}\b(active projects?|all projects?|portfolio|company[- ]wide|business[- ]wide)\b/i,
+    intent: "latest_status",
+  },
   {
     pattern:
       /\b(highest priority|top priority|what should brandon focus|what should i focus|most important thing|state of the business)\b/i,
@@ -93,6 +134,14 @@ function detectExecutiveDeepAgentIntent(
   selectedProjectId?: number,
 ): ReturnType<typeof classifyAssistantIntent> | null {
   if (typeof selectedProjectId === "number") return null;
+
+  // Category-based (temporal + catch-up topic words), not literal-phrase
+  // matching, so paraphrases of "anything important happen today?" generalize
+  // instead of needing a new pattern per wording. Shared with
+  // detectCrossSourceInvestigationRequest so both routing decisions agree —
+  // see isBroadTemporalCatchupQuestion for the rationale and incident trace.
+  if (isBroadTemporalCatchupQuestion(message)) return "latest_status";
+
   const match = EXECUTIVE_DEEP_AGENT_PATTERNS.find(({ pattern }) =>
     pattern.test(message),
   );
@@ -250,6 +299,20 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     };
   }
 
+  // Outbound sends win over every retrieval path below: the channel words they
+  // contain ("teams", "email", "message") are exactly what the cross-source and
+  // source-lookup detectors key on, so evaluating retrieval first hijacks the
+  // action into a semantic search and the send tool is never reached.
+  if (isOutboundSendRequest(message)) {
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {},
+      selectedProjectId,
+      reason: "outbound_message_send_request",
+    };
+  }
+
   // Cross-source investigations ("research the teams, emails, and meetings and see
   // where this started") MUST reach the semantic vector search, which is the only
   // retrieval that spans emails + Teams + meetings + files. This is evaluated
@@ -288,7 +351,14 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
     return {
       intent,
       responseFormat: "conversational",
-      sources: { reusePriorBriefing: true },
+      // Reuse the prior briefing's snapshot AND pull fresh grounding on whatever
+      // subject the follow-up names ("union collective", "steel pricing"). The
+      // reused briefing alone only lets the model paraphrase the last turn;
+      // the vector search is what gives a drill-down real depth.
+      sources: {
+        reusePriorBriefing: true,
+        semanticVectorSearch: { query: message },
+      },
       preconsult: detectPreconsult(message),
       selectedProjectId,
       reason: "followup_to_prior_briefing",

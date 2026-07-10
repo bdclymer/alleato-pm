@@ -9,7 +9,7 @@
 import {
   generateText,
   streamText,
-  stepCountIs,
+  isStepCount,
   type ModelMessage,
   type ToolSet,
 } from "ai";
@@ -798,10 +798,10 @@ export async function generateBotResponse(
 
   const result = await generateText({
     model: getLanguageModel(STRATEGIST_MODEL),
-    system: systemPrompt,
+    instructions: systemPrompt,
     messages,
     tools: tools as unknown as ToolSet,
-    stopWhen: stepCountIs(7),
+    stopWhen: isStepCount(7),
   });
 
   const usage = result.usage;
@@ -832,7 +832,7 @@ export async function generateBotResponse(
 
 /**
  * Stream a response using the C-Suite orchestrator.
- * Returns an AI SDK streamText result whose fullStream/textStream can be
+ * Returns an AI SDK streamText result whose stream/textStream can be
  * passed directly to Chat SDK's thread.post().
  */
 export async function streamBotResponse(options: BotCoreOptions) {
@@ -886,10 +886,10 @@ export async function streamBotResponse(options: BotCoreOptions) {
 
   const result = streamText({
     model: getLanguageModel(STRATEGIST_MODEL),
-    system: systemPrompt,
+    instructions: systemPrompt,
     messages,
     tools: tools as unknown as ToolSet,
-    stopWhen: stepCountIs(7),
+    stopWhen: isStepCount(7),
   });
 
   return { result, toolTrace };
@@ -999,7 +999,10 @@ export async function loadConversationHistory(
   // Reverse to chronological order (oldest first)
   return (data as Array<{ role: "user" | "assistant"; content: string }>)
     .reverse()
-    .map((row) => ({ role: row.role, content: row.content }) as ModelMessage);
+    .map((row) => (({
+    role: row.role,
+    content: row.content
+  }) as ModelMessage));
 }
 
 // ---------------------------------------------------------------------------

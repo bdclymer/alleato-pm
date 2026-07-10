@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-07-09T05:07:58.174Z",
+  "jpProjectId": 8628,
+  "appProjectId": 1009,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 1,
+    "adopt": 0,
+    "create": 1,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 0,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 1,
+    "pccoWithExecutedTwin": 0
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 2695,
+      "number": "CR-8628-0002",
+      "title": "Private Utility Locate",
+      "statusId": 8,
+      "cost": 980,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 0,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [],
+    "prime": [
+      {
+        "number": "PCCO-8628-0002",
+        "amount": 1091.23,
+        "twin": null
+      }
+    ]
+  }
+}

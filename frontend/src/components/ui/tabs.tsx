@@ -31,11 +31,20 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "bg-muted",
+        // Legacy compatibility for older top-of-page call sites. New page-level
+        // navigation should use `PageTabs`; keep `Tabs` for section-level
+        // content tabs.
         line: "gap-4 md:gap-6 bg-transparent border-b border-border p-0 h-auto",
+      },
+      spacing: {
+        default: "",
+        comfortable:
+          "gap-1.5 [&>[data-slot=tabs-trigger]]:flex-none [&>[data-slot=tabs-trigger]]:px-3.5",
       },
     },
     defaultVariants: {
       variant: "default",
+      spacing: "default",
     },
   }
 )
@@ -43,6 +52,7 @@ const tabsListVariants = cva(
 function TabsList({
   className,
   variant = "default",
+  spacing = "default",
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> &
   VariantProps<typeof tabsListVariants>) {
@@ -50,7 +60,8 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      data-spacing={spacing}
+      className={cn(tabsListVariants({ variant, spacing }), className)}
       {...props}
     />
   )
@@ -64,12 +75,12 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        // Default variant (shadcn-style pill tabs)
+        // Section tabs: default shadcn-style content tabs.
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring inline-flex items-center justify-center gap-1.5 whitespace-nowrap text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "group-data-[variant=default]/tabs-list:h-[calc(100%-1px)] group-data-[variant=default]/tabs-list:flex-1 group-data-[variant=default]/tabs-list:rounded-md group-data-[variant=default]/tabs-list:border group-data-[variant=default]/tabs-list:border-transparent group-data-[variant=default]/tabs-list:px-2 group-data-[variant=default]/tabs-list:py-1",
         "group-data-[variant=default]/tabs-list:data-[state=active]:bg-background group-data-[variant=default]/tabs-list:data-[state=active]:text-foreground group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm",
         "group-data-[variant=default]/tabs-list:focus-visible:ring-[3px]",
-        // Line variant — matches PageTabs exactly: border-b-2 underline, primary color, semibold
+        // Legacy page-like underline styling for migrated surfaces only.
         "group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-b-transparent group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:px-1.5 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-3 group-data-[variant=line]/tabs-list:h-auto group-data-[variant=line]/tabs-list:flex-none",
         "group-data-[variant=line]/tabs-list:text-foreground/60 group-data-[variant=line]/tabs-list:hover:text-foreground",
         "group-data-[variant=line]/tabs-list:data-[state=active]:border-b-primary group-data-[variant=line]/tabs-list:data-[state=active]:text-primary group-data-[variant=line]/tabs-list:data-[state=active]:font-semibold group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none",

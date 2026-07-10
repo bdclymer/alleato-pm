@@ -1,10 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import type { PdfFooterOverlayPlan } from "@/lib/documents/print-layout";
 
 interface BrandedDocumentHtmlOptions {
   title: string;
   subtitle?: string;
   detail?: string;
+  renderHeading?: boolean;
   meta?: Array<{
     label: string;
     value: string | null | undefined;
@@ -17,10 +19,16 @@ interface BrandedDocumentHtmlOptions {
    * pinned to the bottom of every page. Defaults to true.
    */
   renderFooterInBody?: boolean;
+  /**
+   * Content column max-width. Defaults to "640px" (portrait cover-sheet
+   * documents). Pass "100%" for wide landscape log/table exports.
+   */
+  contentWidth?: string;
 }
 
 /** Page bottom margin reserved for `buildBrandedFooterTemplate`. */
 export const BRANDED_FOOTER_MARGIN = "0.9in";
+export const BRANDED_LAST_PAGE_FOOTER_MARGIN = "1.35in";
 
 const COMPANY_PHONE = "(317) 760-0088";
 const COMPANY_EMAIL = "info@alleatogroup.com";
@@ -55,7 +63,7 @@ function esc(value: string | number | null | undefined): string {
     .replace(/'/g, "&#39;");
 }
 
-function getPublicAssetDataUri(publicPath: string): string | null {
+export function getPublicAssetDataUri(publicPath: string): string | null {
   const assetPath = path.join(process.cwd(), "public", publicPath);
   if (!existsSync(assetPath)) return null;
 
@@ -130,20 +138,66 @@ export function buildBrandedFooterTemplate(): string {
 
   return (
     `<div style="width:100%;margin:0;font-family:Arial, Helvetica, sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">` +
-    `<div style="width:600px;max-width:100%;margin:0 auto;padding:7px 0 0;border-top:1px solid #ece7e2;text-align:center;font-size:9px;color:#807b76;">${contact}</div>` +
+    `<div style="width:600px;max-width:100%;margin:0 auto;padding:6px 0 0;text-align:right;font-size:8px;color:#a09a94;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>` +
+    `<div style="width:600px;max-width:100%;margin:0 auto;padding:3px 0 0;border-top:1px solid #ece7e2;text-align:center;font-size:9px;color:#807b76;">${contact}</div>` +
     `<div style="text-align:center;font-size:8px;color:#77716b;padding:4px 24px 7px;">${esc(COMPANY_LOCATIONS.join(" · "))}</div>` +
     `<img src="${footerRuleSvgDataUri()}" style="display:block;width:100%;height:14px;" alt="" />` +
     `</div>`
   );
 }
 
+export function buildSimpleFooterOverlay({
+  documentTitle,
+  generatedAtLabel,
+}: {
+  documentTitle: string;
+  generatedAtLabel: string;
+}) {
+  return {
+    kind: "simple" as const,
+    companyName: "Alleato Group",
+    documentTitle,
+    generatedAtLabel,
+  };
+}
+
+export function buildDetailedFooterOverlay() {
+  return {
+    kind: "detailed" as const,
+    companyName: "Alleato Group",
+    phone: COMPANY_PHONE,
+    website: COMPANY_WEBSITE,
+    email: COMPANY_EMAIL,
+    locations: COMPANY_LOCATIONS,
+  };
+}
+
+export function buildBrandedLastPageFooterOverlayPlan({
+  documentTitle,
+  generatedAtLabel,
+}: {
+  documentTitle: string;
+  generatedAtLabel: string;
+}): PdfFooterOverlayPlan {
+  return {
+    marginBottom: BRANDED_LAST_PAGE_FOOTER_MARGIN,
+    defaultVariant: buildSimpleFooterOverlay({
+      documentTitle,
+      generatedAtLabel,
+    }),
+    lastPageVariant: buildDetailedFooterOverlay(),
+  };
+}
+
 export function buildBrandedDocumentHtml({
   title,
   subtitle,
   detail,
+  renderHeading = true,
   meta,
   bodyHtml,
   renderFooterInBody = true,
+  contentWidth = "640px",
 }: BrandedDocumentHtmlOptions) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -230,7 +284,7 @@ export function buildBrandedDocumentHtml({
       letter-spacing: 0.35em;
     }
     .document-heading {
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto 22px;
       padding: 0;
     }
@@ -280,7 +334,7 @@ export function buildBrandedDocumentHtml({
       font-weight: 600;
     }
     .document-content {
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
       padding: 0;
     }
@@ -298,7 +352,7 @@ export function buildBrandedDocumentHtml({
       border-top: 1px solid #ece7e2;
       color: #807b76;
       white-space: nowrap;
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
     }
     .document-footer-contact > span {
@@ -326,7 +380,7 @@ export function buildBrandedDocumentHtml({
       color: #77716b;
       font-size: 8px;
       text-align: center;
-      max-width: 640px;
+      max-width: ${contentWidth};
       margin: 0 auto;
     }
     .document-footer-rule {
@@ -360,6 +414,157 @@ export function buildBrandedDocumentHtml({
         break-inside: avoid;
       }
     }
+    /*
+     * Full-justified text in a ~640px column with a proportional serif font
+     * produces uneven "rivers" of whitespace between words. The legal
+     * contract template (a raw LibreOffice export) hardcodes align="justify"
+     * on nearly every paragraph; override it to a left/ragged-right layout,
+     * which is the standard, more legible convention for contracts at this
+     * column width.
+     */
+    .document-content p[align="justify"] {
+      text-align: left;
+    }
+    /*
+     * The commitment contract is sourced from a Word/LibreOffice document with
+     * explicit Times New Roman typography. Preserve that legal-document text
+     * system here instead of flattening it into the default sans-serif branded
+     * wrapper, otherwise font substitution and paragraph rhythm drift from the
+     * source template the user is approving against.
+     */
+    .document-content .contract-template {
+      color: #222222;
+      font-family: "Times New Roman", Times, "Liberation Serif", "Nimbus Roman No9 L", serif;
+      font-size: 12pt;
+      line-height: 1.15;
+    }
+    .document-content .contract-template p,
+    .document-content .contract-template td,
+    .document-content .contract-template span,
+    .document-content .contract-template div,
+    .document-content .contract-template li,
+    .document-content .contract-template font {
+      color: inherit !important;
+      font-family: inherit !important;
+      line-height: 1.15 !important;
+    }
+    .document-content .contract-template p {
+      margin-bottom: 0.083in !important;
+    }
+    .document-content .contract-template p + table.contract-project-facts {
+      margin-top: 0;
+    }
+    .document-content .contract-template table.contract-project-facts + p {
+      margin-top: 0 !important;
+    }
+    .document-content .contract-template p[align="justify"] {
+      text-align: left !important;
+    }
+    .document-content .contract-template p[align="center"] {
+      text-align: center !important;
+    }
+    .document-content .contract-template > p[align="center"]:first-of-type {
+      font-size: 18pt !important;
+      font-weight: 700;
+      margin-bottom: 0.083in !important;
+    }
+    .document-content .contract-template p[align="center"] b,
+    .document-content .contract-template p[align="center"] strong {
+      letter-spacing: 0;
+    }
+    .document-content .contract-template u {
+      text-underline-offset: 0.08em;
+    }
+    .document-content .contract-template .contract-project-facts {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 0.03in 0;
+    }
+    .document-content .contract-template .contract-project-facts td {
+      vertical-align: top;
+      padding: 0 0 0.03in 0;
+    }
+    .document-content .contract-template .contract-project-facts__bullet {
+      width: 18px;
+      padding-right: 6px;
+    }
+    .document-content .contract-template .contract-project-facts__label {
+      width: 170px;
+      padding-right: 8px;
+      white-space: nowrap;
+    }
+    .document-content .contract-template .contract-project-facts__value {
+      width: auto;
+    }
+    .document-content .contract-template .legal-paragraph {
+      margin: 0 0 0.083in !important;
+    }
+    .document-content .contract-template .legal-spacer {
+      margin: 0 !important;
+      line-height: 100% !important;
+    }
+    .document-content .contract-template .legal-bullet-list {
+      margin-left: 0.18in !important;
+    }
+    .document-content .contract-template .legal-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .document-content .contract-template .legal-table th,
+    .document-content .contract-template .legal-table td {
+      vertical-align: top;
+    }
+    .document-content .contract-template .legal-signature-block {
+      page-break-inside: avoid;
+    }
+    .document-content .contract-template .legal-signature-grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-side {
+      width: 100%;
+    }
+    .document-content .contract-template .legal-signature-title {
+      font-size: 12pt;
+      line-height: 1.15;
+      margin-bottom: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-company {
+      font-size: 12pt;
+      line-height: 1.15;
+      margin-bottom: 0.12in;
+    }
+    .document-content .contract-template .legal-signature-field-row {
+      display: grid;
+      grid-template-columns: 1.05in minmax(0, 1fr);
+      column-gap: 0.12in;
+      align-items: end;
+      margin: 0 0 0.08in 0;
+    }
+    .document-content .contract-template .legal-signature-label {
+      font-size: 12pt;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+    .document-content .contract-template .legal-signature-line {
+      min-width: 0;
+      font-size: 12pt;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      border-bottom: 1px solid #000;
+      padding-bottom: 0.02in;
+    }
+    .document-content .contract-template .legal-signature-fields {
+      width: 100%;
+    }
+    .document-content .contract-template .legal-page-break {
+      page-break-before: always !important;
+    }
   </style>
 </head>
 <body>
@@ -369,12 +574,16 @@ export function buildBrandedDocumentHtml({
       <div class="letterhead-rule"></div>
     </header>
     <main>
-      <section class="document-heading">
+      ${
+        renderHeading
+          ? `<section class="document-heading">
         <h1 class="document-title">${esc(title)}</h1>
         ${subtitle ? `<p class="document-subtitle">${esc(subtitle)}</p>` : ""}
         ${detail ? `<p class="document-detail">${esc(detail)}</p>` : ""}
         ${renderMeta(meta)}
-      </section>
+      </section>`
+          : ""
+      }
       <div class="document-content">
         ${bodyHtml}
       </div>

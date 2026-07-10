@@ -954,6 +954,7 @@ export function createSubmittalAIReviewService(userId: string) {
             toolCallId: "submittal-review",
             messages: [],
             abortSignal: undefined,
+            context: {},
           },
         )) as AnyRow;
       } catch (error) {
@@ -1013,7 +1014,12 @@ export function createSubmittalAIReviewService(userId: string) {
           query: specQuery,
           topK: 6,
         },
-        { toolCallId: "submittal-specs", messages: [], abortSignal: undefined },
+        {
+          toolCallId: "submittal-specs",
+          messages: [],
+          abortSignal: undefined,
+          context: {},
+        },
       )) as AnyRow;
 
       if (!("error" in specResult)) {

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { StatusBadge, type StatusVariant } from "@/components/ds/status-badge";
 import {
+  CellLink,
   type ColumnConfig,
   type FilterConfig,
   type TableColumn,
@@ -44,6 +45,7 @@ import {
 } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import type { Meeting } from "@/lib/validation/meetings";
+import { getMeetingDetailHref } from "@/features/meetings/meeting-routes";
 
 // ─── Inline editing types ───────────────────────────────────────────────────
 
@@ -68,6 +70,11 @@ export interface EditContext {
   handleInlineCancel: () => void;
 }
 
+export type GetMeetingHref = (meeting: Meeting) => string;
+
+const defaultGetMeetingHref: GetMeetingHref = (meeting) =>
+  getMeetingDetailHref({ meetingId: meeting.id });
+
 // ─── Column configs ──────────────────────────────────────────────────────────
 
 export const meetingColumns: ColumnConfig[] = [
@@ -76,7 +83,6 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "participants", label: "Participants", defaultVisible: true },
-  { id: "keywords", label: "Keywords", defaultVisible: true },
   { id: "sentiment", label: "Sentiment", defaultVisible: true },
   { id: "overview", label: "Overview", defaultVisible: false },
   { id: "action_items", label: "Action Items", defaultVisible: false },
@@ -85,9 +91,11 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "summary", label: "Summary", defaultVisible: false },
   { id: "content", label: "Content", defaultVisible: false },
   { id: "type", label: "Type", defaultVisible: false },
-  { id: "category", label: "Category", defaultVisible: false },
+  { id: "category", label: "Category", defaultVisible: true },
   { id: "links", label: "Links", defaultVisible: true },
   { id: "embedding", label: "Embedding", defaultVisible: false },
+  // Keywords lives last so it renders as the right-most column in the table.
+  { id: "keywords", label: "Keywords", defaultVisible: true },
 ];
 
 export const meetingDefaultVisibleColumns = meetingColumns
@@ -920,7 +928,10 @@ function InlineCategorySelect({
 
 // ─── Column builder ───────────────────────────────────────────────────────────
 
-export function buildMeetingTableColumns(editContext?: EditContext): TableColumn<Meeting>[] {
+export function buildMeetingTableColumns(
+  editContext?: EditContext,
+  getMeetingHref: GetMeetingHref = defaultGetMeetingHref,
+): TableColumn<Meeting>[] {
   return [
     // ── Title: link to project detail page ──────────────────────────────────
     {
@@ -951,13 +962,11 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               status={embeddingStatus.variant === "neutral" ? null : embeddingStatus.label}
               fallbackLabel={`Embedding: ${embeddingStatus.label}`}
             />
-            <a
-              href={`/meetings/${item.id}`}
-              className="font-medium truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-              onClick={(event) => event.stopPropagation()}
-            >
-              {titleText}
-            </a>
+            <CellLink
+              value={titleText}
+              href={getMeetingHref(item)}
+              className="font-medium truncate"
+            />
             <Button
               variant="ghost"
               size="icon"
@@ -990,7 +999,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           (item.project ?? "").trim().toLowerCase() === "no project";
 
         return (
-          <div className="w-72" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full min-w-0 max-w-full" onClick={(event) => event.stopPropagation()}>
             <SearchableSelect
               options={[
                 { value: "__none__", label: "No project" },
@@ -1008,9 +1017,10 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               searchPlaceholder="Search projects..."
               emptyMessage="No projects found."
               showIndicator={false}
-              className="space-y-0"
+              triggerVariant="ghost"
+              className="w-full min-w-0"
               triggerClassName={cn(
-                "h-7 border-0 bg-transparent px-1 text-xs font-normal hover:bg-accent/20 focus-visible:ring-1",
+                "h-7 w-full rounded-sm px-1 text-xs font-normal text-muted-foreground hover:bg-accent/20 focus-visible:ring-1",
                 hasNoProject ? "text-red-600" : "text-muted-foreground",
               )}
             />
@@ -1092,15 +1102,6 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       },
       csvValue: (item) => parseParticipants(item).join("; "),
       sortValue: (item) => parseParticipants(item).length,
-    },
-
-    // ── Keywords: compact text preview ──────────────────────────────────────
-    {
-      ...getMeetingColumn("keywords"),
-      render: (item) => <KeywordTagsCell keywords={item.keywords} />,
-      csvValue: (item) => formatKeywords(item.keywords),
-      sortValue: (item) => formatKeywords(item.keywords),
-      width: 220,
     },
 
     // ── Sentiment: compact percentage preview ──────────────────────────────
@@ -1303,6 +1304,16 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       csvValue: (item) => getEmbeddingStatus(item).label,
       sortValue: (item) => getEmbeddingStatus(item).sortValue,
       sortable: true,
+      editable: false,
+    },
+
+    // ── Keywords: compact tag preview, positioned as the last column ────────
+    {
+      ...getMeetingColumn("keywords"),
+      render: (item) => <KeywordTagsCell keywords={item.keywords} />,
+      csvValue: (item) => formatKeywords(item.keywords),
+      sortValue: (item) => formatKeywords(item.keywords),
+      width: 220,
     },
   ];
 }

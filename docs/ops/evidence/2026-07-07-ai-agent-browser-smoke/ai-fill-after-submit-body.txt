@@ -1,0 +1,25 @@
+PROJECT
+Alleato AI
+Company Directory
+COMPANY-WIDE TOOLS
+Alleato AI
+Company
+Company Directory
+User Management
+Meetings
+Tasks
+Documentation
+Estimates
+Prime Contracts
+Change Events
+Potential Change Orders
+Admin Dashboard
+Company
+Alleato AI
+Select Project
+Alleato AI
+Chat history
+
+Check the latest Daily Deep Read setup. Tell me the latest business date you can see, whether project intelligence should use the full-source Daily Deep Read packet or raw RAG chunks, and whether candidate tasks/risks/decisions should be review-gated before promotion.
+
+Still working with Render Deep Agents executive briefing…

@@ -44,9 +44,9 @@ export function DetailPageLoading() {
         <Skeleton className="h-8 w-64" />
       </div>
       {/* Tab bar */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-9 w-24" />
+          <Skeleton key={i} className="h-9 w-24 shrink-0" />
         ))}
       </div>
       {/* KPI / summary cards grid */}

@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Check,
   ChevronsUpDown,
   ExternalLink,
-  MoreHorizontal,
+  MoreVertical,
 } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
@@ -53,16 +53,10 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Database } from "@/types/database.types";
 import { apiFetch } from "@/lib/api-client";
+import { acumaticaVendorUrl } from "@/lib/acumatica/vendor-url";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 type Contact = Database["public"]["Tables"]["people"]["Row"];
@@ -175,25 +169,6 @@ export default function CompanyDetailsPage() {
   const [invoiceFilter, setInvoiceFilter] = React.useState<"all" | "open">("all");
   const [commitmentQuery, setCommitmentQuery] = React.useState("");
 
-  const searchParams = useSearchParams();
-  const [editOpen, setEditOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    if (searchParams?.get("edit") === "1") {
-      setEditOpen(true);
-    }
-  }, [searchParams]);
-  const [isSavingCompany, setIsSavingCompany] = React.useState(false);
-  const [companyForm, setCompanyForm] = React.useState({
-    name: "",
-    address: "",
-    city: "",
-    state: "",
-    website: "",
-    license_number: "",
-    status: "ACTIVE",
-  });
-
   const [addContactOpen, setAddContactOpen] = React.useState(false);
   const [contactMode, setContactMode] = React.useState<"existing" | "new">("existing");
   const [isSavingContact, setIsSavingContact] = React.useState(false);
@@ -261,15 +236,6 @@ export default function CompanyDetailsPage() {
         { cache: "no-store" },
       );
       setData(payload);
-      setCompanyForm({
-        name: payload.company.name || "",
-        address: payload.company.address || "",
-        city: payload.company.city || "",
-        state: payload.company.state || "",
-        website: payload.company.website || "",
-        license_number: payload.company.license_number || "",
-        status: payload.company.status || "ACTIVE",
-      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch company details");
     } finally {
@@ -318,37 +284,6 @@ export default function CompanyDetailsPage() {
     setContactComboboxOpen(false);
     await loadAvailableContacts();
   }, [loadAvailableContacts]);
-
-  async function handleSaveCompany() {
-    if (!data?.company.id || !companyForm.name.trim()) {
-      toast.error("Company name is required");
-      return;
-    }
-
-    try {
-      setIsSavingCompany(true);
-      await apiFetch(`/api/directory/companies/${data.company.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: companyForm.name.trim(),
-          address: companyForm.address || null,
-          city: companyForm.city || null,
-          state: companyForm.state || null,
-          website: companyForm.website || null,
-          license_number: companyForm.license_number || null,
-          status: companyForm.status || "ACTIVE",
-        }),
-      });
-
-      toast.success("Company updated");
-      setEditOpen(false);
-      await loadDetails();
-    } catch (err) {
-      toast.error("Failed to update company");
-    } finally {
-      setIsSavingCompany(false);
-    }
-  }
 
   async function handleAddExistingContact() {
     if (!selectedExistingContactId || !data?.company.id) {
@@ -601,9 +536,17 @@ export default function CompanyDetailsPage() {
       title={company.name}
       onBack={() => router.back()}
       actions={
-        <Button size="sm" onClick={() => setEditOpen(true)} className="active:scale-[0.98]">
-          Edit
-        </Button>
+        company.acumatica_vendor_id ? (
+          <a
+            href={acumaticaVendorUrl(company.acumatica_vendor_id)}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            ERP Linked
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        ) : undefined
       }
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
@@ -687,7 +630,7 @@ export default function CompanyDetailsPage() {
                                   aria-label="Contact actions"
                                   disabled={removingContactId === contact.id}
                                 >
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                  <MoreVertical className="h-3.5 w-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
@@ -926,7 +869,19 @@ export default function CompanyDetailsPage() {
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <p className="shrink-0 text-muted-foreground">Vendor ID</p>
-                    <p className="text-right font-medium text-foreground">{company.acumatica_vendor_id || "—"}</p>
+                    {company.acumatica_vendor_id ? (
+                      <a
+                        href={acumaticaVendorUrl(company.acumatica_vendor_id)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 text-right font-medium text-foreground underline-offset-4 hover:underline"
+                      >
+                        {company.acumatica_vendor_id}
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </a>
+                    ) : (
+                      <p className="text-right font-medium text-foreground">—</p>
+                    )}
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <p className="shrink-0 text-muted-foreground">License Number</p>
@@ -974,85 +929,6 @@ export default function CompanyDetailsPage() {
             </div>
           </aside>
       </div>
-      <Modal open={editOpen} onOpenChange={setEditOpen}>
-        <ModalContent className="sm:max-w-xl">
-          <ModalHeader>
-            <ModalTitle>Edit Company</ModalTitle>
-          </ModalHeader>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-company-name">Name</Label>
-              <Input
-                id="edit-company-name"
-                value={companyForm.name}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-company-address">Address</Label>
-              <Input
-                id="edit-company-address"
-                value={companyForm.address}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, address: e.target.value }))}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit-company-city">City</Label>
-                <Input
-                  id="edit-company-city"
-                  value={companyForm.city}
-                  onChange={(e) => setCompanyForm((prev) => ({ ...prev, city: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-company-state">State</Label>
-                <Input
-                  id="edit-company-state"
-                  value={companyForm.state}
-                  onChange={(e) => setCompanyForm((prev) => ({ ...prev, state: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-company-website">Website</Label>
-              <Input
-                id="edit-company-website"
-                value={companyForm.website}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, website: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-company-license">License Number</Label>
-              <Input
-                id="edit-company-license"
-                value={companyForm.license_number}
-                onChange={(e) => setCompanyForm((prev) => ({ ...prev, license_number: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Status</Label>
-              <Select value={companyForm.status} onValueChange={(value) => setCompanyForm((prev) => ({ ...prev, status: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                  <SelectItem value="INACTIVE">INACTIVE</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <ModalFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isSavingCompany}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveCompany} disabled={isSavingCompany}>
-              {isSavingCompany ? "Saving..." : "Save Changes"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
       <Modal open={addContactOpen} onOpenChange={setAddContactOpen}>
         <ModalContent className="sm:max-w-xl">
@@ -1064,7 +940,7 @@ export default function CompanyDetailsPage() {
           </ModalHeader>
 
           <Tabs value={contactMode} onValueChange={(value) => setContactMode(value as "existing" | "new")}>
-            <TabsList variant="line">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="existing" className="flex-1">Existing Contact</TabsTrigger>
               <TabsTrigger value="new" className="flex-1">Create New</TabsTrigger>
             </TabsList>

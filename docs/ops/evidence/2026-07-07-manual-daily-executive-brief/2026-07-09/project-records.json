@@ -1,0 +1,334 @@
+{
+  "businessDate": "2026-07-09",
+  "count": 14,
+  "projectRecords": [
+    {
+      "projectId": 754,
+      "projectName": "Goodwill Allisonville Rd IN",
+      "healthStatus": "watch",
+      "whatChanged": "Project is moving into closeout while several late-stage coordination items remain open, including loading dock joist RFI response, CAD control-point validation, door hardware pricing, and HVAC closeout documents.",
+      "needsAttention": [
+        "Loading dock joist RFI needs quick response",
+        "HVAC closeout documents due July 24",
+        "CIH door scope needs pricing",
+        "Updated CAD file needs field confirmation",
+        "Progress billing status needs follow-up"
+      ],
+      "openDecisions": [
+        "Confirm door-by-door CIH scope for quote",
+        "Respond to RFI #16 on loading dock joists",
+        "Confirm updated CAD file resolves curb geometry issue"
+      ],
+      "activeRisks": [
+        "Late RFI could affect completion",
+        "Closeout documents gate retainage release",
+        "Survey/CAD mismatch could cause field layout errors"
+      ],
+      "financialRead": "Final retainage for Performance Mechanical is tied to accepted closeout documents; subcontractor also asked about progress billing status. An invoice for Goodwill Allisonville Rd IN was received.",
+      "scheduleRead": "Project is nearing completion with substantial completion set for August 7, 2026; RFI #16 was requested on a quick turnaround.",
+      "fieldRead": "Survey control points and benchmark data were issued, an updated CAD file was sent after missing curb geometry was identified, and a crew is planned for site follow-up.",
+      "confidence": 0.82
+    },
+    {
+      "projectId": 1009,
+      "projectName": "Union Collective",
+      "healthStatus": "watch",
+      "whatChanged": "Preconstruction coordination is active, with landscape compliance revisions, early masonry pricing, storefront bid updates, solar/roof design coordination, and utility package planning underway.",
+      "needsAttention": [
+        "Landscape plan needs cost and code alignment",
+        "Masonry estimate is needed for budget check",
+        "Solar roof layout must be accurate",
+        "Private utility connections need verification",
+        "Complete utility documents need submission"
+      ],
+      "openDecisions": [
+        "Whether to remove excess VUA landscaping",
+        "Whether to pursue horse-style fence waiver",
+        "Finalize bidder-ready landscape plan",
+        "Confirm solar design review inputs"
+      ],
+      "activeRisks": [
+        "Landscape scope may exceed code minimum cost",
+        "Fence waiver approval appears unlikely",
+        "Roof layout errors could affect structural calculations",
+        "Incomplete utility package could delay approvals"
+      ],
+      "financialRead": "Early subcontractor pricing is being gathered to test budget alignment; storefront proposal increased due Low-E glass and longer pull handles, and value engineering was requested from masonry bidders.",
+      "scheduleRead": "Final construction documents are still several weeks away; landscape plan was intended for bidder distribution after near-term review.",
+      "fieldRead": "OAC notes call for site visits to verify private water and sewer connections; solar roof system is being coordinated with structural and electrical review.",
+      "confidence": 0.76
+    },
+    {
+      "projectId": 1031,
+      "projectName": "Ulta Greenwood",
+      "healthStatus": "watch",
+      "whatChanged": "Inspection scope was clarified after rough inspection, with third-party documentation needed for reinforced conveyor-support elements and column support anchors.",
+      "needsAttention": [
+        "Column support anchor inspection needs scheduling",
+        "Roof reinforcement inspection upload needs completion",
+        "Bar joist inspection documentation must satisfy permit requirements"
+      ],
+      "openDecisions": [
+        "Confirm if any additional conveyor inspection is required"
+      ],
+      "activeRisks": [
+        "Permit closeout could be delayed by missing inspection documentation",
+        "Inspection scope confusion could create rework"
+      ],
+      "financialRead": "",
+      "scheduleRead": "Third-party inspection for column support anchors is to be arranged soon; no specific milestone date was provided.",
+      "fieldRead": "Building commissioner clarified inspection expectations for bar joists, reinforced roof support, and column support anchors related to conveyor supports.",
+      "confidence": 0.7
+    },
+    {
+      "projectId": 60,
+      "projectName": "Alleato Finance",
+      "healthStatus": "unknown",
+      "whatChanged": "Sources show routine accounting activity and an unsolicited capital raise outreach, but no construction project operating status.",
+      "needsAttention": [
+        "Review CW waste services statement",
+        "Request invoice copies if needed",
+        "Decide whether to respond to capital raise outreach"
+      ],
+      "openDecisions": [
+        "Whether to explore family office capital conversation"
+      ],
+      "activeRisks": [],
+      "financialRead": "CW sent a current waste services statement; a third party proposed discussing a potential $2M–$35M capital raise.",
+      "scheduleRead": "Capital raise outreach referenced a 60-day investor alignment window.",
+      "fieldRead": "",
+      "confidence": 0.45
+    },
+    {
+      "projectId": 879,
+      "projectName": "McLane Jazz - UT",
+      "healthStatus": "on_track",
+      "whatChanged": "The vertical sprinkler pipe attachment issue appears resolved, with Exotec confirming rear-rack-upright mounting using the standard support and agreed orientation.",
+      "needsAttention": [
+        "Use rear uprights only",
+        "Use Exotec-provided standard support",
+        "Avoid incompatible bolt sizing",
+        "Keep support aligned to prevent bending"
+      ],
+      "openDecisions": [],
+      "activeRisks": [
+        "Front upright attachment conflicts with robot clearance",
+        "1/2-inch bolts are incompatible with 9 mm holes",
+        "Improper elevation could create bending loads"
+      ],
+      "financialRead": "",
+      "scheduleRead": "No schedule impact was stated; final confirmation supports proceeding with installation.",
+      "fieldRead": "Installation direction is to mount vertical sprinkler support 040045-A on rear rack uprights in the approved orientation using Exotec brackets.",
+      "confidence": 0.86
+    },
+    {
+      "projectId": 31,
+      "projectName": "Uniqlo Phillipsburg NJ",
+      "healthStatus": "watch",
+      "whatChanged": "Alleato issued the updated $35,100 fire alarm panel change order with cost breakdown, general conditions, and a revised schedule for UQ review.",
+      "needsAttention": [
+        "UQ leadership approval for the fire alarm change order",
+        "Confirmation of change-order response deadline",
+        "MEP and architectural punch list closeout with photos",
+        "Skypod cutover sequencing with no operational disruption"
+      ],
+      "openDecisions": [
+        "Whether UQ approves the $35,100 fire alarm scope",
+        "When UQ must respond before cost or schedule impact",
+        "Final timing for the one-day Skypod reconnection work"
+      ],
+      "activeRisks": [
+        "Approval delay could affect cost or schedule",
+        "Skypod operations cannot be disrupted",
+        "Landlord is requesting fire alarm panel status",
+        "Punch list documentation remains incomplete"
+      ],
+      "financialRead": "Pending change order totals $35,100, including $10,530 materials, $18,603 labor/installation/programming, and $5,967 design/engineering/permits.",
+      "scheduleRead": "Revised schedule was sent; one additional day is needed after installation to move Skypod from the main panel to the new subpanel.",
+      "fieldRead": "Installation plan is intended to avoid Skypod disruption, with remaining closeout photos needed for punch list items.",
+      "confidence": 0.87
+    },
+    {
+      "projectId": 178,
+      "projectName": "Superior Beverae Exotec",
+      "healthStatus": "watch",
+      "whatChanged": "Permit payment was received, Mack Plumbing registration and insurance documentation are being coordinated, and Exotec raised sprinkler design compliance comments.",
+      "needsAttention": [
+        "Mack Plumbing COI naming the Village as additional insured",
+        "Mack Plumbing state license copy",
+        "Loose-material totals and delivery inventory",
+        "Hy-Tek rack-install sequencing markup",
+        "Sprinkler layout revisions for Exotec requirements"
+      ],
+      "openDecisions": [
+        "Whether to revise to one vertical pipe per bay",
+        "Final pipe and sprinkler head sizes",
+        "Final Phase 1 rack installation and laydown plan"
+      ],
+      "activeRisks": [
+        "Permit issuance depends on contractor registration documents",
+        "Unresolved sprinkler layout comments could delay approval",
+        "Loose material quantities are not yet confirmed",
+        "Grooved coupling leakage responsibility remains unclear"
+      ],
+      "financialRead": "Sprinkler permit fee is $9,620.20 and Mack Plumbing registration fee is $100; payment receipt was confirmed for the permit fee.",
+      "scheduleRead": "Phase 1 rack sequencing and laydown review are pending; permit processing still depends on documentation and final review.",
+      "fieldRead": "Work appears in pre-install coordination, with material logistics and rack-mounted sprinkler layout not yet finalized.",
+      "confidence": 0.8
+    },
+    {
+      "projectId": 1067,
+      "projectName": "Playmakers",
+      "healthStatus": "unknown",
+      "whatChanged": "Orion Electric received the subcontract for signature, and the FRP panel supplier information was provided for potential additional bar wall material.",
+      "needsAttention": [
+        "Orion Electric signed subcontract",
+        "Orion Electric COI and W-9",
+        "Permit approval expected later in the week",
+        "Decision on additional FRP purchase"
+      ],
+      "openDecisions": [
+        "Whether Dale self-installs additional FRP",
+        "Whether additional FRP is added at the bar wall"
+      ],
+      "activeRisks": [
+        "Permit approval is still pending",
+        "Electrical subcontract compliance documents are outstanding"
+      ],
+      "financialRead": "No project cost figures provided; Dale is considering self-installing additional FRP to save money.",
+      "scheduleRead": "Team expects an approved permit later in the week, but no confirmed approval date is provided.",
+      "fieldRead": "Interior finish material coordination is active; no field productivity issues are reported.",
+      "confidence": 0.49
+    },
+    {
+      "projectId": 877,
+      "projectName": "Goodwill Brookville Road",
+      "healthStatus": "watch",
+      "whatChanged": "Submittals from Merritt were uploaded to JobPlanner and sent to the architect, storefront shop drawings were submitted for review, and the excavation subcontract was issued.",
+      "needsAttention": [
+        "Architect approval of uploaded submittals",
+        "Remaining Merritt items for upload and approval",
+        "Storefront shop drawing review",
+        "JT P Excavation signed subcontract and compliance documents",
+        "Accela permit access troubleshooting"
+      ],
+      "openDecisions": [
+        "Whether Accela access issue is resolved",
+        "Whether storefront shop drawings are approved",
+        "Whether excavation can start by August 1"
+      ],
+      "activeRisks": [
+        "Permit-system access issue could slow permit coordination",
+        "Incomplete submittal package remains pending",
+        "Excavation start depends on executed subcontract and documents"
+      ],
+      "financialRead": "No project cost values provided; excavation subcontract administration is in progress.",
+      "scheduleRead": "JT P Excavation was asked to schedule work to begin on or before August 1, 2026; submittal approvals remain pending.",
+      "fieldRead": "Project appears in submittal, subcontract, and permit-access coordination; no field production status is reported.",
+      "confidence": 0.72
+    },
+    {
+      "projectId": 1008,
+      "projectName": "Champaign Ace Addition",
+      "healthStatus": "watch",
+      "whatChanged": "Weekly coordination reported positive momentum, assigned Nick as on-site superintendent, and identified drawing title-block corrections needed for city review.",
+      "needsAttention": [
+        "Revised title blocks with city-compliant stamp box",
+        "Upload corrected plans for city review",
+        "Design firm registration for CR number",
+        "City approval processing",
+        "Updated weekly meeting cadence"
+      ],
+      "openDecisions": [
+        "Whether weekly meetings shift to bi-weekly after July 23",
+        "Timing for city approval after corrected plan upload"
+      ],
+      "activeRisks": [
+        "City review cannot proceed cleanly until corrected drawings are uploaded",
+        "Design firm registration may delay approvals",
+        "Approval timing varies by jurisdiction"
+      ],
+      "financialRead": "",
+      "scheduleRead": "Weekly meetings continue until July 23, then may move to bi-weekly; city review remains dependent on corrected drawings and registration.",
+      "fieldRead": "Nick was assigned as on-site superintendent and main field contact; construction communication structure is being clarified.",
+      "confidence": 0.78
+    },
+    {
+      "projectId": 865,
+      "projectName": "Goodwill Canton, IL",
+      "healthStatus": "unknown",
+      "whatChanged": "Project was identified as an active GW project during transition planning.",
+      "needsAttention": [
+        "Maintain continuity during GW team transition"
+      ],
+      "openDecisions": [],
+      "activeRisks": [],
+      "financialRead": "",
+      "scheduleRead": "",
+      "fieldRead": "",
+      "confidence": 0.25
+    },
+    {
+      "projectId": 876,
+      "projectName": "Exol Morrisville",
+      "healthStatus": "at_risk",
+      "whatChanged": "Revised office layout drawings and outstanding question lists were issued while crews continue onsite and contract edits remain under review.",
+      "needsAttention": [
+        "Expand submittal and procurement logs",
+        "Break schedule into detailed sub-activities",
+        "Track permit milestones against January completion",
+        "Align internally before client communications",
+        "Resolve agreement structure and Exhibit B"
+      ],
+      "openDecisions": [
+        "Exol responses to office layout questions",
+        "Symbotic-related answers from upcoming call",
+        "Agreement applicability across all phases",
+        "Design-build amendment approach for added scope"
+      ],
+      "activeRisks": [
+        "Permit approval delays threaten completion",
+        "Incomplete logs could drive procurement delays",
+        "Unclear questions could frustrate client",
+        "Contract scope structure remains unresolved"
+      ],
+      "financialRead": "No current budget variance was provided; project scale was referenced at $25M and overhead power routing avoids unnecessary underground work concerns.",
+      "scheduleRead": "Crews are expected to remain active over the next few weeks, but the schedule needs more detail and permit milestones to protect January completion.",
+      "fieldRead": "Crews are in the building, electrical contractor mobilization is being coordinated, and charging station power routing was clarified as overhead drops.",
+      "confidence": 0.86
+    },
+    {
+      "projectId": 34,
+      "projectName": "Port Collective",
+      "healthStatus": "unknown",
+      "whatChanged": "Township planning notes on the site plan were forwarded to the project team, but the substantive comments were not included.",
+      "needsAttention": [
+        "Review missing township planning notes",
+        "Address site plan application feedback"
+      ],
+      "openDecisions": [
+        "Response to township comments"
+      ],
+      "activeRisks": [
+        "Application status cannot be judged from available notes"
+      ],
+      "financialRead": "",
+      "scheduleRead": "An application deadline of June 29 was referenced, but current timing status is not shown.",
+      "fieldRead": "",
+      "confidence": 0.28
+    },
+    {
+      "projectId": 38,
+      "projectName": "Niemann Foods TI",
+      "healthStatus": "unknown",
+      "whatChanged": "The owner call was replaced by an onsite meeting with the owner team.",
+      "needsAttention": [],
+      "openDecisions": [],
+      "activeRisks": [],
+      "financialRead": "",
+      "scheduleRead": "",
+      "fieldRead": "Alleato planned to meet the owner team onsite at 1:00 central.",
+      "confidence": 0.32
+    }
+  ]
+}

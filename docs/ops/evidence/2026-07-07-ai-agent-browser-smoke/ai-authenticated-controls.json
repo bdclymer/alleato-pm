@@ -1,0 +1,262 @@
+[
+  {
+    "index": 0,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Project",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 1,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "View Company Tools",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 2,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Toggle Sidebar",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 3,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Expand sidebar",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 4,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": "combobox",
+    "aria": null,
+    "placeholder": null,
+    "text": "Select Project",
+    "disabled": false
+  },
+  {
+    "index": 5,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": null,
+    "placeholder": null,
+    "text": "Alleato AI",
+    "disabled": false
+  },
+  {
+    "index": 6,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Share feedback",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 7,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Discussion",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 8,
+    "tag": "BUTTON",
+    "type": null,
+    "role": null,
+    "aria": "Notifications",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 9,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Open user menu",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 10,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Open menu",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 11,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Open chat history",
+    "placeholder": null,
+    "text": "Chat history",
+    "disabled": false
+  },
+  {
+    "index": 12,
+    "tag": "INPUT",
+    "type": "file",
+    "role": null,
+    "aria": "Upload files",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 13,
+    "tag": "TEXTAREA",
+    "type": null,
+    "role": null,
+    "aria": null,
+    "placeholder": "Ask anything…",
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 14,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": null,
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 15,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Paste from clipboard",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 16,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Start voice input",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 17,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Select project context",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 18,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": "switch",
+    "aria": "Turn on council mode",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 19,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": "Select model",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  },
+  {
+    "index": 20,
+    "tag": "BUTTON",
+    "type": "submit",
+    "role": null,
+    "aria": "Submit",
+    "placeholder": null,
+    "text": "",
+    "disabled": true
+  },
+  {
+    "index": 21,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": null,
+    "placeholder": null,
+    "text": "Project status report",
+    "disabled": false
+  },
+  {
+    "index": 22,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": null,
+    "placeholder": null,
+    "text": "Draft an RFI",
+    "disabled": false
+  },
+  {
+    "index": 23,
+    "tag": "BUTTON",
+    "type": "button",
+    "role": null,
+    "aria": null,
+    "placeholder": null,
+    "text": "Create change request",
+    "disabled": false
+  },
+  {
+    "index": 24,
+    "tag": "BUTTON",
+    "type": null,
+    "role": null,
+    "aria": "Open issues overlay",
+    "placeholder": null,
+    "text": "-10 Issue",
+    "disabled": false
+  },
+  {
+    "index": 25,
+    "tag": "BUTTON",
+    "type": null,
+    "role": null,
+    "aria": "Collapse issues badge",
+    "placeholder": null,
+    "text": "",
+    "disabled": false
+  }
+]

@@ -14,12 +14,34 @@ export interface KnowledgeDocument {
   category: string | null;
   source: string | null;
   status: string | null;
-  tags: string | null; // comma-separated string (NOT string[])
+  tags: string[] | null;
   date: string | null;
   file_name: string | null;
   file_path: string | null;
   project_id: number | null;
   created_at: string | null;
+}
+
+type KnowledgeDocumentApiRow = Omit<KnowledgeDocument, "tags"> & {
+  tags: string[] | string | null;
+};
+
+export function normalizeKnowledgeDocumentTags(
+  raw: string[] | string | null | undefined,
+): string[] | null {
+  if (raw == null) return null;
+
+  const tags = Array.isArray(raw) ? raw : raw.split(/[,;]/);
+  const cleaned = tags.map((tag) => String(tag).trim()).filter(Boolean);
+
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function normalizeKnowledgeDocument(row: KnowledgeDocumentApiRow): KnowledgeDocument {
+  return {
+    ...row,
+    tags: normalizeKnowledgeDocumentTags(row.tags),
+  };
 }
 
 export interface KnowledgeDocumentFilters {
@@ -57,11 +79,11 @@ export function useKnowledgeDocuments(filters?: KnowledgeDocumentFilters) {
   return useQuery({
     queryKey: knowledgeDocumentKeys.list(filters),
     queryFn: async ({ signal }): Promise<KnowledgeDocument[]> => {
-      const json = await apiFetch<{ data: KnowledgeDocument[] }>(
+      const json = await apiFetch<{ data: KnowledgeDocumentApiRow[] }>(
         `/api/knowledge?${params.toString()}`,
         { signal },
       );
-      return json.data;
+      return json.data.map(normalizeKnowledgeDocument);
     },
   });
 }

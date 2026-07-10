@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Phone,
   Users,
+  X,
 } from "lucide-react"
 
 import {
@@ -45,11 +46,11 @@ import {
   developerCompanyAdminTools,
   buildToolUrl,
   extractProjectId,
-  OWNER_EMAIL,
+  filterToolsByPermission,
   type NavigationTool,
   type SidebarNavGroup,
 } from "@/lib/navigation-config"
-import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
+import { useProjectPermissions } from "@/hooks/use-project-permissions"
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile"
 import { ProjectSelector } from "@/components/header/project-selector"
 import { useHeaderNav } from "@/components/header/use-header-nav"
@@ -241,20 +242,32 @@ function ExpandedNavGroup({
   isOpen: boolean
   onToggle: () => void
 }) {
+  const { isMobile, setOpenMobile } = useSidebar()
+  const closeMobileSidebar = React.useCallback(() => {
+    if (isMobile) setOpenMobile(false)
+  }, [isMobile, setOpenMobile])
+
   return (
-    <div className="flex flex-col mt-2.5 first:mt-0.5 md:mt-4 md:first:mt-1">
+    <div className={cn("flex flex-col", isMobile ? "mt-4 first:mt-1" : "mt-2.5 first:mt-0.5 md:mt-4 md:first:mt-1")}>
       <Button
         type="button"
         variant="ghost"
         onClick={onToggle}
-        className="h-auto w-full justify-between rounded-md px-2 pb-1 pt-0 text-left hover:bg-transparent"
+        className={cn(
+          "h-auto w-full justify-between rounded-md text-left hover:bg-transparent",
+          isMobile ? "px-3 pb-2 pt-0" : "px-2 pb-1 pt-0"
+        )}
       >
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+        <span className={cn(
+          "text-[10px] font-semibold uppercase tracking-widest",
+          isMobile ? "text-neutral-400" : "text-sidebar-foreground/50"
+        )}>
           {group.label}
         </span>
         <ChevronDown
           className={cn(
-            "h-3 w-3 text-sidebar-foreground/40 transition-transform duration-200",
+            "h-3 w-3 transition-transform duration-200",
+            isMobile ? "text-neutral-500" : "text-sidebar-foreground/40",
             isOpen ? "rotate-0" : "-rotate-90"
           )}
           strokeWidth={2.5}
@@ -267,7 +280,7 @@ function ExpandedNavGroup({
         )}
       >
         <div className="overflow-hidden">
-          <div className="flex flex-col gap-0 pb-1 md:gap-0.5">
+          <div className={cn("flex flex-col pb-1", isMobile ? "gap-1" : "gap-0 md:gap-0.5")}>
             {tools.map((tool) => {
               const isExternal = tool.path.startsWith("http")
               const href = isExternal
@@ -280,10 +293,15 @@ function ExpandedNavGroup({
                 (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
               const Icon = tool.icon
               const linkClass = cn(
-                "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
+                "flex items-center gap-2 rounded-md transition-colors duration-150",
+                isMobile ? "px-3 py-2.5 text-[13px]" : "px-2 py-1.5 text-xs",
                 isActive
-                  ? "font-medium text-sidebar-foreground"
-                  : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  ? isMobile
+                    ? "bg-primary text-primary-foreground font-medium"
+                    : "font-medium text-sidebar-foreground"
+                  : isMobile
+                    ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
+                    : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )
 
               return isExternal ? (
@@ -291,19 +309,21 @@ function ExpandedNavGroup({
                   key={`${tool.path}:${tool.name}`}
                   href={href}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className={linkClass}
-                >
-                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                rel="noopener noreferrer"
+                className={linkClass}
+                onClick={closeMobileSidebar}
+              >
+                  {Icon && <Icon className={cn("shrink-0", isMobile ? "h-4 w-4" : "h-3.5 w-3.5")} strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </a>
               ) : (
                 <Link
                   key={`${tool.path}:${tool.name}`}
-                  href={href}
-                  className={linkClass}
-                >
-                  {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                href={href}
+                className={linkClass}
+                onClick={closeMobileSidebar}
+              >
+                  {Icon && <Icon className={cn("shrink-0", isMobile ? "h-4 w-4" : "h-3.5 w-3.5")} strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </Link>
               )
@@ -316,21 +336,23 @@ function ExpandedNavGroup({
 }
 
 function ExpandedCompanyWideTools({
-  tools,
   visibleTools,
   projectId,
   pathname,
   onBack,
   projectSelector,
 }: {
-  tools: NavigationTool[]
   visibleTools: NavigationTool[]
   projectId: number | null
   pathname: string
   onBack: () => void
   projectSelector?: React.ReactNode
 }) {
-  const visibleToolSet = React.useMemo(() => new Set(visibleTools), [visibleTools])
+  const { isMobile, setOpenMobile } = useSidebar()
+  const closeMobileSidebar = React.useCallback(() => {
+    if (isMobile) setOpenMobile(false)
+  }, [isMobile, setOpenMobile])
+
   // Only the named Company-wide sections render. The single Admin Dashboard
   // link lives at the end of the "Company" section; other internal admin tools
   // are reachable from the Admin Dashboard page itself.
@@ -343,14 +365,22 @@ function ExpandedCompanyWideTools({
           type="button"
           variant="ghost"
           onClick={onBack}
-          className="mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-        >
+            className={cn(
+              "mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium",
+              isMobile
+                ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
+                : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+            )}
+          >
           <ChevronsLeft className="h-3.5 w-3.5" strokeWidth={1.6} />
           Project tools
         </Button>
       ) : (
         <div className="mb-4 space-y-2 px-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+          <span className={cn(
+            "text-[10px] font-semibold uppercase tracking-widest",
+            isMobile ? "text-neutral-400" : "text-sidebar-foreground/50"
+          )}>
             Select a project
           </span>
           {projectSelector}
@@ -358,19 +388,20 @@ function ExpandedCompanyWideTools({
       )}
       {sections.map((section) => {
         const sectionTools = section.toolNames
-          .map((toolName) => tools.find((tool) => tool.name === toolName))
+          .map((toolName) => visibleTools.find((tool) => tool.name === toolName))
           .filter((tool): tool is NavigationTool => Boolean(tool))
-          // Owner-only tools are hidden outright (not greyed) for non-owners.
-          .filter((tool) => !tool.ownerOnly || visibleToolSet.has(tool))
 
         if (sectionTools.length === 0) return null
 
         return (
           <div key={section.label} className="flex flex-col mt-4 first:mt-0">
-            <span className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
+            <span className={cn(
+              "px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest",
+              isMobile ? "text-neutral-400" : "text-sidebar-foreground/50"
+            )}>
               {section.label}
             </span>
-            <div className="flex flex-col gap-0.5 pb-1">
+            <div className={cn("flex flex-col pb-1", isMobile ? "gap-1" : "gap-0.5")}>
               {sectionTools.map((tool) => {
                 const isExternal = tool.path.startsWith("http")
                 const href = isExternal
@@ -382,13 +413,15 @@ function ExpandedCompanyWideTools({
                   !isExternal &&
                   (pathname === href || (href !== "/" && pathname.startsWith(`${href}/`)))
                 const Icon = tool.icon
-                const isDisabled = !visibleToolSet.has(tool)
                 const linkClass = cn(
-                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors duration-150",
-                  isDisabled
-                    ? "pointer-events-none opacity-30"
-                    : isActive
-                      ? "font-medium text-sidebar-foreground"
+                  "flex items-center gap-2 rounded-md transition-colors duration-150",
+                  isMobile ? "px-3 py-2.5 text-[13px]" : "px-2 py-1.5 text-xs",
+                  isActive
+                    ? isMobile
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "font-medium text-sidebar-foreground"
+                    : isMobile
+                      ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
                       : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                 )
 
@@ -399,8 +432,9 @@ function ExpandedCompanyWideTools({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={linkClass}
+                    onClick={closeMobileSidebar}
                   >
-                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                    {Icon && <Icon className={cn("shrink-0", isMobile ? "h-4 w-4" : "h-3.5 w-3.5")} strokeWidth={1.5} />}
                     <span className="truncate">{tool.name}</span>
                   </a>
                 ) : (
@@ -408,8 +442,9 @@ function ExpandedCompanyWideTools({
                     key={`${tool.path}:${tool.name}`}
                     href={href}
                     className={linkClass}
+                    onClick={closeMobileSidebar}
                   >
-                    {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
+                    {Icon && <Icon className={cn("shrink-0", isMobile ? "h-4 w-4" : "h-3.5 w-3.5")} strokeWidth={1.5} />}
                     <span className="truncate">{tool.name}</span>
                   </Link>
                 )
@@ -492,7 +527,7 @@ function CompanyWideToolsButton({
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()! ?? ""
   const router = useRouter()
-  const { state, isMobile } = useSidebar()
+  const { state, isMobile, setOpenMobile } = useSidebar()
 
   const [isHovering, setIsHovering] = React.useState(false)
   const [user, setUser] = React.useState<User | null>(null)
@@ -548,27 +583,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Header nav hook for project selector
   const nav = useHeaderNav()
+  const mobileProjectLabel = nav.currentProject?.name || "Select a project"
+  const mobileProjectMeta = nav.currentProject?.["job number"]
+    ? `Job ${nav.currentProject["job number"]}`
+    : "Project tools"
 
   const isSubcontractor = userType === "subcontractor"
   // Filter tools by permission
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {
-      return tools.filter((tool) => {
-        if (tool.ownerOnly && user?.email !== OWNER_EMAIL) return false
-        if (tool.onlyWithoutProject && projectId) return false;
-        if (tool.requiresProject && !projectId) return false
-        if (tool.developerOnly && !isDeveloper) return false
-        if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
-        // Subcontractor-only tools: only show for subcontractors
-        if (tool.subcontractorOnly && !isSubcontractor) return false
-        // Hide subcontractor-only tools from non-subcontractors (already handled above)
-        if (tool.module && projectId) {
-          return hasModulePermission(permissions, tool.module, tool.requiredPermission || "read")
-        }
-        return true
-      })
+      return filterToolsByPermission(
+        tools,
+        projectId,
+        permissions,
+        isAppAdmin,
+        userType,
+        isDeveloper,
+        user?.email ?? null,
+        {
+          isAdmin: currentUserProfile?.isAdmin,
+          isDeveloper,
+          role: currentUserProfile?.role,
+          title: currentUserProfile?.title,
+          userType,
+        },
+      )
     },
-    [projectId, permissions, isAppAdmin, userType, isSubcontractor, isDeveloper, user?.email]
+    [
+      currentUserProfile?.isAdmin,
+      currentUserProfile?.role,
+      currentUserProfile?.title,
+      isAppAdmin,
+      isDeveloper,
+      permissions,
+      projectId,
+      user?.email,
+      userType,
+    ]
   )
 
   // Check if a group has any active child
@@ -618,12 +669,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   )
 
   // Collapsible section state for project-scoped sidebar groups.
-  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(() => {
-    const initialProjectId = extractProjectId(pathname ?? "")
-    return initialProjectId
-      ? new Set(["project"])
-      : new Set(["project"])
-  })
+  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(new Set())
+  const initializedGroupKeyRef = React.useRef<string | null>(null)
+  const filteredGroupKey = React.useMemo(
+    () => filteredGroups.map((group) => group.id).join("|"),
+    [filteredGroups]
+  )
 
   const toggleGroup = React.useCallback((groupId: string) => {
     setOpenGroupIds((prev) => {
@@ -633,6 +684,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return next
     })
   }, [])
+
+  // Default every visible section open once the permission-filtered nav is known.
+  // User collapse choices are preserved until the set of visible groups changes.
+  React.useEffect(() => {
+    if (!filteredGroupKey || initializedGroupKeyRef.current === filteredGroupKey) return
+
+    initializedGroupKeyRef.current = filteredGroupKey
+    setOpenGroupIds(new Set(filteredGroups.map((group) => group.id)))
+  }, [filteredGroups, filteredGroupKey])
 
   // Auto-expand the group that contains the active route
   React.useEffect(() => {
@@ -671,11 +731,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       collapsible="icon"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      className={cn(isMobile && "bg-neutral-800 text-neutral-100 shadow-2xl")}
       data-hover-expanded={isHovering && !isPinned ? "true" : undefined}
       {...props}
     >
       {/* ── Header ── */}
-      <SidebarHeader className="px-0 pb-4 pt-5">
+      <SidebarHeader
+        className={cn(
+          isMobile
+            ? "bg-neutral-800 px-5 pb-4 pt-5 text-neutral-100"
+            : "px-0 pb-4 pt-5"
+        )}
+      >
         {isCollapsed ? (
           // Collapsed: logo icon only
           <div className="flex flex-col items-center gap-4">
@@ -690,12 +757,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </Link>
           </div>
         ) : (
-          // Expanded: favicon only
-          <div className="flex flex-col gap-3">
-            <div className="flex h-7 items-center pl-6 pr-2">
+          <div className={cn("flex flex-col", isMobile ? "gap-5" : "gap-3")}>
+            <div className={cn("flex h-7 items-center", isMobile ? "justify-between" : "pl-6 pr-2")}>
               <Link
                 href="/"
                 className="flex items-center rounded-md transition-opacity hover:opacity-80"
+                onClick={() => {
+                  if (isMobile) setOpenMobile(false)
+                }}
               >
                 <Image
                   src="/alleato-favicon.png"
@@ -705,18 +774,67 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="shrink-0 rounded"
                 />
               </Link>
+              {isMobile && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Close navigation"
+                  onClick={() => setOpenMobile(false)}
+                  className="h-8 w-8 rounded-md text-neutral-400 hover:bg-neutral-700/70 hover:text-neutral-50"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.7} />
+                </Button>
+              )}
             </div>
+            {isMobile && (
+              <div className="flex items-center gap-3">
+                <HeaderUserMenu
+                  user={user}
+                  projectId={projectId}
+                  activeToolName=""
+                  permissions={permissions}
+                  isAppAdmin={isAppAdmin}
+                  userType={userType}
+                />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-neutral-50">
+                    {mobileDisplayName}
+                  </div>
+                  <div className="truncate text-xs text-neutral-400">
+                    {mobileProjectLabel}
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Keep project selector only for mobile sidebar drawer */}
-            <div className="md:hidden">
+            <div className={cn(
+              "md:hidden",
+              "[&_.project-selector-trigger]:w-full",
+              "[&_.project-selector-trigger]:border-neutral-700",
+              "[&_.project-selector-trigger]:bg-neutral-900/60",
+              "[&_.project-selector-trigger]:text-neutral-100",
+              "[&_.project-selector-trigger]:hover:bg-neutral-700/70",
+              "[&_.project-selector-trigger_*]:text-neutral-300"
+            )}>
               <ProjectSelector
                 projectId={nav.projectId}
                 currentProject={nav.currentProject}
                 projects={nav.projects}
                 loadingProjects={nav.loadingProjects}
                 onFetchProjects={nav.fetchProjects}
-                onProjectSelect={nav.handleProjectSelect}
-                onViewAll={() => router.push("/")}
+                onProjectSelect={(nextProjectId) => {
+                  nav.handleProjectSelect(nextProjectId)
+                  setOpenMobile(false)
+                }}
+                onViewAll={() => {
+                  setOpenMobile(false)
+                  router.push("/")
+                }}
               />
+              <div className="mt-1 truncate px-1 text-[11px] text-neutral-500">
+                {mobileProjectMeta}
+              </div>
             </div>
           </div>
         )}
@@ -725,7 +843,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Content ── */}
       <SidebarContent
         className={cn(
-          isCollapsed ? "items-center pl-1 pr-0 py-2" : "px-3 py-1",
+          isCollapsed
+            ? "items-center pl-1 pr-0 py-2"
+            : isMobile
+              ? "bg-neutral-800 px-5 py-1 text-neutral-100"
+              : "px-3 py-1",
           "group-data-[hover-expanded=true]:overflow-y-auto"
         )}
       >
@@ -783,7 +905,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="flex flex-col">
             {showCompanyWideTools ? (
               <ExpandedCompanyWideTools
-                tools={companyWideTools}
                 visibleTools={visibleCompanyWideTools}
                 projectId={projectId}
                 pathname={pathname}
@@ -816,13 +937,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   />
                 ))}
                 {visibleCompanyWideTools.length > 0 && (
-                  <div className="mt-4 border-t border-sidebar-border/70 pt-3">
+                  <div className={cn(
+                    "mt-4 pt-3",
+                    isMobile ? "border-t border-neutral-700" : "border-t border-sidebar-border/70"
+                  )}>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowCompanyWideTools(true)}
-                      className="h-8 w-full justify-start gap-2 px-2 text-xs font-medium text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                      className={cn(
+                        "h-9 w-full justify-start gap-2 px-3 text-xs font-medium",
+                        isMobile
+                          ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
+                          : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                      )}
                     >
                       <Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                       <span className="truncate">View Company Tools</span>
@@ -838,23 +967,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* User row — mobile sidebar only */}
       {isMobile && (
-        <SidebarFooter className="border-t border-border/50 px-3 py-2.5">
-          <div className="flex items-center gap-2.5">
-            <HeaderUserMenu
-              user={user}
-              projectId={projectId}
-              activeToolName=""
-              permissions={permissions}
-              isAppAdmin={isAppAdmin}
-              userType={userType}
-            />
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium text-foreground">{mobileDisplayName}</span>
-              {user?.email && (
-                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-              )}
-            </div>
-          </div>
+        <SidebarFooter className="border-t border-neutral-700 bg-neutral-800 px-5 py-4 text-neutral-100">
+          <Link
+            href="/settings/profile"
+            onClick={() => setOpenMobile(false)}
+            className="flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700/70 hover:text-neutral-50"
+          >
+            <Users className="h-4 w-4" strokeWidth={1.5} />
+            <span className="truncate">{user?.email || mobileDisplayName}</span>
+          </Link>
         </SidebarFooter>
       )}
 

@@ -2,11 +2,24 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
-import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
+import {
+  renderPdfFromHtml,
+  buildChangeEventHtml,
+  buildChangeEventFooterPlan,
+} from "@/lib/documents/pdf";
+import { resolveLineItemCommitmentNumbers } from "@/lib/change-events/resolve-line-item-commitment-numbers";
 
 // Puppeteer requires the Node.js runtime — Edge runtime does not support it.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function extractProjectCity(summaryMetadata: unknown): string | null {
+  if (!summaryMetadata || typeof summaryMetadata !== "object" || Array.isArray(summaryMetadata)) {
+    return null;
+  }
+  const record = summaryMetadata as Record<string, unknown>;
+  return typeof record.city === "string" ? record.city : null;
+}
 
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/pdf#GET",
@@ -33,7 +46,10 @@ export const GET = withApiGuardrails(
           unit_cost,
           revenue_rom,
           cost_rom,
+          latest_price,
           non_committed_cost,
+          commitment_id,
+          commitment_type,
           budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
             id,
             description,
@@ -41,6 +57,10 @@ export const GET = withApiGuardrails(
               id,
               title,
               division_title
+            ),
+            cost_type:cost_code_types!cost_type_id(
+              code,
+              description
             )
           ),
           vendor:companies!vendor_id(id, name)
@@ -58,7 +78,7 @@ export const GET = withApiGuardrails(
 
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, project_number, address, state")
+      .select("id, name, project_number, address, state, summary_metadata")
       .eq("id", projectIdNum)
       .single();
 
@@ -80,9 +100,32 @@ export const GET = withApiGuardrails(
     }
 
     const lineItems = changeEvent.change_event_line_items || [];
-    const mappedProject = project ? { ...project, number: project.project_number } : null;
-    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
-    const pdfBuffer = await renderPdfFromHtml(htmlContent);
+    const commitmentMap = await resolveLineItemCommitmentNumbers(
+      supabase,
+      lineItems.map((item) => ({
+        commitment_id: item.commitment_id,
+        commitment_type: item.commitment_type,
+      })),
+    );
+    const lineItemsWithCommitment = lineItems.map((item) => ({
+      ...item,
+      commitment: item.commitment_id ? commitmentMap.get(item.commitment_id) ?? null : null,
+    }));
+    const mappedProject = project
+      ? {
+          ...project,
+          city: extractProjectCity(project.summary_metadata),
+          number: project.project_number,
+        }
+      : null;
+    const htmlContent = buildChangeEventHtml(
+      { ...changeEvent, creator },
+      lineItemsWithCommitment,
+      mappedProject,
+    );
+    const pdfBuffer = await renderPdfFromHtml(htmlContent, {
+      footerOverlayPlan: buildChangeEventFooterPlan(changeEvent),
+    });
 
     const ceNumber = changeEvent.number || changeEvent.id;
     return new NextResponse(Buffer.from(pdfBuffer), {

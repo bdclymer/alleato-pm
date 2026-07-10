@@ -1,4 +1,9 @@
-import { getCollaborationNotificationHref } from "../notification-links";
+import {
+  getCollaborationNotificationHref,
+  getCommentDiscussionHref,
+  getCommentFollowUpAction,
+  getCommentTeamChatHref,
+} from "../notification-links";
 
 describe("collaboration notification links", () => {
   it("routes submittal notifications to the submittals detail page", () => {
@@ -39,5 +44,41 @@ describe("collaboration notification links", () => {
         entityId: "sub-1",
       }),
     ).toBe("/team-chat");
+  });
+
+  it("routes comment activity into the source page discussion sheet", () => {
+    expect(getCommentDiscussionHref("/team-chat", "annotation-1")).toBe(
+      "/team-chat?discussion=annotation-1",
+    );
+  });
+
+  it("falls back to the comments workspace when no source route exists", () => {
+    expect(getCommentDiscussionHref("", "annotation-1")).toBe(
+      "/comments?thread=annotation-1",
+    );
+  });
+
+  it("routes comment follow-up into team chat with the discussion id preserved", () => {
+    expect(getCommentTeamChatHref("annotation-1")).toBe(
+      "/team-chat?discussion=annotation-1",
+    );
+  });
+
+  it("falls back to the comments workspace when there is no discussion id", () => {
+    expect(getCommentTeamChatHref(null)).toBe("/comments");
+  });
+
+  it("returns the visible follow-up action for comment replies", () => {
+    expect(getCommentFollowUpAction("annotation-1")).toEqual({
+      href: "/team-chat?discussion=annotation-1",
+      label: "Team chat",
+    });
+  });
+
+  it("falls back to the comments workspace follow-up when the discussion id is missing", () => {
+    expect(getCommentFollowUpAction(null)).toEqual({
+      href: "/comments",
+      label: "Comments workspace",
+    });
   });
 });

@@ -75,7 +75,6 @@ import {
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { ALL_GRANULAR_FLAGS, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
   GranularFlag,
   PermissionLevel,
@@ -89,13 +88,15 @@ import {
   fetchUsers,
   formatProjectCount,
   toAccessSummary,
-  type PermissionUsersAccess,
   type TemplateScope,
   type UserAccessSummary,
   type UserLinkDiagnostic,
 } from "./_lib/user-access-data";
 
-type PermissionsTab = "app-users" | "project-access" | "project-templates" | "company-templates";
+type PermissionsTab =
+  | "app-users"
+  | "project-templates"
+  | "company-templates";
 type AccessScope = "all_projects" | "selected_projects";
 
 type ProjectOption = {
@@ -112,27 +113,302 @@ type EmployeeOption = {
   jobTitle: string | null;
 };
 
-const TEMPLATE_MODULES: Array<{ key: PermissionModule; label: string }> = [
-  { key: "directory", label: "Directory" },
-  { key: "budget", label: "Budget" },
-  { key: "contracts", label: "Contracts" },
-  { key: "documents", label: "Documents" },
-  { key: "schedule", label: "Schedule" },
-  { key: "submittals", label: "Submittals" },
-  { key: "rfis", label: "RFIs" },
-  { key: "change_orders", label: "Change Orders" },
+const USER_TYPE_OPTIONS = [
+  { value: "employee", label: "Employee" },
+  { value: "user", label: "User" },
+  { value: "subcontractor", label: "Subcontractor" },
+  { value: "contact", label: "Contact" },
 ];
 
-const TEMPLATE_LEVELS: Array<{ key: PermissionLevel; label: string }> = [
-  { key: "none", label: "None" },
-  { key: "read", label: "Read" },
-  { key: "write", label: "Write" },
-  { key: "admin", label: "Admin" },
-];
+const HIDE_TEAMS_DEFAULT_MIGRATION_KEY =
+  "permissions-users:hide-teams-default:v1";
+
+function splitEditableFullName(value: string) {
+  const parts = value.trim().replace(/\s+/g, " ").split(" ").filter(Boolean);
+  if (parts.length <= 1) {
+    return { first_name: parts[0] ?? "Unnamed", last_name: "" };
+  }
+
+  return {
+    first_name: parts.slice(0, -1).join(" "),
+    last_name: parts.at(-1) ?? "",
+  };
+}
+
+function formatUserType(value: string | null | undefined) {
+  const normalized = value?.trim();
+  if (!normalized) return "Unknown";
+
+  return normalized
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function serializeProjectMembershipEdit(
+  memberships: UserAccessSummary["memberships"],
+) {
+  const templatesByProjectId = Object.fromEntries(
+    memberships.map((membership) => [
+      String(membership.projectId),
+      membership.templateId ?? "",
+    ]),
+  );
+
+  return JSON.stringify({
+    projectIds: memberships.map((membership) => String(membership.projectId)),
+    templateId:
+      memberships.find((membership) => Boolean(membership.templateId))
+        ?.templateId ?? "",
+    templatesByProjectId,
+  });
+}
+
+function parseProjectMembershipEdit(value: string) {
+  try {
+    const parsed = JSON.parse(value) as {
+      projectIds?: unknown;
+      templateId?: unknown;
+      templatesByProjectId?: unknown;
+    };
+    const fallbackTemplateId =
+      typeof parsed.templateId === "string" ? parsed.templateId : "";
+    const rawTemplatesByProjectId =
+      parsed.templatesByProjectId &&
+      typeof parsed.templatesByProjectId === "object"
+        ? (parsed.templatesByProjectId as Record<string, unknown>)
+        : {};
+    const templatesByProjectId = Object.fromEntries(
+      Object.entries(rawTemplatesByProjectId).map(([projectId, templateId]) => [
+        projectId,
+        typeof templateId === "string" ? templateId : fallbackTemplateId,
+      ]),
+    );
+
+    return {
+      projectIds: Array.isArray(parsed.projectIds)
+        ? parsed.projectIds.map(String).filter(Boolean)
+        : [],
+      templateId: fallbackTemplateId,
+      templatesByProjectId,
+    };
+  } catch {
+    return { projectIds: [], templateId: "", templatesByProjectId: {} };
+  }
+}
+
+function ProjectMembershipInlineEditor({
+  value,
+  projects,
+  projectTemplates,
+  onCommit,
+  onCancel,
+}: {
+  value: string;
+  projects: ProjectOption[];
+  projectTemplates: PermissionTemplate[];
+  onCommit: (value: string) => void;
+  onCancel: () => void;
+}) {
+  const initialValue = useMemo(
+    () => parseProjectMembershipEdit(value),
+    [value],
+  );
+  const availableProjectTemplateIds = useMemo(
+    () => new Set(projectTemplates.map((template) => template.id)),
+    [projectTemplates],
+  );
+  const defaultTemplateId = projectTemplates[0]?.id ?? "";
+  const resolveProjectTemplateId = (templateId: string | undefined) =>
+    templateId && availableProjectTemplateIds.has(templateId)
+      ? templateId
+      : defaultTemplateId;
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(
+    initialValue.projectIds,
+  );
+  const [templatesByProjectId, setTemplatesByProjectId] = useState<
+    Record<string, string>
+  >(
+    Object.fromEntries(
+      initialValue.projectIds.map((projectId) => [
+        projectId,
+        resolveProjectTemplateId(
+          initialValue.templatesByProjectId[projectId] ||
+            initialValue.templateId,
+        ),
+      ]),
+    ),
+  );
+
+  const selectedCount = selectedProjectIds.length;
+  const selectedProjects = selectedProjectIds
+    .map((projectId) =>
+      projects.find((project) => String(project.id) === projectId),
+    )
+    .filter((project): project is ProjectOption => Boolean(project));
+
+  const toggleProject = (projectId: string) => {
+    setSelectedProjectIds((current) => {
+      if (current.includes(projectId)) {
+        return current.filter((id) => id !== projectId);
+      }
+
+      setTemplatesByProjectId((currentTemplates) => ({
+        ...currentTemplates,
+        [projectId]: resolveProjectTemplateId(
+          currentTemplates[projectId] ||
+            initialValue.templatesByProjectId[projectId] ||
+            initialValue.templateId,
+        ),
+      }));
+      return [...current, projectId];
+    });
+  };
+
+  const setProjectTemplate = (projectId: string, templateId: string) => {
+    setTemplatesByProjectId((current) => ({
+      ...current,
+      [projectId]: templateId,
+    }));
+  };
+
+  const commit = () => {
+    const selectedTemplatesByProjectId = Object.fromEntries(
+      selectedProjectIds.map((projectId) => [
+        projectId,
+        resolveProjectTemplateId(templatesByProjectId[projectId]),
+      ]),
+    );
+
+    onCommit(
+      JSON.stringify({
+        projectIds: selectedProjectIds,
+        templateId: "",
+        templatesByProjectId: selectedTemplatesByProjectId,
+      }),
+    );
+  };
+
+  return (
+    <div className="flex min-w-96 items-center gap-2">
+      <Popover defaultOpen>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-w-48 justify-between"
+          >
+            {selectedCount === 0
+              ? "Select projects"
+              : `${selectedCount} ${selectedCount === 1 ? "project" : "projects"}`}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-screen max-w-2xl p-0">
+          <div className="flex divide-x">
+            <div className="min-w-0 flex-1">
+              <Command>
+                <CommandInput placeholder="Search projects..." />
+                <CommandEmpty>No projects found.</CommandEmpty>
+                <CommandGroup className="max-h-80 overflow-y-auto">
+                  {projects.map((project) => {
+                    const projectId = String(project.id);
+                    const selected = selectedProjectIds.includes(projectId);
+
+                    return (
+                      <CommandItem
+                        key={project.id}
+                        value={`${project.name} ${project.jobNumber ?? ""}`}
+                        onSelect={() => toggleProject(projectId)}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selected ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        <span className="truncate">
+                          {project.jobNumber
+                            ? `${project.jobNumber} - ${project.name}`
+                            : project.name}
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </Command>
+            </div>
+
+            <div className="max-h-80 min-w-0 flex-1 space-y-2 overflow-y-auto p-3">
+              {selectedProjects.length === 0 ? (
+                <p className="px-1 py-6 text-sm text-muted-foreground">
+                  Select projects to assign templates.
+                </p>
+              ) : (
+                selectedProjects.map((project) => {
+                  const projectId = String(project.id);
+
+                  return (
+                    <div key={project.id} className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                        {project.jobNumber
+                          ? `${project.jobNumber} - ${project.name}`
+                          : project.name}
+                      </span>
+                      <Select
+                        value={templatesByProjectId[projectId] ?? ""}
+                        onValueChange={(templateId) =>
+                          setProjectTemplate(projectId, templateId)
+                        }
+                      >
+                        <SelectTrigger className="h-8 w-48">
+                          <SelectValue placeholder="Template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projectTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      <Button
+        type="button"
+        size="sm"
+        onClick={commit}
+        disabled={selectedProjectIds.some(
+          (projectId) =>
+            !availableProjectTemplateIds.has(
+              templatesByProjectId[projectId] ?? "",
+            ),
+        )}
+      >
+        Save
+      </Button>
+      <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+        Cancel
+      </Button>
+    </div>
+  );
+}
 
 async function fetchProjects(): Promise<ProjectOption[]> {
   const { data } = await apiFetch<{
-    data: Array<{ id: number; name: string | null; "job number"?: string | null }>;
+    data: Array<{
+      id: number;
+      name: string | null;
+      "job number"?: string | null;
+    }>;
   }>("/api/projects?limit=500");
 
   return data.map((project) => ({
@@ -171,7 +447,11 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
     case "personType":
       return user.personType;
     case "teams":
-      return user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "";
+      return (
+        user.teamsAccount?.displayName ??
+        user.teamsAccount?.platformUserId ??
+        ""
+      );
     case "projects":
       return user.projectCount;
     case "exceptions":
@@ -207,9 +487,7 @@ export default function PermissionsAdminPage() {
       ? "company-templates"
       : tabParam === "project-templates"
         ? "project-templates"
-        : tabParam === "project-access"
-          ? "project-access"
-          : "app-users";
+        : "app-users";
   const tableState = useUnifiedTableState({
     entityKey: "permissions-users",
     searchParams,
@@ -223,7 +501,14 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "email", "personType", "role", "teams", "projects", "exceptions"],
+      visibleColumns: [
+        "name",
+        "email",
+        "personType",
+        "role",
+        "projects",
+        "exceptions",
+      ],
       filters: {},
     },
   });
@@ -231,9 +516,32 @@ export default function PermissionsAdminPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [createScope, setCreateScope] = useState<TemplateScope>("project");
   const [editTarget, setEditTarget] = useState<PermissionTemplate | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<PermissionTemplate | null>(null);
-  const [userDeleteTarget, setUserDeleteTarget] = useState<UserAccessSummary | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PermissionTemplate | null>(
+    null,
+  );
+  const [showBulkDeleteTemplates, setShowBulkDeleteTemplates] = useState(false);
+  const [showBulkDeleteUsers, setShowBulkDeleteUsers] = useState(false);
+  const [userDeleteTarget, setUserDeleteTarget] =
+    useState<UserAccessSummary | null>(null);
+
+  useEffect(() => {
+    if (tabParam === "project-access") {
+      router.replace("/user-management");
+    }
+  }, [router, tabParam]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(HIDE_TEAMS_DEFAULT_MIGRATION_KEY)) return;
+
+    if (tableState.visibleColumns.includes("teams")) {
+      tableState.setVisibleColumns(
+        tableState.visibleColumns.filter((columnId) => columnId !== "teams"),
+      );
+    }
+
+    window.localStorage.setItem(HIDE_TEAMS_DEFAULT_MIGRATION_KEY, "true");
+  }, [tableState]);
 
   const appUsersQuery = useQuery({
     queryKey: ["permission-users", "app"],
@@ -263,12 +571,14 @@ export default function PermissionsAdminPage() {
     queryKey: ["permissions-employee-options"],
     queryFn: fetchEmployeeOptions,
   });
+  const projectTemplates = projectTemplatesQuery.data ?? [];
+  const companyTemplates = companyTemplatesQuery.data ?? [];
 
-  const userAccess: PermissionUsersAccess =
-    activeTab === "project-access" ? "project" : "app";
-  const activeUsersQuery =
-    userAccess === "project" ? projectAccessUsersQuery : appUsersQuery;
-  const linkDiagnostics = activeUsersQuery.data?.diagnostics?.missingAuthLinks ?? [];
+  // The "project-access" tab was retired (see redirect effect above) — the
+  // users table now always shows app users.
+  const activeUsersQuery = appUsersQuery;
+  const linkDiagnostics =
+    activeUsersQuery.data?.diagnostics?.missingAuthLinks ?? [];
   const users = useMemo(
     () => (activeUsersQuery.data?.data ?? []).map(toAccessSummary),
     [activeUsersQuery.data?.data],
@@ -290,48 +600,33 @@ export default function PermissionsAdminPage() {
       })
       .map(toAccessSummary);
   }, [appUsersQuery.data?.data, projectAccessUsersQuery.data?.data]);
-  const { slugByPersonId } = useMemo(() => buildUserSlugMaps(allUsersForSlugs), [allUsersForSlugs]);
+  const { slugByPersonId } = useMemo(
+    () => buildUserSlugMaps(allUsersForSlugs),
+    [allUsersForSlugs],
+  );
   const userHref = useCallback(
     (user: UserAccessSummary) =>
       `/user-management/users/${slugByPersonId.get(user.personId) ?? user.personId}`,
     [slugByPersonId],
   );
   const appUserCount = appUsersQuery.data?.data.length ?? 0;
-  const projectAccessUserCount = projectAccessUsersQuery.data?.data.length ?? 0;
+  // Descriptions below always use the "app users" copy — the "project-access"
+  // tab was retired (see redirect effect above).
   const usersDescription =
-    activeTab === "project-access"
-      ? "Project-limited users who can access the site because they were added to one or more projects. This is where subcontractors, owner contacts, and other external project contacts belong."
-      : "Internal app users who administer the system or have company-wide access across projects.";
-  const usersSearchPlaceholder =
-    activeTab === "project-access"
-      ? "Search project access users..."
-      : "Search app users...";
-  const usersEmptyTitle =
-    activeTab === "project-access" ? "No project access users" : "No app users";
+    "Internal app users who administer the system or have company-wide access across projects.";
+  const usersSearchPlaceholder = "Search app users...";
+  const usersEmptyTitle = "No app users";
   const usersEmptyDescription =
-    activeTab === "project-access"
-      ? "Project access is granted from the Project Directory inside each individual project."
-      : "Invite an app user to assign company-wide access or admin responsibility.";
+    "Invite an app user to assign company-wide access or admin responsibility.";
 
-  const usersFilteredDescription =
-    activeTab === "project-access"
-      ? "No project access users match your search."
-      : "No app users match your search.";
+  const usersFilteredDescription = "No app users match your search.";
 
-  const usersAddLabel =
-    activeTab === "project-access" ? "Add Project Access" : "Grant App Access";
-  const usersTotalCount =
-    activeTab === "project-access" ? projectAccessUserCount : appUserCount;
+  const usersAddLabel = "Grant App Access";
+  const usersTotalCount = appUserCount;
   const canManageUserRows = activeTab === "app-users";
-  const accessDialogMode: "app" | "project" =
-    activeTab === "project-access" ? "project" : "app";
+  const accessDialogMode: "app" | "project" = "app";
 
-  const usersTopContent =
-    activeTab === "project-access" ? (
-      <p className="mt-0 max-w-3xl pb-4 text-sm leading-6 text-muted-foreground">
-        Add Project Access assigns an employee to selected projects with a project permission template.
-      </p>
-    ) : null;
+  const usersTopContent = null;
 
   const filteredUsers = useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
@@ -370,14 +665,214 @@ export default function PermissionsAdminPage() {
     });
   }, [filteredUsers, tableState.sortBy, tableState.sortDirection]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / tableState.perPage));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedUsers.length / tableState.perPage),
+  );
   const pagedUsers = useMemo(() => {
     const start = (tableState.page - 1) * tableState.perPage;
     return sortedUsers.slice(start, start + tableState.perPage);
   }, [sortedUsers, tableState.page, tableState.perPage]);
 
-  const userColumns = useMemo<TableColumn<UserAccessSummary>[]>(
-    () => [
+  // Export every app user matching the current search/sort — NOT just the
+  // visible page. The page pre-paginates `pagedUsers`, so the table's built-in
+  // exporter would silently emit only the current 25 rows; this exports the
+  // full `sortedUsers` set instead.
+  const handleExportUsers = useCallback(() => {
+    const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const teamsLabel = (user: UserAccessSummary) =>
+      user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "";
+    const columns: Array<[string, (user: UserAccessSummary) => string]> = [
+      ["Name", (user) => user.fullName],
+      ["Email", (user) => user.email],
+      ["User Type", (user) => formatUserType(user.personType)],
+      ["Permission Template", (user) => user.primaryTemplateName],
+      ["Admin", (user) => (user.isAdmin ? "Yes" : "No")],
+      ["Teams Account", teamsLabel],
+      [
+        "Projects",
+        (user) =>
+          user.isAdmin ? "All projects" : formatProjectCount(user.projectCount),
+      ],
+      ["Active Exceptions", (user) => String(user.granularOverrides.length)],
+    ];
+
+    const headerRow = columns.map(([label]) => escapeCsv(label)).join(",");
+    const dataRows = sortedUsers.map((user) =>
+      columns.map(([, value]) => escapeCsv(value(user) ?? "")).join(","),
+    );
+    const csv = [headerRow, ...dataRows].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `app-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, [sortedUsers]);
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({
+      personId,
+      updates,
+    }: {
+      personId: string;
+      updates: {
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        person_type?: string;
+      };
+    }) => {
+      await apiFetch(`/api/permissions/users/${personId}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+  });
+
+  const tableCompanyTemplateMutation = useMutation({
+    mutationFn: async ({
+      personId,
+      templateId,
+    }: {
+      personId: string;
+      templateId: string | null;
+    }) => {
+      if (templateId) {
+        await apiFetch(`/api/permissions/users/${personId}/company-template`, {
+          method: "PUT",
+          body: JSON.stringify({ template_id: templateId }),
+        });
+        return;
+      }
+
+      await apiFetch(`/api/permissions/users/${personId}/company-template`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+  });
+
+  const tableProjectTemplateMutation = useMutation({
+    mutationFn: async ({
+      user,
+      templateId,
+    }: {
+      user: UserAccessSummary;
+      templateId: string;
+    }) => {
+      const projectIds = user.memberships.map(
+        (membership) => membership.projectId,
+      );
+      if (projectIds.length === 0) {
+        throw new Error(
+          "This user does not have project memberships to update.",
+        );
+      }
+
+      await Promise.all(
+        projectIds.map((projectId) =>
+          apiFetch(`/api/projects/${projectId}/permissions/assign`, {
+            method: "POST",
+            body: JSON.stringify({
+              person_id: user.personId,
+              template_id: templateId,
+            }),
+          }),
+        ),
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+  });
+
+  const tableProjectMembershipMutation = useMutation({
+    mutationFn: async ({
+      user,
+      value,
+    }: {
+      user: UserAccessSummary;
+      value: string;
+    }) => {
+      const { projectIds, templatesByProjectId } =
+        parseProjectMembershipEdit(value);
+      const nextProjectIds = Array.from(new Set(projectIds));
+      const currentProjectIds = new Set(
+        user.memberships.map((membership) => String(membership.projectId)),
+      );
+      const removedProjectIds = Array.from(currentProjectIds).filter(
+        (projectId) => !nextProjectIds.includes(projectId),
+      );
+      const validProjectTemplateIds = new Set(
+        projectTemplates.map((template) => template.id),
+      );
+
+      const missingTemplateProjectId = nextProjectIds.find(
+        (projectId) =>
+          !templatesByProjectId[projectId] ||
+          !validProjectTemplateIds.has(templatesByProjectId[projectId]),
+      );
+
+      if (missingTemplateProjectId) {
+        throw new Error(
+          "Select a project permission template for every selected project.",
+        );
+      }
+
+      await Promise.all([
+        ...nextProjectIds.map((projectId) =>
+          apiFetch(`/api/permissions/users/${user.personId}/project-access`, {
+            method: "POST",
+            body: JSON.stringify({
+              project_id: Number(projectId),
+              template_id: templatesByProjectId[projectId],
+            }),
+          }),
+        ),
+        ...removedProjectIds.map((projectId) =>
+          apiFetch(`/api/permissions/users/${user.personId}/project-access`, {
+            method: "DELETE",
+            body: JSON.stringify({ project_id: Number(projectId) }),
+          }),
+        ),
+      ]);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+  });
+
+  const userColumns = useMemo<TableColumn<UserAccessSummary>[]>(() => {
+    const companyTemplateOptions = companyTemplates.map((template) => ({
+      value: template.id,
+      label: template.name,
+    }));
+    const projectTemplateOptions = projectTemplates.map((template) => ({
+      value: template.id,
+      label: template.name,
+    }));
+
+    const resolveCompanyTemplateId = (user: UserAccessSummary) => {
+      if (user.companyTemplateId) return user.companyTemplateId;
+      const matchingTemplate = companyTemplates.find(
+        (template) => template.name === user.primaryTemplateName,
+      );
+      return matchingTemplate?.id ?? companyTemplates[0]?.id ?? null;
+    };
+
+    // The "project-access" tab was retired — this table only ever shows app
+    // users now, so role edits always use company templates.
+    const roleEditOptions = companyTemplateOptions;
+
+    return [
       {
         id: "name",
         label: "User",
@@ -385,11 +880,21 @@ export default function PermissionsAdminPage() {
         alwaysVisible: true,
         sortable: true,
         sortValue: (user) => user.fullName,
+        editable: true,
+        editValue: (user) => user.fullName,
+        onEdit: async (user, value) => {
+          await updateUserMutation.mutateAsync({
+            personId: user.personId,
+            updates: splitEditableFullName(value),
+          });
+        },
         render: (user) => (
           <div className="flex min-w-0 items-center gap-3">
             <UserAvatar user={user} />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">{user.fullName}</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {user.fullName}
+              </p>
             </div>
           </div>
         ),
@@ -401,6 +906,15 @@ export default function PermissionsAdminPage() {
         alwaysVisible: true,
         sortable: true,
         sortValue: (user) => user.email,
+        editable: true,
+        editInputType: "email",
+        editValue: (user) => user.email,
+        onEdit: async (user, value) => {
+          await updateUserMutation.mutateAsync({
+            personId: user.personId,
+            updates: { email: value },
+          });
+        },
         render: (user) => (
           <span className="block truncate text-sm text-muted-foreground">
             {user.email || "No email"}
@@ -413,9 +927,19 @@ export default function PermissionsAdminPage() {
         defaultVisible: true,
         sortable: true,
         sortValue: (user) => user.personType,
+        editable: true,
+        editType: "select",
+        editOptions: USER_TYPE_OPTIONS,
+        editValue: (user) => user.personType || "employee",
+        onEdit: async (user, value) => {
+          await updateUserMutation.mutateAsync({
+            personId: user.personId,
+            updates: { person_type: value },
+          });
+        },
         render: (user) => (
           <span className="block truncate text-sm text-foreground">
-            {user.personType || "Unknown"}
+            {formatUserType(user.personType)}
           </span>
         ),
       },
@@ -425,27 +949,36 @@ export default function PermissionsAdminPage() {
         defaultVisible: true,
         sortable: true,
         sortValue: (user) => user.primaryTemplateName,
+        editable: roleEditOptions.length > 0,
+        editType: "select",
+        editOptions: roleEditOptions,
+        editValue: (user) => resolveCompanyTemplateId(user) ?? "",
+        onEdit: async (user, value) => {
+          await tableCompanyTemplateMutation.mutateAsync({
+            personId: user.personId,
+            templateId: value,
+          });
+        },
         render: (user) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-foreground">{user.primaryTemplateName}</span>
-            {user.companyTemplateId && !user.isAdmin && (
-              <Badge variant="outline" className="border-primary/30 text-primary">
-                All projects
-              </Badge>
-            )}
-          </div>
+          <span className="block truncate text-sm text-foreground">
+            {user.primaryTemplateName}
+          </span>
         ),
       },
       {
         id: "teams",
         label: "Teams Account",
-        defaultVisible: true,
+        defaultVisible: false,
         sortable: true,
         sortValue: (user) =>
-          user.teamsAccount?.displayName ?? user.teamsAccount?.platformUserId ?? "",
+          user.teamsAccount?.displayName ??
+          user.teamsAccount?.platformUserId ??
+          "",
         render: (user) => {
           if (!user.teamsAccount) {
-            return <span className="text-sm text-muted-foreground">Not linked</span>;
+            return (
+              <span className="text-sm text-muted-foreground">Not linked</span>
+            );
           }
 
           return (
@@ -462,10 +995,39 @@ export default function PermissionsAdminPage() {
         label: "Projects",
         defaultVisible: true,
         sortable: true,
-        sortValue: (user) => user.projectCount,
+        sortValue: (user) =>
+          user.isAdmin ? Number.MAX_SAFE_INTEGER : user.projectCount,
+        editable:
+          projectsQuery.data !== undefined && projectTemplateOptions.length > 0,
+        editValue: (user) => serializeProjectMembershipEdit(user.memberships),
+        renderEditor: ({ item, value, onCommit, onCancel }) => (
+          <ProjectMembershipInlineEditor
+            value={value}
+            projects={projectsQuery.data ?? []}
+            projectTemplates={projectTemplates}
+            onCommit={onCommit}
+            onCancel={onCancel}
+          />
+        ),
+        onEdit: async (user, value) => {
+          if (user.isAdmin) {
+            throw new Error("Admin users already have all-project access.");
+          }
+
+          await tableProjectMembershipMutation.mutateAsync({ user, value });
+
+          if (user.companyTemplateId) {
+            await tableCompanyTemplateMutation.mutateAsync({
+              personId: user.personId,
+              templateId: null,
+            });
+          }
+        },
         render: (user) => (
           <div className="text-sm text-foreground">
-            {formatProjectCount(user.projectCount)}
+            {user.isAdmin
+              ? "All projects"
+              : formatProjectCount(user.projectCount)}
             {user.missingTemplateCount > 0 && (
               <span className="ml-2 text-destructive">
                 {user.missingTemplateCount} missing template
@@ -488,9 +1050,17 @@ export default function PermissionsAdminPage() {
           </span>
         ),
       },
-    ],
-    [],
-  );
+    ];
+  }, [
+    activeTab,
+    companyTemplates,
+    projectTemplates,
+    projectsQuery.data,
+    tableCompanyTemplateMutation,
+    tableProjectMembershipMutation,
+    tableProjectTemplateMutation,
+    updateUserMutation,
+  ]);
 
   const createMutation = useMutation({
     mutationFn: async (payload: {
@@ -541,32 +1111,6 @@ export default function PermissionsAdminPage() {
     },
   });
 
-  const templateMatrixMutation = useMutation({
-    mutationFn: async ({
-      id,
-      ...payload
-    }: {
-      id: string;
-      scope: TemplateScope;
-      name: string;
-      description: string;
-      rules_json: Record<PermissionModule, PermissionLevel[]>;
-      granular_flags?: GranularFlag[];
-    }) => {
-      await apiFetch(`/api/permissions/templates/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["permission-templates"] });
-      toast.success("Permission saved");
-    },
-    onError: (err) => {
-      toast.error("Failed to update permission");
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async ({ id }: { id: string; scope: TemplateScope }) => {
       await apiFetch(`/api/permissions/templates/${id}`, { method: "DELETE" });
@@ -578,6 +1122,36 @@ export default function PermissionsAdminPage() {
     },
     onError: (err) => {
       toast.error("Failed to delete template");
+    },
+  });
+
+  const bulkDeleteTemplatesMutation = useMutation({
+    mutationFn: async (templateIds: string[]) => {
+      await Promise.all(
+        templateIds.map((id) =>
+          apiFetch(`/api/permissions/templates/${id}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    },
+    onSuccess: (_data, templateIds) => {
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
+      tableState.setSelectedIds([]);
+      setShowBulkDeleteTemplates(false);
+      const templateScopeLabel =
+        activeTab === "company-templates" ? "company" : "project";
+      toast.success(
+        `Deleted ${templateIds.length} ${templateScopeLabel} template${templateIds.length === 1 ? "" : "s"}`,
+      );
+    },
+    onError: (error) => {
+      const templateScopeLabel =
+        activeTab === "company-templates" ? "company" : "project";
+      toast.error(`Failed to delete ${templateScopeLabel} templates`, {
+        description:
+          error instanceof Error ? error.message : "The selected templates could not be deleted.",
+      });
     },
   });
 
@@ -608,7 +1182,9 @@ export default function PermissionsAdminPage() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (personId: string) => {
-      await apiFetch(`/api/permissions/users/${personId}`, { method: "DELETE" });
+      await apiFetch(`/api/permissions/users/${personId}`, {
+        method: "DELETE",
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["permission-users"] });
@@ -617,6 +1193,29 @@ export default function PermissionsAdminPage() {
     },
     onError: (err) => {
       toast.error("Failed to delete user");
+    },
+  });
+
+  const bulkDeleteUsersMutation = useMutation({
+    mutationFn: async (personIds: string[]) => {
+      await Promise.all(
+        personIds.map((personId) =>
+          apiFetch(`/api/permissions/users/${personId}`, {
+            method: "DELETE",
+          }),
+        ),
+      );
+    },
+    onSuccess: (_data, personIds) => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+      tableState.setSelectedIds([]);
+      setShowBulkDeleteUsers(false);
+      toast.success(
+        `Removed ${personIds.length} app user${personIds.length === 1 ? "" : "s"}`,
+      );
+    },
+    onError: (err) => {
+      toast.error("Failed to delete app users");
     },
   });
 
@@ -633,7 +1232,9 @@ export default function PermissionsAdminPage() {
     onSuccess: (result) => {
       const repairedCount = result.data.repaired.length;
       if (repairedCount > 0) {
-        toast.success(`${repairedCount} user auth link${repairedCount === 1 ? "" : "s"} repaired`);
+        toast.success(
+          `${repairedCount} user auth link${repairedCount === 1 ? "" : "s"} repaired`,
+        );
       }
       qc.invalidateQueries({ queryKey: ["permission-users"] });
     },
@@ -643,14 +1244,21 @@ export default function PermissionsAdminPage() {
   });
 
   useEffect(() => {
-    if ((activeTab !== "app-users" && activeTab !== "project-access") || linkDiagnostics.length === 0) return;
+    if (activeTab !== "app-users" || linkDiagnostics.length === 0) return;
 
     const reconcileKey = linkDiagnostics
-      .map((diagnostic) => `${diagnostic.authUserId}:${diagnostic.issues.join(",")}`)
+      .map(
+        (diagnostic) =>
+          `${diagnostic.authUserId}:${diagnostic.issues.join(",")}`,
+      )
       .sort()
       .join("|");
 
-    if (lastReconcileKeyRef.current === reconcileKey || reconcileLinksMutation.isPending) return;
+    if (
+      lastReconcileKeyRef.current === reconcileKey ||
+      reconcileLinksMutation.isPending
+    )
+      return;
 
     lastReconcileKeyRef.current = reconcileKey;
     reconcileLinksMutation.mutate();
@@ -661,8 +1269,11 @@ export default function PermissionsAdminPage() {
     setShowCreate(true);
   };
 
-  const projectTemplates = projectTemplatesQuery.data ?? [];
-  const companyTemplates = companyTemplatesQuery.data ?? [];
+  const templateDetailHref = useCallback(
+    (template: PermissionTemplate) => `/user-management/templates/${template.id}`,
+    [],
+  );
+
   const activeTemplates =
     activeTab === "company-templates" ? companyTemplates : projectTemplates;
 
@@ -688,24 +1299,32 @@ export default function PermissionsAdminPage() {
       return String(leftValue).localeCompare(String(rightValue)) * direction;
     });
   }, [filteredRoles, tableState.sortBy, tableState.sortDirection]);
-  const templateTotalPages = Math.max(1, Math.ceil(sortedRoles.length / tableState.perPage));
-  const selectedTemplate =
-    sortedRoles.find((template) => template.id === selectedTemplateId) ??
-    null;
+  const templateTotalPages = Math.max(
+    1,
+    Math.ceil(sortedRoles.length / tableState.perPage),
+  );
+  const selectedTemplateIds = useMemo(
+    () =>
+      tableState.selectedIds.filter((id) =>
+        activeTemplates.some(
+          (template) => template.id === id && template.is_system !== true,
+        ),
+      ),
+    [activeTemplates, tableState.selectedIds],
+  );
+
+  useEffect(() => {
+    if (tableState.selectedIds.length > 0) {
+      tableState.setSelectedIds([]);
+    }
+  }, [activeTab, tableState.setSelectedIds, tableState.selectedIds.length]);
 
   const tabs = [
-    { label: "App Users", href: "/user-management", count: appUserCount, isActive: activeTab === "app-users" },
     {
-      label: "Project Access",
-      href: "/user-management?tab=project-access",
-      count: projectAccessUserCount,
-      isActive: activeTab === "project-access",
-    },
-    {
-      label: "Project Permission Templates",
-      href: "/user-management?tab=project-templates",
-      count: projectTemplates.length,
-      isActive: activeTab === "project-templates",
+      label: "App Users",
+      href: "/user-management",
+      count: appUserCount,
+      isActive: activeTab === "app-users",
     },
     {
       label: "Company Permission Templates",
@@ -713,10 +1332,40 @@ export default function PermissionsAdminPage() {
       count: companyTemplates.length,
       isActive: activeTab === "company-templates",
     },
+    {
+      label: "Project Permission Templates",
+      href: "/user-management?tab=project-templates",
+      count: projectTemplates.length,
+      isActive: activeTab === "project-templates",
+    },
   ];
 
-  const roleColumns = useMemo<TableColumn<PermissionTemplate>[]>(
-    () => [
+  const roleColumns = useMemo<TableColumn<PermissionTemplate>[]>(() => {
+    const updateTemplateFromCell = async (
+      role: PermissionTemplate,
+      updates: Partial<
+        Pick<PermissionTemplate, "name" | "description" | "scope">
+      >,
+    ) => {
+      if (role.is_system) {
+        throw new Error("System templates cannot be edited inline.");
+      }
+
+      await apiFetch(`/api/permissions/templates/${role.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          scope:
+            updates.scope ?? (role.scope === "company" ? "company" : "project"),
+          name: updates.name ?? role.name,
+          description: updates.description ?? role.description ?? "",
+          rules_json: role.rules_json,
+          granular_flags: role.granular_flags ?? [],
+        }),
+      });
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
+    };
+
+    return [
       {
         id: "name",
         label: "Template",
@@ -724,8 +1373,13 @@ export default function PermissionsAdminPage() {
         alwaysVisible: true,
         sortable: true,
         sortValue: (role) => role.name,
+        editable: true,
+        editValue: (role) => role.name,
+        onEdit: (role, value) => updateTemplateFromCell(role, { name: value }),
         render: (role) => (
-          <span className="block truncate text-sm font-medium text-foreground">{role.name}</span>
+          <span className="block truncate text-sm font-medium text-foreground">
+            {role.name}
+          </span>
         ),
       },
       {
@@ -734,6 +1388,10 @@ export default function PermissionsAdminPage() {
         defaultVisible: true,
         sortable: true,
         sortValue: (role) => role.description ?? "",
+        editable: true,
+        editValue: (role) => role.description ?? "",
+        onEdit: (role, value) =>
+          updateTemplateFromCell(role, { description: value }),
         render: (role) => (
           <span className="block truncate text-sm text-muted-foreground">
             {role.description || "No description"}
@@ -746,13 +1404,21 @@ export default function PermissionsAdminPage() {
         defaultVisible: true,
         sortable: true,
         sortValue: (role) => role.scope ?? "project",
+        editable: true,
+        editType: "select",
+        editOptions: [
+          { value: "project", label: "Project" },
+          { value: "company", label: "All projects" },
+        ],
+        editValue: (role) => (role.scope === "company" ? "company" : "project"),
+        onEdit: (role, value) =>
+          updateTemplateFromCell(role, {
+            scope: value === "company" ? "company" : "project",
+          }),
         render: (role) => (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">
-              {role.scope === "company" ? "All projects" : "Project"}
-            </Badge>
-            {role.is_system && <Badge variant="outline">System</Badge>}
-          </div>
+          <Badge variant="outline">
+            {role.scope === "company" ? "All projects" : "Project"}
+          </Badge>
         ),
       },
       {
@@ -767,29 +1433,28 @@ export default function PermissionsAdminPage() {
           </span>
         ),
       },
-    ],
-    [],
-  );
+    ];
+  }, [qc]);
 
   return (
     <>
-      {activeTab === "app-users" || activeTab === "project-access" ? (
+      {activeTab === "app-users" ? (
         <UnifiedTablePage<UserAccessSummary>
           header={{
             title: "Manage Users",
             description: usersDescription,
             actions: (
-                <Button size="sm" onClick={() => setShowInvite(true)}>
-                  <UserPlus className="h-4 w-4" />
-                  {usersAddLabel}
-                </Button>
-              ),
+              <Button size="sm" onClick={() => setShowInvite(true)}>
+                <UserPlus className="h-4 w-4" />
+                {usersAddLabel}
+              </Button>
+            ),
           }}
           tabs={tabs}
           toolbar={{
             totalItems: usersTotalCount,
             filteredItems: sortedUsers.length,
-            selectedCount: tableState.selectedIds.length,
+            selectedCount: canManageUserRows ? tableState.selectedIds.length : 0,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
             searchPlaceholder: usersSearchPlaceholder,
@@ -802,12 +1467,20 @@ export default function PermissionsAdminPage() {
             columns: userColumns,
             visibleColumns: tableState.visibleColumns,
             onColumnVisibilityChange: tableState.setVisibleColumns,
+            onExport: sortedUsers.length > 0 ? handleExportUsers : undefined,
+            onBulkDelete:
+              canManageUserRows && tableState.selectedIds.length > 0
+                ? () => setShowBulkDeleteUsers(true)
+                : undefined,
           }}
           data={{
             items: pagedUsers,
             isLoading: activeUsersQuery.isLoading,
             isFetching: activeUsersQuery.isFetching,
-            error: activeUsersQuery.error instanceof Error ? activeUsersQuery.error : null,
+            error:
+              activeUsersQuery.error instanceof Error
+                ? activeUsersQuery.error
+                : null,
           }}
           topContent={
             <div className="-mt-3 space-y-3">
@@ -821,9 +1494,13 @@ export default function PermissionsAdminPage() {
               ) : null}
             </div>
           }
+          layout={{
+            containerClassName: "min-h-svh",
+          }}
           table={{
             columns: userColumns,
             getRowId: (user) => user.id,
+            defaultPinnedLeftColumns: ["name"],
             onRowClick: (user) => router.push(userHref(user)),
             rowActions: canManageUserRows
               ? (user) => (
@@ -846,7 +1523,9 @@ export default function PermissionsAdminPage() {
                         View
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => router.push(`${userHref(user)}?mode=edit`)}
+                        onClick={() =>
+                          router.push(`${userHref(user)}?mode=edit`)
+                        }
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
@@ -871,7 +1550,11 @@ export default function PermissionsAdminPage() {
             onSortChange: (sortBy, direction) => {
               tableState.setSortBy(sortBy);
               tableState.setSortDirection(direction);
-              tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+              tableState.setSearchParams({
+                sort: sortBy,
+                sort_dir: direction,
+                page: "1",
+              });
             },
           }}
           emptyState={{
@@ -891,7 +1574,8 @@ export default function PermissionsAdminPage() {
             totalPages,
             perPage: tableState.perPage,
             onPageChange: tableState.setPage,
-            onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
+            onPerPageChange: (perPage) =>
+              tableState.setPerPage(Number(perPage)),
             clientSide: true,
           }}
           features={{
@@ -899,10 +1583,11 @@ export default function PermissionsAdminPage() {
             enableViews: false,
             enableColumnToggle: true,
             enableFilters: false,
-            enableExport: false,
-            enableBulkDelete: false,
-            enableRowSelection: false,
+            enableExport: true,
+            enableBulkDelete: canManageUserRows,
+            enableRowSelection: canManageUserRows,
             enableRowActions: canManageUserRows,
+            enableInlineEditing: true,
           }}
         />
       ) : (
@@ -917,7 +1602,9 @@ export default function PermissionsAdminPage() {
               <Button
                 size="sm"
                 onClick={() =>
-                  openCreateForScope(activeTab === "company-templates" ? "company" : "project")
+                  openCreateForScope(
+                    activeTab === "company-templates" ? "company" : "project",
+                  )
                 }
               >
                 <Plus className="h-4 w-4" />
@@ -931,7 +1618,7 @@ export default function PermissionsAdminPage() {
           toolbar={{
             totalItems: activeTemplates.length,
             filteredItems: sortedRoles.length,
-            selectedCount: 0,
+            selectedCount: selectedTemplateIds.length,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
             searchPlaceholder:
@@ -941,18 +1628,31 @@ export default function PermissionsAdminPage() {
             currentView: "table",
             onViewChange: () => undefined,
             columns: roleColumns,
-            visibleColumns: ["name", "description", "scope", "granular"],
+            visibleColumns: [
+              "name",
+              "description",
+              "scope",
+              "granular",
+            ],
             onColumnVisibilityChange: () => undefined,
+            onBulkDelete:
+              selectedTemplateIds.length > 0
+                ? () => setShowBulkDeleteTemplates(true)
+                : undefined,
           }}
           data={{
             items: sortedRoles,
-            isLoading: companyTemplatesQuery.isLoading || projectTemplatesQuery.isLoading,
+            isLoading:
+              companyTemplatesQuery.isLoading ||
+              projectTemplatesQuery.isLoading,
+          }}
+          layout={{
+            containerClassName: "min-h-svh",
           }}
           table={{
             columns: roleColumns,
             getRowId: (role) => role.id,
-            activeRowId: selectedTemplate?.id ?? null,
-            onRowClick: (template) => setSelectedTemplateId(template.id),
+            onRowClick: (template) => router.push(templateDetailHref(template)),
             rowActions: (template) =>
               template.is_system ? null : (
                 <DropdownMenu>
@@ -980,13 +1680,43 @@ export default function PermissionsAdminPage() {
             stickyHeader: true,
             density: "compact",
           }}
+          selection={
+            {
+              selectedIds: selectedTemplateIds,
+              onSelectAll: (checked) => {
+                tableState.setSelectedIds(
+                  checked
+                    ? sortedRoles
+                        .filter((template) => !template.is_system)
+                        .map((template) => template.id)
+                    : [],
+                );
+              },
+              onSelectRow: (id, checked) => {
+                const template = activeTemplates.find((item) => item.id === id);
+                if (!template || template.is_system) return;
+
+                tableState.setSelectedIds((current) =>
+                  checked
+                    ? current.includes(id)
+                      ? current
+                      : [...current, id]
+                    : current.filter((selectedId) => selectedId !== id),
+                );
+              },
+            }
+          }
           sorting={{
             sortBy: tableState.sortBy,
             sortDirection: tableState.sortDirection,
             onSortChange: (sortBy, direction) => {
               tableState.setSortBy(sortBy);
               tableState.setSortDirection(direction);
-              tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+              tableState.setSearchParams({
+                sort: sortBy,
+                sort_dir: direction,
+                page: "1",
+              });
             },
           }}
           emptyState={{
@@ -1001,7 +1731,9 @@ export default function PermissionsAdminPage() {
               <Button
                 size="sm"
                 onClick={() =>
-                  openCreateForScope(activeTab === "company-templates" ? "company" : "project")
+                  openCreateForScope(
+                    activeTab === "company-templates" ? "company" : "project",
+                  )
                 }
               >
                 <Plus className="h-4 w-4" />
@@ -1016,7 +1748,8 @@ export default function PermissionsAdminPage() {
             totalPages: templateTotalPages,
             perPage: tableState.perPage,
             onPageChange: tableState.setPage,
-            onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
+            onPerPageChange: (perPage) =>
+              tableState.setPerPage(Number(perPage)),
             clientSide: true,
           }}
           features={{
@@ -1025,9 +1758,10 @@ export default function PermissionsAdminPage() {
             enableColumnToggle: false,
             enableFilters: false,
             enableExport: false,
-            enableBulkDelete: false,
-            enableRowSelection: false,
+            enableBulkDelete: true,
+            enableRowSelection: true,
             enableRowActions: true,
+            enableInlineEditing: true,
           }}
         />
       )}
@@ -1051,13 +1785,18 @@ export default function PermissionsAdminPage() {
       />
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+        <DialogContent
+          size="form"
+          className="max-h-[calc(100svh-2rem)] overflow-y-auto"
+        >
           <DialogHeader>
             <DialogTitle>
-              New {createScope === "company" ? "Company" : "Project"} Permission Template
+              New {createScope === "company" ? "Company" : "Project"} Permission
+              Template
             </DialogTitle>
             <DialogDescription>
-              Define the module access and granular capabilities included in this permission template.
+              Define the module access and granular capabilities included in
+              this permission template.
             </DialogDescription>
           </DialogHeader>
           <PermissionTemplateForm
@@ -1068,7 +1807,10 @@ export default function PermissionsAdminPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
-        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+        <DialogContent
+          size="form"
+          className="max-h-[calc(100svh-2rem)] overflow-y-auto"
+        >
           <DialogHeader>
             <DialogTitle>
               Edit Role: {editTarget?.name}
@@ -1079,7 +1821,8 @@ export default function PermissionsAdminPage() {
               )}
             </DialogTitle>
             <DialogDescription>
-              Adjust this permission template so future assignments inherit the updated access profile.
+              Adjust this permission template so future assignments inherit the
+              updated access profile.
             </DialogDescription>
           </DialogHeader>
           {editTarget && (
@@ -1088,7 +1831,9 @@ export default function PermissionsAdminPage() {
               onSave={(data) =>
                 updateMutation.mutateAsync({
                   id: editTarget.id,
-                  scope: (editTarget.scope === "company" ? "company" : "project") as TemplateScope,
+                  scope: (editTarget.scope === "company"
+                    ? "company"
+                    : "project") as TemplateScope,
                   ...data,
                 })
               }
@@ -1098,44 +1843,16 @@ export default function PermissionsAdminPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplateId(null)}>
-        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Manage permission template access</DialogTitle>
-            <DialogDescription>
-              Adjust the module access and granular capabilities included in this permission template.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedTemplate && (
-            <TemplatePermissionMatrix
-              template={selectedTemplate}
-              isSaving={templateMatrixMutation.isPending}
-              onEdit={() => {
-                setEditTarget(selectedTemplate);
-                setSelectedTemplateId(null);
-              }}
-              onChange={(nextTemplate) =>
-                templateMatrixMutation.mutate({
-                  id: nextTemplate.id,
-                  scope: (nextTemplate.scope === "company" ? "company" : "project") as TemplateScope,
-                  name: nextTemplate.name,
-                  description: nextTemplate.description ?? "",
-                  rules_json: nextTemplate.rules_json,
-                  granular_flags: nextTemplate.granular_flags ?? [],
-                })
-              }
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete template?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes <strong>{deleteTarget?.name}</strong>. Members using
-              this template must be reassigned.
+              This permanently deletes <strong>{deleteTarget?.name}</strong>.
+              Members using this template must be reassigned.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1145,7 +1862,9 @@ export default function PermissionsAdminPage() {
                 deleteTarget &&
                 deleteMutation.mutate({
                   id: deleteTarget.id,
-                  scope: (deleteTarget.scope === "company" ? "company" : "project") as TemplateScope,
+                  scope: (deleteTarget.scope === "company"
+                    ? "company"
+                    : "project") as TemplateScope,
                 })
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -1155,14 +1874,53 @@ export default function PermissionsAdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={!!userDeleteTarget} onOpenChange={() => setUserDeleteTarget(null)}>
+      <AlertDialog
+        open={showBulkDeleteTemplates}
+        onOpenChange={setShowBulkDeleteTemplates}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {selectedTemplateIds.length}{" "}
+              {activeTab === "company-templates" ? "company" : "project"}{" "}
+              template{selectedTemplateIds.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the selected{" "}
+              {activeTab === "company-templates" ? "company" : "project"}{" "}
+              templates. Members using them must be reassigned.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() =>
+                bulkDeleteTemplatesMutation.mutate(selectedTemplateIds)
+              }
+              disabled={
+                selectedTemplateIds.length === 0 ||
+                bulkDeleteTemplatesMutation.isPending
+              }
+            >
+              {bulkDeleteTemplatesMutation.isPending
+                ? "Deleting..."
+                : `Delete ${selectedTemplateIds.length} template${selectedTemplateIds.length === 1 ? "" : "s"}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={!!userDeleteTarget}
+        onOpenChange={() => setUserDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete user?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes {userDeleteTarget?.fullName ?? "this user"} from App Users by removing
-              company-wide access and admin status. Project access is still controlled from each
-              project directory.
+              This removes {userDeleteTarget?.fullName ?? "this user"} from App
+              Users by removing company-wide access and admin status. Project
+              access is still controlled from each project directory.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1177,6 +1935,44 @@ export default function PermissionsAdminPage() {
               disabled={deleteUserMutation.isPending}
             >
               Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={showBulkDeleteUsers}
+        onOpenChange={setShowBulkDeleteUsers}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {tableState.selectedIds.length} app user
+              {tableState.selectedIds.length === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the selected users from App Users. This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() =>
+                bulkDeleteUsersMutation.mutate(
+                  sortedUsers
+                    .filter((user) => tableState.selectedIds.includes(user.id))
+                    .map((user) => user.personId),
+                )
+              }
+              disabled={
+                tableState.selectedIds.length === 0 ||
+                bulkDeleteUsersMutation.isPending
+              }
+            >
+              {bulkDeleteUsersMutation.isPending
+                ? "Deleting..."
+                : `Delete ${tableState.selectedIds.length} user${tableState.selectedIds.length === 1 ? "" : "s"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1218,15 +2014,20 @@ function InviteUserDialog({
 }) {
   const initialAccessScope: AccessScope =
     mode === "project" ? "selected_projects" : "all_projects";
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(
+    null,
+  );
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
-  const [accessScope, setAccessScope] = useState<AccessScope>(initialAccessScope);
+  const [accessScope, setAccessScope] =
+    useState<AccessScope>(initialAccessScope);
   const [projectTemplateId, setProjectTemplateId] = useState("");
   const [companyTemplateId, setCompanyTemplateId] = useState("");
-  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(
+    new Set(),
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1244,7 +2045,10 @@ function InviteUserDialog({
       return;
     }
 
-    setProjectTemplateId((current) => current || findTemplateId(projectTemplates, "Project Manager"));
+    setProjectTemplateId(
+      (current) =>
+        current || findTemplateId(projectTemplates, "Project Manager"),
+    );
     setCompanyTemplateId(
       (current) =>
         current ||
@@ -1278,7 +2082,10 @@ function InviteUserDialog({
   const selectedTemplateId =
     accessScope === "all_projects"
       ? companyTemplateId || companyTemplates[0]?.id || ""
-      : projectTemplateId || findTemplateId(projectTemplates, "Project Manager") || projectTemplates[0]?.id || "";
+      : projectTemplateId ||
+        findTemplateId(projectTemplates, "Project Manager") ||
+        projectTemplates[0]?.id ||
+        "";
 
   const canSubmit =
     firstName.trim() &&
@@ -1292,7 +2099,9 @@ function InviteUserDialog({
     setError(null);
 
     if (!canSubmit) {
-      setError("Add the user details, permission template, and project access before saving.");
+      setError(
+        "Add the user details, permission template, and project access before saving.",
+      );
       return;
     }
 
@@ -1304,7 +2113,8 @@ function InviteUserDialog({
         job_title: jobTitle.trim() || undefined,
         access_scope: accessScope,
         template_id: selectedTemplateId,
-        project_ids: accessScope === "all_projects" ? [] : Array.from(selectedProjectIds),
+        project_ids:
+          accessScope === "all_projects" ? [] : Array.from(selectedProjectIds),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invite failed");
@@ -1313,9 +2123,14 @@ function InviteUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+      <DialogContent
+        size="form"
+        className="max-h-[calc(100svh-2rem)] overflow-y-auto"
+      >
         <DialogHeader>
-          <DialogTitle>{mode === "project" ? "Add project access" : "Grant app access"}</DialogTitle>
+          <DialogTitle>
+            {mode === "project" ? "Add project access" : "Grant app access"}
+          </DialogTitle>
         </DialogHeader>
 
         <form className="space-y-6" onSubmit={submit}>
@@ -1344,7 +2159,10 @@ function InviteUserDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="invite-first-name" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="invite-first-name"
+                className="text-sm font-medium text-foreground"
+              >
                 First name
               </label>
               <Input
@@ -1355,7 +2173,10 @@ function InviteUserDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="invite-last-name" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="invite-last-name"
+                className="text-sm font-medium text-foreground"
+              >
                 Last name
               </label>
               <Input
@@ -1366,7 +2187,10 @@ function InviteUserDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="invite-email" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="invite-email"
+                className="text-sm font-medium text-foreground"
+              >
                 Email
               </label>
               <Input
@@ -1378,7 +2202,10 @@ function InviteUserDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <label htmlFor="invite-title" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="invite-title"
+                className="text-sm font-medium text-foreground"
+              >
                 Title
               </label>
               <Input
@@ -1399,7 +2226,9 @@ function InviteUserDialog({
                   variant="outline"
                   onClick={() => {
                     setAccessScope("all_projects");
-                    setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+                    setCompanyTemplateId(
+                      (current) => current || companyTemplates[0]?.id || "",
+                    );
                   }}
                   className={cn(
                     "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
@@ -1409,7 +2238,9 @@ function InviteUserDialog({
                   )}
                 >
                   <span className="block min-w-0">
-                    <span className="block text-sm font-semibold text-foreground">All projects</span>
+                    <span className="block text-sm font-semibold text-foreground">
+                      All projects
+                    </span>
                     <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
                       Access across every current and future project.
                     </span>
@@ -1420,7 +2251,9 @@ function InviteUserDialog({
                   variant="outline"
                   onClick={() => {
                     setAccessScope("selected_projects");
-                    setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
+                    setProjectTemplateId(
+                      (current) => current || projectTemplates[0]?.id || "",
+                    );
                   }}
                   className={cn(
                     "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
@@ -1430,7 +2263,9 @@ function InviteUserDialog({
                   )}
                 >
                   <span className="block min-w-0">
-                    <span className="block text-sm font-semibold text-foreground">Specific projects</span>
+                    <span className="block text-sm font-semibold text-foreground">
+                      Specific projects
+                    </span>
                     <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
                       Access only to selected projects.
                     </span>
@@ -1442,7 +2277,10 @@ function InviteUserDialog({
 
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="space-y-1.5">
-              <label htmlFor="invite-role" className="text-sm font-medium text-foreground">
+              <label
+                htmlFor="invite-role"
+                className="text-sm font-medium text-foreground"
+              >
                 Permission template
               </label>
               <Select
@@ -1460,7 +2298,10 @@ function InviteUserDialog({
                   <SelectValue placeholder="Select permission template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(accessScope === "all_projects" ? companyTemplates : projectTemplates).map((template) => (
+                  {(accessScope === "all_projects"
+                    ? companyTemplates
+                    : projectTemplates
+                  ).map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
                     </SelectItem>
@@ -1468,7 +2309,8 @@ function InviteUserDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Start with a permission template, then customize the user later if needed.
+                Start with a permission template, then customize the user later
+                if needed.
               </p>
             </div>
 
@@ -1476,16 +2318,18 @@ function InviteUserDialog({
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">
                   Projects
-                  {accessScope === "selected_projects" && selectedProjectIds.size > 0 && (
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {selectedProjectIds.size} selected
-                    </span>
-                  )}
+                  {accessScope === "selected_projects" &&
+                    selectedProjectIds.size > 0 && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {selectedProjectIds.size} selected
+                      </span>
+                    )}
                 </label>
               </div>
               {accessScope === "all_projects" ? (
                 <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  This user will inherit access across every current and future project through the selected company permission template.
+                  This user will inherit access across every current and future
+                  project through the selected company permission template.
                 </div>
               ) : (
                 <MultiSelectField
@@ -1499,10 +2343,16 @@ function InviteUserDialog({
                   value={Array.from(selectedProjectIds).map(String)}
                   onChange={(values) =>
                     setSelectedProjectIds(
-                      new Set(values.map((value) => Number(value)).filter(Number.isFinite)),
+                      new Set(
+                        values
+                          .map((value) => Number(value))
+                          .filter(Number.isFinite),
+                      ),
                     )
                   }
-                  placeholder={isLoading ? "Loading projects..." : "Select projects..."}
+                  placeholder={
+                    isLoading ? "Loading projects..." : "Select projects..."
+                  }
                   disabled={isLoading}
                 />
               )}
@@ -1518,11 +2368,20 @@ function InviteUserDialog({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving || !canSubmit}>
-              {isSaving ? "Saving..." : mode === "project" ? "Add Project Access" : "Grant Access"}
+              {isSaving
+                ? "Saving..."
+                : mode === "project"
+                  ? "Add Project Access"
+                  : "Grant Access"}
             </Button>
           </div>
         </form>
@@ -1559,7 +2418,7 @@ function EmployeeCombobox({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "h-auto min-h-10 w-full justify-between px-3 py-2 text-left font-normal",
+            "h-11 w-full justify-between px-4 py-1 text-left text-base font-normal sm:h-9 md:text-sm",
             !selectedEmployee && "text-muted-foreground",
           )}
         >
@@ -1589,7 +2448,9 @@ function EmployeeCombobox({
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    employee.id === selectedEmployeeId ? "opacity-100" : "opacity-0",
+                    employee.id === selectedEmployeeId
+                      ? "opacity-100"
+                      : "opacity-0",
                   )}
                 />
                 <span className="min-w-0">
@@ -1597,7 +2458,9 @@ function EmployeeCombobox({
                     {formatEmployeeName(employee)}
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {[employee.email, employee.jobTitle].filter(Boolean).join(" · ") || "No email on file"}
+                    {[employee.email, employee.jobTitle]
+                      .filter(Boolean)
+                      .join(" · ") || "No email on file"}
                   </span>
                 </span>
               </CommandItem>
@@ -1610,155 +2473,26 @@ function EmployeeCombobox({
 }
 
 function formatEmployeeName(employee: EmployeeOption) {
-  return [employee.firstName, employee.lastName].filter(Boolean).join(" ") || "Unnamed employee";
+  return (
+    [employee.firstName, employee.lastName].filter(Boolean).join(" ") ||
+    "Unnamed employee"
+  );
 }
 
 function formatEmployeeLabel(employee: EmployeeOption) {
-  const detail = [employee.email, employee.jobTitle].filter(Boolean).join(" · ");
-  return detail ? `${formatEmployeeName(employee)} (${detail})` : formatEmployeeName(employee);
+  const detail = [employee.email, employee.jobTitle]
+    .filter(Boolean)
+    .join(" · ");
+  return detail
+    ? `${formatEmployeeName(employee)} (${detail})`
+    : formatEmployeeName(employee);
 }
 
 function findTemplateId(templates: PermissionTemplate[], name: string) {
-  return templates.find((template) => template.name.toLowerCase() === name.toLowerCase())?.id ?? "";
-}
-
-function getHighestTemplateLevel(levels: PermissionLevel[] | undefined): PermissionLevel {
-  if (levels?.includes("admin")) return "admin";
-  if (levels?.includes("write")) return "write";
-  if (levels?.includes("read")) return "read";
-  return "none";
-}
-
-function expandTemplateLevel(level: PermissionLevel): PermissionLevel[] {
-  if (level === "admin") return ["read", "write", "admin"];
-  if (level === "write") return ["read", "write"];
-  if (level === "read") return ["read"];
-  return ["none"];
-}
-
-function TemplatePermissionMatrix({
-  template,
-  isSaving,
-  onEdit,
-  onChange,
-}: {
-  template: PermissionTemplate;
-  isSaving: boolean;
-  onEdit: () => void;
-  onChange: (template: PermissionTemplate) => void;
-}) {
-  const updateModuleLevel = (module: PermissionModule, level: PermissionLevel) => {
-    onChange({
-      ...template,
-      rules_json: {
-        ...template.rules_json,
-        [module]: expandTemplateLevel(level),
-      },
-    });
-  };
-
-  const updateGranularFlag = (flag: GranularFlag, checked: boolean) => {
-    const currentFlags = new Set(template.granular_flags ?? []);
-    if (checked) {
-      currentFlags.add(flag);
-    } else {
-      currentFlags.delete(flag);
-    }
-    onChange({
-      ...template,
-      granular_flags: Array.from(currentFlags),
-    });
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate text-lg font-semibold text-foreground">
-              {template.name}
-            </h2>
-            {template.is_system && <Badge variant="outline">System</Badge>}
-            <Badge variant="outline">
-              {template.scope === "company" ? "Company template" : "Project template"}
-            </Badge>
-          </div>
-          {template.description && (
-            <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
-          )}
-        </div>
-        <Button type="button" size="sm" variant="outline" onClick={onEdit}>
-          Edit Details
-        </Button>
-      </div>
-
-      <div className="overflow-hidden border-y border-border">
-        <div className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] border-b border-border bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          <div className="px-4 py-2">Module</div>
-          {TEMPLATE_LEVELS.map((level) => (
-            <div key={level.key} className="border-l border-border px-3 py-2 text-center">
-              {level.label}
-            </div>
-          ))}
-        </div>
-        <div className="divide-y divide-border">
-          {TEMPLATE_MODULES.map((module) => {
-            const selectedLevel = getHighestTemplateLevel(template.rules_json[module.key]);
-
-            return (
-              <div
-                key={module.key}
-                className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] items-center"
-              >
-                <div className="px-4 py-3 text-sm font-medium text-foreground">
-                  {module.label}
-                </div>
-                {TEMPLATE_LEVELS.map((level) => (
-                  <label
-                    key={`${module.key}-${level.key}`}
-                    className="flex h-full items-center justify-center border-l border-border px-3 py-3"
-                    aria-label={`${module.label} ${level.label}`}
-                  >
-                    <Checkbox
-                      checked={selectedLevel === level.key}
-                      disabled={isSaving}
-                      onCheckedChange={(checked) => {
-                        if (checked) updateModuleLevel(module.key, level.key);
-                      }}
-                    />
-                  </label>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <SectionRuleHeading label="Granular Access" />
-        <div className="overflow-hidden border-y border-border">
-          <div className="divide-y divide-border">
-            {ALL_GRANULAR_FLAGS.map((flag) => (
-              <label
-                key={flag}
-                className="grid cursor-pointer grid-cols-[minmax(0,1fr)_96px] items-center px-4 py-3 hover:bg-muted/40"
-              >
-                <span className="text-sm text-foreground">
-                  {GRANULAR_FLAG_LABELS[flag]}
-                </span>
-                <span className="flex justify-center">
-                  <Checkbox
-                    checked={(template.granular_flags ?? []).includes(flag)}
-                    disabled={isSaving}
-                    onCheckedChange={(checked) => updateGranularFlag(flag, checked === true)}
-                  />
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    templates.find(
+      (template) => template.name.toLowerCase() === name.toLowerCase(),
+    )?.id ?? ""
   );
 }
 
@@ -1782,8 +2516,11 @@ function UserLinkDiagnosticsAlert({
       <AlertTriangle className="h-4 w-4 text-status-warning" />
       <AlertDescription className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
         <span>
-          {diagnostics.length} user auth link{diagnostics.length === 1 ? "" : "s"} need repair
-          {names ? `: ${names}${extraCount > 0 ? `, +${extraCount} more` : ""}.` : "."}
+          {diagnostics.length} user auth link
+          {diagnostics.length === 1 ? "" : "s"} need repair
+          {names
+            ? `: ${names}${extraCount > 0 ? `, +${extraCount} more` : ""}.`
+            : "."}
         </span>
         <Button
           type="button"

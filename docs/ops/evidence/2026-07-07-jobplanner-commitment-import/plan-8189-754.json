@@ -1,0 +1,996 @@
+{
+  "summary": {
+    "mode": "APPLY (no retire)",
+    "jpProjectId": 8189,
+    "appProjectId": 754,
+    "jpCommitments": 22,
+    "toCreate": 0,
+    "toRebuildSov": 22,
+    "integrityFailures": [],
+    "totalJpSovLines": 74,
+    "acumaticaDuplicatesToRetire": 0,
+    "acumaticaOnlyFlagged": 0,
+    "unresolvedCodeLines": 0,
+    "unresolvedTypeLines": 0
+  },
+  "applied": {
+    "headersUpserted": 22,
+    "sovLinesWritten": 74,
+    "budgetCodesUpserted": 23,
+    "retired": 0
+  },
+  "plan": {
+    "jpCommitments": [
+      {
+        "number": "PO-8189-0001",
+        "kind": "purchase_order",
+        "title": "Site Design",
+        "jpHeaderTotal": 37000,
+        "jpSovLineCount": 6,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "c467bbc6-d631-463c-b6fc-439e636eb066",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Private Utility Locates",
+            "amount": 1000
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Construction Documents",
+            "amount": 14500
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Permitting assistance",
+            "amount": 5000
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Construction Phase Services",
+            "amount": 5000
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Boundary & Topographic Survey",
+            "amount": 6500
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "50-2000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-2000",
+            "description": "Meetings & Coordination",
+            "amount": 5000
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0016",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 12228,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "a0ddee7b-34ce-454e-9d80-ae4073c3e90f",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "12-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "12-3000",
+            "description": "Casework Concepts",
+            "amount": 12228
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0022",
+        "kind": "subcontract",
+        "title": "Materials Testing",
+        "jpHeaderTotal": 1700,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "2c3169cf-f855-44a3-80e4-07e10d124e70",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "01-4523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "01-4523",
+            "description": "Concrete & Soils Testing",
+            "amount": 1700
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0021",
+        "kind": "subcontract",
+        "title": "Surveyor",
+        "jpHeaderTotal": 907.5,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "6a3c5d4c-b4a8-4604-af20-1a55509fbf19",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "02-2113",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "02-2113",
+            "description": "Miller Surveying",
+            "amount": 907.5
+          }
+        ]
+      },
+      {
+        "number": "PO-8189-0002",
+        "kind": "purchase_order",
+        "title": null,
+        "jpHeaderTotal": 59900,
+        "jpSovLineCount": 3,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "bf8c3643-71a7-4c4d-98de-31a5f3835722",
+        "appCurrentSovCount": 3,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "50-5500",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-5500",
+            "description": "DKGR Architectural Design",
+            "amount": 24500
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "50-5500",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-5500",
+            "description": "JPS Structural Design",
+            "amount": 7500
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "50-5500",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "50-5500",
+            "description": "TEC Mechanical and Plumbing",
+            "amount": 27900
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0002",
+        "kind": "subcontract",
+        "title": "HVAC",
+        "jpHeaderTotal": 315578.5,
+        "jpSovLineCount": 11,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "b4f16769-7b18-4c2d-b866-e37971f50ec9",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Service Labor",
+            "amount": 72580
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Curb Materials and Caps",
+            "amount": 2182.8
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Ductwork",
+            "amount": 36030.75
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Bryant Equipment Package",
+            "amount": 147158.46
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Crane Rental",
+            "amount": 7276
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Thermostat Wire",
+            "amount": 1364.25
+          },
+          {
+            "line_number": 7,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "GRD Package and Air Curtains",
+            "amount": 29037.74
+          },
+          {
+            "line_number": 8,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Scissor Lift Rental",
+            "amount": 2728.5
+          },
+          {
+            "line_number": 9,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Test and Balance",
+            "amount": 9520
+          },
+          {
+            "line_number": 10,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Insulation",
+            "amount": 6800
+          },
+          {
+            "line_number": 11,
+            "costCodeId": "23-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "23-3000",
+            "description": "Permit",
+            "amount": 900
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0020",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 17329,
+        "jpSovLineCount": 2,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "fd7343bc-2399-4a52-9f25-2f85e548a852",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "07-5300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5300",
+            "description": "Canopy Roofing, scuppers, downspouts & coping cap",
+            "amount": 14829
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "07-5300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5300",
+            "description": "Roof Temp Dry In",
+            "amount": 2500
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0017",
+        "kind": "subcontract",
+        "title": "Bathroom Accessories",
+        "jpHeaderTotal": 4248,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "cb783615-3c63-4393-82f9-83c4169a43ff",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "10-2813",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "10-2813",
+            "description": "All Source Construction Specialties",
+            "amount": 4248
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0007",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 34320,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "7268414e-1a58-4666-a828-1b20ec826024",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "21-1313",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "21-1313",
+            "description": "Vulcan Fire",
+            "amount": 34320
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0005",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 71325,
+        "jpSovLineCount": 3,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "2d7fb791-c9a6-4090-97f9-c38f11537bd6",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "22-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "22-1000",
+            "description": "Underground/1st Rough",
+            "amount": 24963
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "22-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "22-1000",
+            "description": "Finish",
+            "amount": 21398
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "22-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "22-1000",
+            "description": "2nd Rough",
+            "amount": 24964
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0015",
+        "kind": "subcontract",
+        "title": "Dock Leveler, Overhead Door, Dock Seal & Dock Bumpers",
+        "jpHeaderTotal": 29900,
+        "jpSovLineCount": 5,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "dbb480e9-b5d3-4563-83e4-09e1b50a0b26",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "11-1300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "11-1300",
+            "description": "Scissor Lift",
+            "amount": 24300
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "11-1300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "11-1300",
+            "description": "Dock Seal",
+            "amount": 2200
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "11-1300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "11-1300",
+            "description": "Dock Bumpers",
+            "amount": 600
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "11-1300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "11-1300",
+            "description": "Dock Light",
+            "amount": 400
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "11-1300",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "11-1300",
+            "description": "Dock Door",
+            "amount": 2400
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0014",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 16955,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "568def3b-210e-403b-bcb1-b2758df142b8",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "08-3213",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "08-3213",
+            "description": "Apex Glass",
+            "amount": 16955
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0006",
+        "kind": "subcontract",
+        "title": "Sitework and canopy foundations",
+        "jpHeaderTotal": 91692,
+        "jpSovLineCount": 5,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "9947e937-36c9-43f9-b33e-cfee4dd6b46f",
+        "appCurrentSovCount": 5,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "32-0523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "32-0523",
+            "description": "Asphalt Pavement",
+            "amount": 35670
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "32-0523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "32-0523",
+            "description": "Dock leveler depression",
+            "amount": 4900
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "32-0523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "32-0523",
+            "description": "Earthwork",
+            "amount": 4742
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "32-0523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "32-0523",
+            "description": "Concrete pavement & Curbs",
+            "amount": 23890
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "32-0523",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "32-0523",
+            "description": "Grade beams, footers & concrete pedestals",
+            "amount": 22490
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0001",
+        "kind": "subcontract",
+        "title": "Electrical",
+        "jpHeaderTotal": 383000,
+        "jpSovLineCount": 7,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "6b6303f5-8588-422d-853c-f078a3235546",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Engineering/Design",
+            "amount": 8500
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Pipe, Wire, Cable",
+            "amount": 118500
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Labor",
+            "amount": 150000
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Closeouts",
+            "amount": 5000
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Demo/Make Safe",
+            "amount": 11000
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Lighting",
+            "amount": 69000
+          },
+          {
+            "line_number": 7,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000",
+            "description": "Gear",
+            "amount": 21000
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0013",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 42657,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "bc3a0b4d-8def-4aa1-8604-2a94bee02ee3",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "09-9123",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-9123",
+            "description": "Inline Painting",
+            "amount": 42657
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0008",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 160799,
+        "jpSovLineCount": 12,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "239b772e-e908-4337-b6b9-2efbfecc283d",
+        "appCurrentSovCount": 11,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Door Labor",
+            "amount": 7344
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Exterior Framing",
+            "amount": 24250
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Interior Framing",
+            "amount": 23996
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Rough Carpentry",
+            "amount": 27592
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Insulation",
+            "amount": 9480
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Sheathing",
+            "amount": 3500
+          },
+          {
+            "line_number": 7,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Drywall",
+            "amount": 40174
+          },
+          {
+            "line_number": 8,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Acoustical",
+            "amount": 5529
+          },
+          {
+            "line_number": 9,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Added Furring Retail Area",
+            "amount": 6991
+          },
+          {
+            "line_number": 10,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Non-Structural Metal Framing",
+            "amount": 0
+          },
+          {
+            "line_number": 11,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Stucco",
+            "amount": 6551
+          },
+          {
+            "line_number": 12,
+            "costCodeId": "09-2216",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-2216",
+            "description": "Hardi Board Exterior",
+            "amount": 5392
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0009",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 82900,
+        "jpSovLineCount": 2,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "9a304a4d-bb9a-4c99-9e17-c8d02a7fb895",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "09-6200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-6200",
+            "description": "Polished Concrete - Labor",
+            "amount": 53800
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "09-6200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-6200",
+            "description": "Polished Concrete - Material",
+            "amount": 29100
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0010",
+        "kind": "subcontract",
+        "title": "Doors, Frames & Hardware",
+        "jpHeaderTotal": 37408,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "a81228ba-5100-4608-a3c5-a4577198ae24",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "08-1113",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "08-1113",
+            "description": "Kendell Doors",
+            "amount": 37408
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0004",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 292331,
+        "jpSovLineCount": 4,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "7ad0f84d-258a-49c5-9fae-fee068b36ad6",
+        "appCurrentSovCount": 4,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "05-1200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "05-1200",
+            "description": "Structural Steel",
+            "amount": 75477
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "05-1200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "05-1200",
+            "description": "Submittals",
+            "amount": 16435
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "05-1200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "05-1200",
+            "description": "Erection",
+            "amount": 194275
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "05-1200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "05-1200",
+            "description": "Miscellaneous",
+            "amount": 6144
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0011",
+        "kind": "subcontract",
+        "title": "Masonry",
+        "jpHeaderTotal": 45480,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "69e7c47f-267c-49b7-a04c-0f8feb7fa89c",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "04-2200",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "04-2200",
+            "description": "Broady Campbell Masonry",
+            "amount": 45480
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0012",
+        "kind": "subcontract",
+        "title": "Fire Alarm, Security & Intrusion Systems",
+        "jpHeaderTotal": 102837,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "d5b4bf11-6222-41c1-a0d1-47331f9ac5eb",
+        "appCurrentSovCount": 1,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "28-4600",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "28-4600",
+            "description": "CSC Fire Alarm & Security",
+            "amount": 102837
+          }
+        ]
+      },
+      {
+        "number": "SC-8189-0003",
+        "kind": "subcontract",
+        "title": null,
+        "jpHeaderTotal": 61500,
+        "jpSovLineCount": 4,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "7c9e1fb9-8d84-4bf1-bd38-6ef3300df28f",
+        "appCurrentSovCount": 3,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 2,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "02-4119",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "02-4119",
+            "description": "Interior Demo",
+            "amount": 44500
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "02-4119",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "02-4119",
+            "description": "Demo asphalt and concrete shown on civil drawings",
+            "amount": 15000
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "02-4119",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "02-4119",
+            "description": "Demo 2 bollards by the loading dock & patch with concrete",
+            "amount": 2000
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "02-4113",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "02-4113",
+            "description": "Selective Site Demolition",
+            "amount": 0
+          }
+        ]
+      }
+    ],
+    "retireDuplicates": [],
+    "acumaticaOnlyFlags": [],
+    "errors": []
+  },
+  "completedAt": "2026-07-07T21:50:10.584Z"
+}

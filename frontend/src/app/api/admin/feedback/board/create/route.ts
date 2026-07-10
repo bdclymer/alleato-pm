@@ -5,6 +5,12 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { BOARD_STATUSES } from "@/lib/admin-feedback/constants";
+import {
+  BOARD_CAPTURE_TOPIC_KEYS,
+} from "@/features/product-board/topics";
+import {
+  buildBoardCaptureMetadata,
+} from "@/features/product-board/metadata";
 
 const createSchema = z.object({
   title: z.string().trim().min(1).max(200),
@@ -12,6 +18,10 @@ const createSchema = z.object({
   board_status: z.enum(BOARD_STATUSES).default("submitted"),
   severity: z.enum(["low", "medium", "high"]).default("medium"),
   assignee_id: z.string().uuid().nullable().optional(),
+  topics: z.array(z.enum(BOARD_CAPTURE_TOPIC_KEYS)).default([]),
+  tool: z.string().trim().max(120).default(""),
+  category: z.string().trim().max(120).default(""),
+  type: z.string().trim().max(120).optional().nullable(),
 });
 
 export const POST = withApiGuardrails("admin/feedback/board/create", async ({ request }) => {
@@ -19,7 +29,8 @@ export const POST = withApiGuardrails("admin/feedback/board/create", async ({ re
   if (!user) throw new GuardrailError({ code: "FORBIDDEN", where: "board/create", message: "Sign in required.", status: 401 });
 
   const body = await request.json();
-  const { title, description, board_status, severity, assignee_id } = createSchema.parse(body);
+  const { title, description, board_status, severity, assignee_id, topics, tool, category, type } = createSchema.parse(body);
+  const metadata = buildBoardCaptureMetadata({ topics, tool, category, type });
 
   const supabase = createServiceClient();
 
@@ -43,7 +54,7 @@ export const POST = withApiGuardrails("admin/feedback/board/create", async ({ re
       comment: description,
       page_url: "/product-board",
       page_path: "/product-board",
-      page_title: "Product Board",
+      page_title: "Roadmap",
       request_type: "feature_request",
       board_status,
       severity,
@@ -51,7 +62,7 @@ export const POST = withApiGuardrails("admin/feedback/board/create", async ({ re
       assignee_id: assignee_id ?? null,
       status: "open",
       target_selector: "product-board",
-      metadata: {},
+      metadata,
     })
     .select("id")
     .single();

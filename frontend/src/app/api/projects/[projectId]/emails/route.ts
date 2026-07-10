@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { buildOwnEmailsFilter } from "@/lib/emails/access";
+import { dedupeOutlookIntakeByMessageId } from "@/lib/emails/dedupe-outlook-intake";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
@@ -49,8 +50,10 @@ type OutlookIntakeRow = {
   received_at: string | null;
   has_attachments: boolean | null;
   graph_message_id: string | null;
+  internet_message_id: string | null;
   mailbox_user_id: string | null;
   conversation_id: string | null;
+  project_email_id: number | null;
   created_at: string | null;
 };
 
@@ -71,7 +74,7 @@ function mapEmailProject<T extends EmailRow>(email: T) {
 function mapOutlookIntakeEmail(
   row: OutlookIntakeRow,
   project: EmailProjectRow | null,
-  emailsWithRealAttachments: Set<number>,
+  hasAttachments: boolean,
 ) {
   return {
     id: row.id,
@@ -90,7 +93,7 @@ function mapOutlookIntakeEmail(
     received_at: row.received_at,
     is_private: null,
     is_starred: null,
-    has_attachments: emailsWithRealAttachments.has(row.id),
+    has_attachments: hasAttachments,
     related_tool: null,
     related_id: null,
     distribution_group: null,
@@ -260,7 +263,7 @@ export const GET = withApiGuardrails(
         let outlookQuery = intake
           .from("outlook_email_intake")
           .select(
-            "id,project_id,subject,body,body_html,body_text,from_name,from_email,to_list,cc_list,received_at,has_attachments,graph_message_id,mailbox_user_id,conversation_id,created_at",
+            "id,project_id,subject,body,body_html,body_text,from_name,from_email,to_list,cc_list,received_at,has_attachments,graph_message_id,internet_message_id,mailbox_user_id,conversation_id,project_email_id,created_at",
           )
           .eq("project_id", numericProjectId)
           .order("received_at", { ascending: false, nullsFirst: false });
@@ -339,9 +342,21 @@ export const GET = withApiGuardrails(
               }
             : null;
 
-        outlookRows = rows.map((row) =>
-          mapOutlookIntakeEmail(row, project, emailsWithRealAttachments),
-        );
+        // The Graph sync stores one row per mailbox that received a message, so
+        // an email sent to multiple Alleato people fans out into 2–3 identical
+        // intake rows (each with its own graph_message_id). Collapse those to a
+        // single representative by internet_message_id so the project inbox
+        // doesn't show every message twice. Attachment state is unioned across
+        // the collapsed copies so a paperclip never disappears with a dropped row.
+        const { representatives, memberIdsByRepresentativeId } =
+          dedupeOutlookIntakeByMessageId(rows);
+        outlookRows = representatives.map((row) => {
+          const memberIds = memberIdsByRepresentativeId.get(row.id) ?? [row.id];
+          const hasAttachments = memberIds.some((id) =>
+            emailsWithRealAttachments.has(id),
+          );
+          return mapOutlookIntakeEmail(row, project, hasAttachments);
+        });
       }
     }
 

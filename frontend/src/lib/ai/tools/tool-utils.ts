@@ -1,4 +1,8 @@
-import { tool as defineAiSdkTool, type Tool, type ToolExecutionOptions } from "ai";
+import {
+  tool as defineAiSdkTool,
+  type Tool,
+  type ToolExecutionOptions,
+} from "ai";
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
@@ -6,6 +10,7 @@ import {
   getOpenAICompatibleClientConfig,
   getOpenAIModelId,
 } from "@/lib/ai/provider-config";
+import { type ValidatedEmbedding } from "@/lib/ai/retrieval/retrieve-chunks";
 
 // ---------------------------------------------------------------------------
 // Embedding config registry
@@ -36,12 +41,15 @@ export const EMBEDDING = {
  * Generate an embedding and return it JSON-stringified for use in RPC args.
  * NOTE: The return value is already a JSON string — do NOT wrap it in JSON.stringify() again.
  * Pass the result directly as the RPC argument (e.g. `query_embedding: queryEmbedding`).
+ *
+ * GUARDRAIL: Returns ValidatedEmbedding (branded type), so only this function can produce
+ * values acceptable to the RPC. Prevents raw-array encoding bugs at compile time.
  */
 export async function generateEmbedding(
   openai: OpenAI,
   input: string,
   config: typeof EMBEDDING.LARGE | typeof EMBEDDING.SMALL,
-): Promise<string> {
+): Promise<ValidatedEmbedding> {
   const modelId = getOpenAIModelId(config.model);
   const resp = await openai.embeddings.create({
     model: modelId,
@@ -53,7 +61,7 @@ export async function generateEmbedding(
       `Embedding API returned empty data for model ${modelId}. Check API key and gateway config.`,
     );
   }
-  return JSON.stringify(resp.data[0].embedding);
+  return JSON.stringify(resp.data[0].embedding) as ValidatedEmbedding;
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +166,8 @@ type TraceOptions = {
   pinnedProjectId?: number;
 };
 
+type ToolContext = Record<string, unknown>;
+
 /**
  * Typed tool-error envelope returned by `withTrace` when an executor throws.
  *
@@ -194,15 +204,25 @@ export function asNumber(value: unknown): number {
   return 0;
 }
 
-export function withTrace<TInput extends Record<string, unknown>, TResult>(
+export function withTrace<
+  TInput extends Record<string, unknown>,
+  TResult,
+  TContext extends ToolContext = ToolContext,
+>(
   name: string,
   options: TraceOptions,
-  execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
+  execute: (
+    input: TInput,
+    executionOptions?: ToolExecutionOptions<TContext>,
+  ) => Promise<TResult>,
   errorGuidance: string,
-): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult | ToolErrorResult> {
+): (
+  input: TInput,
+  executionOptions?: ToolExecutionOptions<TContext>,
+) => Promise<TResult | ToolErrorResult> {
   return async (
     input: TInput,
-    executionOptions?: ToolExecutionOptions,
+    executionOptions?: ToolExecutionOptions<TContext>,
   ): Promise<TResult | ToolErrorResult> => {
     const executionInput = applyPinnedProjectInput(input, options);
     try {
@@ -263,14 +283,24 @@ export { getOpenAIModelId } from "@/lib/ai/provider-config";
  * returning a silent structured {error} response. Contrast with withTrace
  * (read tools) which catches and returns structured errors.
  */
-export function withWriteTrace<TInput extends Record<string, unknown>, TResult>(
+export function withWriteTrace<
+  TInput extends Record<string, unknown>,
+  TResult,
+  TContext extends ToolContext = ToolContext,
+>(
   name: string,
   options: TraceOptions,
-  execute: (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult>,
-): (input: TInput, executionOptions?: ToolExecutionOptions) => Promise<TResult> {
+  execute: (
+    input: TInput,
+    executionOptions?: ToolExecutionOptions<TContext>,
+  ) => Promise<TResult>,
+): (
+  input: TInput,
+  executionOptions?: ToolExecutionOptions<TContext>,
+) => Promise<TResult> {
   return async (
     input: TInput,
-    executionOptions?: ToolExecutionOptions,
+    executionOptions?: ToolExecutionOptions<TContext>,
   ): Promise<TResult> => {
     const executionInput = applyPinnedProjectInput(input, options);
     try {
@@ -309,50 +339,62 @@ function applyPinnedProjectInput<TInput extends Record<string, unknown>>(
   };
 }
 
-type SharedToolDefinition<TInput extends Record<string, unknown>, TResult> = {
+type SharedToolDefinition<
+  TInput extends Record<string, unknown>,
+  TResult,
+  TContext extends ToolContext = ToolContext,
+> = {
   description?: string;
   title?: string;
-  inputSchema: Tool<TInput, TResult>["inputSchema"];
-  inputExamples?: Tool<TInput, TResult>["inputExamples"];
-  needsApproval?: Tool<TInput, TResult>["needsApproval"];
-  strict?: Tool<TInput, TResult>["strict"];
+  inputSchema: Tool<TInput, TResult, TContext>["inputSchema"];
+  inputExamples?: Tool<TInput, TResult, TContext>["inputExamples"];
+  needsApproval?: Tool<TInput, TResult, TContext>["needsApproval"];
+  strict?: Tool<TInput, TResult, TContext>["strict"];
   execute: (
     input: TInput,
-    executionOptions?: ToolExecutionOptions,
+    executionOptions?: ToolExecutionOptions<TContext>,
   ) => Promise<TResult>;
 };
 
-export function defineReadTool<TInput extends Record<string, unknown>, TResult>(
+export function defineReadTool<
+  TInput extends Record<string, unknown>,
+  TResult,
+  TContext extends ToolContext = ToolContext,
+>(
   name: string,
   options: { onTrace?: (trace: ToolTracePayload) => void },
-  definition: SharedToolDefinition<TInput, TResult> & {
+  definition: SharedToolDefinition<TInput, TResult, TContext> & {
     errorGuidance: string;
   },
-): Tool<TInput, TResult | ToolErrorResult> {
+): Tool<TInput, TResult | ToolErrorResult, TContext> {
   const { errorGuidance, execute, ...toolDefinition } = definition;
-  const tracedExecute: NonNullable<Tool<TInput, unknown>["execute"]> =
+  const tracedExecute: NonNullable<Tool<TInput, unknown, TContext>["execute"]> =
     withTrace(name, options, execute, errorGuidance);
-  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown>({
+  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown, TContext>({
       ...toolDefinition,
       outputSchema: undefined,
       execute: tracedExecute,
-    }) as Tool<TInput, TResult | ToolErrorResult>;
+    }) as Tool<TInput, TResult | ToolErrorResult, TContext>;
   return toolDefinitionWithTrace;
 }
 
-export function defineWriteTool<TInput extends Record<string, unknown>, TResult>(
+export function defineWriteTool<
+  TInput extends Record<string, unknown>,
+  TResult,
+  TContext extends ToolContext = ToolContext,
+>(
   name: string,
   options: { onTrace?: (trace: ToolTracePayload) => void },
-  definition: SharedToolDefinition<TInput, TResult>,
-): Tool<TInput, TResult> {
+  definition: SharedToolDefinition<TInput, TResult, TContext>,
+): Tool<TInput, TResult, TContext> {
   const { execute, ...toolDefinition } = definition;
-  const tracedExecute: NonNullable<Tool<TInput, unknown>["execute"]> =
+  const tracedExecute: NonNullable<Tool<TInput, unknown, TContext>["execute"]> =
     withWriteTrace(name, options, execute);
-  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown>({
+  const toolDefinitionWithTrace = defineAiSdkTool<TInput, unknown, TContext>({
       ...toolDefinition,
       outputSchema: undefined,
       execute: tracedExecute,
-    }) as Tool<TInput, TResult>;
+    }) as Tool<TInput, TResult, TContext>;
   return toolDefinitionWithTrace;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,14 +46,6 @@ interface LineItem {
   } | null;
 }
 
-interface MarkupItem {
-  id: string;
-  markup_type: string;
-  percentage: number;
-  calculation_order: number;
-  compound: boolean | null;
-}
-
 interface ExpandedRowContext {
   columns: Array<{
     id: string;
@@ -68,7 +60,6 @@ interface ChangeEventExpandedRowProps {
   changeEventId: string | number;
   projectId: number;
   colSpan: number;
-  expectingRevenue?: boolean;
   context?: ExpandedRowContext;
   onEditLineItem?: (lineItemId: string) => void;
 }
@@ -151,40 +142,16 @@ function lineItemValueForColumn(li: LineItem, columnId: string): React.ReactNode
   }
 }
 
-function markupValueForColumn(
-  markup: { label: string; percentage: number; amount: number; markupType: string },
-  columnId: string,
-): React.ReactNode {
-  const dash = <span className="text-muted-foreground">--</span>;
-
-  switch (columnId) {
-    case "number_title":
-      return (
-        <span className="pl-6 truncate block italic text-muted-foreground">
-          {markup.markupType} ({markup.percentage}%)
-        </span>
-      );
-    case "cost_rom":
-      // Markups (insurance, fee, etc.) are cost-side only — show the amount in
-      // the Cost ROM column, never in the revenue/prime-PCO column.
-      return <span className="tabular-nums">{formatMoney(markup.amount)}</span>;
-    default:
-      return dash;
-  }
-}
-
 /* ── Main component ───────────────────────────────────────────────── */
 
 export function ChangeEventExpandedRow({
   changeEventId,
   projectId,
   colSpan,
-  expectingRevenue = true,
   context,
   onEditLineItem,
 }: ChangeEventExpandedRowProps) {
   const [lineItems, setLineItems] = React.useState<LineItem[]>([]);
-  const [markups, setMarkups] = React.useState<MarkupItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -204,30 +171,19 @@ export function ChangeEventExpandedRow({
 
       setIsLoading(true);
       try {
-        const [lineItemsData, markupsData] = await Promise.all([
-          apiFetch<{ data?: LineItem[] }>(
-            `/api/projects/${projectId}/change-events/${ceId}/line-items`,
-          ).catch(() => null),
-          expectingRevenue
-            ? apiFetch<{ markups?: MarkupItem[] }>(
-                `/api/projects/${projectId}/vertical-markup`,
-              ).catch(() => null)
-            : Promise.resolve(null),
-        ]);
+        const lineItemsData = await apiFetch<{ data?: LineItem[] }>(
+          `/api/projects/${projectId}/change-events/${ceId}/line-items`,
+        ).catch(() => null);
 
         if (cancelled) return;
 
         if (lineItemsData) {
           setLineItems(lineItemsData.data || []);
         }
-
-        if (markupsData) {
-          setMarkups(markupsData.markups || []);
-        }
       } catch (error) {
         reportNonCriticalFailure({
           area: "change-event-expanded-row",
-          operation: "load-line-items-and-markups",
+          operation: "load-line-items",
           error,
           userVisibleFallback:
             "Change event detail rows could not be fully loaded.",
@@ -242,32 +198,7 @@ export function ChangeEventExpandedRow({
     return () => {
       cancelled = true;
     };
-  }, [projectId, changeEventId, expectingRevenue]);
-
-  const lineItemCostSubtotal = lineItems.reduce(
-    (sum, li) => sum + (li.costRom ?? 0),
-    0,
-  );
-
-  const computedMarkups = React.useMemo(() => {
-    if (!expectingRevenue || markups.length === 0) return [];
-
-    const sorted = [...markups].sort(
-      (a, b) => a.calculation_order - b.calculation_order,
-    );
-    let runningBase = lineItemCostSubtotal;
-    return sorted.map((m) => {
-      const amount = runningBase * (m.percentage / 100);
-      if (m.compound) runningBase += amount;
-      return {
-        id: m.id,
-        label: `${formatMoney(amount)} - ${m.markup_type}`,
-        amount,
-        percentage: m.percentage,
-        markupType: m.markup_type,
-      };
-    });
-  }, [expectingRevenue, markups, lineItemCostSubtotal]);
+  }, [projectId, changeEventId]);
 
   if (isLoading) {
     return (
@@ -279,12 +210,12 @@ export function ChangeEventExpandedRow({
     );
   }
 
-  if (lineItems.length === 0 && computedMarkups.length === 0) {
+  if (lineItems.length === 0) {
     return (
       <TableRow className="bg-primary/5 hover:bg-primary/5">
         <TableCell colSpan={colSpan} className="py-1 px-8">
           <p className="text-[10px] text-muted-foreground">
-            No line items or markups for this change event.
+            No line items for this change event.
           </p>
         </TableCell>
       </TableRow>
@@ -353,7 +284,7 @@ export function ChangeEventExpandedRow({
                 className="h-4 w-4"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreHorizontal className="h-3 w-3" />
+                <MoreVertical className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -384,13 +315,6 @@ export function ChangeEventExpandedRow({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>,
-        ),
-      )}
-      {computedMarkups.map((markup) =>
-        renderRow(
-          `mk-${markup.id}`,
-          (columnId) => markupValueForColumn(markup, columnId),
-          undefined,
         ),
       )}
     </>

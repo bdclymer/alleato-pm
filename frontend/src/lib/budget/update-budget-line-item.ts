@@ -2,6 +2,7 @@ import { ApiError, apiFetch } from "@/lib/api-client";
 
 export interface UpdateBudgetLineItemInput {
   quantity: number;
+  uom?: string | null;
   unitCost: number;
   originalAmount: number;
 }
@@ -38,6 +39,7 @@ export async function updateBudgetLineItem(
     },
     body: JSON.stringify({
       quantity: data.quantity,
+      unit_of_measure: data.uom ?? null,
       unit_cost: data.unitCost,
       original_amount: data.originalAmount,
     }),

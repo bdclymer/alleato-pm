@@ -43,7 +43,7 @@ def test_graph_sync_blueprints_do_not_override_the_safe_embed_limit():
         graph_sync = _services_by_name(path)["alleato-graph-sync"]
 
         assert "--embed-limit" not in graph_sync["dockerCommand"]
-        assert "embed_limit=25" in graph_sync["dockerCommand"]
+        assert graph_sync["dockerCommand"].endswith("scripts/run_graph_sync.py")
         assert graph_sync["schedule"] == "20 */2 * * *"
         env = {item["key"]: item.get("value") for item in graph_sync["envVars"]}
         assert env["GRAPH_SYNC_TEAMS"] == "false"
@@ -70,6 +70,24 @@ def test_acumatica_cron_uses_guarded_direct_entrypoint():
 
         assert acumatica["schedule"] == "0 0,12 * * *"
         assert acumatica["dockerCommand"] == "python3 scripts/run_acumatica_financial_sync.py"
+
+
+def test_source_sync_health_cron_uses_direct_entrypoint():
+    for path in _render_blueprint_paths():
+        source_sync = _services_by_name(path)["alleato-source-sync-health"]
+
+        assert source_sync["schedule"] == "*/30 * * * *"
+        assert source_sync["dockerCommand"] == "python3 scripts/run_source_sync_health_recompute.py"
+
+
+def test_fireflies_cron_uses_direct_entrypoint():
+    for path in _render_blueprint_paths():
+        fireflies = _services_by_name(path)["alleato-fireflies-sync"]
+
+        assert fireflies["schedule"] == "15 * * * *"
+        assert fireflies["dockerCommand"] == (
+            "timeout 20m python3 scripts/run_fireflies_sync.py"
+        )
 
 
 def test_alleato_crons_require_app_db_pressure_guard():
@@ -118,6 +136,15 @@ def test_teams_dm_cron_is_tightly_bounded():
         env = {item["key"]: item.get("value") for item in teams_dm["envVars"]}
 
         assert "timeout 10m" in teams_dm["dockerCommand"]
+        assert teams_dm["dockerCommand"].endswith("scripts/run_graph_teams_dm_sync.py")
         assert env["TEAMS_DM_SYNC_MAX_USERS"] == "1"
         assert env["TEAMS_DM_EXPORT_PAGE_SIZE"] == "25"
         assert env["TEAMS_DM_EXPORT_MAX_PAGES"] == "2"
+
+
+def test_teams_channel_cron_uses_direct_entrypoint():
+    for path in _render_blueprint_paths():
+        teams = _services_by_name(path)["alleato-teams-channel-sync"]
+
+        assert "timeout 25m" in teams["dockerCommand"]
+        assert teams["dockerCommand"].endswith("scripts/run_graph_teams_channel_sync.py")

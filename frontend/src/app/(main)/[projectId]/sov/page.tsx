@@ -9,17 +9,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
-
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
 
 // Contract Line Item interface
 interface ContractLineItem {
@@ -68,29 +69,21 @@ export default function ProjectSOVPage() {
         setLoading(true);
 
         // Fetch contracts
-        const contractsResponse = await fetch(
+        const contractsData = await apiFetch<ContractWithLineItems[]>(
           `/api/projects/${projectId}/contracts`,
         );
-        if (!contractsResponse.ok) {
-          throw new Error("Failed to fetch contracts");
-        }
-        const contractsData = await contractsResponse.json();
 
         // Fetch line items for each contract
         const contractsWithLineItems = await Promise.all(
           contractsData.map(async (contract: ContractWithLineItems) => {
             try {
-              const lineItemsResponse = await fetch(
+              const lineItemsData = await apiFetch<ContractLineItem[]>(
                 `/api/projects/${projectId}/contracts/${contract.id}/line-items`,
               );
-              if (lineItemsResponse.ok) {
-                const lineItemsData = await lineItemsResponse.json();
-                return {
-                  ...contract,
-                  line_items: lineItemsData || [],
-                };
-              }
-              return { ...contract, line_items: [] };
+              return {
+                ...contract,
+                line_items: lineItemsData || [],
+              };
             } catch (err) {
               return { ...contract, line_items: [] };
             }
@@ -299,122 +292,118 @@ export default function ProjectSOVPage() {
             action={<Button onClick={() => router.push(`/${projectId}/contracts/new`)}><Plus />Create Contract</Button>}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted">
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("contract")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Contract
-                      <ArrowUpDown className="h-3 w-3" />
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+              <InlineTableHeaderCell
+                className="cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("contract")}
+              >
+                <div className="flex items-center gap-1">
+                  Contract
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="cursor-pointer hover:bg-muted w-20"
+                onClick={() => handleSort("line")}
+              >
+                <div className="flex items-center gap-1">
+                  Line #
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("cost_code")}
+              >
+                <div className="flex items-center gap-1">
+                  Cost Code
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("description")}
+              >
+                <div className="flex items-center gap-1">
+                  Description
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="text-right cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("quantity")}
+              >
+                <div className="flex items-center justify-end gap-1">
+                  Quantity
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell className="text-center">Unit</InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="text-right cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("unit_cost")}
+              >
+                <div className="flex items-center justify-end gap-1">
+                  Unit Cost
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell
+                className="text-right cursor-pointer hover:bg-muted"
+                onClick={() => handleSort("total")}
+              >
+                <div className="flex items-center justify-end gap-1">
+                  Total Cost
+                  <ArrowUpDown className="h-3 w-3" />
+                </div>
+              </InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {allLineItems.map((item) => (
+                <InlineTableRow key={item.id}>
+                  <InlineTableCell>
+                    <Link
+                      href={`/${projectId}/contracts/${item.contract.id}`}
+                      className="text-link hover:text-link-hover hover:underline"
+                    >
+                      {item.contract.contract_number}
+                    </Link>
+                    <div className="text-xs text-muted-foreground">
+                      {item.contract.title}
                     </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted w-20"
-                    onClick={() => handleSort("line")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Line #
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("cost_code")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Cost Code
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("description")}
-                  >
-                    <div className="flex items-center gap-1">
-                      Description
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="text-right cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("quantity")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Quantity
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead className="text-center">Unit</TableHead>
-                  <TableHead
-                    className="text-right cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("unit_cost")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Unit Cost
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="text-right cursor-pointer hover:bg-muted"
-                    onClick={() => handleSort("total")}
-                  >
-                    <div className="flex items-center justify-end gap-1">
-                      Total Cost
-                      <ArrowUpDown className="h-3 w-3" />
-                    </div>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allLineItems.map((item) => (
-                  <TableRow key={item.id} className="border-b hover:bg-muted">
-                    <TableCell>
-                      <Link
-                        href={`/${projectId}/contracts/${item.contract.id}`}
-                        className="text-link hover:text-link-hover hover:underline"
-                      >
-                        {item.contract.contract_number}
-                      </Link>
-                      <div className="text-xs text-muted-foreground">
-                        {item.contract.title}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center font-mono text-sm">
-                      {item.line_number}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {item.cost_code_id || "--"}
-                    </TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell className="text-right">
-                      {item.quantity.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {item.unit_of_measure || "LS"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(item.unit_cost)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.total_cost)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <tfoot>
-                <TableRow className="bg-muted font-medium">
-                  <TableCell colSpan={7}>Grand Total</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(totals.sov)}
-                  </TableCell>
-                </TableRow>
-              </tfoot>
-            </Table>
-          </div>
+                  </InlineTableCell>
+                  <InlineTableCell className="text-center font-mono text-sm">
+                    {item.line_number}
+                  </InlineTableCell>
+                  <InlineTableCell className="font-mono text-sm">
+                    {item.cost_code_id || "--"}
+                  </InlineTableCell>
+                  <InlineTableCell>{item.description}</InlineTableCell>
+                  <InlineTableCell className="text-right">
+                    {item.quantity.toLocaleString()}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-center">
+                    {item.unit_of_measure || "LS"}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-right">
+                    {formatCurrency(item.unit_cost)}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-right font-medium">
+                    {formatCurrency(item.total_cost)}
+                  </InlineTableCell>
+                </InlineTableRow>
+              ))}
+              <InlineTableRow className="bg-muted font-medium">
+                <InlineTableCell colSpan={7}>Grand Total</InlineTableCell>
+                <InlineTableCell className="text-right">
+                  {formatCurrency(totals.sov)}
+                </InlineTableCell>
+              </InlineTableRow>
+            </InlineTableBody>
+          </InlineTable>
         )}
     </PageShell>
   );

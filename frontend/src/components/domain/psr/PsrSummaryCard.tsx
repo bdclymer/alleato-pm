@@ -50,7 +50,7 @@ export function PsrSummaryCard({
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
           <InfoField label="Project Start Date" value={formatDate(projectInfo.startDate)} />
           <InfoField label="Project Completion Date" value={formatDate(projectInfo.completionDate)} />
-          <InfoField label="Contract Budget" value={formatCurrency(projectInfo.contractBudget)} />
+          <InfoField label="Original Budget" value={formatCurrency(projectInfo.contractBudget)} />
           <InfoField label="Current Budget" value={formatCurrency(projectInfo.currentBudget)} />
           <InfoField label="Current Projected Profit" value={formatCurrency(projectInfo.currentProjectedProfit)} />
           <InfoField label="Original Fee" value={formatCurrency(projectInfo.originalFee)} />

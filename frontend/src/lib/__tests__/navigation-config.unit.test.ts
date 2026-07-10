@@ -128,6 +128,18 @@ describe("navigation config", () => {
     expect(tools.some((tool) => tool.name === "Project Intelligence")).toBe(false);
   });
 
+  it("keeps project admin out of project navigation", () => {
+    const projectNavTools = [
+      ...coreTools,
+      ...adminTools,
+      ...headerNavGroups.flatMap((group) => group.tools),
+    ];
+
+    expect(
+      projectNavTools.filter((tool) => tool.path === "admin" && tool.requiresProject === true),
+    ).toHaveLength(0);
+  });
+
   it("shows developer-only report tools to developers with module access", () => {
     const tools = filterToolsByPermission(
       [...projectManagementTools, ...financialManagementTools],
@@ -203,7 +215,11 @@ describe("navigation config", () => {
     const expectedTools = [
       { name: "Meetings", path: "meetings", href: "/meetings" },
       { name: "Tasks", path: "tasks", href: "/tasks" },
-      { name: "Knowledge Base", path: "knowledge", href: "/knowledge" },
+      {
+        name: "Documentation",
+        path: "https://alleato-docs-site.vercel.app/",
+        href: "https://alleato-docs-site.vercel.app/",
+      },
     ];
 
     for (const expectedTool of expectedTools) {
@@ -230,6 +246,46 @@ describe("navigation config", () => {
     for (const expectedTool of expectedTools) {
       expect(tools.some((tool) => tool.name === expectedTool.name)).toBe(true);
     }
+  });
+
+  it("allows User Management for configured project leadership roles", () => {
+    const userManagementTools = companyWideHeaderTools.filter(
+      (tool) => tool.name === "User Management",
+    );
+
+    for (const title of ["Senior Project Manager", "Project Manager", "Superintendent"]) {
+      const tools = filterToolsByPermission(
+        userManagementTools,
+        null,
+        {},
+        false,
+        "employee",
+        false,
+        null,
+        { title },
+      );
+
+      expect(tools.some((tool) => tool.name === "User Management")).toBe(true);
+    }
+  });
+
+  it("keeps User Management hidden from unrelated non-admin roles", () => {
+    const userManagementTools = companyWideHeaderTools.filter(
+      (tool) => tool.name === "User Management",
+    );
+
+    const tools = filterToolsByPermission(
+      userManagementTools,
+      null,
+      {},
+      false,
+      "employee",
+      false,
+      null,
+      { title: "Project Engineer" },
+    );
+
+    expect(tools).toHaveLength(0);
   });
 
   it("keeps removed company-wide surfaces out of company navigation", () => {

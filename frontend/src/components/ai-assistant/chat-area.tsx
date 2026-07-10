@@ -3,8 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { apiFetchBlob } from "@/lib/api-client";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   AI_ASSISTANT_MODELS,
@@ -141,6 +140,10 @@ import {
   isAssistantWidgetPayload,
   type AssistantWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
+import type {
+  ChangeEventWorkflowDraft,
+  ChangeEventWorkflowDraftEdits,
+} from "@/lib/ai/change-event-workflow";
 import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
@@ -152,13 +155,13 @@ import {
   type MemoryUsage,
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
-import { AssistantSuggestionList } from "./assistant-suggestion-list";
-import {
-  resolveAssistantSuggestions,
-  type AssistantSuggestion,
-} from "@/lib/ai/assistant-suggestion-resolver";
 import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
 import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
+import { isStandalonePreviewCardPart } from "./preview-review-card";
+import {
+  ChangeEventDraftArtifact,
+  type ChangeEventDraftProjectOption,
+} from "./change-event-draft-artifact";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -389,13 +392,67 @@ function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
     // Evidence/source-coverage cards disabled in chat UI per 2026-05-19 —
     // backend still emits them; re-enable by removing this filter.
     if (widget.type === "source_evidence_drawer") return widgets;
+    // Meeting-intelligence aggregate card deactivated in chat UI per 2026-06-26 —
+    // it produced meta-commentary noise ("2 meeting records matched this window",
+    // "Opportunity tracking is not available", "Open the meeting cards with risk
+    // badges first"), crowded out the conversational answer, and its links didn't
+    // open. The agent now answers meeting questions in prose. Backend still emits
+    // the part; re-enable by removing this filter. See docs/design/noise-gate-log.md.
+    if (widget.type === "meeting_intelligence") return widgets;
     widgets.push(widget);
     return widgets;
   }, []);
 }
 
+function getLatestChangeEventWorkflowDraft(
+  messages: UIMessage[],
+): ChangeEventWorkflowDraft | null {
+  for (const msg of [...messages].reverse()) {
+    if (msg.role !== "assistant") continue;
+    const widget = getAssistantWidgetParts(msg)
+      .reverse()
+      .find((part) => part.type === "change_event_workflow");
+    if (widget?.type === "change_event_workflow") {
+      return widget.draft;
+    }
+  }
+  return null;
+}
+
+type WorkspaceArtifactListResponse = {
+  artifacts?: Array<{
+    content?: unknown;
+  }>;
+};
+
+type ChangeEventDraftSaveResponse = {
+  draft: ChangeEventWorkflowDraft;
+};
+
+function changeEventDraftFromArtifactContent(
+  content: unknown,
+): ChangeEventWorkflowDraft | null {
+  if (!content || typeof content !== "object" || Array.isArray(content)) {
+    return null;
+  }
+  const record = content as Record<string, unknown>;
+  const workflow = record.workflow;
+  if (!workflow || typeof workflow !== "object" || Array.isArray(workflow)) {
+    return null;
+  }
+  const draft = (workflow as Record<string, unknown>).draft;
+  if (!draft || typeof draft !== "object" || Array.isArray(draft)) {
+    return null;
+  }
+  return draft as ChangeEventWorkflowDraft;
+}
+
 function isOutlookInboxSummaryWidget(widget: AssistantWidgetPayload): boolean {
   return widget.type === "outlook_inbox_summary";
+}
+
+function isTrailingAssistantWidget(widget: AssistantWidgetPayload): boolean {
+  return isOutlookInboxSummaryWidget(widget) || widget.type === "project_picker";
 }
 
 function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
@@ -1202,10 +1259,7 @@ export function ChatArea({
   onToolApprovalResponse,
   onStop,
   welcomeHideOrb = false,
-  showWidgetWelcomePrompt = false,
-  onWidgetWelcomeDismiss,
 }: ChatAreaProps) {
-  const pathname = usePathname();
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
 
@@ -1233,10 +1287,98 @@ export function ChatArea({
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 500 });
   const selectedProject =
     projects.find((p) => p.id === selectedProjectIdProp) ?? null;
+  const changeEventDraftProjectOptions =
+    useMemo<ChangeEventDraftProjectOption[]>(
+      () =>
+        projects.map((project) => ({
+          id: project.id,
+          name: project.name ?? `Project #${project.id}`,
+          meta: [project.project_number, project.phase, project.state]
+            .filter(Boolean)
+            .join(" - "),
+        })),
+      [projects],
+    );
   const selectedModelOption =
     AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
     AI_ASSISTANT_MODELS[0];
   const councilMode = councilModeProp ?? councilModeInternal;
+  const latestMessageChangeEventDraft = useMemo(
+    () => getLatestChangeEventWorkflowDraft(messages),
+    [messages],
+  );
+  const [persistedChangeEventDraft, setPersistedChangeEventDraft] =
+    useState<ChangeEventWorkflowDraft | null>(null);
+  const activeChangeEventDraft =
+    persistedChangeEventDraft ?? latestMessageChangeEventDraft;
+
+  useEffect(() => {
+    if (latestMessageChangeEventDraft) {
+      setPersistedChangeEventDraft(latestMessageChangeEventDraft);
+    }
+  }, [latestMessageChangeEventDraft]);
+
+  const loadChangeEventDraftArtifact = useCallback(async () => {
+    if (!sessionId) {
+      return null;
+    }
+
+    const params = new URLSearchParams({
+      type: "change_event_draft",
+      status: "draft",
+      sessionId,
+      limit: "1",
+    });
+
+    const data = await apiFetch<WorkspaceArtifactListResponse>(
+      `/api/ai-assistant/workspace?${params.toString()}`,
+    );
+    return changeEventDraftFromArtifactContent(data.artifacts?.[0]?.content);
+  }, [sessionId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadChangeEventDraftArtifact()
+      .then((draft) => {
+        if (cancelled) return;
+        setPersistedChangeEventDraft(draft);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        console.warn(
+          "[ai-assistant] Failed to hydrate change-event draft artifact for session.",
+        );
+        setPersistedChangeEventDraft(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadChangeEventDraftArtifact]);
+
+  const saveChangeEventDraftArtifact = useCallback(
+    async (edits: ChangeEventWorkflowDraftEdits) => {
+      if (!sessionId) {
+        throw new Error("No active AI session is available for this draft.");
+      }
+
+      const data = await apiFetch<ChangeEventDraftSaveResponse>(
+        "/api/ai-assistant/workspace",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_change_event_draft",
+            sessionId,
+            edits,
+          }),
+        },
+      );
+      setPersistedChangeEventDraft(data.draft);
+    },
+    [sessionId],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1527,9 +1669,16 @@ export function ChatArea({
 
   const handleToolApprove = useCallback(
     (part: ToolPart) => {
-      const toolName = formatToolName(getToolNameFromType(part.type));
+      const toolName = getToolNameFromType(part.type);
+      const preview = getToolPreview(part);
+      const fields = asObject(preview?.fields);
       onSubmit(
-        `I approve this ${toolName} preview. Run it now exactly as shown.`,
+        [
+          `Run ${toolName} now with confirmed=true using exactly these preview values.`,
+          "Do not rebuild the intake draft. Do not ask another preview question.",
+          "",
+          JSON.stringify(fields, null, 2),
+        ].join("\n"),
       );
     },
     [onSubmit],
@@ -1557,34 +1706,9 @@ export function ChatArea({
     [onSubmit],
   );
 
-  const handleWidgetWelcomeAction = useCallback(
-    (prompt: string) => {
-      if (isStreaming) return;
-      onWidgetWelcomeDismiss?.();
-      onInputChange(prompt);
-    },
-    [isStreaming, onInputChange, onWidgetWelcomeDismiss],
-  );
-
-  const handleCatalogAction = useCallback(
-    (prompt: string) => {
-      if (isStreaming) return;
-      onInputChange(prompt);
-    },
-    [isStreaming, onInputChange],
-  );
-
-  const assistantSuggestions = useMemo(
-    () =>
-      resolveAssistantSuggestions({
-        pathname,
-        surface: welcomeHideOrb ? "widget" : "command_center",
-      }),
-    [pathname, welcomeHideOrb],
-  );
-
   const hasMessages = messages.length > 0;
-  const showWelcome = !hasMessages && !isLoadingMessages;
+  const showWelcome =
+    !hasMessages && !isLoadingMessages && !activeChangeEventDraft;
 
   // Determine streaming indicator visibility
   const lastMessage = messages[messages.length - 1];
@@ -1601,8 +1725,11 @@ export function ChatArea({
       Boolean(lastMessageStatus) ||
       (lastIsAssistantWithToolCalls && !lastMessageText.trim()));
 
+  // Mobile needs real 44px touch targets with legible ~20px icons; desktop
+  // stays compact (32px / 16px). The [&_svg] selector sizes the glyph without
+  // editing every icon call-site.
   const composerIconButtonClass =
-    "h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8";
+    "h-11 w-11 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground [&_svg]:size-5 sm:h-8 sm:w-8 sm:[&_svg]:size-4";
 
   // Shared prompt input element
   const promptInputEl = (
@@ -1650,7 +1777,7 @@ export function ChatArea({
           welcomeHideOrb
             ? hasMessages
               ? "min-h-8 pb-1.5 pt-0.5"
-              : "min-h-8 pb-1 pt-0"
+              : "min-h-16 pb-2 pt-1"
             : hasMessages
               ? "min-h-8 pb-2 pt-0.5"
               : "min-h-12 pb-3 pt-1",
@@ -1712,7 +1839,6 @@ export function ChatArea({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon-sm"
                       className={cn(
                         composerIconButtonClass,
                         selectedProject && "text-primary hover:text-primary",
@@ -1810,7 +1936,6 @@ export function ChatArea({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon-sm"
                       className={composerIconButtonClass}
                       aria-label="Select model"
                     >
@@ -1884,27 +2009,6 @@ export function ChatArea({
             hideOrb={welcomeHideOrb}
             variant={welcomeHideOrb ? "widget" : "full"}
             composer={promptInputEl}
-            beforeComposer={
-              welcomeHideOrb ? (
-                <WidgetWelcomePrompt
-                  disabled={isStreaming}
-                  suggestions={assistantSuggestions}
-                  onAction={handleWidgetWelcomeAction}
-                  onDismiss={
-                    showWidgetWelcomePrompt ? onWidgetWelcomeDismiss : undefined
-                  }
-                />
-              ) : null
-            }
-            afterComposer={
-              !welcomeHideOrb ? (
-                <AssistantSuggestionList
-                  disabled={isStreaming}
-                  suggestions={assistantSuggestions}
-                  onSelectPrompt={handleCatalogAction}
-                />
-              ) : null
-            }
             error={
               chatError ? (
                 <InfoAlert variant="error" className="py-2">
@@ -1916,8 +2020,10 @@ export function ChatArea({
         </div>
       ) : (
         <>
-          <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
+          <div className="flex min-h-0 flex-1">
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+              <Conversation className="min-h-0">
+                <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 sm:px-6 md:pb-8 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -1945,16 +2051,23 @@ export function ChatArea({
                 const assistantWidgetParts = isAssistant
                   ? getAssistantWidgetParts(msg)
                   : [];
-                const leadingAssistantWidgetParts = assistantWidgetParts.filter(
-                  (widget) => !isOutlookInboxSummaryWidget(widget),
-                );
+                const inlineAssistantWidgetParts =
+                  assistantWidgetParts.filter(
+                    (widget) => widget.type !== "change_event_workflow",
+                  );
+                const leadingAssistantWidgetParts =
+                  inlineAssistantWidgetParts.filter(
+                    (widget) => !isTrailingAssistantWidget(widget),
+                  );
                 // Widgets that fully replace the text response — suppress duplicate text
-                const textSuppressingTypes = new Set(["task_summary"]);
+                const textSuppressingTypes = new Set([
+                  "task_summary",
+                ]);
                 const widgetSuppressesText = leadingAssistantWidgetParts.some(
                   (w) => textSuppressingTypes.has(w.type),
                 );
                 const trailingAssistantWidgetParts =
-                  assistantWidgetParts.filter(isOutlookInboxSummaryWidget);
+                  inlineAssistantWidgetParts.filter(isTrailingAssistantWidget);
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedActionToolParts =
                   toolParts.length === 0
@@ -1972,6 +2085,8 @@ export function ChatArea({
                 const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
                 const langfuseTraceId = langfuseTraceIdByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
+                const assistantTextIsAnimating =
+                  isStreaming && isLastMessage && trailingAssistantWidgetParts.length === 0;
 
                 // Show tool-only assistant messages with live tool call display.
                 // Falls through when the only tool call is an artifact (which has
@@ -2207,6 +2322,33 @@ export function ChatArea({
                                     onEditDraft={onInputChange}
                                   />
                                 ))}
+                              {/*
+                                Preview cards (e.g. createChangeEvent confirmed:false)
+                                carry NO approval — the AI SDK only gates approval on
+                                confirmed:true. Without this, a preview that rides alongside
+                                other tool calls (findProject/semanticSearch) is shown only
+                                as an "Analysis Step" label and the generative-UI form card
+                                is dropped. Render those preview parts here so the card shows
+                                even when the assistant also emits text.
+                              */}
+                              {toolParts
+                                .filter(
+                                  (part) =>
+                                    !hasAssistantDynamicToolComponent(part) &&
+                                    isStandalonePreviewCardPart(part),
+                                )
+                                .map((part) => (
+                                  <ToolCallItem
+                                    key={`${part.toolCallId}-preview`}
+                                    part={part}
+                                    onApprove={handleToolApprove}
+                                    onEdit={handleToolEdit}
+                                    onRun={handleToolRun}
+                                    onApprovalResponse={onToolApprovalResponse}
+                                    sessionId={sessionId}
+                                    selectedProjectId={selectedProjectIdProp}
+                                  />
+                                ))}
                             </div>
                           ) : toolParts.length === 1 ? (
                             <div className="mb-3">
@@ -2254,11 +2396,9 @@ export function ChatArea({
                           {!widgetSuppressesText && (
                             <MessageResponse
                               className="text-sm leading-6"
-                              isAnimating={isStreaming && isLastMessage}
+                              isAnimating={assistantTextIsAnimating}
                               caret={
-                                isStreaming && isLastMessage
-                                  ? "block"
-                                  : undefined
+                                assistantTextIsAnimating ? "block" : undefined
                               }
                             >
                               {formattedAssistantText}
@@ -2322,8 +2462,13 @@ export function ChatArea({
                               tucked behind the Trace icon in the message actions
                               row below (see TraceMenu). */}
 
-                          {/* Source citations — disabled in chat UI per 2026-05-19. */}
-                          {false && persistedSources.length > 0 && (
+                          {/* Source citations. Re-enabled 2026-07-09: originally
+                              disabled 2026-05-19 because the sources column was
+                              always empty (nothing to show). #827 now persists
+                              real citations, and getSourceHref links each to the
+                              in-app record (meeting page / email), so the
+                              evidence drawer shows grounded, clickable sources. */}
+                          {persistedSources.length > 0 && (
                             <AssistantSourceEvidenceWidget
                               sources={persistedSources}
                             />
@@ -2428,15 +2573,45 @@ export function ChatArea({
                   <CrossSourceTimeline projectId={selectedProjectIdProp} />
                 </div>
               )}
-            </ConversationContent>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
-            <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
-          </Conversation>
+                </ConversationContent>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
+                <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
+              </Conversation>
+            </div>
+            {activeChangeEventDraft ? (
+              <div className="hidden w-96 shrink-0 border-l border-border/60 lg:block">
+                <ChangeEventDraftArtifact
+                  draft={activeChangeEventDraft}
+                  projectOptions={changeEventDraftProjectOptions}
+                  projectsLoading={projectsLoading}
+                  onSubmit={onSubmit}
+                  onSaveDraft={saveChangeEventDraftArtifact}
+                />
+              </div>
+            ) : null}
+          </div>
         </>
       )}
 
+      {!showWelcome && activeChangeEventDraft ? (
+        <div className="max-h-80 shrink-0 overflow-hidden border-t border-border/60 lg:hidden">
+          <ChangeEventDraftArtifact
+            draft={activeChangeEventDraft}
+            projectOptions={changeEventDraftProjectOptions}
+            projectsLoading={projectsLoading}
+            onSubmit={onSubmit}
+            onSaveDraft={saveChangeEventDraftArtifact}
+          />
+        </div>
+      ) : null}
+
       {!showWelcome && (
-        <div className="z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6">
+        <div
+          className={cn(
+            "z-20 shrink-0 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 sm:px-6",
+            activeChangeEventDraft && "lg:pr-96",
+          )}
+        >
           <div className="mx-auto w-full max-w-3xl">
             {chatError && (
               <InfoAlert variant="error" className="mb-2 py-2">
@@ -2451,41 +2626,3 @@ export function ChatArea({
   );
 }
 
-function WidgetWelcomePrompt({
-  disabled,
-  suggestions,
-  onAction,
-  onDismiss,
-}: {
-  disabled: boolean;
-  suggestions: AssistantSuggestion[];
-  onAction: (prompt: string) => void;
-  onDismiss?: () => void;
-}) {
-  return (
-    <div className="text-left">
-      {onDismiss && (
-        <div className="mb-1 flex justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onDismiss}
-            aria-label="Dismiss AI welcome message"
-            className="-mr-1 -mt-1 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <XIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
-      <div>
-        <AssistantSuggestionList
-          disabled={disabled}
-          suggestions={suggestions.slice(0, 3)}
-          variant="compact"
-          onSelectPrompt={onAction}
-        />
-      </div>
-    </div>
-  );
-}

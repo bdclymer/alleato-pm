@@ -1,0 +1,25 @@
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals:prod
+> AI_EVAL_BASE_URL=https://projects.alleatogroup.com AI_EVAL_CASE_TIMEOUT_MS=120000 npm run rag:verify:inbox-evals
+
+
+> alleato-procore@0.1.0 rag:verify:inbox-evals
+> node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression
+
+AI Assistant eval suite — 5 cases
+Endpoint: https://projects.alleatogroup.com/api/ai-assistant/chat
+User id: 6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6
+Bundle: inbox-outlook-regression
+Run dir: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-23-22-281Z-a3c96f4b
+
+[1/5] realworld-last-five-emails … ✓ pass (7895ms, 1 tools)
+[2/5] realworld-urgent-inbox … ✓ pass (11734ms, 1 tools)
+[3/5] realworld-important-emails-this-morning … ✗ fail (11404ms, 1 tools)
+    ! judge email_operator score 2 < 4: The answer does identify a few potentially relevant messages and gives basic response paths, but it does not cleanly separate urgent from merely notable inbox items, and it lacks strong evidence-backed prioritization. The 'maintenance needed' thread is treated as actionable without enough detail to prove urgency, and the GitHub message is probably over-included as 'important' despite being informational. It also does not provide a true draft recommendation or any actual draft text, and the thread summaries are thin and slightly speculative.
+[4/5] realworld-outlook-arrived-today … ✓ pass (9959ms, 1 tools)
+[5/5] realworld-email-reply-triage … ✗ fail (11786ms, 1 tools)
+    ! judge email_operator score 3 < 4: The answer does identify several likely reply-needed emails and separates them from watch/ignore items, but it is not strong enough on evidence discipline or action ownership. It includes some unsupported inferences, does not clearly distinguish confirmed user-owned tasks from merely interesting inbox items, and it misses the prompt’s emphasis on today’s emails needing a reply by mixing in items that are not clearly reply-required.
+
+Results: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-23-22-281Z-a3c96f4b/results.json
+Summary: docs/archive/2026-06-22-docs-migration/ai-plan/evals/runs/2026-06-27T04-23-22-281Z-a3c96f4b/summary.md
+Pass: 3/5

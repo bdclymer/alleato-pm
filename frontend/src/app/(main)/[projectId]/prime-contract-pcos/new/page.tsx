@@ -7,12 +7,23 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Check, ChevronsUpDown, CircleHelp, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { FileUploadField } from "@/components/forms/FileUploadField";
+import { FormSection } from "@/components/forms/FormSection";
+import { FormGrid } from "@/components/forms/FormGrid";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { RHFCheckboxField } from "@/components/forms/fields/RHFCheckboxField";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFMoneyField } from "@/components/forms/fields/RHFMoneyField";
+import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -21,35 +32,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
@@ -65,6 +55,7 @@ import {
   parseChangeEventIdsParam,
   resolveSourceChangeReason,
   resolveSourcePrimeContractId,
+  sumSourceChangeEventRom,
   type PrimePcoSourceChangeEvent,
   type PrimePcoSourceContract,
   type PrimePcoSourceLineItem,
@@ -256,35 +247,37 @@ function toPrimeContractOption(contract: PrimePcoSourceContract): PrimeContract 
   };
 }
 
-function ProjectTeamReviewerTooltip({ projectId }: { projectId: string }) {
+function contractPartyName(contract: PrimeContract): string | null {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Reviewer assignment help"
-          >
-            <CircleHelp className="h-3.5 w-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="top" align="start" className="max-w-xs text-left">
-          <span>
-            Select any user added to the{" "}
-            <Link
-              href={`/${projectId}/directory#project-team`}
-              className="underline underline-offset-2"
-            >
-              Project Team
-            </Link>
-            .
-          </span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    contract.contract_company?.name ??
+    contract.client?.name ??
+    contract.vendor?.name ??
+    contract.company_name ??
+    null
+  );
+}
+
+function contractOptionLabel(contract: PrimeContract): string {
+  return [`#${contract.contract_number}`, contract.title, contractPartyName(contract)]
+    .filter(Boolean)
+    .join(" — ");
+}
+
+/** Read-only informational field (auto-generated / auto-filled values). */
+function ReadOnlyField({
+  label,
+  value,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="grid gap-2">
+      <Label className="text-sm font-medium">{label}</Label>
+      <Input value={value} placeholder={placeholder} disabled />
+    </div>
   );
 }
 
@@ -351,10 +344,7 @@ export default function NewPrimeContractPcoPage() {
   const [potentialChangeOrders, setPotentialChangeOrders] = useState<PrimePcoOption[]>([]);
   const [isLoadingPcos, setIsLoadingPcos] = useState(false);
   const [selectedPcoIds, setSelectedPcoIds] = useState<string[]>([]);
-  const [contractSelectOpen, setContractSelectOpen] = useState(false);
   const [pcoSelectOpen, setPcoSelectOpen] = useState(false);
-  const [reviewerSelectOpen, setReviewerSelectOpen] = useState(false);
-  const [reviewedBySelectOpen, setReviewedBySelectOpen] = useState(false);
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
@@ -412,9 +402,25 @@ export default function NewPrimeContractPcoPage() {
     return `${selectedPotentialChangeOrders.length} PCOs selected`;
   }, [selectedPotentialChangeOrders]);
 
-  const formatEmployeeName = useCallback((employee: EmployeeOption) => {
-    return [employee.first_name, employee.last_name].filter(Boolean).join(" ") || "Unnamed employee";
-  }, []);
+  const contractOptions = useMemo(
+    () =>
+      contracts.map((c) => ({
+        value: c.id,
+        label: contractOptionLabel(c),
+      })),
+    [contracts],
+  );
+
+  const employeeOptions = useMemo(
+    () =>
+      employees.map((employee) => {
+        const name =
+          [employee.first_name, employee.last_name].filter(Boolean).join(" ") ||
+          "Unnamed employee";
+        return { value: name, label: name };
+      }),
+    [employees],
+  );
 
   // ── Fetch prime contracts ──────────────────────────────────────────
   useEffect(() => {
@@ -477,8 +483,17 @@ export default function NewPrimeContractPcoPage() {
       form.setValue("title", buildPrimePcoSourceTitle(events), {
         shouldValidate: true,
       });
+
+      // Prefill the Amount from the source change events' Revenue ROM so the
+      // user isn't forced to retype it. Only when the user is creating from
+      // change events and hasn't selected existing PCOs to sum instead.
+      if (selectedPcoIds.length === 0) {
+        form.setValue("total_amount", sumSourceChangeEventRom(events), {
+          shouldValidate: true,
+        });
+      }
     },
-    [form],
+    [form, selectedPcoIds.length],
   );
 
   useEffect(() => {
@@ -569,7 +584,7 @@ export default function NewPrimeContractPcoPage() {
     };
 
     fetchChangeEvents();
-     
+
   }, [form, projectId, changeEventIdsParam]);
 
   useEffect(() => {
@@ -641,7 +656,12 @@ export default function NewPrimeContractPcoPage() {
   useEffect(() => {
     setSelectedPcoIds([]);
     setPcoSelectOpen(false);
-    form.setValue("total_amount", null);
+    // In the change-event flow the Amount is prefilled from the source events'
+    // Revenue ROM (see applyChangeEventDefaults); don't clobber it when the
+    // prime contract auto-populates. Only the select-existing-PCO flow resets.
+    if (!hasChangeEvents) {
+      form.setValue("total_amount", null);
+    }
 
     if (!selectedContractId) {
       setPotentialChangeOrders([]);
@@ -681,7 +701,7 @@ export default function NewPrimeContractPcoPage() {
     return () => {
       active = false;
     };
-  }, [form, projectId, selectedContractId]);
+  }, [form, projectId, selectedContractId, hasChangeEvents]);
 
   useEffect(() => {
     if (selectedPotentialChangeOrders.length === 0) return;
@@ -904,65 +924,43 @@ export default function NewPrimeContractPcoPage() {
     } catch (err) {
       const detail =
         err instanceof Error ? err.message : "Unknown create error";
+      form.setError("root", {
+        type: "server",
+        message: `Prime Contract Change Order was not created: ${detail}`,
+      });
       toast.error(`Prime Contract Change Order was not created: ${detail}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleCancel = useCallback(() => {
+    if (contractContextId) {
+      router.push(`/${projectId}/prime-contracts/${contractContextId}`);
+    } else {
+      router.push(`/${projectId}/prime-contract-pcos`);
+    }
+  }, [contractContextId, projectId, router]);
+
   const isLoading = isLoadingContracts || isLoadingChangeEvents;
   const hasMissingSourceChangeEvents =
     hasChangeEvents && !isLoadingChangeEvents && changeEvents.length !== changeEventIds.length;
 
+  const statusOptions = PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((s) => ({
+    value: s.value,
+    label: s.label,
+  }));
+
   return (
     <PageShell
-      variant="dashboard"
-      title={
-        hasChangeEvents
-          ? "New Prime Contract PCO"
-          : "New Prime Contract Change Order"
-      }
+      variant="form"
+      title="New Prime Contract Potential Change Order"
       description={
         hasChangeEvents
           ? "Create a potential change order from linked change events."
           : "Assemble an official change order from linked potential change orders."
       }
       onBack={() => router.back()}
-      actions={
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              contractContextId
-                ? router.push(`/${projectId}/prime-contracts/${contractContextId}`)
-                : router.push(`/${projectId}/prime-contract-pcos`)
-            }
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={form.handleSubmit(handleSubmit)}
-            disabled={
-              isSubmitting ||
-              isLoading ||
-              hasMissingSourceChangeEvents ||
-              (!hasChangeEvents && selectedPcoIds.length === 0)
-            }
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating…
-              </>
-            ) : (
-              "Create"
-            )}
-          </Button>
-        </div>
-      }
     >
       {isLoading ? (
         <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
@@ -970,695 +968,357 @@ export default function NewPrimeContractPcoPage() {
           <Text tone="muted">Loading…</Text>
         </div>
       ) : (
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
-          >
-            {/* Overview */}
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Overview"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <FormItem>
-                  <FormLabel>
-                    {hasChangeEvents ? "PCO Number" : "PCCO Number"}
-                  </FormLabel>
-                  <Input value="Auto-generated on save" disabled />
-                </FormItem>
+        <FormContainer maxWidth="lg" withCard={false}>
+          <Form {...form}>
+            <form
+              noValidate
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-8"
+            >
+              <FormSection title="Overview">
+                <FormGrid columns={2}>
+                  <ReadOnlyField
+                    label={hasChangeEvents ? "PCO Number" : "PCCO Number"}
+                    value="Auto-generated on save"
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Change order title" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFTextField
+                    control={form.control}
+                    name="title"
+                    label="Title *"
+                    placeholder="Change order title"
+                  />
 
-                {/* Contract */}
-                <FormField
-                  control={form.control}
-                  name="prime_contract_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contract *</FormLabel>
-                      <Select
-                        open={contractSelectOpen}
-                        onOpenChange={(open) => {
-                          setContractSelectOpen(open);
-                          if (open) {
-                            setPcoSelectOpen(false);
-                            setReviewerSelectOpen(false);
-                            setReviewedBySelectOpen(false);
-                          }
-                        }}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setContractSelectOpen(false);
-                          setPcoSelectOpen(false);
-                          setReviewedBySelectOpen(false);
-                        }}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a contract" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {contracts.map((c) => {
-                            const partyName =
-                              c.contract_company?.name ??
-                              c.client?.name ??
-                              c.vendor?.name ??
-                              c.company_name ??
-                              null;
-                            const label = [
-                              `#${c.contract_number}`,
-                              c.title,
-                              partyName,
-                            ]
-                              .filter(Boolean)
-                              .join(" — ");
-                            return (
-                              <SelectItem key={c.id} value={c.id}>
-                                {label}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <RHFComboboxField
+                    control={form.control}
+                    name="prime_contract_id"
+                    label="Contract *"
+                    placeholder="Select a contract"
+                    searchPlaceholder="Search contracts..."
+                    emptyMessage="No contracts found."
+                    options={contractOptions}
+                    selectedLabel={
+                      selectedContract
+                        ? contractOptionLabel(selectedContract)
+                        : undefined
+                    }
+                  />
 
-                <FormItem>
-                  <FormLabel>Contract Company</FormLabel>
-                  <Input
+                  <ReadOnlyField
+                    label="Contract Company"
                     value={contractCompany ?? ""}
                     placeholder="Auto-filled from contract"
-                    disabled
                   />
-                </FormItem>
 
-                {!hasChangeEvents && (
-                <FormItem>
-                  <FormLabel>Potential Change Orders *</FormLabel>
-                  <Popover
-                    open={Boolean(selectedContractId) && pcoSelectOpen}
-                    onOpenChange={(open) => {
-                      if (!selectedContractId || isLoadingPcos) {
-                        setPcoSelectOpen(false);
-                        return;
-                      }
-                      setPcoSelectOpen(open);
-                      if (open) {
-                        setContractSelectOpen(false);
-                        setReviewerSelectOpen(false);
-                        setReviewedBySelectOpen(false);
-                      }
-                    }}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        role="combobox"
-                        disabled={!selectedContractId || isLoadingPcos}
-                        className={cn(
-                          "w-full justify-between font-normal",
-                          selectedPotentialChangeOrders.length === 0 &&
-                            "text-muted-foreground",
-                        )}
-                      >
-                        <span className="truncate">
-                          {isLoadingPcos ? "Loading PCOs..." : selectedPcoLabel}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="p-0"
-                      align="start"
-                      style={{ width: "var(--radix-popover-trigger-width)" }}
-                    >
-                      <Command>
-                        <CommandInput placeholder="Search potential change orders..." />
-                        <CommandList>
-                          <CommandEmpty>
-                            {selectedContractId
-                              ? "No linked potential change orders found."
-                              : "Select a contract first."}
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {potentialChangeOrders.map((pco) => {
-                              const isSelected = selectedPcoIds.includes(pco.id);
-                              return (
-                                <CommandItem
-                                  key={pco.id}
-                                  value={formatPcoOptionLabel(pco)}
-                                  onSelect={() => toggleSelectedPco(pco.id)}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      isSelected ? "opacity-100" : "opacity-0",
-                                    )}
-                                  />
-                                  <div className="flex min-w-0 flex-col">
-                                    <span className="truncate">
-                                      {formatPcoOptionLabel(pco)}
-                                    </span>
-                                    {pco.status && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {pco.status}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="revision"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Revision</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : null,
-                            )
+                  {!hasChangeEvents && (
+                    <div className="grid gap-2">
+                      <Label className="text-sm font-medium">
+                        Potential Change Orders *
+                      </Label>
+                      <Popover
+                        open={Boolean(selectedContractId) && pcoSelectOpen}
+                        onOpenChange={(open) => {
+                          if (!selectedContractId || isLoadingPcos) {
+                            setPcoSelectOpen(false);
+                            return;
                           }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
+                          setPcoSelectOpen(open);
+                        }}
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {s.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            disabled={!selectedContractId || isLoadingPcos}
+                            className={cn(
+                              "w-full justify-between font-normal",
+                              selectedPotentialChangeOrders.length === 0 &&
+                                "text-muted-foreground",
+                            )}
+                          >
+                            <span className="truncate">
+                              {isLoadingPcos ? "Loading PCOs..." : selectedPcoLabel}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="p-0"
+                          align="start"
+                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                        >
+                          <Command>
+                            <CommandInput placeholder="Search potential change orders..." />
+                            <CommandList>
+                              <CommandEmpty>
+                                {selectedContractId
+                                  ? "No linked potential change orders found."
+                                  : "Select a contract first."}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {potentialChangeOrders.map((pco) => {
+                                  const isSelected = selectedPcoIds.includes(pco.id);
+                                  return (
+                                    <CommandItem
+                                      key={pco.id}
+                                      value={formatPcoOptionLabel(pco)}
+                                      onSelect={() => toggleSelectedPco(pco.id)}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          isSelected ? "opacity-100" : "opacity-0",
+                                        )}
+                                      />
+                                      <div className="flex min-w-0 flex-col">
+                                        <span className="truncate">
+                                          {formatPcoOptionLabel(pco)}
+                                        </span>
+                                        {pco.status && (
+                                          <span className="text-xs text-muted-foreground">
+                                            {pco.status}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   )}
-                />
 
-                <FormField
+                  <RHFNumberField
+                    control={form.control}
+                    name="revision"
+                    label="Revision"
+                    min={0}
+                    step={1}
+                  />
+
+                  <RHFSelectField
+                    control={form.control}
+                    name="status"
+                    label="Status"
+                    placeholder="Select status"
+                    options={statusOptions}
+                  />
+                </FormGrid>
+
+                <RHFTextareaField
                   control={form.control}
                   name="description"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2 lg:col-span-3">
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          value={field.value ?? ""}
-                          rows={4}
-                          placeholder="Describe the change order..."
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Description"
+                  placeholder="Describe the change order..."
+                  rows={4}
                 />
 
-                <RHFDateField
-                  control={form.control}
-                  name="signed_co_received_date"
-                  label="Signed Change Order Received Date"
-                  nullable
-                />
+                <FormGrid columns={2}>
+                  <RHFDateField
+                    control={form.control}
+                    name="signed_co_received_date"
+                    label="Signed Change Order Received Date"
+                    nullable
+                  />
+                </FormGrid>
 
-                <div className="flex items-start gap-6 pt-7">
-                  <FormField
+                <FormGrid columns={3}>
+                  <RHFCheckboxField
                     control={form.control}
                     name="field_change"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start gap-3">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-0.5 leading-none">
-                          <FormLabel className="cursor-pointer">
-                            Field Change
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
+                    label="Field Change"
                   />
-
-                  <FormField
+                  <RHFCheckboxField
                     control={form.control}
                     name="executed"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start gap-3">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-0.5 leading-none">
-                          <FormLabel className="cursor-pointer">Executed</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
+                    label="Executed"
                   />
-
-                  <FormField
+                  <RHFCheckboxField
                     control={form.control}
                     name="is_private"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start gap-3">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-0.5 leading-none">
-                          <FormLabel className="cursor-pointer">Private</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
+                    label="Private"
                   />
-                </div>
-              </div>
-            </section>
+                </FormGrid>
+              </FormSection>
 
-            {!hasChangeEvents && (
-              <section className="space-y-4">
-                <SectionRuleHeading
-                  label="Approval"
-                  className="[&_span]:text-primary"
-                />
-                <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="designated_reviewer"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-1.5">
-                          <FormLabel>Designated Reviewer</FormLabel>
-                          <ProjectTeamReviewerTooltip projectId={projectId} />
-                        </div>
-                        <Popover
-                          open={reviewerSelectOpen}
-                          onOpenChange={(open) => {
-                            setReviewerSelectOpen(open);
-                            if (open) {
-                              setContractSelectOpen(false);
-                              setPcoSelectOpen(false);
-                              setReviewedBySelectOpen(false);
-                            }
-                          }}
-                        >
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={reviewerSelectOpen}
-                                disabled={isLoadingEmployees}
-                                className={cn(
-                                  "w-full justify-between font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                <span className="truncate">
-                                  {isLoadingEmployees
-                                    ? "Loading employees..."
-                                    : field.value || "Select an employee"}
-                                </span>
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="p-0"
-                            align="start"
-                            style={{ width: "var(--radix-popover-trigger-width)" }}
-                          >
-                            <Command>
-                              <CommandInput placeholder="Search employees..." />
-                              <CommandList>
-                                <CommandEmpty>No employee found.</CommandEmpty>
-                                <CommandGroup>
-                                  {employees.map((employee) => {
-                                    const employeeName = formatEmployeeName(employee);
-                                    return (
-                                      <CommandItem
-                                        key={employee.id}
-                                        value={employeeName}
-                                        onSelect={() => {
-                                          field.onChange(employeeName);
-                                          setReviewerSelectOpen(false);
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            field.value === employeeName
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        <span className="truncate">
-                                          {employeeName}
-                                        </span>
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              {!hasChangeEvents && (
+                <FormSection title="Approval">
+                  <FormGrid columns={2}>
+                    <RHFComboboxField
+                      control={form.control}
+                      name="designated_reviewer"
+                      label="Designated Reviewer"
+                      placeholder="Select an employee"
+                      searchPlaceholder="Search employees..."
+                      emptyMessage="No employee found."
+                      options={employeeOptions}
+                      selectedLabel={form.watch("designated_reviewer") ?? undefined}
+                      disabled={isLoadingEmployees}
+                      clearable
+                    />
 
-                  <FormField
+                    <RHFComboboxField
+                      control={form.control}
+                      name="reviewed_by"
+                      label="Reviewer"
+                      placeholder="Select an employee"
+                      searchPlaceholder="Search employees..."
+                      emptyMessage="No employee found."
+                      options={employeeOptions}
+                      selectedLabel={form.watch("reviewed_by") ?? undefined}
+                      disabled={isLoadingEmployees}
+                      clearable
+                    />
+
+                    <RHFDateField
+                      control={form.control}
+                      name="review_date"
+                      label="Review Date"
+                      nullable
+                    />
+                  </FormGrid>
+                </FormSection>
+              )}
+
+              <FormSection title="Schedule">
+                <FormGrid columns={3}>
+                  <RHFDateField
                     control={form.control}
-                    name="reviewed_by"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex items-center gap-1.5">
-                          <FormLabel>Reviewer</FormLabel>
-                          <ProjectTeamReviewerTooltip projectId={projectId} />
-                        </div>
-                        <Popover
-                          open={reviewedBySelectOpen}
-                          onOpenChange={(open) => {
-                            setReviewedBySelectOpen(open);
-                            if (open) {
-                              setContractSelectOpen(false);
-                              setPcoSelectOpen(false);
-                              setReviewerSelectOpen(false);
-                            }
-                          }}
-                        >
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={reviewedBySelectOpen}
-                                disabled={isLoadingEmployees}
-                                className={cn(
-                                  "w-full justify-between font-normal",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                              >
-                                <span className="truncate">
-                                  {isLoadingEmployees
-                                    ? "Loading employees..."
-                                    : field.value || "Select an employee"}
-                                </span>
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="p-0"
-                            align="start"
-                            style={{ width: "var(--radix-popover-trigger-width)" }}
-                          >
-                            <Command>
-                              <CommandInput placeholder="Search employees..." />
-                              <CommandList>
-                                <CommandEmpty>No employee found.</CommandEmpty>
-                                <CommandGroup>
-                                  {employees.map((employee) => {
-                                    const employeeName = formatEmployeeName(employee);
-                                    return (
-                                      <CommandItem
-                                        key={employee.id}
-                                        value={employeeName}
-                                        onSelect={() => {
-                                          field.onChange(employeeName);
-                                          setReviewedBySelectOpen(false);
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            field.value === employeeName
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        <span className="truncate">
-                                          {employeeName}
-                                        </span>
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    name="due_date"
+                    label="Due Date"
+                    nullable
                   />
 
                   <RHFDateField
                     control={form.control}
-                    name="review_date"
-                    label="Review Date"
+                    name="revised_substantial_completion_date"
+                    label="Revised Substantial Completion Date"
                     nullable
                   />
-                </div>
-              </section>
-            )}
 
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Schedule"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <RHFDateField
-                  control={form.control}
-                  name="due_date"
-                  label="Due Date"
-                  nullable
-                />
-
-                <RHFDateField
-                  control={form.control}
-                  name="revised_substantial_completion_date"
-                  label="Revised Substantial Completion Date"
-                  nullable
-                />
-
-                <FormField
-                  control={form.control}
-                  name="schedule_impact"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Schedule Impact (days)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                ? parseInt(e.target.value, 10)
-                                : null,
-                            )
-                          }
-                          placeholder=""
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Financial"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="total_amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value ? Number(e.target.value) : null,
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <RHFDateField
-                  control={form.control}
-                  name="invoiced_date"
-                  label="Invoice Date"
-                  nullable
-                />
-
-                <RHFDateField
-                  control={form.control}
-                  name="paid_date"
-                  label="Paid Date"
-                  nullable
-                />
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Attachments"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <div className="md:col-span-2 lg:col-span-3">
-                  <FileUploadField
-                    value={attachmentFileInfo}
-                    onChange={handleAttachmentInfoChange}
-                    onFilesSelected={handleAttachmentFilesSelected}
-                    multiple
-                    variant="minimal"
+                  <RHFNumberField
+                    control={form.control}
+                    name="schedule_impact"
+                    label="Schedule Impact (days)"
+                    step={1}
                   />
-                </div>
-              </div>
-            </section>
+                </FormGrid>
+              </FormSection>
 
-            {/* Source Change Events */}
-            {hasChangeEvents && (
-              <section className="space-y-3">
-                <SectionRuleHeading
-                  label={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
-                  className="[&_span]:text-primary"
+              <FormSection title="Financial">
+                <FormGrid columns={3}>
+                  <RHFMoneyField
+                    control={form.control}
+                    name="total_amount"
+                    label="Amount"
+                  />
+
+                  <RHFDateField
+                    control={form.control}
+                    name="invoiced_date"
+                    label="Invoice Date"
+                    nullable
+                  />
+
+                  <RHFDateField
+                    control={form.control}
+                    name="paid_date"
+                    label="Paid Date"
+                    nullable
+                  />
+                </FormGrid>
+              </FormSection>
+
+              <FormSection title="Attachments">
+                <FileUploadField
+                  value={attachmentFileInfo}
+                  onChange={handleAttachmentInfoChange}
+                  onFilesSelected={handleAttachmentFilesSelected}
+                  multiple
+                  variant="minimal"
                 />
-                {isLoadingChangeEvents ? (
-                  <InfoAlert variant="info" className="text-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading source change events...
-                  </InfoAlert>
-                ) : sourceChangeEventError ? (
-                  <InfoAlert variant="error" className="text-sm">
-                    {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
-                  </InfoAlert>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <div className="min-w-full divide-y divide-border/60">
-                      <div className="grid grid-cols-9 gap-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
-                        <div>Number</div>
-                        <div>Title</div>
-                        <div>Scope</div>
-                        <div>Type</div>
-                        <div>Reason</div>
-                        <div>Status</div>
-                        <div>Origin</div>
-                        <div>Complete</div>
-                        <div className="text-right">ROM</div>
-                      </div>
-                      {changeEvents.map((ce) => (
-                        <div
-                          key={ce.id}
-                          className="grid grid-cols-9 gap-4 py-2.5 text-sm text-foreground/80"
-                        >
-                          <div className="truncate font-medium text-foreground">
-                            <Link
-                              href={`/${projectId}/change-events/${ce.id}`}
-                              className="transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            >
-                              {ce.number ? `CE ${ce.number}` : "CE"}
-                            </Link>
-                          </div>
-                          <div className="truncate">{ce.title}</div>
-                          <div className="truncate">{formatTableValue(ce.scope)}</div>
-                          <div className="truncate">{formatTableValue(ce.type)}</div>
-                          <div className="truncate">{formatTableValue(ce.reason)}</div>
-                          <div className="truncate">{formatTableValue(ce.status)}</div>
-                          <div className="truncate">{formatTableValue(ce.origin)}</div>
-                          <div>
-                            {isChangeEventComplete(ce.status) ? "Yes" : "No"}
-                          </div>
-                          <div className="text-right tabular-nums">
-                            {formatMoney(ce.rom)}
-                          </div>
+              </FormSection>
+
+              {hasChangeEvents && (
+                <FormSection
+                  title={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
+                >
+                  {isLoadingChangeEvents ? (
+                    <InfoAlert variant="info" className="text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading source change events...
+                    </InfoAlert>
+                  ) : sourceChangeEventError ? (
+                    <InfoAlert variant="error" className="text-sm">
+                      {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
+                    </InfoAlert>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <div className="min-w-full divide-y divide-border/60">
+                        <div className="grid grid-cols-9 gap-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
+                          <div>Number</div>
+                          <div>Title</div>
+                          <div>Scope</div>
+                          <div>Type</div>
+                          <div>Reason</div>
+                          <div>Status</div>
+                          <div>Origin</div>
+                          <div>Complete</div>
+                          <div className="text-right">ROM</div>
                         </div>
-                      ))}
+                        {changeEvents.map((ce) => (
+                          <div
+                            key={ce.id}
+                            className="grid grid-cols-9 gap-4 py-2.5 text-sm text-foreground/80"
+                          >
+                            <div className="truncate font-medium text-foreground">
+                              <Link
+                                href={`/${projectId}/change-events/${ce.id}`}
+                                className="transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              >
+                                {ce.number ? `CE ${ce.number}` : "CE"}
+                              </Link>
+                            </div>
+                            <div className="truncate">{ce.title}</div>
+                            <div className="truncate">{formatTableValue(ce.scope)}</div>
+                            <div className="truncate">{formatTableValue(ce.type)}</div>
+                            <div className="truncate">{formatTableValue(ce.reason)}</div>
+                            <div className="truncate">{formatTableValue(ce.status)}</div>
+                            <div className="truncate">{formatTableValue(ce.origin)}</div>
+                            <div>
+                              {isChangeEventComplete(ce.status) ? "Yes" : "No"}
+                            </div>
+                            <div className="text-right tabular-nums">
+                              {formatMoney(ce.rom)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </section>
-            )}
-          </form>
-        </Form>
+                  )}
+                </FormSection>
+              )}
+
+              <FormServerError message={form.formState.errors.root?.message} />
+
+              <FormActions
+                onCancel={handleCancel}
+                isSubmitting={isSubmitting}
+                submitLabel="Create"
+                submitDisabled={
+                  isLoading ||
+                  hasMissingSourceChangeEvents ||
+                  (!hasChangeEvents && selectedPcoIds.length === 0)
+                }
+                stickyOnMobile
+              />
+            </form>
+          </Form>
+        </FormContainer>
       )}
     </PageShell>
   );

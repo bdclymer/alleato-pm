@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "startedAt": "2026-07-07T17:36:28.815Z",
+  "completedAt": "2026-07-07T17:38:28.753Z",
+  "start": "2026-06-23",
+  "end": "2026-06-23",
+  "dryRun": false,
+  "shouldWrite": true,
+  "maxDocumentsPerDay": 125,
+  "forceAbnormalDays": false,
+  "evidenceRoot": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-single",
+  "days": [
+    {
+      "date": "2026-06-23",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-06-23",
+        "bounds": {
+          "startIso": "2026-06-23T04:00:00.000Z",
+          "endIso": "2026-06-24T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 10,
+          "emails": 57,
+          "teams": 155,
+          "documents": 6
+        },
+        "total": 228,
+        "threshold": {
+          "maxDocumentsPerDay": 125
+        }
+      },
+      "packetId": "abeab4bc-5687-4857-be9d-f07a1b55b177",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-06-23",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-single/2026-06-23",
+        "rowsConsidered": 1093,
+        "included": {
+          "meetings": 4,
+          "emails": 76,
+          "teams": 12,
+          "documents": 6
+        },
+        "skipped": 995,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "abeab4bc-5687-4857-be9d-f07a1b55b177",
+          "generatedAt": "2026-07-07T17:38:22.778Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "abeab4bc-5687-4857-be9d-f07a1b55b177",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 19,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 19
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 1
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 1
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 7
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 5
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 5
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-06-23"
+      }
+    }
+  ]
+}

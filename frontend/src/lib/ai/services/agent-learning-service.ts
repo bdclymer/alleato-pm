@@ -1,11 +1,9 @@
 import { createHash } from "crypto";
-import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { toSessionUuid } from "@/lib/ai/session-id";
-import {
-  getOpenAICompatibleClientConfig,
-  getOpenAIModelId,
-} from "@/lib/ai/provider-config";
+import { getOpenAIModelId } from "@/lib/ai/provider-config";
+import { getOpenAI } from "@/lib/ai/tools/tool-utils";
+import { retrieveChunks } from "@/lib/ai/retrieval/retrieve-chunks";
 import { createRagServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/types/database.types";
 
@@ -107,17 +105,6 @@ const STOPWORDS = new Set([
   "response",
   "feedback",
 ]);
-
-let cachedOpenAI: OpenAI | null = null;
-
-function getOpenAI(): OpenAI {
-  if (!cachedOpenAI) {
-    const config = getOpenAICompatibleClientConfig("Agent learning embeddings");
-    cachedOpenAI = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL });
-  }
-
-  return cachedOpenAI;
-}
 
 function createUntypedServiceClient() {
   const supabaseUrl =
@@ -404,21 +391,21 @@ export async function getRelevantAgentLearnings(params: {
 }) {
   const supabase = createUntypedServiceClient();
   const matchCount = params.limit ?? 4;
-  const queryEmbedding = await embedLearning(params.messageText.slice(0, 8000));
 
-  if (queryEmbedding) {
-    try {
-      const ragClient = createRagServiceClient();
-      const { data: chunks, error: chunksError } = await ragClient.rpc("search_document_chunks", {
-        query_embedding: JSON.stringify(queryEmbedding),
-        filter_source_types: ["agent_learning"],
-        filter_project_id: params.projectId ?? undefined,
-        match_count: matchCount,
-        match_threshold: 0.45,
-      });
+  try {
+    const chunks = await retrieveChunks({
+      query: params.messageText.slice(0, 8000),
+      openai: getOpenAI(),
+      ragClient: createRagServiceClient(),
+      projectId: params.projectId ?? undefined,
+      sourceTypes: ["agent_learning"],
+      matchCount,
+      matchThreshold: 0.45,
+      errorLabel: "Agent learning search",
+    });
 
-      if (!chunksError && Array.isArray(chunks) && chunks.length > 0) {
-        const learningIds = (chunks as Array<{ document_id: string; similarity: number }>).map((c) => c.document_id);
+    if (Array.isArray(chunks) && chunks.length > 0) {
+      const learningIds = (chunks as Array<{ document_id: string; similarity: number }>).map((c) => c.document_id);
         const similarityMap = new Map(
           (chunks as Array<{ document_id: string; similarity: number }>).map((c) => [c.document_id, c.similarity]),
         );
@@ -438,7 +425,6 @@ export async function getRelevantAgentLearnings(params: {
     } catch (e) {
       console.warn("[agent-learning-service] AI DB search failed — falling back to keyword search:", e instanceof Error ? e.message : e);
     }
-  }
 
   const keywords = extractKeywords(params.messageText, 6);
   let query = supabase
@@ -575,6 +561,18 @@ const REASON_PREVENTION_HINTS: Record<string, string> = {
     "Pick the tool that matches the user's intent (emails vs meetings vs tasks vs budget). When unsure, prefer the more specific tool over a generic search.",
   unhelpful:
     "Give the actual answer, not a meta-description of what you could do. If you don't have enough context, ask one specific clarifying question.",
+  duplicate_risk:
+    "Do not list overlapping risks as separate items. Merge duplicates and keep the clearest wording once.",
+  not_a_risk:
+    "Only label something as a risk when it describes a plausible project exposure, blocker, delay, cost issue, or coordination failure. Do not turn neutral discussion points into risks.",
+  wrong_priority:
+    "Prioritize risks by actual project impact and immediacy. Avoid inflating minor notes into top-line risks.",
+  well_scoped:
+    "Keep each risk specific, concrete, and bounded to one real project issue.",
+  actionable:
+    "Phrase risks so a PM can immediately understand what could go wrong and what needs follow-up.",
+  real_risk:
+    "Prefer risks grounded in explicit evidence from the meeting, not speculative or generic concerns.",
   other: "Re-read the user feedback note and avoid this failure pattern.",
 };
 

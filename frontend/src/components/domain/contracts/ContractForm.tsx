@@ -1,24 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Form } from "@/components/forms/Form";
-import { FormActions } from "@/components/forms/FormActions";
-import { FormLayoutProvider } from "@/components/forms/FormField";
-import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
+
+import { FormContainer } from "@/components/layout";
+import { Form } from "@/components/ui/form";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormServerError } from "@/components/forms/FormServerError";
+import { Button } from "@/components/ui/button";
 import { isDevelopment } from "@/lib/dev-autofill";
 import {
-  PrimeContractAddCompanyDialog,
   PrimeContractDatesSection,
   PrimeContractGeneralInfoSection,
   PrimeContractPrivacySection,
   PrimeContractScopeSection,
 } from "@/components/domain/contracts/prime-contract-form/sections";
-import type {
-  BudgetCode,
-  ContractFormData,
-  SOVLineItem,
-} from "@/components/domain/contracts/prime-contract-form/types";
+import type { ContractFormData } from "@/components/domain/contracts/prime-contract-form/types";
 import {
   PrimeContractCreateBudgetCodeModal,
   PrimeContractSovSection,
@@ -69,8 +66,9 @@ export function ContractForm({
   projectId,
 }: ContractFormProps) {
   const {
+    form,
+    submitHandler,
     formData,
-    validationErrors,
     budgetCodes,
     loadingBudgetCodes,
     showCreateBudgetCodeModal,
@@ -84,16 +82,10 @@ export function ContractForm({
     companyOptions,
     companiesLoading,
     userOptions,
-    showAddCompany,
-    newCompanyName,
     isCreating,
     isUnitQuantityMode,
     sovColumnCount,
     sovTotals,
-    handleSubmit,
-    updateFormData,
-    clearValidationError,
-    handleCreateCompany,
     getCostTypeLabel,
     toggleDivision,
     handleCreateBudgetCode,
@@ -116,8 +108,6 @@ export function ContractForm({
     setShowImportFromBudget,
     setShowImportEstimateWorkbook,
     fetchBudgetCodes,
-    setShowAddCompany,
-    setNewCompanyName,
     markups,
     setMarkups,
     sovDisplayItems,
@@ -129,36 +119,29 @@ export function ContractForm({
   });
 
   return (
-    <Form
-      onSubmit={handleSubmit}
-      data-testid="prime-contract-form"
-      data-dev-autofill-disabled
-    >
-      <FormLayoutProvider layout="horizontal">
-        <div className="flex flex-col gap-16">
+    <FormContainer maxWidth="lg" withCard={false}>
+      <Form {...form}>
+        <form
+          noValidate
+          onSubmit={form.handleSubmit(submitHandler)}
+          className="space-y-8"
+          data-testid="prime-contract-form"
+          data-dev-autofill-disabled
+        >
           <PrimeContractGeneralInfoSection
-            formData={formData}
-            validationErrors={validationErrors}
+            control={form.control}
             companyOptions={companyOptions}
             companiesLoading={companiesLoading}
             contractStatuses={CONTRACT_STATUSES}
             attachments={mode === "create" ? formData.attachments || [] : undefined}
             isSubmitting={isSubmitting}
-            onCreateCompany={() => setShowAddCompany(true)}
-            onClearValidationError={clearValidationError}
-            onUpdateFormData={updateFormData}
             onAttachmentChange={
               mode === "create" ? handleAttachmentListChange : undefined
             }
-            onFilesSelected={
-              mode === "create" ? handleFilesSelected : undefined
-            }
+            onFilesSelected={mode === "create" ? handleFilesSelected : undefined}
           />
 
-          <PrimeContractDatesSection
-            formData={formData}
-            onUpdateFormData={updateFormData}
-          />
+          <PrimeContractDatesSection control={form.control} />
 
           <FinancialMarkupFormSection
             markups={markups}
@@ -168,7 +151,7 @@ export function ContractForm({
 
           <PrimeContractSovSection
             projectId={projectId}
-            formData={{ ...formData, sovItems: sovDisplayItems }}
+            formData={{ ...formData, sovItems: sovDisplayItems } as Partial<ContractFormData>}
             budgetCodes={budgetCodes}
             loadingBudgetCodes={loadingBudgetCodes}
             showImportFromBudget={showImportFromBudget}
@@ -178,9 +161,7 @@ export function ContractForm({
             sovTotals={sovTotals}
             onShowImportFromBudgetChange={setShowImportFromBudget}
             onShowImportEstimateWorkbookChange={setShowImportEstimateWorkbook}
-            onShowCreateBudgetCodeModal={() =>
-              setShowCreateBudgetCodeModal(true)
-            }
+            onShowCreateBudgetCodeModal={() => setShowCreateBudgetCodeModal(true)}
             onToggleSovAccountingMethod={toggleSovAccountingMethod}
             onAddSovLine={addSOVLine}
             onUpdateSovLine={updateSOVLine}
@@ -197,47 +178,37 @@ export function ContractForm({
             onBudgetCodesActivated={fetchBudgetCodes}
           />
 
-          <PrimeContractScopeSection
-            formData={formData}
-            onUpdateFormData={updateFormData}
-          />
+          <PrimeContractScopeSection control={form.control} />
 
           <PrimeContractPrivacySection
-            formData={formData}
+            control={form.control}
             userOptions={userOptions}
-            onUpdateFormData={updateFormData}
           />
-        </div>
-      </FormLayoutProvider>
 
-      <PrimeContractAddCompanyDialog
-        open={showAddCompany}
-        companyName={newCompanyName}
-        isCreating={isCreating}
-        onOpenChange={setShowAddCompany}
-        onCompanyNameChange={setNewCompanyName}
-        onCreate={handleCreateCompany}
-      />
+          <FormServerError message={form.formState.errors.root?.message} />
 
-      <FormActions
-        onCancel={onCancel}
-        isSubmitting={isSubmitting}
-        submitLabel={
-          mode === "create" ? "Create Prime Contract" : "Save Changes"
-        }
-      >
-        {isDevelopment ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAutoFill}
-            className="gap-2"
+          <FormActions
+            onCancel={onCancel}
+            isSubmitting={isSubmitting}
+            submitLabel={
+              mode === "create" ? "Create Prime Contract" : "Save Changes"
+            }
+            stickyOnMobile
           >
-            <Sparkles className="h-4 w-4" />
-            Auto-fill
-          </Button>
-        ) : null}
-      </FormActions>
+            {isDevelopment ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAutoFill}
+                className="gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                Auto-fill
+              </Button>
+            ) : null}
+          </FormActions>
+        </form>
+      </Form>
 
       <PrimeContractCreateBudgetCodeModal
         open={showCreateBudgetCodeModal}
@@ -253,6 +224,6 @@ export function ContractForm({
         onNewBudgetCodeDataChange={setNewBudgetCodeData}
         onCreate={handleCreateBudgetCode}
       />
-    </Form>
+    </FormContainer>
   );
 }

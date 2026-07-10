@@ -50,6 +50,7 @@ export const BOARD_STATUSES = [
   "submitted",
   "planned",
   "in_progress",
+  "leadership_review",
   "shipped",
 ] as const;
 
@@ -59,6 +60,7 @@ export const BOARD_STATUS_LABELS: Record<BoardStatus, string> = {
   submitted: "Submitted",
   planned: "Planned",
   in_progress: "In Progress",
+  leadership_review: "Leadership review",
   shipped: "Shipped",
 };
 

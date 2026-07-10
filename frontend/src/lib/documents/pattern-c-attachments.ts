@@ -16,7 +16,9 @@ export type PatternCEntityType =
   | "subcontractor_invoice"
   | "submittal"
   | "rfi"
-  | "company";
+  | "company"
+  | "meeting"
+  | "meeting_item";
 
 export type PatternCJunctionTable =
   | "project_documents_v2"
@@ -32,12 +34,25 @@ export type PatternCJunctionTable =
   | "subcontractor_invoice_documents"
   | "submittal_doc_links"
   | "rfi_documents"
-  | "company_documents";
+  | "company_documents"
+  | "meeting_documents"
+  | "meeting_item_documents";
 
 type PatternCConfig = {
   table: PatternCJunctionTable;
   fkColumn: string;
   storageFolder: string;
+  /**
+   * Junction-row timestamp column. Every original Pattern C table uses
+   * `attached_at`; the meetings junction tables (`meeting_documents`,
+   * `meeting_item_documents`) use the plain `created_at` convention instead
+   * (no `document_type`/`attached_by` columns). Defaults to `attached_at`.
+   */
+  timestampColumn?: "attached_at" | "created_at";
+  /** Junction-row actor column. Defaults to `attached_by`. */
+  actorColumn?: "attached_by" | "created_by";
+  /** Whether the junction table has a `document_type` column. Defaults to true. */
+  supportsDocumentType?: boolean;
 };
 
 export const PATTERN_C_ENTITY_CONFIG: Record<PatternCEntityType, PatternCConfig> = {
@@ -110,6 +125,22 @@ export const PATTERN_C_ENTITY_CONFIG: Record<PatternCEntityType, PatternCConfig>
     table: "company_documents",
     fkColumn: "company_id",
     storageFolder: "company",
+  },
+  meeting: {
+    table: "meeting_documents",
+    fkColumn: "meeting_id",
+    storageFolder: "meeting",
+    timestampColumn: "created_at",
+    actorColumn: "created_by",
+    supportsDocumentType: false,
+  },
+  meeting_item: {
+    table: "meeting_item_documents",
+    fkColumn: "meeting_item_id",
+    storageFolder: "meeting-item",
+    timestampColumn: "created_at",
+    actorColumn: "created_by",
+    supportsDocumentType: false,
   },
 };
 
@@ -258,17 +289,48 @@ export async function listLinkedPatternCDocuments({
   entityId: string;
 }): Promise<LinkedPatternCDocument[]> {
   const config = getPatternCConfig(entityType);
+  const timestampColumn = config.timestampColumn ?? "attached_at";
+  const supportsDocumentType = config.supportsDocumentType ?? true;
+  const selectColumns = supportsDocumentType
+    ? `document_metadata_id, document_type, ${timestampColumn}`
+    : `document_metadata_id, ${timestampColumn}`;
+
   const { data: rows, error } = await supabase
     .from(config.table)
-    .select("document_metadata_id, document_type, attached_at")
+    .select(selectColumns)
     .eq(config.fkColumn, entityId)
-    .order("attached_at", { ascending: false });
+    .order(timestampColumn, { ascending: false });
 
   if (error) {
     throw new Error(`Failed to fetch linked documents: ${error.message}`);
   }
 
-  const linkedRows = rows ?? [];
+  // Runtime-narrow the dynamically-selected junction rows instead of casting:
+  // only these fields are consumed below, and a row missing its FK id is
+  // unusable anyway.
+  const linkedRows = (rows ?? []).flatMap(
+    (
+      row,
+    ): Array<{
+      document_metadata_id: string;
+      document_type: string | null;
+      attached_at: string;
+    }> => {
+      if (typeof row !== "object" || row === null) return [];
+      const record = row as Record<string, unknown>;
+      const documentMetadataId = record.document_metadata_id;
+      if (typeof documentMetadataId !== "string") return [];
+      const documentType = record.document_type;
+      const timestampValue = record[timestampColumn];
+      return [
+        {
+          document_metadata_id: documentMetadataId,
+          document_type: typeof documentType === "string" ? documentType : null,
+          attached_at: String(timestampValue ?? ""),
+        },
+      ];
+    },
+  );
   if (!linkedRows.length) return [];
 
   const ids = linkedRows.map((row) => row.document_metadata_id);
@@ -306,7 +368,7 @@ export async function listLinkedPatternCDocuments({
     const filePath = meta?.file_path ?? null;
     return {
       document_metadata_id: row.document_metadata_id,
-      document_type: row.document_type,
+      document_type: row.document_type ?? null,
       attached_at: row.attached_at,
       title: meta?.title ?? meta?.file_name ?? null,
       file_name: meta?.file_name ?? null,
@@ -404,10 +466,10 @@ export async function registerUploadedPatternCDocument({
   const row: Record<string, unknown> = {
     [config.fkColumn]: entityForeignKeyValue(config.fkColumn, entityId),
     document_metadata_id: docId,
-    attached_by: userId,
-    attached_at: attachedAt,
+    [config.actorColumn ?? "attached_by"]: userId,
+    [config.timestampColumn ?? "attached_at"]: attachedAt,
   };
-  if (documentType) {
+  if (documentType && (config.supportsDocumentType ?? true)) {
     row.document_type = documentType;
   }
 

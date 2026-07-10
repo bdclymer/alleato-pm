@@ -2,12 +2,19 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { assertNonNilUuid } from "@/lib/guardrails/path-params";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { getIsAdmin } from "@/lib/auth/current-user";
 import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
 import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { getCommitmentSovLockStateForCommitment } from "@/lib/commitments/commitment-sov-lock.server";
+import {
+  fetchCommitmentSovProjectBudgetCodes,
+  resolveCommitmentSovBudgetCodeFromLookup,
+} from "@/lib/commitments/sov-budget-code-resolution.server";
 import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 /**
  * Schema that matches what the commitment detail edit form actually sends.
@@ -110,11 +117,20 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const { commitmentId } = await params;
     assertNonNilUuid(commitmentId, "commitmentId", "commitments/[commitmentId]#GET");
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]#GET",
+        message: "Authentication required.",
+      });
+    }
 
     // Determine type from unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
@@ -170,7 +186,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("subcontract_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, quantity, unit_of_measure, unit_cost, billed_to_date, sort_order",
+              "id, line_number, budget_code, project_budget_code_id, description, amount, quantity, unit_of_measure, unit_cost, billed_to_date, sort_order",
             )
             .eq("subcontract_id", commitmentId)
             .order("line_number", { ascending: true }),
@@ -202,7 +218,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("purchase_order_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, quantity, uom, unit_cost, billed_to_date, sort_order",
+              "id, line_number, budget_code, project_budget_code_id, description, amount, quantity, uom, unit_cost, billed_to_date, sort_order",
             )
             .eq("purchase_order_id", commitmentId)
             .order("line_number", { ascending: true }),
@@ -336,6 +352,11 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const revisedAmount = originalAmount + changeOrderTotals.approved;
     const balanceToFinish = revisedAmount - billedToDate;
 
+    const sovLock = await getCommitmentSovLockStateForCommitment(supabase, {
+      commitmentId,
+      commitmentType: isSubcontract ? "subcontract" : "purchase_order",
+    });
+
     const responseData = {
       ...data,
       contract_company: contractCompany,
@@ -358,6 +379,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       invoice_contacts: invoiceContacts,
       created_by_name: createdByName,
       assigned_to_name: assignedToName,
+      sov_lock: sovLock,
     };
 
     // Add cache headers for detail data (5 seconds, revalidate in background)
@@ -437,7 +459,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     // Determine the commitment type from the unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
@@ -448,11 +470,18 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       );
     }
 
+    // Approved commitments remain editable here — general fields (title, dates,
+    // retainage, private/non-admin flags, etc.) can always be updated. Only SOV
+    // line items stay locked once approved, enforced independently in
+    // ScheduleOfValuesTab / the subcontractor-sov and PCO line-item routes.
+
     // Query the appropriate table based on type
     const tableName =
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     // Build a safe update payload containing only columns that exist in both
     // subcontracts and purchase_orders. Undefined values are omitted so Supabase
@@ -465,7 +494,12 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       if (val !== undefined) updatePayload[key] = val;
     };
 
-    def(validatedData.contract_number, "contract_number");
+    if (validatedData.contract_number !== undefined) {
+      updatePayload.contract_number = normalizeCommitmentContractNumber(
+        validatedData.contract_number,
+        contractNumberPrefix,
+      );
+    }
     def(validatedData.title, "title");
     def(validatedData.contract_company_id, "contract_company_id");
     if (validatedData.status !== undefined) {
@@ -559,17 +593,34 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     // Update SOV line items (budget_code, description, amount) if provided.
     // The edit form sends sov_lines when the user modifies SOV fields — budget_code
     // lives on the SOV item, not on the subcontract/PO record itself.
-    const rawBody = validatedData as Record<string, unknown>;
+    const rawBody = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
     const sovLines = Array.isArray(rawBody.sov_lines)
       ? (rawBody.sov_lines as Array<{
           line_number: number;
           budget_code: string | null;
+          project_budget_code_id?: string | null;
+          projectBudgetCodeId?: string | null;
           description: string | null;
           amount: number;
         }>)
       : null;
 
     if (sovLines && sovLines.length > 0) {
+      // Admins bypass the approved-status SOV lock — they can edit the schedule
+      // of values even on an approved commitment (matches the client-side admin
+      // bypass on the detail page and edit form). Non-admins stay locked.
+      const isApprovedSovLocked =
+        (unifiedData.status ?? "").trim().toLowerCase() === "approved" &&
+        !(await getIsAdmin());
+      if (isApprovedSovLocked) {
+        throw new GuardrailError({
+          code: "PRECONDITION_FAILED",
+          where: "commitments/[commitmentId]#PUT",
+          message:
+            "Approved commitments have a locked schedule of values. Change the status before editing SOV line items.",
+        });
+      }
+
       const sovTable =
         unifiedData.commitment_type === "subcontract"
           ? "subcontract_sov_items"
@@ -578,8 +629,35 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
         unifiedData.commitment_type === "subcontract"
           ? "subcontract_id"
           : "purchase_order_id";
+      const sovProjectId =
+        data && typeof data === "object" && "project_id" in data
+          ? Number((data as { project_id?: number | string }).project_id)
+          : NaN;
+
+      if (Number.isNaN(sovProjectId)) {
+        throw new GuardrailError({
+          code: "SCHEMA_MISMATCH",
+          where: "commitments/[commitmentId]#PUT#sov-project-id",
+          message: "Cannot update commitment SOV lines because the parent project_id could not be resolved.",
+        });
+      }
+
+      const projectBudgetCodes = await fetchCommitmentSovProjectBudgetCodes(
+        supabase,
+        sovProjectId,
+        "commitments/[commitmentId]#PUT",
+      );
 
       for (const line of sovLines) {
+        const resolvedBudgetCode = resolveCommitmentSovBudgetCodeFromLookup({
+          budgetCodes: projectBudgetCodes,
+          lineNumber: line.line_number,
+          where: "commitments/[commitmentId]#PUT",
+          submittedBudgetCode: line.budget_code,
+          submittedProjectBudgetCodeId:
+            line.project_budget_code_id ?? line.projectBudgetCodeId ?? null,
+        });
+
         const { data: existing } = await supabase
           .from(sovTable as "subcontract_sov_items")
           .select("id")
@@ -591,7 +669,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
           await supabase
             .from(sovTable as "subcontract_sov_items")
             .update({
-              budget_code: line.budget_code,
+              budget_code: resolvedBudgetCode.displayBudgetCode,
+              project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
               description: line.description,
               amount: line.amount,
             })
@@ -603,7 +682,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
               .insert({
                 subcontract_id: commitmentId,
                 line_number: line.line_number,
-                budget_code: line.budget_code,
+                budget_code: resolvedBudgetCode.displayBudgetCode,
+                project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
                 description: line.description,
                 amount: line.amount,
               });
@@ -613,7 +693,8 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
               .insert({
                 purchase_order_id: commitmentId,
                 line_number: line.line_number,
-                budget_code: line.budget_code,
+                budget_code: resolvedBudgetCode.displayBudgetCode,
+                project_budget_code_id: resolvedBudgetCode.projectBudgetCodeId,
                 description: line.description,
                 amount: line.amount,
               });
@@ -679,6 +760,8 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     // Soft delete commitment (set deleted_at timestamp)
     const deletedAt = new Date().toISOString();
@@ -756,7 +839,7 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
 
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, status")
       .eq("id", commitmentId)
       .single();
 
@@ -768,12 +851,17 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
       unifiedData.commitment_type === "subcontract"
         ? "subcontracts"
         : "purchase_orders";
+    const contractNumberPrefix =
+      unifiedData.commitment_type === "subcontract" ? "SC-" : "PO-";
 
     const updatePayload: Record<string, string | boolean | null> = {
       updated_at: new Date().toISOString(),
     };
     if (parsed.data.number !== undefined) {
-      updatePayload.contract_number = parsed.data.number;
+      updatePayload.contract_number = normalizeCommitmentContractNumber(
+        parsed.data.number,
+        contractNumberPrefix,
+      );
     }
     if (parsed.data.title !== undefined) {
       updatePayload.title = parsed.data.title;

@@ -1,21 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { KpiRow, SectionHeader, EmptyState } from "@/components/ds";
+import { Button, KpiRow, SectionHeader, EmptyState } from "@/components/ds";
 import {
   FileSpreadsheet,
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  Minus,
+  Sparkles,
+  Pencil,
+  Coins,
+  Gauge,
+  SquarePen,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import { ForecastToCompleteModal } from "@/components/budget/modals/ForecastToCompleteModal";
 import { apiFetch } from "@/lib/api-client";
+import type { BudgetGrandTotals, BudgetLineItem } from "@/types/budget";
 
 interface ForecastingTabProps {
   projectId: string;
@@ -46,16 +51,66 @@ interface ForecastData {
     forecastStartDate: string | null;
     forecastEndDate: string | null;
   }>;
-  generatedAt: string;
 }
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+interface BudgetForecastApiResponse {
+  lineItems?: BudgetLineItem[];
+  grandTotals?: BudgetGrandTotals;
+}
+
+const FORECAST_GRID_COLUMNS =
+  "grid-cols-[minmax(180px,240px)_132px_132px_132px_140px_128px_128px_132px_132px]";
+
+function getBudgetUsedPercent(projectedBudget: number, projectedCosts: number) {
+  if (projectedBudget <= 0) return 0;
+  return (projectedCosts / projectedBudget) * 100;
+}
+
+function formatBudgetUsedPercent(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0%";
+  if (value >= 1000) return "999%+";
+  return formatPercent(value, 0);
+}
+
+function mapBudgetDataToForecast(
+  lineItems: BudgetLineItem[],
+  grandTotals?: BudgetGrandTotals,
+): ForecastData {
+  const summary = {
+    totalOriginalBudget: grandTotals?.originalBudgetAmount ?? 0,
+    totalRevisedBudget: grandTotals?.revisedBudget ?? 0,
+    totalProjectedBudget: grandTotals?.projectedBudget ?? 0,
+    totalProjectedCosts: grandTotals?.projectedCosts ?? 0,
+    totalProjectedCostToComplete: grandTotals?.forecastToComplete ?? 0,
+    totalEstimatedCostAtCompletion: grandTotals?.estimatedCostAtCompletion ?? 0,
+    totalProjectedVariance: grandTotals?.projectedOverUnder ?? 0,
+    variancePercentage:
+      (grandTotals?.projectedBudget ?? 0) > 0
+        ? ((grandTotals?.projectedOverUnder ?? 0) /
+            (grandTotals?.projectedBudget ?? 1)) *
+          100
+        : 0,
+  };
+
+  return {
+    summary,
+    forecastByCostCode: lineItems
+      .filter((line) => Boolean(line.costCode))
+      .map((line) => ({
+        budgetLineId: line.id,
+        costCode: line.costCode,
+        costCodeName: line.costCodeDescription || "",
+        forecastMethod: line.forecastMethod || "automatic",
+        notes: line.forecastNotes ?? null,
+        projectedBudget: line.projectedBudget,
+        projectedCosts: line.projectedCosts,
+        projectedCostToComplete: line.forecastToComplete,
+        estimatedCostAtCompletion: line.estimatedCostAtCompletion,
+        projectedVariance: line.projectedOverUnder,
+        forecastStartDate: line.forecastStartDate ?? null,
+        forecastEndDate: line.forecastEndDate ?? null,
+      })),
+  };
 }
 
 function VarianceCell({ value }: { value: number }) {
@@ -70,12 +125,10 @@ function VarianceCell({ value }: { value: number }) {
           ? "text-muted-foreground"
           : positive
             ? "text-emerald-600 dark:text-emerald-400"
-            : "text-destructive"
+            : "text-destructive",
       )}
     >
-      {neutral ? (
-        <Minus className="h-3 w-3" />
-      ) : positive ? (
+      {neutral ? null : positive ? (
         <TrendingUp className="h-3 w-3" />
       ) : (
         <TrendingDown className="h-3 w-3" />
@@ -85,14 +138,43 @@ function VarianceCell({ value }: { value: number }) {
   );
 }
 
+const FORECAST_METHOD_META: Record<
+  ForecastData["forecastByCostCode"][number]["forecastMethod"],
+  { icon: LucideIcon; label: string }
+> = {
+  automatic: { icon: Sparkles, label: "Automatic" },
+  manual: { icon: Pencil, label: "Manual" },
+  lump_sum: { icon: Coins, label: "Lump sum" },
+  monitored_resources: { icon: Gauge, label: "Monitored resources" },
+};
+
+function MethodIcon({
+  method,
+}: {
+  method: ForecastData["forecastByCostCode"][number]["forecastMethod"];
+}) {
+  const meta = FORECAST_METHOD_META[method] ?? FORECAST_METHOD_META.automatic;
+  const Icon = meta.icon;
+
+  return (
+    <span
+      className="inline-flex text-muted-foreground"
+      title={meta.label}
+      aria-label={meta.label}
+    >
+      <Icon className="h-4 w-4" />
+    </span>
+  );
+}
+
 function CostBar({ budget, costs }: { budget: number; costs: number }) {
-  const pct = budget > 0 ? Math.min(100, (costs / budget) * 100) : 0;
+  const pct = Math.min(100, getBudgetUsedPercent(budget, costs));
   const tone =
     pct > 100 ? "bg-destructive" : pct > 85 ? "bg-amber-400" : "bg-primary/50";
 
   return (
     <div className="h-1 w-full overflow-hidden rounded-full bg-border">
-      { }
+      {}
       <div
         className={cn("h-full rounded-full transition-all", tone)}
         style={{ width: `${pct}%` }}
@@ -105,7 +187,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-8">
       {/* KPI row skeleton */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-hidden rounded-lg border border-border bg-background">
         <div className="grid grid-cols-2 divide-x divide-border md:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="px-6 py-4 space-y-2">
@@ -143,8 +225,9 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
   const [loading, setLoading] = React.useState(true);
   const [recalculating, setRecalculating] = React.useState(false);
   const [forecast, setForecast] = React.useState<ForecastData | null>(null);
-  const [selectedLine, setSelectedLine] =
-    React.useState<ForecastData["forecastByCostCode"][number] | null>(null);
+  const [selectedLine, setSelectedLine] = React.useState<
+    ForecastData["forecastByCostCode"][number] | null
+  >(null);
   const [showFtcEditor, setShowFtcEditor] = React.useState(false);
 
   const fetchForecast = React.useCallback(
@@ -153,10 +236,12 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         if (showRecalc) setRecalculating(true);
         else setLoading(true);
 
-        const data = await apiFetch<ForecastData>(
-          `/api/projects/${projectId}/budget/forecast`,
+        const data = await apiFetch<BudgetForecastApiResponse>(
+          `/api/projects/${projectId}/budget`,
         );
-        setForecast(data);
+        setForecast(
+          mapBudgetDataToForecast(data.lineItems ?? [], data.grandTotals),
+        );
         if (showRecalc) toast.success("Forecast updated");
       } catch {
         toast.error("Could not load budget forecast — please refresh");
@@ -165,7 +250,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         setRecalculating(false);
       }
     },
-    [projectId]
+    [projectId],
   );
 
   React.useEffect(() => {
@@ -181,22 +266,22 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
     {
       label: "Projected Budget",
       value: formatCurrency(summary?.totalProjectedBudget ?? 0),
-      context: "Revised + pending changes",
+      size: "compact" as const,
     },
     {
       label: "Projected Costs",
       value: formatCurrency(summary?.totalProjectedCosts ?? 0),
-      context: "Direct costs + committed",
+      size: "compact" as const,
     },
     {
       label: "Cost to Complete",
       value: formatCurrency(summary?.totalProjectedCostToComplete ?? 0),
-      context: "Forecast remaining (FTC)",
+      size: "compact" as const,
     },
     {
       label: "Est. Cost at Completion",
       value: formatCurrency(summary?.totalEstimatedCostAtCompletion ?? 0),
-      context: `Variance ${isOverBudget ? "−" : "+"}${formatCurrency(Math.abs(summary?.totalProjectedVariance ?? 0))} · ${Math.abs(variancePct).toFixed(1)}%`,
+      size: "compact" as const,
       delta: summary
         ? {
             value: `${Math.abs(variancePct).toFixed(1)}%`,
@@ -207,7 +292,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
   ];
 
   const headerActions = (
-    <div className="flex items-center gap-1.5">
+    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
       <Button
         variant="outline"
         size="sm"
@@ -219,15 +304,118 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         />
         Recalculate
       </Button>
-      <Button
-        size="sm"
-        onClick={() => toast.info("Export coming soon")}
-      >
+      <Button size="sm" onClick={() => void handleExport()}>
         <FileSpreadsheet className="h-3.5 w-3.5" />
         Export
       </Button>
     </div>
   );
+
+  const handleExport = React.useCallback(async () => {
+    let toastId: string | number | undefined;
+
+    try {
+      toastId = toast.loading("Preparing export...", {
+        description: "Building forecasting workbook...",
+      });
+
+      const xlsx = await import("xlsx");
+
+      const summaryRows = [
+        ["Metric", "Value"],
+        ["Projected Budget", summary?.totalProjectedBudget ?? 0],
+        ["Projected Costs", summary?.totalProjectedCosts ?? 0],
+        ["Cost to Complete", summary?.totalProjectedCostToComplete ?? 0],
+        [
+          "Estimated Cost at Completion",
+          summary?.totalEstimatedCostAtCompletion ?? 0,
+        ],
+        ["Variance", summary?.totalProjectedVariance ?? 0],
+        ["Variance %", variancePct / 100],
+      ];
+
+      const forecastRows = items.map((item) => {
+        const usagePercent = getBudgetUsedPercent(
+          item.projectedBudget,
+          item.projectedCosts,
+        );
+
+        return {
+          "Cost Code": item.costCode,
+          "Cost Code Name": item.costCodeName,
+          "Budget Used %": usagePercent,
+          "Projected Budget": item.projectedBudget,
+          "Projected Costs": item.projectedCosts,
+          "Cost to Complete": item.projectedCostToComplete,
+          "Estimated Cost at Completion": item.estimatedCostAtCompletion,
+          "Forecast Start": item.forecastStartDate
+            ? formatDate(item.forecastStartDate)
+            : "",
+          "Forecast End": item.forecastEndDate
+            ? formatDate(item.forecastEndDate)
+            : "",
+          Method: item.forecastMethod.replaceAll("_", " "),
+          Variance: item.projectedVariance,
+          Notes: item.notes ?? "",
+        };
+      });
+
+      const workbook = xlsx.utils.book_new();
+      const summarySheet = xlsx.utils.aoa_to_sheet(summaryRows);
+      const forecastSheet = xlsx.utils.json_to_sheet(forecastRows);
+
+      summarySheet["!cols"] = [{ wch: 34 }, { wch: 18 }];
+      forecastSheet["!cols"] = [
+        { wch: 14 },
+        { wch: 28 },
+        { wch: 12 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 24 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 28 },
+      ];
+
+      xlsx.utils.book_append_sheet(workbook, summarySheet, "Summary");
+      xlsx.utils.book_append_sheet(
+        workbook,
+        forecastSheet,
+        "Forecast by Cost Code",
+      );
+
+      const workbookArray = xlsx.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const blob = new Blob([workbookArray], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `forecasting-${projectId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      toast.success("Export downloaded", {
+        id: toastId,
+        description: "Forecasting workbook has been saved.",
+      });
+    } catch (error) {
+      console.error("Failed to export forecasting workbook", error);
+      toast.error("Failed to export forecasting workbook. Please try again.", {
+        id: toastId,
+      });
+    }
+  }, [items, projectId, summary, variancePct]);
 
   const handleForecastSave = React.useCallback(
     async (data: {
@@ -266,15 +454,14 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
 
   return (
     <div className="space-y-8">
-      {/* KPI metrics */}
-      <KpiRow metrics={kpiMetrics} />
+      <KpiRow metrics={kpiMetrics} size="small" />
 
       {/* Cost code breakdown */}
       <div className="space-y-3">
         <SectionHeader
           title="Forecast by Cost Code"
-          count={items.length}
           action={headerActions}
+          className="flex-col items-start gap-3 sm:flex-row sm:items-center"
         />
 
         {items.length === 0 ? (
@@ -284,148 +471,185 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
             description="Add budget lines to generate cost code forecasts."
           />
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <div className="w-max min-w-full">
-              {/* Table header */}
-              <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <span>Cost Code</span>
-                <span className="text-right">Projected Budget</span>
-                <span className="text-right">Projected Costs</span>
-                <span className="text-right">Cost to Complete</span>
-                <span className="text-right">Est. at Completion</span>
-                <span className="text-right">Forecast Start</span>
-                <span className="text-right">Forecast End</span>
-                <span className="text-right">Method</span>
-                <span className="text-right">Variance</span>
-              </div>
-
-              {/* Table rows */}
-              <div className="divide-y divide-border">
-                {items.map((item) => {
-                  const pct =
-                    item.projectedBudget > 0
-                      ? (item.projectedCosts / item.projectedBudget) * 100
-                      : 0;
-
-                  return (
-                    <div
-                      key={item.budgetLineId || `${item.costCode}-${item.costCodeName}`}
-                      className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 px-5 py-3.5 items-center hover:bg-muted/30 transition-colors"
-                    >
-                      {/* Code + name */}
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
-                            {item.costCode}
-                          </span>
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {item.costCodeName}
-                          </span>
-                        </div>
-                        <CostBar
-                          budget={item.projectedBudget}
-                          costs={item.projectedCosts}
-                        />
-                        <span className="text-[11px] text-muted-foreground/60">
-                          {pct.toFixed(0)}% of budget used
-                        </span>
-                      </div>
-
-                      {/* Projected Budget */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedBudget)}
-                      </div>
-
-                      {/* Projected Costs */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedCosts)}
-                      </div>
-
-                      {/* Projected Cost to Complete */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedCostToComplete)}
-                      </div>
-
-                      {/* Estimated Cost at Completion */}
-                      <div className="text-right text-sm tabular-nums font-medium text-foreground">
-                        {formatCurrency(item.estimatedCostAtCompletion)}
-                      </div>
-
-                      {/* Forecast Start */}
-                      <div className="text-right text-xs tabular-nums text-muted-foreground">
-                        {formatDate(item.forecastStartDate)}
-                      </div>
-
-                      {/* Forecast End */}
-                      <div className="text-right text-xs tabular-nums text-muted-foreground">
-                        {formatDate(item.forecastEndDate)}
-                      </div>
-
-                      {/* Method */}
-                      <div className="text-right text-xs text-muted-foreground capitalize">
-                        {item.forecastMethod.replace("_", " ")}
-                      </div>
-
-                      {/* Variance */}
-                      <div className="text-right text-sm flex items-center justify-end gap-2">
-                        <VarianceCell value={item.projectedVariance} />
-                        {item.budgetLineId && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedLine(item);
-                              setShowFtcEditor(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer summary */}
-              {items.length > 0 && (
-                <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedBudget ?? 0)}
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <div className="min-w-max rounded-lg border border-border bg-background">
+              <div className="w-max min-w-full">
+                {/* Table header */}
+                <div
+                  className={cn(
+                    "grid gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
+                    FORECAST_GRID_COLUMNS,
+                  )}
+                >
+                  <span className="sticky left-0 z-[2] whitespace-nowrap bg-muted/40">
+                    Cost Code
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedCosts ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Projected Budget
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedCostToComplete ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Projected Costs
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalEstimatedCostAtCompletion ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Cost to Complete
                   </span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <div className="text-right">
-                    <VarianceCell value={summary?.totalProjectedVariance ?? 0} />
-                  </div>
+                  <span className="whitespace-nowrap text-right">
+                    Est. at Completion
+                  </span>
+                  <span className="whitespace-nowrap text-right">
+                    Forecast Start
+                  </span>
+                  <span className="whitespace-nowrap text-right">
+                    Forecast End
+                  </span>
+                  <span className="whitespace-nowrap text-right">Method</span>
+                  <span className="whitespace-nowrap text-right">Variance</span>
                 </div>
-              )}
+
+                {/* Table rows */}
+                <div className="divide-y divide-border">
+                  {items.map((item) => {
+                    const pct = getBudgetUsedPercent(
+                      item.projectedBudget,
+                      item.projectedCosts,
+                    );
+
+                    return (
+                      <div
+                        key={
+                          item.budgetLineId ||
+                          `${item.costCode}-${item.costCodeName}`
+                        }
+                        className={cn(
+                          "group grid items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/30",
+                          FORECAST_GRID_COLUMNS,
+                        )}
+                      >
+                        {/* Code + name */}
+                        <div className="sticky left-0 z-[1] min-w-0 space-y-2 bg-background group-hover:bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
+                              {item.costCode}
+                            </span>
+                            <span className="truncate text-sm font-medium text-foreground">
+                              {item.costCodeName}
+                            </span>
+                            <span className="ml-auto shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
+                              {formatBudgetUsedPercent(pct)}
+                            </span>
+                          </div>
+                          <CostBar
+                            budget={item.projectedBudget}
+                            costs={item.projectedCosts}
+                          />
+                        </div>
+
+                        {/* Projected Budget */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedBudget)}
+                        </div>
+
+                        {/* Projected Costs */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedCosts)}
+                        </div>
+
+                        {/* Projected Cost to Complete */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedCostToComplete)}
+                        </div>
+
+                        {/* Estimated Cost at Completion */}
+                        <div className="text-right text-sm tabular-nums font-medium text-foreground">
+                          {formatCurrency(item.estimatedCostAtCompletion)}
+                        </div>
+
+                        {/* Forecast Start */}
+                        <div className="text-right text-xs tabular-nums text-muted-foreground">
+                          {formatDate(item.forecastStartDate)}
+                        </div>
+
+                        {/* Forecast End */}
+                        <div className="text-right text-xs tabular-nums text-muted-foreground">
+                          {formatDate(item.forecastEndDate)}
+                        </div>
+
+                        {/* Method */}
+                        <div className="flex justify-end">
+                          <MethodIcon method={item.forecastMethod} />
+                        </div>
+
+                        {/* Variance */}
+                        <div className="flex items-center justify-end gap-2 text-sm">
+                          {item.budgetLineId && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Edit forecast"
+                              title="Edit forecast"
+                              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                              onClick={() => {
+                                setSelectedLine(item);
+                                setShowFtcEditor(true);
+                              }}
+                            >
+                              <SquarePen className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <VarianceCell value={item.projectedVariance} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer summary */}
+                {items.length > 0 && (
+                  <div
+                    className={cn(
+                      "grid gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold",
+                      FORECAST_GRID_COLUMNS,
+                    )}
+                  >
+                    <span className="sticky left-0 z-[1] bg-muted/40 text-muted-foreground">
+                      Total
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(summary?.totalProjectedBudget ?? 0)}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(summary?.totalProjectedCosts ?? 0)}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(
+                        summary?.totalProjectedCostToComplete ?? 0,
+                      )}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(
+                        summary?.totalEstimatedCostAtCompletion ?? 0,
+                      )}
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <div className="text-right">
+                      <VarianceCell
+                        value={summary?.totalProjectedVariance ?? 0}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        )}
-
-        {forecast?.generatedAt && (
-          <p className="text-[11px] text-muted-foreground/50 text-right">
-            Last calculated{" "}
-            {new Date(forecast.generatedAt).toLocaleString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </p>
         )}
       </div>
 

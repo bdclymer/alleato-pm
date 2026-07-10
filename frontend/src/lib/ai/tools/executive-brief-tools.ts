@@ -1,12 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 import {
-  completeDailyBriefRun,
-  failDailyBriefRun,
-  regenerateDailyBriefDraftForRun,
-  sourceHealthForDraft,
-  startDailyBriefRun,
-} from "@/lib/ai-ops/executive-daily-brief-ledger";
+  loadCurrentDailyExecutiveBriefPacket,
+  toCanonicalDailyBriefApiResponse,
+} from "@/lib/daily-briefs/canonical-packets";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 
 type CreateExecutiveBriefToolsOptions = {
@@ -22,7 +19,7 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
     name,
     options,
     execute,
-    "Brief generation failed. This may be due to incomplete source data (emails, meetings, Teams messages). Ask the user to check recent communications.",
+    "Daily Executive Brief read failed. Check whether the canonical intelligence_packets/daily-executive-brief packet exists and is fresh.",
   );
 }
 
@@ -30,119 +27,16 @@ export function createExecutiveBriefTools(
   options: CreateExecutiveBriefToolsOptions = {},
 ) {
   return {
-    generateExecutiveDailyBrief: tool({
+    readCurrentDailyExecutiveBrief: tool({
       description:
-        "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention. IMPORTANT: After this tool completes, output ONLY the single sentence 'Your brief is ready.' — do not summarize, paraphrase, or restate the tool output. The UI renders the brief as a structured card.",
-      inputSchema: z.object({
-        windowDays: z
-          .number()
-          .int()
-          .min(1)
-          .max(7)
-          .default(3)
-          .describe("Number of days to look back (default 3)"),
-      }),
+        "Read the current canonical Daily Executive Brief from intelligence_packets target slug daily-executive-brief. Use this when the user asks for today's brief, the current executive brief, or the saved daily update. Do not regenerate the brief; if the packet is missing or stale, report that the canonical packet must be compiled first.",
+      inputSchema: z.object({}),
       execute: withTrace(
-        "generateExecutiveDailyBrief",
+        "readCurrentDailyExecutiveBrief",
         options,
-        async (input: { windowDays?: number }) => {
-          const windowDays = input.windowDays ?? 3;
-          const runContext = await startDailyBriefRun({
-            eventType: "manual_regeneration",
-            triggerType: "ai_tool_generate_executive_daily_brief",
-            surface: "ai_assistant_tool",
-            title: "Generate Executive Daily Brief",
-            userGoal:
-              "Generate the Executive Daily Brief from the AI assistant tool.",
-            normalizedGoal:
-              "Regenerate the evidence-linked Executive Daily Brief and record the tool-triggered run.",
-            deliveryTarget: { channel: "none", dryRun: true },
-            payload: { windowDays },
-          });
-
-          try {
-            const result = await regenerateDailyBriefDraftForRun(runContext, {
-              windowDays,
-            });
-
-            const { packet } = result.draft;
-            const { sections, operatingBrief } = packet;
-            const itemCount =
-              sections.needsBrandon.length +
-              sections.waitingOnOthers.length +
-              sections.importantUpdates.length;
-
-            await completeDailyBriefRun(runContext, {
-              status: "succeeded",
-              dailyRecapId: result.draft.id,
-              deliveryStatus: "dry_run",
-              resultSummary: `Generated Executive Daily Brief with ${itemCount} item(s) from AI tool.`,
-              deliveryTarget: { channel: "none", dryRun: true },
-              sourceCounts: {
-                itemCount,
-                needsBrandon: sections.needsBrandon.length,
-                waitingOnOthers: sections.waitingOnOthers.length,
-                importantUpdates: sections.importantUpdates.length,
-                topProjects: operatingBrief?.topExecutiveFocus?.length ?? 0,
-              },
-              sourceHealth: sourceHealthForDraft(result.draft),
-              metadata: {
-                briefId: result.draft.id,
-                recapDate: result.draft.recapDate,
-              },
-            });
-
-            return {
-              success: true,
-              runId: runContext.runId,
-              briefId: result.draft.id,
-              generatedAt: result.draft.recapDate,
-              summary: {
-                needsBrandon: sections.needsBrandon.length,
-                waitingOnOthers: sections.waitingOnOthers.length,
-                importantUpdates: sections.importantUpdates.length,
-                topProjects: operatingBrief?.topExecutiveFocus?.length ?? 0,
-              },
-              financialPulse: packet.financialPulse
-                ? {
-                    totalOutstandingAR:
-                      packet.financialPulse.totalOutstandingAR,
-                    totalOverdueAR: packet.financialPulse.totalOverdueAR,
-                    topOverdueProjects:
-                      packet.financialPulse.arByProject
-                        ?.filter((a) => a.overdueBalance > 0)
-                        ?.slice(0, 3)
-                        ?.map((a) => ({
-                          project: a.projectName,
-                          overdue: a.overdueBalance,
-                        })) ?? [],
-                    pendingCORevenue:
-                      packet.financialPulse.totalPendingCORevenue,
-                  }
-                : null,
-              topItems:
-                operatingBrief?.topExecutiveFocus?.slice(0, 5).map((f) => ({
-                  lane: f.lane,
-                  project: f.item.project,
-                  title: f.item.title,
-                  nextMove: f.recommendedNextMove,
-                })) ?? [],
-              sourceHealth: {
-                email: packet.sourceCoverage?.find((s) => s.label === "Email"),
-                teams: packet.sourceCoverage?.find((s) => s.label === "Teams"),
-                meetings: packet.sourceCoverage?.find(
-                  (s) => s.label === "Meeting",
-                ),
-              },
-            };
-          } catch (error) {
-            await failDailyBriefRun(
-              runContext,
-              error,
-              "EXECUTIVE_DAILY_BRIEF_TOOL_GENERATION_FAILED",
-            );
-            throw error;
-          }
+        async () => {
+          const packet = await loadCurrentDailyExecutiveBriefPacket();
+          return toCanonicalDailyBriefApiResponse(packet);
         },
       ),
     }),

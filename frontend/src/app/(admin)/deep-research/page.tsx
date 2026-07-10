@@ -9,7 +9,7 @@ import {
   EmptyState,
   ErrorState,
 } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { PageScaffold, SectionRuleHeading } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
@@ -180,9 +180,131 @@ export default function DeepResearchArchivePage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
+  const workspacesColumn = (
+    <>
+      <SectionRuleHeading
+        label="Workspaces"
+        actions={
+          <ExpandableSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Search workspaces..."
+            ariaLabel="Search archived research workspaces"
+          />
+        }
+      />
+
+      {error ? <ErrorState title="Couldn't load the archive" description={error} /> : null}
+
+      <div className="divide-y divide-border">
+        {filteredProjects.map((project) => {
+          const isSelected =
+            selectedProject?.topicSlug === project.topicSlug &&
+            selectedProject?.sessionId === project.sessionId;
+          return (
+            <Button
+              key={`${project.userId}:${project.topicSlug}:${project.sessionId}`}
+              type="button"
+              variant="ghost"
+              onClick={() => selectProject(project)}
+              className={cn(
+                "h-auto min-h-16 w-full flex-col items-start justify-start gap-2 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
+                isSelected && "bg-muted/60",
+              )}
+            >
+              <span className="block truncate text-sm font-medium text-foreground">{project.topic}</span>
+              <span className="line-clamp-2 text-sm leading-5 text-muted-foreground">
+                {project.logSummary ?? `Updated ${formatDateTime(project.updatedAt)}`}
+              </span>
+              <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span>{project.markdownCount} wiki</span>
+                <span>{project.sourceCount} sources</span>
+                <span>{formatDateTime(project.updatedAt)}</span>
+              </span>
+            </Button>
+          );
+        })}
+        {!isLoading && filteredProjects.length === 0 ? (
+          <EmptyState
+            title="No archived research found"
+            description="Run an LLM wiki workflow, then refresh this archive."
+          />
+        ) : null}
+      </div>
+    </>
+  );
+
+  const filesColumn = (
+    <>
+      <SectionRuleHeading label="Files" />
+      {!selectedProject ? (
+        <EmptyState
+          title="No workspace selected"
+          description="Choose a workspace to inspect its saved files."
+        />
+      ) : artifactError ? (
+        <ErrorState
+          title="Couldn't load files"
+          description={artifactError}
+          onRetry={() => void loadArtifacts(selectedProject)}
+        />
+      ) : (
+        <div className="divide-y divide-border">
+          {isArtifactLoading ? (
+            <div className="px-1 py-3 text-sm text-muted-foreground">Loading files...</div>
+          ) : null}
+          {artifacts.map((artifact) => {
+            const isSelected = selectedArtifact?.path === artifact.path;
+            return (
+              <Button
+                key={artifact.path}
+                type="button"
+                variant="ghost"
+                onClick={() => setSelectedArtifactPath(artifact.path)}
+                className={cn(
+                  "h-auto min-h-14 w-full flex-col items-start justify-start gap-1 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
+                  isSelected && "bg-muted/60",
+                )}
+              >
+                <span className="block w-full truncate text-sm font-medium text-foreground">{artifact.path}</span>
+                <span className="text-xs text-muted-foreground">
+                  {artifactLabel(artifact.kind)} - {formatBytes(artifact.bytes)}
+                </span>
+              </Button>
+            );
+          })}
+          {!isArtifactLoading && artifacts.length === 0 ? (
+            <div className="px-1 py-3 text-sm text-muted-foreground">No saved files in this workspace.</div>
+          ) : null}
+        </div>
+      )}
+    </>
+  );
+
+  const previewColumn = (
+    <>
+      <SectionRuleHeading label="Preview" />
+      <div className="rounded-lg bg-muted/30">
+        <div className="px-3 py-3">
+          <p className="truncate text-sm font-medium text-foreground">
+            {selectedArtifact?.path ?? "No file selected"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {selectedArtifact
+              ? `${artifactLabel(selectedArtifact.kind)} - ${formatBytes(selectedArtifact.bytes)}`
+              : "Choose a file to preview"}
+          </p>
+        </div>
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap px-3 py-4 text-sm leading-6 text-foreground">
+          {previewText(selectedArtifact?.content)}
+        </pre>
+      </div>
+    </>
+  );
+
   return (
-    <PageShell
-      variant="detailWide"
+    <PageScaffold
+      layout="three-column"
       title="Deep Research Archive"
       actions={
         <Button variant="outline" onClick={() => void loadProjects()} disabled={isLoading}>
@@ -190,140 +312,9 @@ export default function DeepResearchArchivePage() {
           Refresh
         </Button>
       }
-    >
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Workspaces</h2>
-              <p className="text-sm text-muted-foreground">{filteredProjects.length} archived runs</p>
-            </div>
-            <ExpandableSearch
-              value={query}
-              onChange={setQuery}
-              placeholder="Search workspaces..."
-              ariaLabel="Search archived research workspaces"
-            />
-          </div>
-
-          {error ? (
-            <ErrorState title="Couldn't load the archive" description={error} />
-          ) : null}
-
-          <div className="divide-y divide-border overflow-hidden border-y border-border">
-            {filteredProjects.map((project) => {
-              const isSelected = selectedProject?.topicSlug === project.topicSlug && selectedProject?.sessionId === project.sessionId;
-              return (
-                <Button
-                  key={`${project.userId}:${project.topicSlug}:${project.sessionId}`}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => selectProject(project)}
-                  className={cn(
-                    "h-auto min-h-16 w-full flex-col items-start justify-start gap-2 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
-                    isSelected && "bg-muted/60",
-                  )}
-                >
-                  <span className="block truncate text-sm font-medium text-foreground">{project.topic}</span>
-                  <span className="line-clamp-2 text-sm leading-5 text-muted-foreground">
-                    {project.logSummary ?? `Updated ${formatDateTime(project.updatedAt)}`}
-                  </span>
-                  <span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>{project.markdownCount} wiki</span>
-                    <span>{project.sourceCount} sources</span>
-                    <span>{formatDateTime(project.updatedAt)}</span>
-                  </span>
-                </Button>
-              );
-            })}
-            {!isLoading && filteredProjects.length === 0 ? (
-              <EmptyState
-                title="No archived research found"
-                description="Run an LLM wiki workflow, then refresh this archive."
-              />
-            ) : null}
-          </div>
-        </section>
-
-        <section className="space-y-6 lg:col-span-2">
-          {selectedProject ? (
-            <>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 space-y-1">
-                  <h2 className="truncate text-lg font-semibold text-foreground">{selectedProject.title}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedProject.artifactCount} files, session {selectedProject.sessionId}
-                  </p>
-                </div>
-                {artifactError ? (
-                  <Button variant="outline" size="sm" onClick={() => void loadArtifacts(selectedProject)} disabled={isArtifactLoading}>
-                    Retry
-                  </Button>
-                ) : null}
-              </div>
-
-              {artifactError ? (
-                <ErrorState
-                  title="Couldn't load files"
-                  description={artifactError}
-                  onRetry={() => void loadArtifacts(selectedProject)}
-                  className="border-y border-border py-10"
-                />
-              ) : null}
-
-              <div className="grid gap-6 xl:grid-cols-3">
-                <div className="divide-y divide-border overflow-hidden border-y border-border">
-                  {isArtifactLoading ? (
-                    <div className="px-1 py-3 text-sm text-muted-foreground">Loading files...</div>
-                  ) : null}
-                  {artifacts.map((artifact) => {
-                    const isSelected = selectedArtifact?.path === artifact.path;
-                    return (
-                      <Button
-                        key={artifact.path}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => setSelectedArtifactPath(artifact.path)}
-                        className={cn(
-                          "h-auto min-h-14 w-full flex-col items-start justify-start gap-1 rounded-none px-1 py-3 text-left whitespace-normal transition-colors hover:bg-muted/50",
-                          isSelected && "bg-muted/60",
-                        )}
-                      >
-                        <span className="block w-full truncate text-sm font-medium text-foreground">{artifact.path}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {artifactLabel(artifact.kind)} - {formatBytes(artifact.bytes)}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                  {!isArtifactLoading && artifacts.length === 0 && !artifactError ? (
-                    <div className="p-4 text-sm text-muted-foreground">No saved files in this workspace.</div>
-                  ) : null}
-                </div>
-
-                <div className="min-h-96 overflow-hidden border-y border-border xl:col-span-2">
-                  <div className="flex items-center justify-between gap-4 border-b border-border px-1 py-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{selectedArtifact?.path ?? "No file selected"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {selectedArtifact ? `${artifactLabel(selectedArtifact.kind)} - ${formatBytes(selectedArtifact.bytes)}` : "Choose a file to preview"}
-                      </p>
-                    </div>
-                  </div>
-                  <pre className="max-h-96 overflow-auto whitespace-pre-wrap px-1 py-4 text-sm leading-6 text-foreground">
-                    {previewText(selectedArtifact?.content)}
-                  </pre>
-                </div>
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              title="No workspace selected"
-              description="Choose a workspace to inspect saved sources, wiki pages, and logs."
-            />
-          )}
-        </section>
-      </div>
-    </PageShell>
+      left={workspacesColumn}
+      center={filesColumn}
+      right={previewColumn}
+    />
   );
 }

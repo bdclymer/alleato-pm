@@ -1,0 +1,8 @@
+{
+  "id": "crn-d827cfm7r5hc73e7lp20",
+  "name": "alleato-acumatica-financial-sync",
+  "suspended": "suspended",
+  "schedule": "0 0,12 * * *",
+  "command": "python3 scripts/run_acumatica_financial_sync.py",
+  "updatedAt": "2026-06-25T21:05:54.666743Z"
+}

@@ -12,12 +12,12 @@ describe("ai widget collaboration notifications", () => {
     expect(isAiWidgetNotificationKind("ai_action_ready")).toBe(true);
     expect(isAiWidgetNotificationKind("ai_notification_decision")).toBe(true);
     expect(isAiWidgetNotificationKind("rfi_attention")).toBe(true);
-    expect(isAiWidgetNotificationKind("change_request_review_needed")).toBe(
-      true,
-    );
 
     expect(isAiWidgetNotificationKind("comment")).toBe(false);
     expect(isAiWidgetNotificationKind("ai_assistant")).toBe(false);
+    expect(isAiWidgetNotificationKind("change_request_review_needed")).toBe(
+      false,
+    );
     expect(isAiWidgetNotificationKind("")).toBe(false);
   });
 
@@ -93,10 +93,10 @@ describe("ai widget collaboration notifications", () => {
       },
       {
         id: "3",
-        kind: "change_request_review_needed",
+        kind: "rfi_attention",
         readAt: null,
         metadata: {
-          prompt: " Review this change request draft. ",
+          prompt: " Review this RFI draft. ",
           actionLabel: " Review draft ",
           source: " collaboration_notifications ",
         },
@@ -111,10 +111,28 @@ describe("ai widget collaboration notifications", () => {
 
     expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toEqual({
       id: "3",
-      prompt: "Review this change request draft.",
+      prompt: "Review this RFI draft.",
       actionLabel: "Review draft",
       source: "collaboration_notifications",
     });
+  });
+
+  it("does not surface legacy change request review drafts in the widget", () => {
+    const notifications = [
+      {
+        id: "1",
+        kind: "change_request_review_needed",
+        readAt: null,
+        metadata: {
+          prompt: "Review this change request draft.",
+          actionLabel: "Review draft",
+          source: "createChangeEvent.preview",
+        },
+      },
+    ];
+
+    expect(getUnreadAiWidgetNotifications(notifications)).toEqual([]);
+    expect(getFirstUnreadAiWidgetNotificationDraft(notifications)).toBeNull();
   });
 
   it("generates a contextual prompt for widget-selected AI notification decisions", () => {

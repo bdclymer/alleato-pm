@@ -3,7 +3,8 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreVertical, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
@@ -38,8 +39,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { format as fmtDate } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateField } from "@/components/forms";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -53,6 +56,7 @@ import {
   type BillingPeriod,
 } from "@/hooks/use-billing-periods";
 import { formatDate } from "@/lib/format";
+import { validateOpenBillingPeriodCreate } from "@/lib/invoicing/billing-period-validation";
 
 // =============================================================================
 // Column Configs
@@ -68,6 +72,18 @@ const columnConfigs = [
 const defaultVisibleColumns = columnConfigs
   .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
   .map((c) => c.id);
+
+/** Parse a YYYY-MM-DD string to a local Date (no timezone shift). */
+function parseISODate(s: string): Date | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
+}
+
+/** Convert a Date to YYYY-MM-DD string, or empty string if undefined. */
+function toISODateStr(d: Date | undefined): string {
+  return d ? fmtDate(d, "yyyy-MM-dd") : "";
+}
 
 // =============================================================================
 // Page Component
@@ -126,6 +142,10 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
   // ─── Data ──────────────────────────────────────────────────────────────────
 
   const { data: rawPeriods = [], isLoading, isFetching, error } = useBillingPeriodsList(projectId);
+  const openBillingPeriod = React.useMemo(
+    () => rawPeriods.find((period) => period.is_closed !== true) ?? null,
+    [rawPeriods],
+  );
 
   const resolvedError =
     error instanceof Error ? error : error ? new Error("Failed to load billing periods") : undefined;
@@ -241,7 +261,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -283,6 +303,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
             <Button
               size="sm"
               onClick={() => setCreateDialogOpen(true)}
+              disabled={Boolean(openBillingPeriod)}
             >
               <Plus />
               New Billing Period
@@ -318,6 +339,8 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => String(item.id),
+          onRowClick: (item) =>
+            router.push(`/${projectId}/billing-periods/${item.id}`),
           rowActions: renderRowActions,
         }}
         sorting={{
@@ -352,6 +375,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
             <Button
               size="sm"
               onClick={() => setCreateDialogOpen(true)}
+              disabled={Boolean(openBillingPeriod)}
             >
               <Plus />
               New Billing Period
@@ -417,37 +441,31 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
             ]}
           />
 
+          {openBillingPeriod ? (
+            <p className="text-sm text-muted-foreground">
+              Close BP-{String(openBillingPeriod.period_number).padStart(3, "0")} before creating another billing period.
+            </p>
+          ) : null}
+
           {bpMode === "manual" ? (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bp-start">From</Label>
-                  <Input
-                    id="bp-start"
-                    type="date"
-                    value={bpFormStartDate}
-                    onChange={(e) => setBpFormStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bp-end">To</Label>
-                  <Input
-                    id="bp-end"
-                    type="date"
-                    value={bpFormEndDate}
-                    onChange={(e) => setBpFormEndDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bp-billing">Due Date</Label>
-                <Input
-                  id="bp-billing"
-                  type="date"
-                  value={bpFormBillingDate}
-                  onChange={(e) => setBpFormBillingDate(e.target.value)}
+                <DateField
+                  label="From"
+                  value={parseISODate(bpFormStartDate)}
+                  onChange={(d) => setBpFormStartDate(toISODateStr(d))}
+                />
+                <DateField
+                  label="To"
+                  value={parseISODate(bpFormEndDate)}
+                  onChange={(d) => setBpFormEndDate(toISODateStr(d))}
                 />
               </div>
+              <DateField
+                label="Due Date"
+                value={parseISODate(bpFormBillingDate)}
+                onChange={(d) => setBpFormBillingDate(toISODateStr(d))}
+              />
             </div>
           ) : (
             (() => {
@@ -610,32 +628,8 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
               Cancel
             </Button>
             <Button
-              disabled={
-                createBpMutation.isPending ||
-                (bpMode === "manual" &&
-                  (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
-              }
+              disabled={createBpMutation.isPending || Boolean(openBillingPeriod)}
               onClick={async () => {
-                if (bpMode === "manual") {
-                  createBpMutation.mutate(
-                    {
-                      start_date: bpFormStartDate,
-                      end_date: bpFormEndDate,
-                      due_date: bpFormBillingDate || undefined,
-                    },
-                    {
-                      onSuccess: () => {
-                        setCreateDialogOpen(false);
-                        setBpFormStartDate("");
-                        setBpFormEndDate("");
-                        setBpFormBillingDate("");
-                      },
-                    },
-                  );
-                  return;
-                }
-
-                // Automatic: resolve day-of-month rule to a single period
                 const resolveDate = (
                   dayStr: string,
                   offset: "previous" | "this" | "next",
@@ -661,12 +655,50 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
                   return target.toISOString().slice(0, 10);
                 };
 
+                const payload =
+                  bpMode === "manual"
+                    ? {
+                        start_date: bpFormStartDate,
+                        end_date: bpFormEndDate,
+                        due_date: bpFormBillingDate || undefined,
+                      }
+                    : {
+                        start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
+                        end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
+                        due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
+                      };
+
+                const validationError = validateOpenBillingPeriodCreate(
+                  payload,
+                  rawPeriods,
+                );
+
+                if (validationError) {
+                  toast.error(validationError);
+                  return;
+                }
+
+                if (bpMode === "manual") {
+                  createBpMutation.mutate(
+                    {
+                      start_date: bpFormStartDate,
+                      end_date: bpFormEndDate,
+                      due_date: bpFormBillingDate,
+                    },
+                    {
+                      onSuccess: () => {
+                        setCreateDialogOpen(false);
+                        setBpFormStartDate("");
+                        setBpFormEndDate("");
+                        setBpFormBillingDate("");
+                      },
+                    },
+                  );
+                  return;
+                }
+
                 try {
-                  await createBpMutation.mutateAsync({
-                    start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
-                    end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
-                    due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
-                  });
+                  await createBpMutation.mutateAsync(payload);
                   setCreateDialogOpen(false);
                 } catch (error) {
                   reportNonCriticalFailure({

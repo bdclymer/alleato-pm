@@ -9,12 +9,14 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { pdfjs } from "react-pdf";
 import OpenSeadragon from "openseadragon";
 import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Cloud,
   Eraser,
   Highlighter,
   Home,
@@ -40,6 +42,11 @@ import {
 import { ErrorState } from "@/components/ds";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import {
+  useDrawingAnnotations,
+  useCreateDrawingAnnotation,
+  useDeleteDrawingAnnotation,
+} from "@/hooks/use-drawing-annotations";
 
 type PdfDocumentProxy = Awaited<ReturnType<typeof pdfjs.getDocument>["promise"]>;
 type PdfLoadingTask = ReturnType<typeof pdfjs.getDocument>;
@@ -62,20 +69,24 @@ export type AnnotationTool =
   | "pen"
   | "highlighter"
   | "rectangle"
+  | "cloud"
   | "arrow"
   | "text"
   | "eraser"
   | "comment"
   | "link";
 
-export type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
+export type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "cloud" | "arrow" | "text";
+
+/** Shapes with a bounding box (start/end) that make sense to link to an RFI, punch item, etc. */
+const LINKABLE_SHAPE_TYPES = new Set<LocalAnnotationType>(["rectangle", "cloud", "arrow"]);
 
 interface ImagePoint {
   x: number;
   y: number;
 }
 
-interface Annotation {
+export interface Annotation {
   id: string;
   type: LocalAnnotationType;
   page: number;
@@ -103,6 +114,29 @@ const STROKE_WIDTHS = [1, 2, 4, 6];
 
 function uid() {
   return Math.random().toString(36).slice(2);
+}
+
+/** Anchor point (image-space) for a "Link" follow-up action after a shape is drawn. */
+function getAnnotationAnchor(a: Annotation): ImagePoint | null {
+  if (a.start && a.end) {
+    if (a.type === "arrow") return a.end;
+    return { x: (a.start.x + a.end.x) / 2, y: (a.start.y + a.end.y) / 2 };
+  }
+  return null;
+}
+
+// ─── Committed-shape notification (for a follow-up "Link" action) ──────────
+
+export interface CommittedAnnotationInfo {
+  id: string;
+  type: LocalAnnotationType;
+  /** 0–100, percentage across the rendered page — the shape's anchor point. */
+  xPct: number;
+  /** 0–100, percentage down the rendered page. */
+  yPct: number;
+  page: number;
+  /** Removes the just-committed shape (used by a "Delete" follow-up action). */
+  remove: () => void;
 }
 
 // ─── Public overlay type ────────────────────────────────────────────────────
@@ -150,11 +184,22 @@ export interface OsdDrawingViewerProps {
   /** Called when the user clicks while the comment or link tool is active. Coords are 0–100. */
   onCommentClick?: (xPct: number, yPct: number, page: number) => void;
 
+  /** Called after a linkable shape (rectangle/cloud/arrow) is drawn, so the parent can offer a "Link" follow-up action. */
+  onAnnotationCommitted?: (info: CommittedAnnotationInfo) => void;
+
   /** Pins / threads to render on top of the drawing in image-space. */
   htmlOverlays?: HtmlOverlay[];
 
   /** Filter local (drawn) markup by type. Undefined = show all. */
   visibleAnnotationTypes?: LocalAnnotationType[];
+
+  /**
+   * When both are provided, drawn markup is persisted to the drawing_annotations
+   * table: existing markup loads on mount and new/erased shapes save in the
+   * background. Without them the viewer keeps markup in memory only (legacy).
+   */
+  drawingId?: string;
+  projectId?: string;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -172,8 +217,11 @@ export function OsdDrawingViewer({
   onRotationChange,
   onPageNumberChange,
   onCommentClick,
+  onAnnotationCommitted,
   htmlOverlays,
   visibleAnnotationTypes,
+  drawingId,
+  projectId,
 }: OsdDrawingViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<OpenSeadragon.Viewer | null>(null);
@@ -204,6 +252,80 @@ export function OsdDrawingViewer({
   const [localStrokeWidth, setLocalStrokeWidth] = useState(2);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
 
+  // ── Markup persistence (drawing_annotations) ────────────────────────────────
+  const persistEnabled = Boolean(projectId && drawingId);
+  const persistedQuery = useDrawingAnnotations(projectId ?? "", drawingId ?? "");
+  const createAnnotation = useCreateDrawingAnnotation(projectId ?? "", drawingId ?? "");
+  const deleteAnnotation = useDeleteDrawingAnnotation(projectId ?? "", drawingId ?? "");
+  const persistedData = persistedQuery.data;
+  const seededDrawingRef = useRef<string | null>(null);
+  // Client uid → server id once a create resolves. The client uid stays the
+  // annotation's stable id in state (so React keys and the shape-action "remove"
+  // closure never go stale); the server id is resolved from this map on delete.
+  const serverIdRef = useRef<Map<string, string>>(new Map());
+  // Client uids whose create POST is still in flight.
+  const pendingCreateRef = useRef<Set<string>>(new Set());
+  // Client uids erased before their create resolved (delete the row once saved).
+  const erasedPendingRef = useRef<Set<string>>(new Set());
+
+  // Seed the editing surface from persisted markup. On a new drawing, drop the
+  // stale id maps and clear immediately, then reseed once that drawing loads.
+  useEffect(() => {
+    if (!persistEnabled) return;
+    if (seededDrawingRef.current === drawingId) return;
+    serverIdRef.current.clear();
+    pendingCreateRef.current.clear();
+    erasedPendingRef.current.clear();
+    if (persistedData) {
+      seededDrawingRef.current = drawingId ?? null;
+      setAnnotations(persistedData);
+    } else {
+      setAnnotations([]);
+    }
+  }, [persistEnabled, persistedData, drawingId]);
+
+  const handleCommitAnnotation = useCallback(
+    (ann: Annotation) => {
+      setAnnotations((prev) => [...prev, ann]);
+      if (!persistEnabled) return;
+      pendingCreateRef.current.add(ann.id);
+      createAnnotation
+        .mutateAsync(ann)
+        .then((saved) => {
+          pendingCreateRef.current.delete(ann.id);
+          if (erasedPendingRef.current.delete(ann.id)) {
+            // Erased before the save resolved — remove the now-orphaned row so it
+            // does not reappear on reload.
+            deleteAnnotation.mutate(saved.id);
+            return;
+          }
+          serverIdRef.current.set(ann.id, saved.id);
+        })
+        .catch(() => {
+          // The hook toasts the failure; keep the shape on screen so the user
+          // does not silently lose their work.
+          pendingCreateRef.current.delete(ann.id);
+        });
+    },
+    [persistEnabled, createAnnotation, deleteAnnotation],
+  );
+
+  const handleEraseAnnotation = useCallback(
+    (id: string) => {
+      setAnnotations((prev) => prev.filter((a) => a.id !== id));
+      if (!persistEnabled) return;
+      if (pendingCreateRef.current.has(id)) {
+        // Create still in flight — defer deletion until the server id is known.
+        erasedPendingRef.current.add(id);
+        return;
+      }
+      const serverId = serverIdRef.current.get(id) ?? id;
+      serverIdRef.current.delete(id);
+      deleteAnnotation.mutate(serverId);
+    },
+    [persistEnabled, deleteAnnotation],
+  );
+
   const tool = controlledTool ?? localTool;
   const color = controlledColor ?? localColor;
   const strokeWidth = controlledStrokeWidth ?? localStrokeWidth;
@@ -221,7 +343,9 @@ export function OsdDrawingViewer({
         setPdf(doc);
         setNumPages(doc.numPages);
         setPageNumber(1);
-        setAnnotations([]);
+        // When persistence is on, the seed effect owns markup state (loading it
+        // from the server); clearing here would wipe the loaded markup.
+        if (!persistEnabled) setAnnotations([]);
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load PDF");
       }
@@ -609,6 +733,7 @@ export function OsdDrawingViewer({
                 { value: "pen" as AnnotationTool, icon: <Pencil className="h-4 w-4" />, label: "Pen" },
                 { value: "highlighter" as AnnotationTool, icon: <Highlighter className="h-4 w-4" />, label: "Highlighter" },
                 { value: "rectangle" as AnnotationTool, icon: <Square className="h-4 w-4" />, label: "Rectangle" },
+                { value: "cloud" as AnnotationTool, icon: <Cloud className="h-4 w-4" />, label: "Cloud" },
                 { value: "arrow" as AnnotationTool, icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
                 { value: "text" as AnnotationTool, icon: <Type className="h-4 w-4" />, label: "Text" },
                 { value: "eraser" as AnnotationTool, icon: <Eraser className="h-4 w-4" />, label: "Eraser" },
@@ -725,8 +850,21 @@ export function OsdDrawingViewer({
               strokeWidth={strokeWidth}
               page={pageNumber}
               annotations={visibleAnnotationsOnPage}
-              onCommit={(ann) => setAnnotations((prev) => [...prev, ann])}
-              onErase={(id) => setAnnotations((prev) => prev.filter((a) => a.id !== id))}
+              onCommit={(ann) => {
+                handleCommitAnnotation(ann);
+                if (!onAnnotationCommitted || !LINKABLE_SHAPE_TYPES.has(ann.type)) return;
+                const anchor = getAnnotationAnchor(ann);
+                if (!anchor) return;
+                onAnnotationCommitted({
+                  id: ann.id,
+                  type: ann.type,
+                  xPct: (anchor.x / imageSize.width) * 100,
+                  yPct: (anchor.y / imageSize.height) * 100,
+                  page: ann.page,
+                  remove: () => handleEraseAnnotation(ann.id),
+                });
+              }}
+              onErase={(id) => handleEraseAnnotation(id)}
               onCommentClick={onCommentClick}
             />
           )}
@@ -762,12 +900,19 @@ function OsdHtmlOverlayItem({
   imageWidth: number;
   imageHeight: number;
 }) {
-  const elRef = useRef<HTMLDivElement>(null);
+  const [container] = useState(() => {
+    const element = document.createElement("div");
+    element.style.pointerEvents = "auto";
+    return element;
+  });
+
+  useEffect(() => {
+    container.style.zIndex = String(overlay.zIndex ?? 20);
+  }, [container, overlay.zIndex]);
 
   useEffect(() => {
     const viewer = viewerRef.current;
-    const el = elRef.current;
-    if (!viewer || !el) return;
+    if (!viewer) return;
     const placement =
       OpenSeadragon.Placement[overlay.placement ?? "BOTTOM"] ?? OpenSeadragon.Placement.BOTTOM;
     const point = new OpenSeadragon.Point(
@@ -776,7 +921,7 @@ function OsdHtmlOverlayItem({
     );
     try {
       viewer.addOverlay({
-        element: el,
+        element: container,
         location: viewer.viewport.imageToViewportCoordinates(point),
         placement,
       });
@@ -791,7 +936,7 @@ function OsdHtmlOverlayItem({
     }
     return () => {
       try {
-        viewer.removeOverlay(el);
+        viewer.removeOverlay(container);
       } catch (error) {
         reportNonCriticalFailure({
           area: "osd-drawing-viewer",
@@ -802,13 +947,9 @@ function OsdHtmlOverlayItem({
         });
       }
     };
-  }, [viewerRef, overlay.xPct, overlay.yPct, overlay.placement, imageWidth, imageHeight]);
+  }, [viewerRef, container, overlay.xPct, overlay.yPct, overlay.placement, imageWidth, imageHeight]);
 
-  return (
-    <div ref={elRef} style={{ zIndex: overlay.zIndex ?? 20, pointerEvents: "auto" }}>
-      {overlay.element}
-    </div>
-  );
+  return createPortal(overlay.element, container);
 }
 
 // ─── Annotation overlay (SVG drawing layer) ─────────────────────────────────
@@ -845,6 +986,13 @@ function AnnotationOverlay({
   const [inProgress, setInProgress] = useState<Annotation | null>(null);
   const [textPrompt, setTextPrompt] = useState<{ position: ImagePoint } | null>(null);
   const drawingRef = useRef(false);
+  // Guards against the text annotation committing twice (Enter fires onCommit, then
+  // the resulting unmount fires onBlur which would commit the same text again) and
+  // lets Escape cancel without committing. onBlur is the single commit path.
+  const textCancelledRef = useRef(false);
+  // The text-prompt position is computed in the render body, which re-runs on every
+  // pan/zoom frame. If that call throws we report it once per prompt, not per frame.
+  const textPositionErrorReportedRef = useRef(false);
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -902,6 +1050,7 @@ function AnnotationOverlay({
     e.currentTarget.setPointerCapture(e.pointerId);
 
     if (tool === "text") {
+      textPositionErrorReportedRef.current = false;
       setTextPrompt({ position: pt });
       return;
     }
@@ -997,16 +1146,34 @@ function AnnotationOverlay({
     ? (() => {
         const viewer = viewerRef.current;
         if (!viewer) return undefined;
-        const elPt = viewer.viewport.imageToViewerElementCoordinates(
-          new OpenSeadragon.Point(textPrompt.position.x, textPrompt.position.y)
-        );
-        return {
-          position: "absolute",
-          left: elPt.x,
-          top: elPt.y,
-          transform: "translate(0, -2.25rem)",
-          zIndex: 30,
-        };
+        // Guard this render-phase OSD call: unlike every other viewport call in
+        // this file it runs during render, so an exception here would blank the
+        // whole viewer instead of logging and recovering.
+        try {
+          const elPt = viewer.viewport.imageToViewerElementCoordinates(
+            new OpenSeadragon.Point(textPrompt.position.x, textPrompt.position.y)
+          );
+          return {
+            position: "absolute",
+            left: elPt.x,
+            top: elPt.y,
+            transform: "translate(0, -2.25rem)",
+            zIndex: 30,
+          };
+        } catch (error) {
+          // Report once per prompt: this runs in render, which re-fires on every
+          // pan/zoom frame, so an unconditional report here would flood telemetry.
+          if (!textPositionErrorReportedRef.current) {
+            textPositionErrorReportedRef.current = true;
+            reportNonCriticalFailure({
+              area: "osd-drawing-viewer",
+              operation: "text-annotation-position",
+              error,
+              userVisibleFallback: "Text annotation position could not be computed.",
+            });
+          }
+          return undefined;
+        }
       })()
     : undefined;
 
@@ -1038,26 +1205,18 @@ function AnnotationOverlay({
             style={{ color }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                const value = (e.target as HTMLInputElement).value.trim();
-                if (value) {
-                  onCommit({
-                    id: uid(),
-                    type: "text",
-                    page,
-                    color,
-                    strokeWidth: Math.max(strokeWidth, 2),
-                    text: value,
-                    position: textPrompt.position,
-                  });
-                }
-                setTextPrompt(null);
+                e.preventDefault();
+                // Commit via the single onBlur path to avoid a double commit.
+                e.currentTarget.blur();
               } else if (e.key === "Escape") {
-                setTextPrompt(null);
+                e.preventDefault();
+                textCancelledRef.current = true;
+                e.currentTarget.blur();
               }
             }}
             onBlur={(e) => {
               const value = e.target.value.trim();
-              if (value) {
+              if (!textCancelledRef.current && value) {
                 onCommit({
                   id: uid(),
                   type: "text",
@@ -1068,6 +1227,7 @@ function AnnotationOverlay({
                   position: textPrompt.position,
                 });
               }
+              textCancelledRef.current = false;
               setTextPrompt(null);
             }}
           />
@@ -1078,6 +1238,46 @@ function AnnotationOverlay({
 }
 
 // ─── Annotation rendering ───────────────────────────────────────────────────
+
+/** Scalloped "revision cloud" outline around a bounding box, built from outward-bulging arcs. */
+function buildCloudPath(x: number, y: number, w: number, h: number): string {
+  const perimeter = 2 * (w + h);
+  const bumpSize = Math.max(Math.min(w, h) / 4, 14);
+  const bumpCount = Math.max(Math.round(perimeter / bumpSize), 8);
+  const step = perimeter / bumpCount;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
+  const pointAt = (dist: number): ImagePoint => {
+    let d = ((dist % perimeter) + perimeter) % perimeter;
+    if (d <= w) return { x: x + d, y };
+    d -= w;
+    if (d <= h) return { x: x + w, y: y + d };
+    d -= h;
+    if (d <= w) return { x: x + w - d, y: y + h };
+    d -= w;
+    return { x, y: y + h - d };
+  };
+
+  const points: ImagePoint[] = [];
+  for (let i = 0; i <= bumpCount; i++) points.push(pointAt(i * step));
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const p0 = points[i - 1];
+    const p1 = points[i];
+    const mx = (p0.x + p1.x) / 2;
+    const my = (p0.y + p1.y) / 2;
+    const nx = mx - cx;
+    const ny = my - cy;
+    const len = Math.hypot(nx, ny) || 1;
+    const bulge = step * 0.55;
+    const bx = mx + (nx / len) * bulge;
+    const by = my + (ny / len) * bulge;
+    d += ` Q ${bx} ${by} ${p1.x} ${p1.y}`;
+  }
+  return `${d} Z`;
+}
 
 function AnnotationShape({ annotation: a }: { annotation: Annotation }) {
   const stroke = a.color;
@@ -1121,6 +1321,24 @@ function AnnotationShape({ annotation: a }: { annotation: Annotation }) {
           vectorEffect={ns}
         />
       </g>
+    );
+  }
+
+  if (a.type === "cloud" && a.start && a.end) {
+    const x = Math.min(a.start.x, a.end.x);
+    const y = Math.min(a.start.y, a.end.y);
+    const w = Math.max(Math.abs(a.end.x - a.start.x), 1);
+    const h = Math.max(Math.abs(a.end.y - a.start.y), 1);
+    return (
+      <path
+        d={buildCloudPath(x, y, w, h)}
+        fill={stroke}
+        fillOpacity={0.12}
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinejoin="round"
+        vectorEffect={ns}
+      />
     );
   }
 
@@ -1190,7 +1408,7 @@ function findAnnotationAt(annotations: Annotation[], pt: ImagePoint): Annotation
           if (pointToSegmentDistance(pt, a.points[j], a.points[j + 1]) < tol) return a;
         }
       }
-    } else if (a.type === "rectangle" && a.start && a.end) {
+    } else if ((a.type === "rectangle" || a.type === "cloud") && a.start && a.end) {
       const minX = Math.min(a.start.x, a.end.x) - tol;
       const maxX = Math.max(a.start.x, a.end.x) + tol;
       const minY = Math.min(a.start.y, a.end.y) - tol;

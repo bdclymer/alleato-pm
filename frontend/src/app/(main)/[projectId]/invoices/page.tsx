@@ -8,8 +8,7 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
-import { Plus, Eye, MoreHorizontal } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Eye, MoreVertical, ExternalLink } from "lucide-react";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { KpiStrip, StatusBadge } from "@/components/ds";
@@ -35,8 +34,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { format as fmtDate } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateField } from "@/components/forms";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -53,6 +54,7 @@ import {
   type BillingPeriod,
 } from "@/hooks/use-billing-periods";
 import { PageTabs } from "@/components/layout/PageTabs";
+import { SubcontractorInvoiceStatusCell } from "@/components/invoicing/SubcontractorInvoiceStatusCell";
 import {
   buildInvoiceTableColumns,
   invoiceColumns,
@@ -62,6 +64,9 @@ import {
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
+import { toast } from "sonner";
+import { validateOpenBillingPeriodCreate } from "@/lib/invoicing/billing-period-validation";
 
 type TabKey = "owner" | "subcontractor" | "billing-periods";
 type FilterState = Record<string, FilterValue>;
@@ -92,6 +97,8 @@ interface SubcontractorInvoiceRow {
   percent_complete: number;
   erp_status: string | null;
   payment_status: string | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type: string | null;
 }
 
 const INVOICE_STATUS_OPTIONS = [
@@ -106,6 +113,7 @@ const INVOICE_STATUS_OPTIONS = [
 
 const subcontractorColumnConfig: ColumnConfig[] = [
   { id: "invoice_number", label: "Invoice #", alwaysVisible: true },
+  { id: "acumatica", label: "Acumatica", defaultVisible: true },
   { id: "status", label: "Invoice Status", defaultVisible: true },
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
   { id: "billing_period", label: "Billing Period", defaultVisible: true },
@@ -121,12 +129,24 @@ const subcontractorColumnConfig: ColumnConfig[] = [
   },
   { id: "percent_complete", label: "% Complete", defaultVisible: true },
   { id: "total_amount", label: "Total Amount", defaultVisible: false },
-  { id: "erp_status", label: "ERP Status", defaultVisible: false },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
 ];
 
 const subcontractorDefaultVisibleColumns = subcontractorColumnConfig
   .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
   .map((column) => column.id);
+
+/** Parse a YYYY-MM-DD string to a local Date (no timezone shift). */
+function parseISODate(s: string): Date | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : undefined;
+}
+
+/** Convert a Date to YYYY-MM-DD string, or empty string if undefined. */
+function toISODateStr(d: Date | undefined): string {
+  return d ? fmtDate(d, "yyyy-MM-dd") : "";
+}
 
 function sortItems<T>(
   items: T[],
@@ -184,9 +204,7 @@ const billingPeriodFilters: FilterConfig[] = [
   },
 ];
 
-function buildBillingPeriodColumns(
-  _onView: (bp: BillingPeriod) => void,
-): TableColumn<BillingPeriod>[] {
+function buildBillingPeriodColumns(): TableColumn<BillingPeriod>[] {
   return [
     {
       id: "period_number",
@@ -318,6 +336,10 @@ export default function ProjectInvoicesPage(): ReactElement {
     isFetching: bpFetching,
     error: bpError,
   } = useBillingPeriodsList(projectId);
+  const openBillingPeriod = React.useMemo(
+    () => billingPeriodsRaw.find((period) => period.is_closed !== true) ?? null,
+    [billingPeriodsRaw],
+  );
 
   const {
     data: ownerRawInvoices = [],
@@ -480,7 +502,7 @@ export default function ProjectInvoicesPage(): ReactElement {
           <Button
             type="button"
             variant="link"
-            className="font-medium text-primary hover:underline h-auto p-0"
+            className="h-auto p-0 font-medium text-foreground hover:text-foreground hover:underline"
             onClick={() =>
               router.push(`/${projectId}/invoicing/subcontractor/${i.id}`)
             }
@@ -490,12 +512,42 @@ export default function ProjectInvoicesPage(): ReactElement {
         ),
       },
       {
+        id: "acumatica",
+        label: "Acumatica",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.acumatica_ref_nbr ?? "",
+        render: (i) =>
+          i.acumatica_ref_nbr ? (
+            <a
+              href={buildAcumaticaApBillHref(
+                i.acumatica_doc_type,
+                i.acumatica_ref_nbr,
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+            >
+              <span className="tabular-nums">{i.acumatica_ref_nbr}</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <span className="text-sm text-muted-foreground">Not synced</span>
+          ),
+      },
+      {
         id: "status",
         label: "Invoice Status",
         defaultVisible: true,
         sortable: true,
         sortValue: (i) => i.status,
-        render: (i) => <StatusBadge status={i.status} />,
+        render: (i) => (
+          <SubcontractorInvoiceStatusCell
+            projectId={projectId}
+            invoiceId={i.id}
+            status={i.status}
+          />
+        ),
       },
       {
         id: "contract_company",
@@ -575,17 +627,20 @@ export default function ProjectInvoicesPage(): ReactElement {
         defaultVisible: true,
         sortable: true,
         sortValue: (i) => i.contract_number ?? "",
-        render: (i) => (
-          <span className="text-sm text-foreground">
-            {i.contract_number ?? "-"}
-            {i.contract_title ? (
-              <span className="text-muted-foreground">
-                {" "}
-                — {i.contract_title}
-              </span>
-            ) : null}
-          </span>
-        ),
+        render: (i) => {
+          const number = i.contract_number ?? null;
+          const title = i.contract_title ?? null;
+          const label = number ?? title;
+          const suffix = title && title !== number ? title : null;
+          return (
+            <span className="text-sm text-foreground">
+              {label ?? "-"}
+              {suffix ? (
+                <span className="text-muted-foreground"> — {suffix}</span>
+              ) : null}
+            </span>
+          );
+        },
       },
       {
         id: "total_contract_amount",
@@ -748,15 +803,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   );
 
   // Billing periods — columns + filtered/sorted data
-  const bpColumns = React.useMemo(
-    () =>
-      buildBillingPeriodColumns((bp) =>
-        router.push(
-          `/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`,
-        ),
-      ),
-    [projectId, router],
-  );
+  const bpColumns = React.useMemo(() => buildBillingPeriodColumns(), []);
 
   const filteredBillingPeriods = React.useMemo(() => {
     let items = [...billingPeriodsRaw];
@@ -947,16 +994,12 @@ export default function ProjectInvoicesPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() =>
-              toast.info(
-                `Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`,
-              )
-            }
+            onClick={() => router.push(`/${projectId}/billing-periods/${bp.id}`)}
           >
             <Eye className="mr-2 h-4 w-4" />
             View Details
@@ -972,7 +1015,11 @@ export default function ProjectInvoicesPage(): ReactElement {
             title: "Invoices",
             description: "Track owner and subcontractor invoice activity",
             actions: (
-              <Button size="sm" onClick={() => setCreateBpOpen(true)}>
+              <Button
+                size="sm"
+                onClick={() => setCreateBpOpen(true)}
+                disabled={Boolean(openBillingPeriod)}
+              >
                 <Plus />
                 Create Billing Period
               </Button>
@@ -1011,9 +1058,7 @@ export default function ProjectInvoicesPage(): ReactElement {
             columns: bpColumns,
             getRowId: (bp) => bp.id,
             onRowClick: (bp) =>
-              toast.info(
-                `Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`,
-              ),
+              router.push(`/${projectId}/billing-periods/${bp.id}`),
             rowActions: renderBpRowActions,
           }}
           sorting={{
@@ -1076,37 +1121,31 @@ export default function ProjectInvoicesPage(): ReactElement {
               ]}
             />
 
+            {openBillingPeriod ? (
+              <p className="text-sm text-muted-foreground">
+                Close BP-{String(openBillingPeriod.period_number).padStart(3, "0")} before creating another billing period.
+              </p>
+            ) : null}
+
             {bpMode === "manual" ? (
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bp-start">From</Label>
-                    <Input
-                      id="bp-start"
-                      type="date"
-                      value={bpFormStartDate}
-                      onChange={(e) => setBpFormStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="bp-end">To</Label>
-                    <Input
-                      id="bp-end"
-                      type="date"
-                      value={bpFormEndDate}
-                      onChange={(e) => setBpFormEndDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bp-billing">Due Date</Label>
-                  <Input
-                    id="bp-billing"
-                    type="date"
-                    value={bpFormBillingDate}
-                    onChange={(e) => setBpFormBillingDate(e.target.value)}
+                  <DateField
+                    label="From"
+                    value={parseISODate(bpFormStartDate)}
+                    onChange={(d) => setBpFormStartDate(toISODateStr(d))}
+                  />
+                  <DateField
+                    label="To"
+                    value={parseISODate(bpFormEndDate)}
+                    onChange={(d) => setBpFormEndDate(toISODateStr(d))}
                   />
                 </div>
+                <DateField
+                  label="Due Date"
+                  value={parseISODate(bpFormBillingDate)}
+                  onChange={(d) => setBpFormBillingDate(toISODateStr(d))}
+                />
               </div>
             ) : (
               (() => {
@@ -1300,32 +1339,8 @@ export default function ProjectInvoicesPage(): ReactElement {
                 Cancel
               </Button>
               <Button
-                disabled={
-                  createBpMutation.isPending ||
-                  (bpMode === "manual" &&
-                    (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
-                }
+                disabled={createBpMutation.isPending || Boolean(openBillingPeriod)}
                 onClick={async () => {
-                  if (bpMode === "manual") {
-                    createBpMutation.mutate(
-                      {
-                        start_date: bpFormStartDate,
-                        end_date: bpFormEndDate,
-                        due_date: bpFormBillingDate || undefined,
-                      },
-                      {
-                        onSuccess: () => {
-                          setCreateBpOpen(false);
-                          setBpFormStartDate("");
-                          setBpFormEndDate("");
-                          setBpFormBillingDate("");
-                        },
-                      },
-                    );
-                    return;
-                  }
-
-                  // Automatic: resolve day-of-month rule to a single period
                   const resolveDate = (
                     dayStr: string,
                     offset: "previous" | "this" | "next",
@@ -1351,12 +1366,53 @@ export default function ProjectInvoicesPage(): ReactElement {
                     return target.toISOString().slice(0, 10);
                   };
 
+                  const payload =
+                    bpMode === "manual"
+                      ? {
+                          start_date: bpFormStartDate,
+                          end_date: bpFormEndDate,
+                          due_date: bpFormBillingDate || undefined,
+                        }
+                      : {
+                          start_date: resolveDate(
+                            bpAutoStartDay,
+                            bpAutoStartMonth,
+                          ),
+                          end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
+                          due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
+                        };
+
+                  const validationError = validateOpenBillingPeriodCreate(
+                    payload,
+                    billingPeriodsRaw,
+                  );
+
+                  if (validationError) {
+                    toast.error(validationError);
+                    return;
+                  }
+
+                  if (bpMode === "manual") {
+                    createBpMutation.mutate(
+                      {
+                        start_date: bpFormStartDate,
+                        end_date: bpFormEndDate,
+                        due_date: bpFormBillingDate,
+                      },
+                      {
+                        onSuccess: () => {
+                          setCreateBpOpen(false);
+                          setBpFormStartDate("");
+                          setBpFormEndDate("");
+                          setBpFormBillingDate("");
+                        },
+                      },
+                    );
+                    return;
+                  }
+
                   try {
-                    await createBpMutation.mutateAsync({
-                      start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
-                      end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
-                      due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
-                    });
+                    await createBpMutation.mutateAsync(payload);
                     setCreateBpOpen(false);
                   } catch (error) {
                     reportNonCriticalFailure({

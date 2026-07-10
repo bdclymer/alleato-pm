@@ -137,6 +137,52 @@ def _with_fake_rag_write(supabase, fn):
         source_sync_health_mod.get_rag_write_client = original_get_rag_write_client
 
 
+def test_chunk_rows_for_documents_uses_small_batches_for_long_graph_ids():
+    class _LimitedInQuery:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def select(self, *_args):
+            return self
+
+        def in_(self, key, values):
+            assert len(values) <= source_sync_health_mod.CHUNK_DOCUMENT_ID_BATCH_SIZE
+            allowed = set(values)
+            self.rows = [row for row in self.rows if row.get(key) in allowed]
+            return self
+
+        def execute(self):
+            return _Result(self.rows)
+
+    class _LimitedInClient:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def table(self, table_name):
+            assert table_name == "document_chunks"
+            return _LimitedInQuery(list(self.rows))
+
+    document_ids = [
+        f"outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYg_{index}"
+        for index in range(source_sync_health_mod.CHUNK_DOCUMENT_ID_BATCH_SIZE + 1)
+    ]
+    rows = [
+        {"document_id": document_id, "chunk_id": f"{document_id}__chunk_0"}
+        for document_id in document_ids
+    ]
+    original_get_rag_read_client = source_sync_health_mod.get_rag_read_client
+    source_sync_health_mod.get_rag_read_client = lambda: _LimitedInClient(rows)
+    try:
+        chunk_rows = source_sync_health_mod._chunk_rows_for_documents(
+            _LimitedInClient(rows),
+            document_ids,
+        )
+    finally:
+        source_sync_health_mod.get_rag_read_client = original_get_rag_read_client
+
+    assert {row["document_id"] for row in chunk_rows} == set(document_ids)
+
+
 def test_record_sync_run_writes_loud_run_ledger_row():
     supabase = _FakeSupabase()
 
@@ -254,6 +300,157 @@ def test_get_source_sync_health_surfaces_stale_graph_and_vector_backlog():
     assert outlook["unembeddedCount"] == 1
     assert outlook["uncompiledCount"] == 1
     assert health["alerts"]
+
+
+def test_document_health_excludes_terminal_and_stub_rows_from_rag_backlog():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "doc-real-email",
+            "source_system": "microsoft_graph",
+            "category": "outlook_email",
+            "type": "email",
+            "status": "uploaded",
+            "created_at": recent,
+        },
+        {
+            "id": "doc-ai-stub",
+            "source_system": "ai_assistant",
+            "category": "ai_assistant",
+            "type": "ai_assistant_task",
+            "status": "done",
+            "created_at": recent,
+        },
+        {
+            "id": "doc-agenda-stub",
+            "source_system": "meeting_agenda",
+            "category": "meeting_agenda",
+            "type": "meeting_agenda_task",
+            "status": "done",
+            "created_at": recent,
+        },
+        {
+            "id": "doc-low-content",
+            "source_system": "microsoft_graph",
+            "category": "outlook_email",
+            "type": "email",
+            "status": "skipped_low_content",
+            "created_at": recent,
+        },
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    assert health["counts"]["unembedded"] == 1
+    assert health["counts"]["uncompiled"] == 1
+    assert health["pipeline"]["unembeddedBySource"] == {"outlook_email": 1}
+    assert health["pipeline"]["uncompiledBySource"] == {"outlook_email": 1}
+
+
+def test_uncompiled_document_count_alone_does_not_make_source_unhealthy():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    recent = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    supabase.tables["graph_sync_state"] = [
+        {
+            "source": "outlook_email",
+            "resource_id": "mailbox@example.com",
+            "resource_name": "Mailbox",
+            "last_sync_at": recent,
+            "sync_status": "success",
+            "error_message": None,
+            "items_synced": 1,
+            "updated_at": recent,
+        }
+    ]
+    supabase.tables["document_metadata"] = [
+        {
+            "id": "doc-compiled-later",
+            "source_system": "microsoft_graph",
+            "category": "outlook_email",
+            "type": "email",
+            "status": "embedded",
+            "created_at": recent,
+        }
+    ]
+    supabase.tables["document_chunks"] = [
+        {"document_id": "doc-compiled-later", "chunk_id": "chunk-1"},
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    outlook = next(row for row in health["sources"] if row["source"] == "outlook_email")
+    assert outlook["status"] == "healthy"
+    assert outlook["uncompiledCount"] == 1
+    assert health["pipeline"]["uncompiledBySource"] == {"outlook_email": 1}
+    assert not any(alert["code"] == "compiler_backlog" for alert in health["alerts"])
+
+
+def test_source_sync_health_excludes_retired_compiler_and_packet_jobs_from_active_backlog():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    old = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    supabase.tables["source_intelligence_jobs"] = [
+        {
+            "id": f"retired-attribution-{index}",
+            "status": "queued",
+            "job_type": "attribution",
+            "compiler_version": "ai_intelligence_compiler_v0_1",
+            "source_document_id": f"doc-retired-{index}",
+            "last_error": None,
+            "queued_at": old,
+            "updated_at": old,
+        }
+        for index in range(30)
+    ] + [
+        {
+            "id": "retired-rls",
+            "status": "failed",
+            "job_type": "signal_extract",
+            "compiler_version": "ai_intelligence_compiler_v0_1",
+            "source_document_id": "doc-rls",
+            "last_error": 'new row violates row-level security policy for table "source_syntheses"',
+            "queued_at": old,
+            "updated_at": old,
+        },
+        {
+            "id": "active-attribution",
+            "status": "queued",
+            "job_type": "attribution",
+            "compiler_version": "ai_intelligence_compiler_v0_2",
+            "source_document_id": "doc-active",
+            "last_error": None,
+            "queued_at": old,
+            "updated_at": old,
+        },
+    ]
+    supabase.tables["packet_refresh_jobs"] = [
+        {
+            "id": f"retired-packet-{index}",
+            "status": "failed",
+            "compiler_version": "ai_intelligence_compiler_v0_1",
+            "trigger_source_document_id": None,
+            "trigger_insight_card_id": None,
+            "metadata": {"reason": "source lifecycle green gate refresh"},
+            "last_error": "PM projection max row guard blocked direct packet refresh",
+            "queued_at": old,
+            "updated_at": old,
+        }
+        for index in range(8)
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    assert health["pipeline"]["sourceJobsByStatus"] == {"queued": 1}
+    assert health["pipeline"]["sourceJobsByStatusRaw"] == {"queued": 31, "failed": 1}
+    assert health["pipeline"]["retiredSourceJobsByStatus"] == {"queued": 30, "failed": 1}
+    assert health["pipeline"]["packetJobsByStatus"] == {}
+    assert health["pipeline"]["packetJobsByStatusRaw"] == {"failed": 8}
+    assert health["pipeline"]["retiredPacketJobsByStatus"] == {"failed": 8}
+    assert not any(alert["code"] == "compiler_backlog" for alert in health["alerts"])
+    assert not any(alert["code"] == "packet_refresh_failed" for alert in health["alerts"])
 
 
 def test_get_source_sync_health_surfaces_unconfigured_graph_subscription(monkeypatch):
@@ -439,6 +636,43 @@ def test_get_source_sync_health_surfaces_acumatica_payment_application_failure()
     assert row["status"] == "critical"
     assert row["lastErrorMessage"] == "Expose a Generic Inquiry or endpoint with applied invoice fields."
     assert row["metadata"]["failedEntities"] == ["payment_applications"]
+
+
+def test_get_source_sync_health_treats_acumatica_warning_fallback_as_warning_not_critical():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    now = datetime.now(timezone.utc).isoformat()
+    supabase.tables["acumatica_sync_state"] = [
+        {
+            "entity_name": "ar_payments",
+            "status": "success",
+            "last_started_at": now,
+            "last_success_at": now,
+            "last_error": None,
+            "last_stats": {"upserted": 31},
+            "updated_at": now,
+        },
+        {
+            "entity_name": "payment_applications",
+            "status": "warning",
+            "last_started_at": now,
+            "last_success_at": now,
+            "last_error": "Projected prime contract payments directly from acumatica_payments using unique customer-to-project mapping.",
+            "last_stats": {"projected": 43, "errors": 0, "warnings": ["fallback projection"]},
+            "updated_at": now,
+        },
+    ]
+
+    health = _get_source_sync_health_with_fake_rag(supabase)
+
+    row = next(source for source in health["sources"] if source["source"] == "acumatica_financial_sync")
+    assert health["status"] == "degraded"
+    assert row["status"] == "warning"
+    assert row["metadata"]["failedEntities"] == []
+    assert row["metadata"]["warningEntities"] == ["payment_applications"]
+    alert = next(alert for alert in health["alerts"] if alert["source"] == "acumatica_financial_sync")
+    assert alert["severity"] == "warning"
+    assert alert["code"] == "source_sync_error"
 
 
 def test_get_source_sync_health_alerts_when_graph_docs_missing_project_documents():

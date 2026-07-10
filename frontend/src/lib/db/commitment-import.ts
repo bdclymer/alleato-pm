@@ -16,6 +16,7 @@
 import * as XLSX from "xlsx";
 import { mapFormToInsert, type SubcontractFormData } from "./subcontracts";
 import type { Database } from "@/types/database.types";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 type SubcontractInsert = Database["public"]["Tables"]["subcontracts"]["Insert"];
 type PurchaseOrderInsert = Database["public"]["Tables"]["purchase_orders"]["Insert"];
@@ -260,6 +261,7 @@ export function buildPurchaseOrderInsert(
   const { signed_contract_received_date, ...rest } = base;
   return {
     ...rest,
+    contract_number: normalizeCommitmentContractNumber(row.number, "PO-"),
     signed_po_received_date: signed_contract_received_date ?? null,
   } as PurchaseOrderInsert;
 }

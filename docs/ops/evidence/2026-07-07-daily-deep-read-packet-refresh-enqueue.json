@@ -1,0 +1,15 @@
+{
+  "checked_at": "2026-07-07T19:47:58.181Z",
+  "job": {
+    "id": "6728a0b6-1794-4522-b4f9-688ac1f1be04",
+    "status": "queued",
+    "priority": 10,
+    "target_id": "93dc271e-dc59-4f51-9b3e-db402c67bf97",
+    "trigger_source_document_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+    "trigger_insight_card_id": "988cf9e2-84a0-4fca-82f3-bd130b4d23d0",
+    "compiler_version": "ai_intelligence_compiler_v0_1",
+    "reason": "Daily Deep Read candidate promoted",
+    "queued_at": "2026-07-07T19:47:45.534106+00:00",
+    "updated_at": "2026-07-07T19:47:45.534106+00:00"
+  }
+}

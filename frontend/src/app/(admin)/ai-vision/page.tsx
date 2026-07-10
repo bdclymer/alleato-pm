@@ -120,8 +120,8 @@ function SectionHead({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Content (sourced from AI-MASTER-PLAN, AI-VISION, AI-TOOLS-INVENTORY,
-// AI-OS-GAP-MATRIX, AI-OS-PHASE-1-PLAN, AGENT_ACTION_LAYER_CONTRACT).
+// Content: this page IS the canonical vision statement (the old ai-plan doc
+// tree was retired). The ranked build queue lives in docs/roadmap/AI-ROADMAP.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PILLARS: { icon: React.ComponentType<{ className?: string }>; title: string; body: string }[] = [
@@ -182,7 +182,7 @@ const AGENT_GROUPS: { label: string; icon: React.ComponentType<{ className?: str
     icon: BrainCircuit,
     agents: [
       { name: "Project Intelligence", job: "Project-status synthesis runtime with source-coverage tools.", status: "live", href: "/ai-system-health" },
-      { name: "Executive Briefing", job: "Portfolio-level executive briefing runtime.", status: "live", href: "/ai-work-runs" },
+      { name: "Executive Briefing", job: "Portfolio-level executive briefing runtime.", status: "live" },
       { name: "Research Agent", job: "Web research (Tavily + fetch).", status: "live", href: "/deep-research" },
       { name: "Content Builder", job: "Marketing & content generation with image tools.", status: "live", href: "/ai" },
       { name: "Scoped analysts", job: "Financial, schedule, risk & comms analysts consumed by the Deep Agents.", status: "live", href: "/ai" },
@@ -213,7 +213,7 @@ const TOOL_TIERS: { tier: string; subtitle: string; tools: Tool[] }[] = [
     subtitle: "Highest pain, highest impact",
     tools: [
       { name: "Financial Guardian", purpose: "Continuous budget-vs-actual, owner-vs-sub margin-leak detection, cash-flow projection, CE→CO→Commitment sync.", status: "partial", href: "/ai" },
-      { name: "Morning Briefing", purpose: "Daily top 3–5 cross-project priorities, per-project health, overdue items, team load.", status: "partial", href: "/ai-work-runs" },
+      { name: "Morning Briefing", purpose: "Daily top 3–5 cross-project priorities, per-project health, overdue items, team load.", status: "partial" },
       { name: "Conversational Financial Advisor", purpose: "Natural-language drill-down, comparisons, root-cause, what-if.", status: "live", href: "/ai" },
     ],
   },
@@ -245,7 +245,7 @@ const TOOL_TIERS: { tier: string; subtitle: string; tools: Tool[] }[] = [
       { name: "Memory trace on answers", purpose: "“Memory used” disclosure + one-tap “this is wrong”.", status: "planned" },
       { name: "Teach Alleato intake", purpose: "Field workflow submission feeding the review queue.", status: "planned" },
       { name: "Skill Library", purpose: "Durable, versioned, reviewed workflows.", status: "planned" },
-      { name: "AI Work Queue + Subagents", purpose: "Visible scheduled / delegated runs with status, sources, confidence.", status: "planned", href: "/ai-work-runs" },
+      { name: "AI Work Queue + Subagents", purpose: "Visible scheduled / delegated runs with status, sources, confidence.", status: "planned" },
     ],
   },
 ];
@@ -316,7 +316,6 @@ const LIVE_SURFACES: {
   { name: "AI system health", href: "/ai-system-health", desc: "Conversations, spend, model mix, learning loop.", icon: Gauge },
   { name: "Agent inventory", href: "/ai/admin/agents", desc: "Every agent with status & deployment.", icon: Building2 },
   { name: "Project intelligence health", href: "/ai-system-health", desc: "Source ingestion, synthesis health, and AI operations.", icon: BrainCircuit },
-  { name: "Executive brief runs", href: "/ai-work-runs", desc: "Daily-brief run ledger & evidence rows.", icon: Sparkles },
   { name: "Deep research archive", href: "/deep-research", desc: "Past Deep Agents research projects.", icon: FileSearch },
   { name: "Memory center", href: "/settings/memory", desc: "Inspect & correct what the AI remembers.", icon: Eye },
   { name: "Learning promotions", href: "/ai/learning-promotions", desc: "Approve candidate AI learnings.", icon: CheckCircle2 },
@@ -326,12 +325,8 @@ const LIVE_SURFACES: {
 ];
 
 const SOURCE_DOCS: string[] = [
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-MASTER-PLAN.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-VISION.md",
-  "docs/architecture/AI-TOOLS-INVENTORY.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-GAP-MATRIX.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md",
-  "AGENT_ACTION_LAYER_CONTRACT.md",
+  "docs/roadmap/AI-ROADMAP.md",
+  "docs/architecture/AI-RAG-ARCHITECTURE.md",
 ];
 
 export default async function AiVisionPage() {
@@ -625,7 +620,7 @@ export default async function AiVisionPage() {
         <div className="mb-3 flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            This page is compiled from
+            Companion docs
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -639,8 +634,8 @@ export default async function AiVisionPage() {
           ))}
         </div>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          When the plan changes, update those source docs and refresh this page — it&apos;s meant to
-          be the one place you and the team look instead of hunting through scattered files.
+          This page is the canonical vision statement. The ranked build queue lives in
+          AI-ROADMAP.md — when the plan changes, update the roadmap and refresh this page.
         </p>
       </section>
     </PageShell>

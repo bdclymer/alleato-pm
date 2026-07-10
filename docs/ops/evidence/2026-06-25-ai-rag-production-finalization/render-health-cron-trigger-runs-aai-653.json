@@ -1,0 +1,29 @@
+[
+  {
+    "name": "alleato-microsoft-executive-assistant-check",
+    "status": 200,
+    "body": {
+      "id": "crn-d8orvmmrnols73etajrg-1782421950",
+      "status": "pending",
+      "triggeredBy": "support@megankharrison.com"
+    }
+  },
+  {
+    "name": "alleato-ai-provider-health",
+    "status": 200,
+    "body": {
+      "id": "crn-d8ndbas8aovs73abp21g-1782421950",
+      "status": "pending",
+      "triggeredBy": "support@megankharrison.com"
+    }
+  },
+  {
+    "name": "alleato-rag-health",
+    "status": 200,
+    "body": {
+      "id": "crn-d827ch7avr4c739i5mp0-1782421950",
+      "status": "pending",
+      "triggeredBy": "support@megankharrison.com"
+    }
+  }
+]

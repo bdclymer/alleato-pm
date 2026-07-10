@@ -1,6 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { apiErrorResponse } from "@/lib/api-error";
-import { createClient } from "@/lib/supabase/server";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 const SEARCHABLE_COLUMNS = [
@@ -94,6 +95,14 @@ export const GET = withApiGuardrails(
   "directory/vendors#GET",
   async ({ request }) => {
     const supabase = await createClient();
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "directory/vendors#GET",
+        message: "Authentication required.",
+      });
+    }
     const { searchParams } = new URL(request.url);
 
     const page = parsePositiveInteger(searchParams.get("page"), 1);

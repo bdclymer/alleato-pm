@@ -1,0 +1,91 @@
+{
+  "task": {
+    "id": "67d824d6-2b7d-49cb-8011-efb42a5bd0ad",
+    "title": "Force-close the Union Collective bidder coverage gap to at least four confirmed bidders per thin division before 7/8. [teamsdm_33fed32e02adebbb_2026-07-06, outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBG",
+    "metadata_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+    "project_id": 1009,
+    "project_ids": [
+      1009
+    ],
+    "status": "open",
+    "source_system": "daily_deep_read",
+    "extraction_source": "daily_deep_read_candidate",
+    "extraction_model": "daily_deep_read_promotion_v1",
+    "extraction_metadata": {
+      "review": {
+        "action": "accept",
+        "source": "project_intelligence_daily_deep_read_review",
+        "reviewed_at": "2026-07-07T18:25:50.295Z",
+        "reviewed_by": "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+        "review_notes": null,
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+      },
+      "section": "Task Candidates",
+      "source_ids": [],
+      "promoted_at": "2026-07-07T19:16:42.772Z",
+      "promoted_by": "codex-verification",
+      "business_date": "2026-07-06",
+      "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+      "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "candidate_policy": "review_gated_not_auto_promoted",
+      "promoted_target_id": "93dc271e-dc59-4f51-9b3e-db402c67bf97",
+      "daily_packet_target_id": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+      "consumer_compiler_version": "daily_deep_read_consumers_v1",
+      "daily_packet_generated_at": "2026-07-07T11:32:33.213433+00:00",
+      "project_assignment_method": "project_name_or_number_match",
+      "daily_packet_business_date": "2026-07-06",
+      "promotion_compiler_version": "daily_deep_read_promotion_v1",
+      "daily_deep_read_candidate_id": "b24e1d69-389d-4103-9bec-752c20a1f194"
+    }
+  },
+  "packetDoc": {
+    "id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+    "title": "Daily Executive Brief - 2026-07-06",
+    "category": "daily_deep_read",
+    "source_system": "daily_deep_read",
+    "project_id": 1009,
+    "status": "processed",
+    "source_metadata": {
+      "packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "target_id": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+      "packet_type": "current",
+      "business_date": "2026-07-06",
+      "source_policy": "Canonical Daily Deep Read packet source for promoted tasks/cards.",
+      "compiler_version": "manual_daily_executive_brief_v1"
+    }
+  },
+  "candidate": {
+    "id": "b24e1d69-389d-4103-9bec-752c20a1f194",
+    "project_id": 1009,
+    "status": "promoted",
+    "current_status": "resolved",
+    "promoted_insight_card_id": "67d824d6-2b7d-49cb-8011-efb42a5bd0ad",
+    "extraction_json": {
+      "review": {
+        "action": "accept",
+        "source": "project_intelligence_daily_deep_read_review",
+        "reviewed_at": "2026-07-07T18:25:50.295Z",
+        "reviewed_by": "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+        "review_notes": null,
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64"
+      },
+      "section": "Task Candidates",
+      "promotion": {
+        "kind": "task",
+        "promoted_at": "2026-07-07T19:16:42.858Z",
+        "promoted_by": "codex-verification",
+        "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+        "compiler_version": "daily_deep_read_promotion_v1",
+        "promoted_record_id": "67d824d6-2b7d-49cb-8011-efb42a5bd0ad"
+      },
+      "source_ids": [],
+      "business_date": "2026-07-06",
+      "source_policy": "Derived from daily_deep_read packet sections/source notes; no direct chunk synthesis.",
+      "daily_packet_id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+      "candidate_policy": "review_gated_not_auto_promoted",
+      "consumer_compiler_version": "daily_deep_read_consumers_v1",
+      "daily_packet_generated_at": "2026-07-07T11:32:33.213Z",
+      "project_assignment_method": "project_name_or_number_match"
+    }
+  }
+}

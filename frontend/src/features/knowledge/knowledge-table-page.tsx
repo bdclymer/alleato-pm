@@ -130,7 +130,7 @@ export function KnowledgeTablePage() {
     const rows = filteredDocuments.map((d) => [
       d.title ?? d.file_name ?? "",
       d.status ?? "",
-      d.tags ?? "",
+      d.tags?.join(", ") ?? "",
       d.file_name ?? "",
       d.date ?? d.created_at ?? "",
       d.created_at ? new Date(d.created_at).toLocaleDateString() : "",

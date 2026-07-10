@@ -162,15 +162,42 @@ describe("global AI assistant tool registry", () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       [...EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS].sort(),
     );
+    expect(tools.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining([
+        "read-current-daily-executive-brief",
+        "fetch-daily-executive-brief-sources",
+        "build-teams-daily-brief-payload",
+        "send-teams-daily-brief",
+      ]),
+    );
     expect(
       tools
         .filter((tool) => tool.requiresDeliveryPermission)
         .map((tool) => tool.name),
-    ).toEqual(
-      expect.arrayContaining([
-        "send-teams-daily-brief",
-        "send-email-daily-brief",
-      ]),
+    ).toEqual(["send-teams-daily-brief"]);
+    expect(
+      tools.find((tool) => tool.name === "build-teams-daily-brief-payload"),
+    ).toMatchObject({
+      owningAdapter: "daily_executive_brief_canonical_packet",
+      allowedChannels: ["teams"],
+      metadata: expect.objectContaining({
+        sourceOfTruth: "intelligence_packets",
+        targetSlug: "daily-executive-brief",
+      }),
+    });
+    expect(
+      tools.find((tool) => tool.name === "send-teams-daily-brief"),
+    ).toMatchObject({
+      requiresWritePermission: true,
+      requiresDeliveryPermission: true,
+      allowedChannels: ["teams"],
+      metadata: expect.objectContaining({
+        sourceOfTruth: "intelligence_packets",
+        targetSlug: "daily-executive-brief",
+      }),
+    });
+    expect(tools.map((tool) => tool.name)).not.toContain(
+      "send-email-daily-brief",
     );
   });
 
@@ -198,7 +225,7 @@ describe("global AI assistant tool registry", () => {
         "extractStructuredActionBrief",
         "getSpecRequirements",
         "getDomainIntelligence",
-        "generateExecutiveDailyBrief",
+        "readCurrentDailyExecutiveBrief",
         "createMarketingContentAsset",
       ]),
     );
@@ -295,8 +322,9 @@ describe("global AI assistant tool registry", () => {
         ?.description,
     ).toContain("Microsoft Graph live inbox first");
     expect(
-      definitions.find((definition) => definition.name === "searchTeamsMessages")
-        ?.metadata.routingPolicy,
+      definitions.find(
+        (definition) => definition.name === "searchTeamsMessages",
+      )?.metadata.routingPolicy,
     ).toMatchObject({
       emptyResultBehavior: expect.stringContaining(
         "do not substitute meetings",
@@ -424,7 +452,9 @@ describe("global AI assistant tool registry", () => {
         (definition) => definition.name === "getAcumaticaProjectBudget",
       )?.metadata.routingPolicy,
     ).toMatchObject({
-      emptyResultBehavior: expect.stringContaining("do not invent financial totals"),
+      emptyResultBehavior: expect.stringContaining(
+        "do not invent financial totals",
+      ),
       regressionPrompts: expect.arrayContaining([
         "pull current AR aging from Acumatica",
       ]),
@@ -695,7 +725,9 @@ describe("global AI assistant tool registry", () => {
       topic: "OAC",
       maxResults: 10,
     });
-    expect(getMeetingDetailsInputSchema.parse({ meetingTitle: "Westfield OAC" })).toEqual({
+    expect(
+      getMeetingDetailsInputSchema.parse({ meetingTitle: "Westfield OAC" }),
+    ).toEqual({
       meetingTitle: "Westfield OAC",
     });
     expect(getMeetingsByDateInputSchema.parse({})).toEqual({
@@ -719,16 +751,20 @@ describe("global AI assistant tool registry", () => {
       category: "any",
       limit: 15,
     });
-    expect(searchDocumentsInputSchema.parse({ query: "fire ratings" })).toEqual({
-      query: "fire ratings",
-      maxResults: 10,
-    });
+    expect(searchDocumentsInputSchema.parse({ query: "fire ratings" })).toEqual(
+      {
+        query: "fire ratings",
+        maxResults: 10,
+      },
+    );
     expect(getAPAgingReportInputSchema.parse({})).toEqual({});
     expect(getARAgingReportInputSchema.parse({})).toEqual({});
     expect(getCashPositionReportInputSchema.parse({})).toEqual({
       windowDays: 90,
     });
-    expect(getVendorSpendReportInputSchema.parse({ vendorId: "PROOUT" })).toEqual({
+    expect(
+      getVendorSpendReportInputSchema.parse({ vendorId: "PROOUT" }),
+    ).toEqual({
       vendorId: "PROOUT",
     });
     expect(getRecentBillsInputSchema.parse({})).toEqual({

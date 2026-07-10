@@ -2,15 +2,19 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Download, Edit, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import { Download, Edit, Eye, ExternalLink, Loader2, Mail, Plus, RefreshCw, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   ContentSectionStack,
   DetailPanel,
   SectionRuleHeading,
 } from "@/components/layout";
+import { ErrorState } from "@/components/ds/error-state";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { DetailActions } from "@/components/ds/DetailActions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Markdown } from "@/components/misc/markdown";
 import { AiFeedbackControl } from "@/components/ai/ai-feedback-control";
 import { Button } from "@/components/ui/button";
@@ -19,7 +23,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { apiFetch } from "@/lib/api-client";
+import { downloadPdf } from "@/hooks/use-pdf-export";
+import {
+  PROGRESS_REPORT_LOADING_STATES,
+  PROGRESS_REPORT_LOADING_STEP_DURATION,
+} from "@/lib/progress-reports/loading-states";
 import {
   useProgressReport,
   useUpdateProgressReport,
@@ -248,6 +258,10 @@ export function ProgressReportEditor({
   const [isSending, setIsSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [reportAudience, setReportAudience] = useState<"client" | "internal">("client");
+  const [reportLength, setReportLength] = useState<"detailed" | "brief">("detailed");
 
   useProjectTitle(draft?.title ?? "Progress Report");
 
@@ -394,6 +408,36 @@ export function ProgressReportEditor({
     });
   }
 
+  async function handleRefreshFromDeepRead() {
+    if (!draft) return;
+    setIsRefreshing(true);
+    try {
+      const result = await apiFetch<AiGeneratedSections>(
+        `/api/projects/${projectId}/progress-reports/${reportId}/refresh-from-deep-read`,
+        { method: "POST" },
+      );
+      if (result) {
+        setDraft((current) =>
+          current
+            ? {
+                ...current,
+                past_week_highlights: result.past_week_highlights,
+                upcoming_week_activities: result.upcoming_week_activities,
+                open_items: result.open_items,
+              }
+            : current,
+        );
+        toast.success("Pulled the latest daily deep read — review and save when ready");
+      }
+    } catch (error) {
+      toast.error("Refresh failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   async function handleAiGenerate() {
     if (!draft) return;
     setIsGenerating(true);
@@ -485,6 +529,16 @@ export function ProgressReportEditor({
     }
   }
 
+  if (reportQuery.isError) {
+    return (
+      <ErrorState
+        title="Could not load progress report"
+        error={reportQuery.error}
+        onRetry={() => void reportQuery.refetch()}
+      />
+    );
+  }
+
   // ── Loading ──
   if (reportQuery.isLoading || !draft || !reportQuery.data) {
     return (
@@ -502,11 +556,26 @@ export function ProgressReportEditor({
   );
 
   const weekRange = `${formatProgressReportDate(draft.week_start)} – ${formatProgressReportDate(draft.week_end)}`;
+  const viewQuery = `audience=${reportAudience}&length=${reportLength}`;
+  const previewSrc = `/api/projects/${projectId}/progress-reports/${reportId}/pdf?format=html&${viewQuery}`;
+  const handleDownloadPdf = () => {
+    void downloadPdf({
+      endpoint: `/api/projects/${projectId}/progress-reports/${reportId}/pdf?${viewQuery}`,
+      filename: `${draft.title || "progress-report"} (${reportAudience}, ${reportLength})`,
+      errorMessage: "Progress report PDF download failed. Try again.",
+    });
+  };
 
   // ── Edit mode ──
   if (isEditing) {
     return (
       <div className="space-y-8">
+        <MultiStepLoader
+          loadingStates={PROGRESS_REPORT_LOADING_STATES}
+          loading={isGenerating}
+          duration={PROGRESS_REPORT_LOADING_STEP_DURATION}
+          loop={false}
+        />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-foreground">{draft.title}</p>
@@ -515,16 +584,29 @@ export function ProgressReportEditor({
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
+              onClick={() => void handleRefreshFromDeepRead()}
+              disabled={isRefreshing || isGenerating || updateMutation.isPending}
+            >
+              {isRefreshing ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1.5 h-4 w-4" />
+              )}
+              {isRefreshing ? "Refreshing…" : "Refresh from deep read"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => void handleAiGenerate()}
-              disabled={isGenerating || updateMutation.isPending}
+              disabled={isGenerating || isRefreshing || updateMutation.isPending}
+              title="Premium: re-write the sections with AI (gpt-5.5). Slower and costs more; use only if you want a different narrative than the deep read."
             >
               {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="mr-1.5 h-4 w-4" />
               )}
-              {isGenerating ? "Generating…" : "AI Generate"}
+              {isGenerating ? "Rewriting…" : "AI rewrite"}
             </Button>
             <Button
               size="sm"
@@ -651,7 +733,7 @@ export function ProgressReportEditor({
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
+          <section className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
             <div className="space-y-8">
               <div className="space-y-2">
                 <Label htmlFor="highlights">Past week&apos;s highlights</Label>
@@ -964,31 +1046,74 @@ export function ProgressReportEditor({
   // ── View mode ──
   return (
     <ContentSectionStack>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2.5">
           <p className="text-sm font-medium text-foreground">{draft.title}</p>
           <p className="text-xs text-muted-foreground">{weekRange}</p>
         </div>
         <div className="flex items-center gap-2">
-          <StatusBadge status={draft.status} />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsEditing(true)}
-          >
+          <Button size="sm" onClick={() => setIsEditing(true)}>
             <Edit className="mr-1.5 h-4 w-4" />
-            Edit
+            Edit Progress Report
           </Button>
-          <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
-            <Button variant="outline" size="sm">
-              <Download className="mr-1.5 h-4 w-4" />
-              Download PDF
-            </Button>
-          </a>
+          <DetailActions
+            extraActions={[
+              {
+                label: "Preview Report",
+                icon: <Eye className="h-4 w-4" />,
+                onClick: () => setIsPreviewOpen(true),
+              },
+              {
+                label: "Download PDF",
+                icon: <Download className="h-4 w-4" />,
+                onClick: handleDownloadPdf,
+              },
+            ]}
+          />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent size="fullscreen" className="flex flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
+            <DialogTitle className="text-sm font-medium">Report preview</DialogTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <ToggleGroup
+                type="single"
+                size="sm"
+                value={reportAudience}
+                onValueChange={(v) => v && setReportAudience(v as "client" | "internal")}
+              >
+                <ToggleGroupItem value="client">Client</ToggleGroupItem>
+                <ToggleGroupItem value="internal">Internal</ToggleGroupItem>
+              </ToggleGroup>
+              <ToggleGroup
+                type="single"
+                size="sm"
+                value={reportLength}
+                onValueChange={(v) => v && setReportLength(v as "detailed" | "brief")}
+              >
+                <ToggleGroupItem value="detailed">Detailed</ToggleGroupItem>
+                <ToggleGroupItem value="brief">Brief</ToggleGroupItem>
+              </ToggleGroup>
+              <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
+                <Download className="mr-1.5 h-4 w-4" />
+                Download this version
+              </Button>
+            </div>
+          </DialogHeader>
+          {isPreviewOpen && (
+            <iframe
+              key={viewQuery}
+              title="Progress report preview"
+              src={previewSrc}
+              className="min-h-0 flex-1 bg-background"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
         <div className="space-y-0">
           <DetailPanel className="space-y-8">
             <ReportMarkdownSection
@@ -1119,35 +1244,37 @@ export function ProgressReportEditor({
                   <SideRailEmpty>No recipients saved.</SideRailEmpty>
                 )}
               </div>
+            </div>
+          </SideRailSection>
 
+          <SideRailSection title="Project Team">
+            {draft.contacts.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-xs text-muted-foreground">Project team</p>
-                {draft.contacts.length > 0 ? (
-                  <div className="divide-y divide-border/60">
-                    {draft.contacts.map((contact, index) => (
-                      <div key={`${contact.email}-${index}`} className="space-y-0.5 py-3 first:pt-0 last:pb-0">
-                        {contact.role ? (
-                          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                            {contact.role}
-                          </div>
-                        ) : null}
+                {draft.contacts.map((contact, index) => (
+                  <SideRailRow
+                    key={`${contact.email}-${index}`}
+                    label={contact.role || "Project team"}
+                    value={
+                      <div className="space-y-0.5">
                         <div className="text-sm font-medium text-foreground">
                           {contact.name || "Unnamed contact"}
                         </div>
                         {contact.email ? (
-                          <div className="break-words text-xs text-muted-foreground">{contact.email}</div>
+                          <div className="break-words text-xs text-muted-foreground">
+                            {contact.email}
+                          </div>
                         ) : null}
                         {contact.phone ? (
                           <div className="text-xs text-muted-foreground">{contact.phone}</div>
                         ) : null}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <SideRailEmpty>No project team contacts added.</SideRailEmpty>
-                )}
+                    }
+                  />
+                ))}
               </div>
-            </div>
+            ) : (
+              <SideRailEmpty>No project team contacts added.</SideRailEmpty>
+            )}
           </SideRailSection>
 
           <SideRailSection title="Source Context">

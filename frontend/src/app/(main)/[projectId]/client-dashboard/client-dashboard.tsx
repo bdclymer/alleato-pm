@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/ds";
+import { PageTabs } from "@/components/layout";
 import {
   Card,
   CardContent,
@@ -24,7 +25,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -103,12 +103,12 @@ export default function ClientDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100/50">
-      <div className="container mx-auto p-6 space-y-8">
+      <div className="container mx-auto p-4 space-y-8 sm:p-6">
         {/* Header */}
-        <div className="bg-card rounded-xl shadow-sm border p-8">
-          <div className="flex items-start justify-between">
+        <div className="bg-card rounded-xl shadow-sm border p-4 sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-foreground">
+              <h1 className="text-2xl font-bold text-foreground sm:text-4xl">
                 {project.name}
               </h1>
               <p className="text-lg text-muted-foreground mt-2">
@@ -227,19 +227,33 @@ export default function ClientDashboard({
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <TabsList variant="line">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
+          <PageTabs
+            tabs={[
+              {
+                label: "Overview",
+                href: "overview",
+                isActive: activeTab === "overview",
+              },
+              {
+                label: "Schedule",
+                href: "schedule",
+                isActive: activeTab === "schedule",
+              },
+              {
+                label: "Documents",
+                href: "documents",
+                isActive: activeTab === "documents",
+              },
+            ]}
+            variant="inline"
+            className="mb-0"
+            onTabClick={(href) => setActiveTab(href as typeof activeTab)}
+          />
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
+          {activeTab === "overview" ? (
+            <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Contract Details */}
               {primeContract && (
@@ -411,16 +425,18 @@ export default function ClientDashboard({
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+            </div>
+          ) : null}
 
           {/* Schedule Tab */}
-          <TabsContent value="schedule" className="space-y-6">
+          {activeTab === "schedule" ? (
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Schedule</CardTitle>
                 <CardDescription>Key dates and milestones</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 {milestones.length > 0 ? (
                   <Table>
                     <TableHeader>
@@ -477,10 +493,12 @@ export default function ClientDashboard({
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+            </div>
+          ) : null}
 
           {/* Documents Tab */}
-          <TabsContent value="documents" className="space-y-6">
+          {activeTab === "documents" ? (
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Project Documents</CardTitle>
@@ -488,7 +506,7 @@ export default function ClientDashboard({
                   Important project files and documents
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 {documents.length > 0 ? (
                   <Table>
                     <TableHeader>
@@ -552,8 +570,9 @@ export default function ClientDashboard({
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -847,7 +847,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         _clear_ingestion_error("done")
         record_source_processing_status(
             source_context,
-            status="failed_permanent",
+            status=INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
             error_code="interview_title_excluded",
             error_message=reason,
         )
@@ -886,16 +886,17 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
                 error_message="Graph document has no RAG content, storage text, or downloadable payload.",
             )
             return 0
-        logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
-        _update_app_document_status(supabase_client, metadata_id, "embedded", enabled=has_app_document)
-        rag_client.from_("rag_document_metadata").update(
-            {"embedding_status": "embedded"}
+        logger.warning("[GraphEmbed] Document %s has no content — marking skipped_low_content", metadata_id)
+        rag_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
+        _update_app_document_status(supabase_client, metadata_id, "skipped_low_content", enabled=has_app_document)
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": "skipped"}
         ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
         record_source_processing_status(
             source_context,
-            status="failed_permanent",
-            error_code="graph_content_empty",
+            status=INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
+            error_code="skipped_low_content",
             error_message="Graph source item had no embeddable text content.",
         )
         return 0
@@ -922,7 +923,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         _clear_ingestion_error("embedded")
         record_source_processing_status(
             source_context,
-            status="failed_permanent",
+            status=INTENTIONAL_EMBEDDING_EXCLUSION_STATUS,
             error_code="skipped_low_content",
             error_message=f"Substantive text length {substantive_chars} below minimum {min_chars}.",
         )
@@ -1072,9 +1073,6 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         metadata={"chunk_count": len(rows), "source_type": source_type},
     )
     record_source_processing_status(source_context, status="complete")
-    if has_app_document:
-        _run_source_intelligence_compiler(supabase_client, metadata_id)
-
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
     return len(rows)
 

@@ -10,7 +10,7 @@ import {
 import { createToolContext, type ToolContext } from "./tool-context";
 import { ingestSubmittalReviewCorrectionLearning } from "@/lib/ai/services/agent-learning-service";
 
-type AnyRow = Record<string, unknown>;
+import { type AnyRow } from "./types";
 
 type CreateDocumentIntelligenceToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;

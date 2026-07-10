@@ -60,7 +60,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "project-selector-trigger w-56",
+            "project-selector-trigger w-40 lg:w-48 xl:w-56",
             headerSelectTriggerClassName,
           )}
         >
@@ -92,7 +92,8 @@ export function ProjectSelector({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="border border-border p-0 shadow-sm"
+        collisionPadding={{ left: 60, right: 8 }}
+        className="z-[110] border border-border p-0 shadow-sm"
         style={{ width: "min(340px, calc(100vw - 1rem))" }}
       >
         {/* Panel header */}

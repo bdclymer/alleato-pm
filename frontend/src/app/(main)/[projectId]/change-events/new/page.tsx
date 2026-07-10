@@ -8,8 +8,7 @@ import { Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
-import { FormServerError } from "@/components/forms/FormServerError";
-import { PageShell } from "@/components/layout";
+import { FormContainer, PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 
 export default function NewChangeEventPage() {
@@ -18,11 +17,9 @@ export default function NewChangeEventPage() {
   const projectId = parseInt(params.projectId as string, 10);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
-    setSaveError(null);
     try {
       // The form emits display strings (e.g. "Open", "Pending Approval", "Design Change").
       // The server-side validation.ts uses createNormalizedEnum which accepts these directly.
@@ -191,11 +188,13 @@ export default function NewChangeEventPage() {
       toast.success("Change event created successfully");
       router.push(`/${projectId}/change-events/${newEvent.id}`);
     } catch (error) {
+      // Re-throw so ChangeEventForm surfaces the message via FormServerError
+      // (errors.root); also toast for immediate feedback.
       const message = error instanceof Error
         ? error.message
         : "Failed to create change event";
-      setSaveError(message);
       toast.error(message);
+      throw error instanceof Error ? error : new Error(message);
     } finally {
       setIsSaving(false);
     }
@@ -235,21 +234,22 @@ export default function NewChangeEventPage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="form"
       title="Create Change Event"
       description="Document a potential change to project scope, schedule, or budget."
       onBack={handleCancel}
       actions={headerActions}
     >
-      {saveError ? <FormServerError message={saveError} /> : null}
-      <ChangeEventForm
-        initialData={initialData}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-        isSubmitting={isSaving}
-        mode="create"
-        projectId={projectId}
-      />
+      <FormContainer maxWidth="xl" withCard={false}>
+        <ChangeEventForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          isSubmitting={isSaving}
+          mode="create"
+          projectId={projectId}
+        />
+      </FormContainer>
     </PageShell>
   );
 }

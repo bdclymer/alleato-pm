@@ -1,0 +1,236 @@
+{
+  "generatedAt": "2026-07-09T05:07:52.083Z",
+  "jpProjectId": 3620,
+  "appProjectId": 25108,
+  "mode": "DRY-RUN — READ ONLY — NO WRITES",
+  "counts": {
+    "changeRequests": 8,
+    "adopt": 0,
+    "create": 8,
+    "flag": 0,
+    "existingChangeEvents": 0,
+    "appOnly": 0,
+    "jpCcos": 9,
+    "ccoWithExecutedTwin": 0,
+    "jpPccos": 3,
+    "pccoWithExecutedTwin": 3
+  },
+  "decisions": [
+    {
+      "jpChangeRequestId": 1514,
+      "number": "CR-3620-0004",
+      "title": "Deduct for Removal of Thickened Slab at Mezzanine Wall",
+      "statusId": 8,
+      "cost": -1500,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 4, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1633,
+      "number": "CR-3620-0005",
+      "title": "Hardware for Security Office Door",
+      "statusId": 10,
+      "cost": 205,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 0,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 5, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1414,
+      "number": "CR-3620-0002",
+      "title": "Rework Footers",
+      "statusId": 8,
+      "cost": 4660,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 2, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1401,
+      "number": "CR-3620-0001",
+      "title": "GPR for Footing Excavation",
+      "statusId": 8,
+      "cost": 1000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 1, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1509,
+      "number": "CR-3620-0003",
+      "title": "Demo & Repour Base Plate Grout",
+      "statusId": 8,
+      "cost": 2781.91,
+      "lineItems": 3,
+      "fork": {
+        "prime": 0,
+        "commitment": 2,
+        "unlinked": 1
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 3, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1944,
+      "number": "CR-3620-0007",
+      "title": "CSC Donating Material",
+      "statusId": 8,
+      "cost": -6000,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 7, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1960,
+      "number": "CR-3620-0008",
+      "title": "Add Carpet in Security Office",
+      "statusId": 8,
+      "cost": 1160,
+      "lineItems": 1,
+      "fork": {
+        "prime": 1,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 8, title, or amount",
+      "matchedExisting": null
+    },
+    {
+      "jpChangeRequestId": 1970,
+      "number": "CR-3620-0009",
+      "title": "Install risers on stairs, build safety rail under staircase",
+      "statusId": 8,
+      "cost": 1305,
+      "lineItems": 1,
+      "fork": {
+        "prime": 0,
+        "commitment": 1,
+        "unlinked": 0
+      },
+      "decision": "CREATE",
+      "reason": "no existing change event matches seq 9, title, or amount",
+      "matchedExisting": null
+    }
+  ],
+  "appOnly": [],
+  "executedCoTwins": {
+    "commitment": [
+      {
+        "number": "CCO-3620-0007",
+        "commitmentNumber": "SC-3620-0007",
+        "amount": 970,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0002",
+        "commitmentNumber": "SC-3620-0005",
+        "amount": 4660,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0005",
+        "commitmentNumber": "SC-3620-0005",
+        "amount": -1500,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0003",
+        "commitmentNumber": "SC-3620-0005",
+        "amount": 581.91,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0001",
+        "commitmentNumber": "SC-3620-0005",
+        "amount": 1000,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0004",
+        "commitmentNumber": "SC-3620-0005",
+        "amount": 1100,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0008",
+        "commitmentNumber": "SC-3620-0008",
+        "amount": -6000,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0009",
+        "commitmentNumber": "SC-3620-0006",
+        "amount": 1160,
+        "twin": null
+      },
+      {
+        "number": "CCO-3620-0010",
+        "commitmentNumber": "SC-3620-0002",
+        "amount": 1305,
+        "twin": null
+      }
+    ],
+    "prime": [
+      {
+        "number": "PCCO-3620-0003",
+        "amount": 1160,
+        "twin": {
+          "id": 1732,
+          "number": "001827",
+          "amount": 1160
+        }
+      },
+      {
+        "number": "PCCO-3620-0002",
+        "amount": -6000,
+        "twin": {
+          "id": 1731,
+          "number": "001823",
+          "amount": -6000
+        }
+      },
+      {
+        "number": "PCCO-3620-0001",
+        "amount": 28150,
+        "twin": {
+          "id": 91,
+          "number": "001710",
+          "amount": 28150
+        }
+      }
+    ]
+  }
+}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { CircleCheck, Download, RotateCcw } from "lucide-react";
 
 import {
   Button,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ds";
 import { useUpdateRfi, useDeleteRfi } from "@/hooks/use-rfis";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { RfiEditValues } from "@/lib/schemas/rfi-schema";
 import type { RFI } from "@/types/database-extensions";
 
@@ -41,11 +43,17 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         data: { status: newStatus } as Record<string, unknown> & RfiEditValues,
       });
       router.refresh();
-    } catch {
-      // Genuine failures are surfaced by useUpdateRfi's onError (handleFormError).
-      // Caught here so a rejected mutation doesn't become an unhandled rejection.
-      // Note: a close-notification email failure is NOT an error — the route now
-      // returns 200 with a non-blocking _emailWarning instead of a 502.
+    } catch (error) {
+      // The user-facing message is surfaced by useUpdateRfi's onError
+      // (handleFormError); this catch stops a rejected mutation from becoming an
+      // unhandled rejection and records the failure for observability.
+      reportNonCriticalFailure({
+        area: "rfi-header-actions",
+        operation: "update-rfi-status",
+        error,
+        userVisibleFallback: "The RFI status could not be updated.",
+        metadata: { rfiId: rfi.id, newStatus },
+      });
     }
   };
 
@@ -63,19 +71,33 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
           method: "POST",
           body: JSON.stringify({
             title: rfi.subject,
+            type: "TBD",
+            scope: "TBD",
             origin: "rfis",
-            origin_id: rfi.id,
+            originId: rfi.id,
             status: "Open",
           }),
         },
       );
       const newId = result?.data?.id ?? result?.id;
-      toast.success("Change event created from RFI");
-      if (newId) {
-        router.push(`/${projectId}/change-events/${newId}`);
+      if (!newId) {
+        throw new Error("Change event creation succeeded without returning an id.");
       }
+      toast.success("Change event created from RFI");
+      router.push(`/${projectId}/change-events/${newId}`);
     } catch (err) {
-      toast.error("Failed to create change event");
+      reportNonCriticalFailure({
+        area: "rfi-header-actions",
+        operation: "create-change-event",
+        error: err,
+        userVisibleFallback: "The change event could not be created from this RFI.",
+        metadata: { projectId, rfiId: rfi.id },
+      });
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "The change event could not be created from this RFI.";
+      toast.error(message);
     } finally {
       setIsCreatingCE(false);
     }
@@ -84,19 +106,23 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
   // Status transition shown as an overflow-menu action rather than a standalone button.
   const statusAction =
     rfi.status === "draft"
-      ? { label: "Open RFI", next: "open" }
+      ? { label: "Open RFI", next: "open", icon: <CircleCheck className="h-4 w-4" /> }
       : rfi.status === "open"
-        ? { label: "Close RFI", next: "closed" }
+        ? { label: "Close RFI", next: "closed", icon: <CircleCheck className="h-4 w-4" /> }
         : rfi.status === "closed" || rfi.status === "closed-draft"
-          ? { label: "Reopen RFI", next: rfi.status === "closed-draft" ? "draft" : "open" }
+          ? {
+              label: "Reopen RFI",
+              next: rfi.status === "closed-draft" ? "draft" : "open",
+              icon: <RotateCcw className="h-4 w-4" />,
+            }
           : null;
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button
           size="sm"
-          variant="outline"
+          className="min-h-11 flex-1 justify-center sm:min-h-9 sm:flex-none"
           onClick={() => void handleCreateChangeEvent()}
           disabled={isCreatingCE}
         >
@@ -106,16 +132,27 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         <DetailActions
           onEdit={() => router.push(`${pathname}?mode=edit`)}
           onDelete={() => setDeleteOpen(true)}
-          extraActions={
-            statusAction
+          extraActions={[
+            ...(statusAction
               ? [
                   {
                     label: statusAction.label,
+                    icon: statusAction.icon,
                     onClick: () => void handleStatusChange(statusAction.next),
                   },
                 ]
-              : undefined
-          }
+              : []),
+            {
+              label: "Export PDF",
+              icon: <Download className="h-4 w-4" />,
+              onClick: () =>
+                window.open(
+                  `/api/projects/${projectId}/rfis/${rfi.id}/pdf`,
+                  "_blank",
+                  "noopener,noreferrer",
+                ),
+            },
+          ]}
         />
       </div>
 

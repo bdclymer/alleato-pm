@@ -115,6 +115,7 @@ export function buildTransmittalTableColumns(
         <span className="font-medium">{item.number || "-"}</span>
       ),
       sortValue: (item) => item.number,
+      csvValue: (item) => item.number,
     },
     {
       ...transmittalColumns[1],
@@ -124,6 +125,7 @@ export function buildTransmittalTableColumns(
         </span>
       ),
       sortValue: (item) => item.subject,
+      csvValue: (item) => item.subject,
       // Subject is the row's primary label / link to detail — never inline-editable.
     },
     {
@@ -134,6 +136,7 @@ export function buildTransmittalTableColumns(
         </Badge>
       ),
       sortValue: (item) => item.status,
+      csvValue: (item) => item.status,
       editable,
       editType: "select",
       editValue: (item) => item.status ?? "",
@@ -147,6 +150,7 @@ export function buildTransmittalTableColumns(
       ...transmittalColumns[3],
       render: (item) => <span>{item.to_company || "-"}</span>,
       sortValue: (item) => item.to_company ?? "",
+      csvValue: (item) => item.to_company ?? "",
       editable,
       editType: "text",
       editValue: (item) => item.to_company ?? "",
@@ -159,6 +163,7 @@ export function buildTransmittalTableColumns(
       ...transmittalColumns[4],
       render: (item) => <span>{item.from_company || "-"}</span>,
       sortValue: (item) => item.from_company ?? "",
+      csvValue: (item) => item.from_company ?? "",
       editable,
       editType: "text",
       editValue: (item) => item.from_company ?? "",
@@ -171,6 +176,7 @@ export function buildTransmittalTableColumns(
       ...transmittalColumns[5],
       render: (item) => <span>{item.delivery_method || "-"}</span>,
       sortValue: (item) => item.delivery_method ?? "",
+      csvValue: (item) => item.delivery_method ?? "",
       editable,
       editType: "select",
       editValue: (item) => item.delivery_method ?? "",
@@ -185,6 +191,7 @@ export function buildTransmittalTableColumns(
       render: (item) => <span>{formatDate(item.sent_date)}</span>,
       sortValue: (item) =>
         item.sent_date ? new Date(item.sent_date).getTime() : 0,
+      csvValue: (item) => item.sent_date ?? "",
       editable,
       editType: "date",
       editValue: (item) => (item.sent_date ? item.sent_date.slice(0, 10) : ""),
@@ -198,6 +205,7 @@ export function buildTransmittalTableColumns(
       render: (item) => <span>{formatDate(item.due_date)}</span>,
       sortValue: (item) =>
         item.due_date ? new Date(item.due_date).getTime() : 0,
+      csvValue: (item) => item.due_date ?? "",
       editable,
       editType: "date",
       editValue: (item) => (item.due_date ? item.due_date.slice(0, 10) : ""),

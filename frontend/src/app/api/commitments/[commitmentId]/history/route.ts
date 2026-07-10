@@ -1,5 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -14,6 +16,17 @@ export const GET = withApiGuardrails(
   "commitments/[commitmentId]/history#GET",
   async ({ params }) => {
     const { commitmentId } = (await params) as { commitmentId: string };
+
+    // Auth first — outside the try below, so the 401 isn't swallowed into a 500
+    // by the handler's own catch block.
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "commitments/[commitmentId]/history#GET",
+        message: "Authentication required.",
+      });
+    }
 
     if (!commitmentId) {
       return NextResponse.json(

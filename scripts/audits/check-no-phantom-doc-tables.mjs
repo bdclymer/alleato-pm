@@ -45,8 +45,18 @@ const MD_EXT = /\.mdx?$/;
 // docs/archive/) and docs/ops/tasks/ + docs/ops/evidence/ are process/run logs,
 // not authoritative DB-fact docs — they legitimately quote shell commands,
 // usernames, FK constraint names, and lifecycle values that trip false positives.
+// docs/patterns/ is the retrospective error-pattern archive (restored 2026-07-02
+// after the docs purge): its files quote example snippets (`.from("table")`,
+// `.from("xxx")`), trigger-word lists, and commit hashes that are never live
+// table assertions — same false-positive category as docs/archive/.
+// docs/design/entity-relationships/ is a Phase-2 schema PROPOSAL folder — it
+// discusses link tables that do not exist yet by design (that's the point of
+// the proposal). docs/architecture/_audit/ holds one-time investigation output
+// (same category as a report, not a maintained DB-fact doc). docs/architecture/memory/
+// holds unrelated personal/voice-profile content that has nothing to do with
+// the database schema.
 const IGNORE_PATH_RE =
-  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
+  /(^|\/)_bmad-output\/|(^|\/)docs\/archive\/|(^|\/)docs\/migrate\/|(^|\/)docs\/patterns\/|(^|\/)docs\/ops\/(tasks|evidence)\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$|(^|\/)docs\/design\/entity-relationships\/|(^|\/)docs\/architecture\/_audit\/|(^|\/)docs\/architecture\/memory\//;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");
@@ -71,6 +81,7 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "rag_pipeline_state",
   "source_intelligence_jobs",
   "source_processing_jobs",
+  "source_signal_candidates",
   "outlook_email_intake",
   "source_syntheses",
   "project_daily_deltas",
@@ -80,6 +91,8 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "source_sync_health_snapshots",
   // App-DB tables referenced in docs but missing from types (may be views or AI-DB)
   "ai_insights",
+  "insights",
+  "source_documents",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
 
@@ -164,6 +177,29 @@ const NON_TABLE_WORDS = new Set([
   "experimental_telemetry",
   // Column names (JSON fields), not table names
   "risks",
+  "decisions",
+  "source",
+  "source_type",
+  "project_name",
+  "is_admin",
+  "external_key",
+  "document_type",
+  "applies_to",
+  // TanStack column-config field referenced in docs/design/table-system.md
+  "meta",
+  // event-handler variable in code snippets (`e.target.value`), never a table
+  "e",
+  // Supabase project ref (PM APP) — id, not a table (RAG ref already listed above)
+  "lgveqfnpkxvzbnnwuled",
+  // AI assistant tool/RPC/widget names, not tables (docs/architecture/AI-ASSISTANT-*.md)
+  "app_help",
+  "lookup_app_route",
+  "task_summary",
+  "source_evidence",
+  // Video artifact filename in docs/architecture/DOCS-OPERATING-MODEL.md
+  "session",
+  // UI row-height token name in docs/design/tokens.md ("Default for all [UI] tables")
+  "standard",
 ]);
 
 function run(cmd) {

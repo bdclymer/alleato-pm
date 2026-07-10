@@ -209,13 +209,20 @@ function formatDocumentDate(item: DocumentMetadataItem): string | null {
   });
 }
 
-function documentDateSortValue(item: DocumentMetadataItem) {
+function getDocumentChronologyTime(item: DocumentMetadataItem) {
   if (isTeamsDailyDocument(item)) {
     const sourceDay = sourceDayFromMetadata(item);
     const localDate = sourceDay ? displayDateParts(sourceDay) : null;
     if (localDate) return localDate.getTime();
   }
-  return item.date ? new Date(item.date).getTime() : 0;
+
+  if (item.date) return new Date(item.date).getTime();
+  if (item.created_at) return new Date(item.created_at).getTime();
+  return 0;
+}
+
+function documentDateSortValue(item: DocumentMetadataItem) {
+  return getDocumentChronologyTime(item);
 }
 
 function DocumentDateValue({ item }: { item: DocumentMetadataItem }) {
@@ -276,8 +283,11 @@ function parseTags(raw: string | null | undefined): string[] {
     try {
       const parsed = JSON.parse(arrayMatch[0]);
       if (Array.isArray(parsed)) tokens.push(...parsed.map((t) => String(t)));
-    } catch {
-      // fall through to delimiter splitting on the bracket contents
+    } catch (error) {
+      console.warn("Failed to parse document metadata tags as JSON array.", {
+        error,
+        raw,
+      });
     }
     working = working.replace(arrayMatch[0], "");
   }

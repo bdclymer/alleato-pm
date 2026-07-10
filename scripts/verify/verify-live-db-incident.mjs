@@ -25,7 +25,6 @@ const REQUIRED_WEB_FLAGS = new Map([
   ["GRAPH_WEBHOOK_DRAIN_ENABLED", "false"],
   ["INTELLIGENCE_COMPILER_ENABLED", "false"],
   ["SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false"],
-  ["FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false"],
   ["TASK_EXTRACTION_ENABLED", "false"],
 ]);
 
@@ -49,19 +48,77 @@ const SAFE_RESUMED_CRON_ENV = new Map();
 const SAFE_RESUMED_CRONS = new Set();
 const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
 
-function loadDotEnv() {
-  if (!fs.existsSync(".env")) return;
-  const lines = fs.readFileSync(".env", "utf8").split(/\r?\n/);
+function parseDotEnvFile(path) {
+  if (!fs.existsSync(path)) return new Map();
+  const values = new Map();
+  const lines = fs.readFileSync(path, "utf8").split(/\r?\n/);
   for (const line of lines) {
     if (!line || line.trim().startsWith("#")) continue;
     const index = line.indexOf("=");
     if (index === -1) continue;
     const key = line.slice(0, index).trim();
     const value = line.slice(index + 1).trim().replace(/^['"]|['"]$/g, "");
-    if (key && process.env[key] === undefined) {
+    if (key) values.set(key, value);
+  }
+  return values;
+}
+
+function loadDotEnv(path = ".env") {
+  const values = parseDotEnvFile(path);
+  for (const [key, value] of values.entries()) {
+    if (process.env[key] === undefined) {
       process.env[key] = value;
     }
   }
+}
+
+async function resolveSupabaseAccessToken() {
+  const candidates = [];
+  const seen = new Set();
+
+  function add(label, value) {
+    const token = String(value || "").trim();
+    if (!token || seen.has(token)) return;
+    seen.add(token);
+    candidates.push({ label, token });
+  }
+
+  add("process.env:SUPABASE_ACCESS_TOKEN", process.env.SUPABASE_ACCESS_TOKEN);
+  add("process.env:SUPABASE_MANAGEMENT_API_TOKEN", process.env.SUPABASE_MANAGEMENT_API_TOKEN);
+
+  for (const path of [".env", "frontend/.env.local"]) {
+    const values = parseDotEnvFile(path);
+    add(`${path}:SUPABASE_ACCESS_TOKEN`, values.get("SUPABASE_ACCESS_TOKEN"));
+    add(`${path}:SUPABASE_MANAGEMENT_API_TOKEN`, values.get("SUPABASE_MANAGEMENT_API_TOKEN"));
+  }
+
+  if (candidates.length === 0) {
+    throw new Error("Missing required env var SUPABASE_ACCESS_TOKEN or SUPABASE_MANAGEMENT_API_TOKEN.");
+  }
+
+  const failures = [];
+  for (const candidate of candidates) {
+    const response = await fetch(SUPABASE_HEALTH_URL, {
+      headers: { Authorization: `Bearer ${candidate.token}` },
+    });
+    if (response.ok) {
+      if (candidate.label !== "process.env:SUPABASE_ACCESS_TOKEN" && candidate.label !== ".env:SUPABASE_ACCESS_TOKEN") {
+        console.warn(`Using valid Supabase Management API token from ${candidate.label}; earlier candidates were unavailable or invalid.`);
+      }
+      return candidate.token;
+    }
+    const text = await response.text();
+    failures.push(`${candidate.label}: HTTP ${response.status} ${text.slice(0, 120)}`);
+  }
+
+  throw new Error(
+    [
+      "No valid Supabase Management API token found for live DB incident verification.",
+      "Checked SUPABASE_ACCESS_TOKEN and SUPABASE_MANAGEMENT_API_TOKEN from process env, .env, and frontend/.env.local.",
+      "Failures:",
+      ...failures.map((failure) => `- ${failure}`),
+    ].join("\n"),
+  );
 }
 
 function requireEnv(key) {
@@ -291,7 +348,7 @@ loadDotEnv();
 
 const windowMinutes = Number(process.argv.find((arg) => arg.startsWith("--minutes="))?.split("=")[1] || DEFAULT_WINDOW_MINUTES);
 const renderToken = requireEnv("RENDER_API_KEY");
-const supabaseToken = requireEnv("SUPABASE_ACCESS_TOKEN");
+const supabaseToken = await resolveSupabaseAccessToken();
 const databaseUrl = requireEnv("DATABASE_URL");
 
 const failures = [];

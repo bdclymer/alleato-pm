@@ -1,7 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import Link from "next/link";
-import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
 
@@ -20,6 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  CellLink,
+} from "@/components/tables/unified";
 import type {
   ColumnConfig,
   DetailFieldConfig,
@@ -56,6 +58,7 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "erp_status", label: "ERP Status", defaultVisible: false },
   { id: "ssov_status", label: "SOV Status", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
+  { id: "created_by_name", label: "Created By", defaultVisible: true },
 ];
 
 export const commitmentFilters: FilterConfig[] = [
@@ -257,6 +260,18 @@ function acumaticaCommitmentUrl(
 
 export type CommitmentInlineField = "title" | "description" | "executed";
 
+function hasCommitmentChangeOrders(item: CommitmentListItem): boolean {
+  if (typeof item.change_order_count === "number") {
+    return item.change_order_count > 0;
+  }
+
+  return (
+    item.approved_change_orders !== 0 ||
+    item.pending_change_orders !== 0 ||
+    item.draft_change_orders !== 0
+  );
+}
+
 export function buildCommitmentTableColumns(
   projectId: string,
   expandedIds?: Set<string>,
@@ -281,15 +296,10 @@ export function buildCommitmentTableColumns(
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
-          <Link
-            href={`/${projectId}/commitments/${item.id}`}
-            className="font-medium max-w-32 truncate text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            title={item.number}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <span className="block max-w-32 truncate font-medium" title={item.number}>
             {item.number}
-          </Link>
-          {onToggleExpand && (
+          </span>
+          {onToggleExpand && hasCommitmentChangeOrders(item) && (
             <Button
               type="button"
               onClick={(e) => {
@@ -320,13 +330,10 @@ export function buildCommitmentTableColumns(
     contract_company: {
       render: (item) =>
         item.contract_company?.id && item.contract_company?.name ? (
-          <Link
+          <CellLink
+            value={item.contract_company.name}
             href={`/directory/companies/${item.contract_company.id}`}
-            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {item.contract_company.name}
-          </Link>
+          />
         ) : (
           <span>{item.contract_company?.name ?? "-"}</span>
         ),
@@ -389,7 +396,11 @@ export function buildCommitmentTableColumns(
     },
     title: {
       render: (item) => (
-        <span className="font-medium">{item.title ?? "-"}</span>
+        <CellLink
+          value={item.title ?? "-"}
+          href={`/${projectId}/commitments/${item.id}`}
+          className="block max-w-72 truncate font-medium"
+        />
       ),
       csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
@@ -475,16 +486,12 @@ export function buildCommitmentTableColumns(
       render: (item) => {
         const url = acumaticaCommitmentUrl(item.number, item.type);
         return url ? (
-          <a
+          <CellLink
+            value="View"
             href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary transition-colors"
-            title={`Open ${item.number} in Acumatica`}
-          >
-            View
-          </a>
+            external
+            className="font-medium"
+          />
         ) : (
           <span className="text-muted-foreground">-</span>
         );
@@ -567,6 +574,15 @@ export function buildCommitmentTableColumns(
       sortValue: (item) =>
         item.created_at ? new Date(item.created_at).getTime() : 0,
     },
+    created_by_name: {
+      render: (item) => (
+        <span className="text-muted-foreground">
+          {item.created_by_name ?? "—"}
+        </span>
+      ),
+      csvValue: (item) => item.created_by_name ?? "",
+      sortValue: (item) => item.created_by_name ?? "",
+    },
   };
 
   return commitmentColumns.map((c) => ({ ...col(c.id), ...renderers[c.id] }));
@@ -586,7 +602,7 @@ export function renderCommitmentRowActions(
           className="h-8 w-8"
           aria-label="Row actions"
         >
-          <MoreHorizontal />
+          <MoreVertical />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -607,26 +623,48 @@ export function renderCommitmentCard(
   item: CommitmentListItem,
   onClick: (commitment: CommitmentListItem) => void,
 ): ReactElement {
+  const billedPct = Math.max(0, Math.min(100, Math.round(item.percent_paid)));
+
   return (
     <div
-      className="bg-card rounded-md p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+      className="group flex cursor-pointer flex-col rounded-lg border border-border bg-background shadow-xs transition-all duration-200 hover:-translate-y-px hover:border-foreground/20 hover:shadow-sm"
       onClick={() => onClick(item)}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-mono text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {item.number}
-          </p>
-          <p className="font-medium">{item.title ?? "Untitled Commitment"}</p>
+          </span>
+          <StatusBadge status={statusLabel(item.status)} />
         </div>
-        <StatusBadge status={statusLabel(item.status)} />
+
+        <p className="mt-2.5 line-clamp-2 text-[13px] font-semibold leading-snug text-foreground">
+          {item.title ?? "Untitled Commitment"}
+        </p>
+
+        <p className="mt-1 truncate text-[13px] italic text-muted-foreground/80">
+          {item.contract_company?.name ?? "No company assigned"}
+        </p>
       </div>
-      <p className="text-sm text-muted-foreground">
-        {item.contract_company?.name ?? "-"}
-      </p>
-      <p className="text-sm text-muted-foreground mt-2">
-        Revised: {formatCurrency(item.revised_contract_amount)}
-      </p>
+
+      <div className="flex items-end justify-between rounded-b-lg bg-muted/40 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Contract value
+          </p>
+          <p className="mt-0.5 truncate text-sm font-semibold tabular-nums text-foreground">
+            {formatCurrency(item.revised_contract_amount)}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[11px] font-medium text-muted-foreground">
+            Billed
+          </p>
+          <p className="mt-0.5 text-[13px] font-medium tabular-nums text-foreground">
+            {billedPct}%
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

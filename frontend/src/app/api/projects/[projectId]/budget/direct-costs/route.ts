@@ -37,6 +37,7 @@ interface DirectCostParent {
 
 interface DirectCostWithRelations {
   id: string;
+  direct_cost_id: string;
   budget_code_id: string | null;
   line_total: number | null;
   quantity: number | null;
@@ -151,6 +152,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .select(
         `
         id,
+        direct_cost_id,
         budget_code_id,
         line_total,
         quantity,
@@ -266,6 +268,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           status,
           payments: 0,
           incurredDate: directCost?.date || null,
+          detailHref: `/${projectIdNum}/direct-costs/${cost.direct_cost_id}`,
         };
       },
     );

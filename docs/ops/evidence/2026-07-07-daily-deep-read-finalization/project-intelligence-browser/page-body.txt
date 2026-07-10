@@ -1,0 +1,516 @@
+PROJECT
+Home
+Alleato AI
+Project Directory
+Company Directory
+FINANCIAL
+Estimates
+Budget
+Prime Contracts
+Commitments
+Change Orders
+Change Events
+Direct Costs
+Invoicing
+Project Status Report
+OPERATIONS
+Schedule
+Meetings
+Daily Log
+Punch List
+Project Tasks
+RFIs
+Submittals
+Transmittals
+DOCUMENTS
+Photos
+Drawings
+Specifications
+Documents
+Progress Reports
+COMPANY-WIDE TOOLS
+Alleato AI
+Company
+Company Directory
+User Management
+Meetings
+Tasks
+Documentation
+Estimates
+Prime Contracts
+Change Events
+Potential Change Orders
+Admin Dashboard
+Company
+Exol Morrisville
+Project Intelligence
+Exol Morrisville
+26-116
+Project Intelligence
+Exol Morrisville Project Intelligence
+
+Course of Construction
+
+Last updated Jul 7, 2026, 3:26 AM
+
+Open tasks
+Open assistant
+Status not yet established
+Source coverage: 1 update
+
+Unreimbursed cost exposure is now acute because Exol has explicitly blocked APP-01 pending contract execution.
+
+OPERATING READ
+
+DAILY INTELLIGENCE FAILED SOURCE-QUALITY CHECKS.
+
+Unreimbursed cost exposure is now acute because Exol has explicitly blocked APP-01 pending contract execution.
+
+Alleato has already billed for preconstruction and mobilization-related items, including equipment deposits, electrical gear, and design fees, but owner processing is frozen.
+
+RECOMMENDED NEXT MOVES
+
+Force a contract-close meeting with Exol decision-makers this week limited to the few remaining business terms, with explicit objective of same-day execution or a documented interim authorization to proceed and pay.
+Issue a written scope-baseline memo identifying the latest office revisions, forklift charger details, door revisions, and any Phase 2 permit updates as either included scope or pending owner-directed changes.
+Submit or prepare a formal reservation of rights covering APP-01 costs incurred pre-execution, including mobilization, deposits, gear on site, and design services.
+What changed
+
+Owner-driven office and charger layout revisions are still arriving while Phase 2 permit work is being prepared.
+
+Scope is still moving during active permitting and mobilization, which preserves schedule momentum but increases the chance of late design incorporation, change entitlement disputes, and rework if these revisions are assumed to be in base scope.
+
+Alleato and counsel aligned internally to remove complex cost-plus style language and retain only the simplified change-order cap structure.
+
+This means Alleato's contract position is internally settled and ready to present consistently. The remaining drag is now mainly owner acceptance, not internal confusion.
+
+Alleato has now simplified its final fallback contract position on change orders to a very narrow markup structure of 10% fee plus 1.35% insurance and wants broader subcontractor markup controls deleted.
+
+This sharpens the commercial issue to one clean decision for Exol legal instead of a broader negotiation. It also shows Alleato is trying to close the contract by simplifying language rather than expanding economics, which should reduce drafting friction if Exol is ready to sign.
+
+The payment dispute is no longer implicit; Exol directly rejected processing the Phase 1 pay application until the contract is signed.
+
+This confirms the project is in a paper-before-payment condition. Alleato is carrying preconstruction, mobilization, equipment deposits, electrical gear, and design costs without a clear reimbursement path until execution, which raises working-capital exposure and weakens leverage.
+
+Risks & decisions
+
+CURRENT READ
+
+A submittal approval may not have been correctly logged in Job
+Risk · Fireflies · Jun 22, 2026
+High
+Additional follow-up may be needed with Symbolic if the review
+Risk · Fireflies · Jun 22, 2026
+High
+Approval submission may not have been logged correctly in the
+Risk · Fireflies · Jun 22, 2026
+High
+Attendance gaps due to vacation, late arrival, or missing
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Attendance gaps or late arrivals could delay coordination and
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Attendance may remain limited because of vacation and
+Risk · Fireflies · Jun 22, 2026
+High
+Calendar invite issues could cause missed meetings and reduce
+Risk · Fireflies · Jun 22, 2026
+High
+Continue processing submittals through Job Planner
+Decision · Fireflies · Jun 22, 2026
+High
+Continue using Job Planner as the system of record for submittal
+Decision · Fireflies · Jun 22, 2026
+High
+Daniel may not have access to the mezzanine elevation
+Risk · Fireflies · Jun 22, 2026
+High
+Daniel may not have the mezzanine height information needed for
+Risk · Fireflies · Jun 22, 2026
+High
+Delay in getting Naveen's response could slow Bob's ability to
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Delays in Bob's response to Excel and landlord comments could
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Do not issue phase two revisions yet
+Decision · Fireflies · Jun 22, 2026
+High
+Give Nathan advance notice before issuing phase two revisions so
+Decision · Fireflies · Jun 22, 2026
+High
+Hold phase two permit submission until landlord feedback and
+Decision · Fireflies · Jun 22, 2026
+High
+Hold phase two submission until Excel feedback and landlord
+Decision · Fireflies · Jun 22, 2026
+High
+Hold phase two submission until landlord feedback and Excel's
+Decision · Fireflies · Jun 22, 2026
+High
+Incomplete access to remaining landlord files could delay review
+Risk · Fireflies · Jun 22, 2026
+High
+Jerome will be added to the recurring weekly call access and
+Decision · Fireflies · Jun 22, 2026
+High
+Job Planner workflow could create confusion if the team is not
+Risk · Fireflies · Jun 22, 2026
+High
+Landlord review could be incomplete if Naveen only checks the
+Risk · Fireflies · Jun 22, 2026
+High
+Landlord review files may contain more material than expected
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Landlord review files may contain more scope than expected
+Risk · Fireflies · Jun 22, 2026
+High
+Mail the Vermilion checks rather than using pickup or alternate
+Decision · Fireflies · Jun 22, 2026
+High
+Mail the Vermilion checks rather than using pickup or another
+Decision · Fireflies · Jun 22, 2026
+High
+Mail Vermilion payments by check rather than using pickup or
+Decision · Fireflies · Jun 22, 2026
+High
+Missing racking drawings could block sprinkler design and
+Risk · Fireflies · Jun 22, 2026
+High
+Nathan may miss QC issues if he is not given enough advance
+Risk · Fireflies · Jun 22, 2026
+High
+Nathan may not have enough lead time for QC review before phase
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Naveen will review all landlord comment materials
+Decision · Fireflies · Jun 22, 2026
+High
+Naveen will review the landlord comment package
+Decision · Fireflies · Jun 22, 2026
+High
+Outdated drawings or incomplete landlord feedback could cause
+Risk · Fireflies · Jun 22, 2026
+High
+Payment could be misrouted if address or mailing details are
+Financial Exposure · Fireflies · Jun 22, 2026
+High
+Payment could be misrouted if vendor address or mailing
+Financial Exposure · Fireflies · Jun 22, 2026
+High
+Payment mailing could be misdirected if the address or process
+Risk · Fireflies · Jun 22, 2026
+High
+Phase one is approved and does not require further city action
+Decision · Fireflies · Jun 22, 2026
+High
+Phase one permit is approved with no city comments
+Decision · Fireflies · Jun 22, 2026
+High
+Phase one permit is approved with no city comments, aside from
+Decision · Fireflies · Jun 22, 2026
+High
+Phase two comments are not yet available because phase two has
+Decision · Fireflies · Jun 22, 2026
+High
+Phase two comments remain unknown until the package is submitted
+Risk · Fireflies · Jun 22, 2026
+High
+Phase two could be delayed if Excel's final input is not
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Phase two submission may surface new city comments that require
+Risk · Fireflies · Jun 22, 2026
+High
+Proceed with the meeting and continue discussions despite
+Decision · Fireflies · Jun 22, 2026
+High
+Proceed with the meeting despite missing attendees and continue
+Decision · Fireflies · Jun 22, 2026
+High
+Proceed with the weekly design coordination meeting despite
+Decision · Fireflies · Jun 22, 2026
+High
+QC issues may be missed if revisions are issued without advance
+Risk · Fireflies · Jun 22, 2026
+High
+Recurring meeting invite setup could create future attendance
+Risk · Fireflies · Jun 22, 2026
+High
+Recurring meeting invite setup issues could create future
+Risk · Fireflies · Jun 22, 2026
+High
+Request missing racking drawings from Symbolic / the landlord
+Decision · Fireflies · Jun 22, 2026
+High
+Route all future submittals through Job Planner
+Decision · Fireflies · Jun 22, 2026
+High
+Set up Jerome as an attendee/placeholder on the recurring weekly
+Decision · Fireflies · Jun 22, 2026
+High
+Submittal approval may not be visible in Job Planner or may have
+Risk · Fireflies · Jun 22, 2026
+High
+The linked review package may be larger or more complex than
+Schedule Risk · Fireflies · Jun 22, 2026
+High
+Treat the received comments as landlord-engineer comments for
+Decision · Fireflies · Jun 22, 2026
+High
+Treat the reviewed comments as landlord-engineer comments for
+Decision · Fireflies · Jun 22, 2026
+High
+Use the corrected calendar invitation / call-link setup for
+Decision · Fireflies · Jun 22, 2026
+High
+Use the Revit model and mezzanine sections as the source of
+Decision · Fireflies · Jun 22, 2026
+High
+Use the Revit model as the source of truth for mezzanine height
+Decision · Fireflies · Jun 22, 2026
+High
+Using outdated drawings could create permitting issues or rework
+Risk · Fireflies · Jun 22, 2026
+High
+Verify Benjamin Cottrell’s approval submission in Job Planner
+Decision · Fireflies · Jun 22, 2026
+High
+Waiting for external landlord or Symbolic feedback may delay
+Risk · Fireflies · Jun 22, 2026
+High
+Obtain the phase-one permit before submitting phase-two drawings
+Decision · Fireflies · Jun 9, 2026
+High
+Phase-two drawing submission depends on phase-one permit
+Risk · Fireflies · Jun 9, 2026
+High
+Phase-two warehouse/office construction duration and start dates
+Schedule Risk · Fireflies · Jun 9, 2026
+High
+Symbotic's racking design is not finalized and is blocking
+Risk · Fireflies · Jun 9, 2026
+High
+Design the fire alarm system to code minimum initially, with
+Decision · Fireflies · Jun 2, 2026
+High
+Do not submit or present partial structural plans
+Decision · Fireflies · Jun 2, 2026
+High
+Exterior connector-drive / gravel-road scope may be missing from
+Risk · Fireflies · Jun 2, 2026
+High
+Exterior connector-drive scope remains a schedule/scope risk
+Risk · Fireflies · Jun 2, 2026
+High
+Include both electric hand dryers and paper towel holders in
+Decision · Fireflies · Jun 2, 2026
+High
+Money impact
+Financial Exposure · Meeting + Email · Jun 2, 2026
+High
+Open decisions
+Decision · Meeting · Jun 2, 2026
+High
+Permit approval/review tracking has slipped from the previously
+Schedule Risk · Fireflies · Jun 2, 2026
+High
+Permit approval/review tracking has slipped or been clarified
+Schedule Risk · Fireflies · Jun 2, 2026
+High
+Proceed with a code-minimum fire alarm design for now, with
+Decision · Fireflies · Jun 2, 2026
+High
+Provide the client/landlord a complete stamped structural set
+Decision · Fireflies · Jun 2, 2026
+High
+Recommended actions
+Open Question · Meeting · Jun 2, 2026
+High
+Remove the dishwasher from the main break room and provide one
+Decision · Fireflies · Jun 2, 2026
+High
+Remove the dishwasher from the main break room but include a
+Decision · Fireflies · Jun 2, 2026
+High
+Risks and exposure
+Risk · Meeting + Email · Jun 2, 2026
+High
+Schedule and procurement
+Schedule Risk · Meeting · Jun 2, 2026
+High
+Submitting an addendum during the active 30-day permit review
+Risk · Fireflies · Jun 2, 2026
+High
+The June 8 100% CD target is at risk because electrical
+Schedule Risk · Fireflies · Jun 2, 2026
+High
+The June 8 final CD target is at risk because electrical
+Schedule Risk · Fireflies · Jun 2, 2026
+High
+What changed
+Change Management · Meeting + Email · Jun 2, 2026
+High
+Open decisions
+Decision · Meeting + Email · May 18, 2026
+High
+Recommended actions
+Open Question · Meeting + Email +1 · May 18, 2026
+High
+Risks and exposure
+Risk · Meeting + Email · May 18, 2026
+High
+Money impact
+Financial Exposure · Email + Meeting · May 7, 2026
+High
+Schedule and procurement
+Schedule Risk · Email + Meeting +1 · May 7, 2026
+High
+What changed
+Change Management · Meeting + Email +1 · May 4, 2026
+High
+711 (Sys 1 + 2).pdf
+Decision · Document · Aug 24, 2025
+High
+712 (Sys 3 + 4).pdf
+Decision · Document · Aug 24, 2025
+High
+Project timeline
+how we got here
+Jun 23, 2026 · Task
+Exol ERW01 Morrisville PA - Weekly Milestone Review
+
+This source contains project-relevant language that should be reviewed before it is trusted in a current intelligence packet.
+
+Jun 22, 2026 · Risk
+Outdated drawings or incomplete landlord feedback could cause
+
+Outdated drawings or incomplete landlord feedback could cause permitting rework and city comments.
+
+Jun 22, 2026 · Decision
+Proceed with the meeting despite missing attendees and continue
+
+The team agreed to start the discussion and not delay progress due to attendance gaps.
+
+Jun 22, 2026 · Decision
+Mail the Vermilion checks rather than using pickup or alternate
+
+Payment handling was clarified to reduce misrouting and administrative confusion.
+
+Jun 22, 2026 · Risk
+Missing racking drawings could block sprinkler design and
+
+Missing racking drawings could block sprinkler design and related coordination work.
+
+Jun 22, 2026 · Financial Exposure
+Payment could be misrouted if vendor address or mailing
+
+Payment could be misrouted if vendor address or mailing instructions are outdated.
+
+Jun 22, 2026 · Decision
+Naveen will review the landlord comment package
+
+A timely review was needed so Bob could relay questions or clarifications to Excel and avoid delays.
+
+Jun 22, 2026 · Decision
+Do not issue phase two revisions yet
+
+The team wanted to avoid premature revisions before QC and coordination were complete.
+
+Show 140 earlier events
+View recent source activity
+Act now
+
+13 tasks already need follow-up
+
+Project tasks · overdue
+
+Open tasks
+
+Next due: Send the updated structural information to Steve for landlord on May 31, 2026.
+
+Outdated drawings or incomplete landlord feedback could cause
+
+Risk · Jun 22, 2026 · 1 source
+
+Open evidence
+
+Outdated drawings or incomplete landlord feedback could cause permitting rework and city comments.
+
+Missing racking drawings could block sprinkler design and
+
+Risk · Jun 22, 2026 · 1 source
+
+Open evidence
+
+Missing racking drawings could block sprinkler design and related coordination work.
+
+Recurring meeting invite setup issues could create future
+
+Risk · Jun 22, 2026 · 1 source
+
+Open evidence
+
+Recurring meeting invite setup issues could create future attendance confusion.
+
+Potential change: Email: RE: Exol ERW01 Morrisville PA - Weekly Milestone Review - Meeting Notes and Action Items
+
+Potential change order · High · Candidate
+
+Create change event
+
+Source language suggests a potential scope, cost, schedule, or change-order exposure.
+
+Trust this read
+Packet freshness
+Fresh · compiled Jul 7, 2026, 3:26 AM
+Operating record
+Updated Jun 23, 2026, 4:56 PM
+Latest source signal
+Jul 6, 2026, 5:28 PM
+
+WARNINGS
+
+46 cards contain raw source text or metadata instead of usable synthesis.
+The packet is older than the expected refresh window.
+Financial context
+
+Schedule SPI and percent-complete are intentionally omitted — schedule data is not yet reliable enough to show.
+
+Potential change: Email: RE: Exol ERW01 Morrisville PA - Weekly Milestone Review - Meeting Notes and Action Items
+
+Source language suggests a potential scope, cost, schedule, or change-order exposure.
+
+Confidence: High · Status: Candidate
+
+Create with AI
+
+Potential change: Exol ERW01 Morrisville PA - Weekly Milestone Review
+
+Source language suggests a potential scope, cost, schedule, or change-order exposure.
+
+Confidence: High · Status: Candidate
+
+Create with AI
+
+v3.0.2
+
+Output Detail
+Standard
+React Components
+Hide Until Restart
+Marker Color
+Clear on copy/send
+Block page interactions
+Manage MCP & Webhooks
+Manage MCP & Webhooks
+MCP Connection
+
+MCP connection allows agents to receive and act on annotations. Learn more
+
+Webhooks
+Auto-Send
+
+The webhook URL will receive live annotation changes and annotation data.

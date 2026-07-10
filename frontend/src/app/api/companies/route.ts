@@ -4,20 +4,9 @@ import type { Company } from "@/app/api/types";
 import { z } from "zod";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
-  parseJsonBody,
   validateResponseContract,
   withApiGuardrails,
 } from "@/lib/guardrails/api";
-
-const CreateCompanySchema = z.object({
-  name: z.string().min(1, "Company name is required"),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  website: z.string().optional(),
-  license_number: z.string().optional(),
-  notes: z.string().optional(),
-});
 
 const CompanyResponseSchema = z.object({
   id: z.string(),
@@ -86,8 +75,11 @@ export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) =
   return NextResponse.json(companies);
 });
 
-export const POST = withApiGuardrails("/api/companies#POST", async ({ request }) => {
-  const supabase = await createClient();
+// Companies are managed exclusively in Acumatica (ERP) by Accounting, so
+// insurance, EIN, and legal details stay accurate. Creation from the PM app
+// is disabled — records sync in automatically via
+// `backend/src/services/acumatica_sync.py`.
+export const POST = withApiGuardrails("/api/companies#POST", async () => {
   const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({
@@ -98,35 +90,13 @@ export const POST = withApiGuardrails("/api/companies#POST", async ({ request })
       severity: "medium",
     });
   }
-  const body = await parseJsonBody(
-    request,
-    CreateCompanySchema,
-    "/api/companies#POST",
+
+  return NextResponse.json(
+    {
+      error: "erp_managed",
+      message:
+        "Companies are managed in Acumatica (ERP) by Accounting and can no longer be created here. Ask Accounting to add the company in Acumatica — it will sync in automatically.",
+    },
+    { status: 403 },
   );
-
-  const { data, error } = await supabase
-    .from("companies")
-    .insert({
-      name: body.name,
-      address: body.address,
-      city: body.city,
-      state: body.state,
-      website: body.website,
-      license_number: body.license_number,
-      notes: body.notes,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "/api/companies#POST",
-      message: "Failed to create company.",
-      details: { reason: error.message },
-      cause: error,
-    });
-  }
-
-  return NextResponse.json(data, { status: 201 });
 });

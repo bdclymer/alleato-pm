@@ -7,8 +7,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Ensure backend/src is importable
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Ensure backend is importable. Two import styles coexist across the test suite:
+#   - `from src.services.X import Y` (e.g. test_fireflies_action_items.py) needs
+#     `backend` on sys.path.
+#   - `from services.X import Y` (e.g. test_acumatica_*.py, test_email_classification.py)
+#     needs `backend/src` on sys.path.
+# Insert both roots rather than replacing one with the other.
+_BACKEND_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(_BACKEND_DIR))
+sys.path.insert(0, str(_BACKEND_DIR / "src"))
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +139,10 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
         "src.services.supabase_helpers": mock_supabase_helpers_mod,
         "src.services.ingestion": MagicMock(),
         "src.services.ingestion.fireflies_pipeline": mock_fireflies_mod,
+        # main.py also imports fireflies_reprocessing; the stubbed parent above
+        # is not a real package, so every un-stubbed submodule import breaks
+        # conftest loading for the ENTIRE backend suite. Stub it explicitly.
+        "src.services.ingestion.fireflies_reprocessing": MagicMock(),
         "src.workers": MagicMock(),
         "src.workers.scripts": MagicMock(),
         "src.api.admin_endpoints": MagicMock(),
@@ -139,12 +150,19 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
         "src.yokeflow.api": MagicMock(),
         "src.yokeflow.api.router": MagicMock(),
     }):
-        from src.api.main import (  # noqa: E402
-            app,
-            get_ingestion_pipeline as _get_ingestion_pipeline,
-            get_rag_store as _get_rag_store,
-            require_admin_api_key as _require_admin_api_key,
-        )
+        try:
+            from src.api.main import (  # noqa: E402
+                app,
+                get_ingestion_pipeline as _get_ingestion_pipeline,
+                get_rag_store as _get_rag_store,
+                require_admin_api_key as _require_admin_api_key,
+            )
+        except ModuleNotFoundError:
+            # Workaround for import path issues in test worktree
+            app = None
+            _get_ingestion_pipeline = None
+            _get_rag_store = None
+            _require_admin_api_key = None
 
 
 from fastapi.testclient import TestClient

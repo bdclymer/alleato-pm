@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ds";
-import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
+import { Github } from "lucide-react";
+import { Button, Checkbox } from "@/components/ds";
+import { displayAdminFeedbackTitle, isCommentRedundantWithTitle } from "@/lib/admin-feedback/title";
 import { cn } from "@/lib/utils";
 
 import { STATUS_META } from "../constants";
@@ -14,7 +15,6 @@ import {
 import type {
   DisplayStatus,
   FeedbackItem,
-  FeedbackListSection,
 } from "../types";
 
 import { ListItemContextMenu } from "./list-item-context-menu";
@@ -22,14 +22,18 @@ import { ListItemContextMenu } from "./list-item-context-menu";
 function FeedbackQueueItem({
   item,
   selectedId,
+  selectedIds,
   onSelect,
+  onToggleBulkSelected,
   onUpdateStatus,
   onSendToGitHub,
   onDelete,
 }: {
   item: FeedbackItem;
   selectedId: string | null;
+  selectedIds: string[];
   onSelect: (id: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
@@ -45,7 +49,11 @@ function FeedbackQueueItem({
     pageTitle: item.page_title,
   });
   const toolLabel = toolLabelFromPath(item.page_path);
-  const shouldShowStatus = displayStatus !== "open";
+  const showCommentPreview = !isCommentRedundantWithTitle(itemDisplayTitle, item.comment);
+  const sourceLabel = item.page_title ?? item.page_path;
+  const bulkSelected = selectedIds.includes(item.id);
+  const primarySource = toolLabel ?? sourceLabel;
+  const secondarySource = toolLabel && sourceLabel && toolLabel !== sourceLabel ? sourceLabel : null;
 
   return (
     <ListItemContextMenu
@@ -61,48 +69,103 @@ function FeedbackQueueItem({
         size="default"
         onClick={() => onSelect(item.id)}
         className={cn(
-          "group h-auto w-full min-w-0 items-start justify-start gap-4 rounded-none px-4 py-3 text-left transition-colors",
-          isSelected ? "bg-background" : "hover:bg-background/60",
+          "group relative h-auto w-full min-w-0 items-start justify-start gap-4 rounded-none px-4 py-3 text-left transition-colors",
+          isSelected
+            ? "bg-background shadow-[inset_3px_0_0_hsl(var(--primary))]"
+            : "hover:bg-background/60",
         )}
       >
+        <span
+          className="mt-0.5 shrink-0"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Checkbox
+            checked={bulkSelected}
+            onCheckedChange={(checked) =>
+              onToggleBulkSelected(item.id, checked === true)
+            }
+            aria-label={`Select ${itemDisplayTitle}`}
+          />
+        </span>
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-start justify-between gap-4">
-            <span className="min-w-0">
-              <span className="line-clamp-1 min-w-0 text-sm font-medium leading-normal text-foreground">
+          <span className="flex min-w-0 items-start justify-between gap-3">
+            <span className="min-w-0 space-y-0.5">
+              <span className="line-clamp-1 min-w-0 text-[13px] font-semibold leading-normal text-foreground">
                 {itemDisplayTitle}
               </span>
-              <span className="mt-1 line-clamp-2 text-sm font-normal leading-snug text-muted-foreground">
-                {item.comment}
-              </span>
+              {showCommentPreview && (
+                <span className="line-clamp-1 text-[13px] font-normal leading-snug text-muted-foreground">
+                  {item.comment}
+                </span>
+              )}
             </span>
             <span className="shrink-0 text-xs font-normal text-muted-foreground">
               {relativeTime(item.created_at)}
             </span>
           </span>
 
-          <span className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            {shouldShowStatus && (
-              <>
-                <span className="font-medium text-foreground">{meta.label}</span>
-                <span aria-hidden="true">/</span>
-              </>
-            )}
-            {toolLabel && (
-              <>
-                <span className="truncate">{toolLabel}</span>
-                <span aria-hidden="true">/</span>
-              </>
-            )}
-            <span className="truncate">{submitterLabel(item)}</span>
-            {item.github_issue_number && (
-              <span className="ml-auto shrink-0">
-                #{item.github_issue_number}
-              </span>
-            )}
+          <span className="mt-2 flex min-w-0 items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+            <span
+              className={cn("h-2 w-2 shrink-0 rounded-full", meta.dotClassName)}
+              aria-label={meta.label}
+              title={meta.label}
+            />
+            <span className="shrink-0">{meta.label}</span>
             {item.severity === "high" && (
               <>
-                <span aria-hidden="true">/</span>
-                <span className="shrink-0 font-medium text-status-error">High</span>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="shrink-0 font-medium text-status-error">
+                  High
+                </span>
+              </>
+            )}
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            <span className="min-w-0 shrink truncate">
+              {submitterLabel(item)}
+            </span>
+            <span aria-hidden className="text-border">
+              /
+            </span>
+            {primarySource ? (
+              <span className="min-w-0 shrink truncate font-medium text-foreground">
+                {primarySource}
+              </span>
+            ) : null}
+            {secondarySource ? (
+              <span className="inline-flex min-w-0 items-center truncate">
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="truncate">{secondarySource}</span>
+              </span>
+            ) : null}
+            {item.category ? (
+              <>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <span className="min-w-0 shrink truncate">{item.category}</span>
+              </>
+            ) : null}
+            {item.github_issue_number && item.github_issue_url && (
+              <>
+                <span aria-hidden className="text-border">
+                  /
+                </span>
+                <a
+                  href={item.github_issue_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 text-muted-foreground hover:text-foreground hover:underline"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Github className="h-3 w-3" />
+                  #{item.github_issue_number}
+                </a>
               </>
             )}
           </span>
@@ -113,22 +176,24 @@ function FeedbackQueueItem({
 }
 
 export function FeedbackQueue({
-  sections,
   items,
   selectedId,
+  selectedIds,
   loading,
   currentFilterLabel,
   onSelect,
+  onToggleBulkSelected,
   onUpdateStatus,
   onSendToGitHub,
   onDelete,
 }: {
-  sections: FeedbackListSection[];
   items: FeedbackItem[];
   selectedId: string | null;
+  selectedIds: string[];
   loading: boolean;
   currentFilterLabel: string;
   onSelect: (id: string) => void;
+  onToggleBulkSelected: (id: string, checked: boolean) => void;
   onUpdateStatus: (id: string, status: DisplayStatus) => void;
   onSendToGitHub: (id: string) => void;
   onDelete: (id: string) => void;
@@ -155,31 +220,19 @@ export function FeedbackQueue({
   }
 
   return (
-    <div>
-      {sections.map((section) => (
-        <section key={section.status}>
-          {sections.length > 1 && (
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-muted/95 px-4 py-2 backdrop-blur">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {section.label}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {section.items.length}
-              </span>
-            </div>
-          )}
-          {section.items.map((item) => (
-            <FeedbackQueueItem
-              key={item.id}
-              item={item}
-              selectedId={selectedId}
-              onSelect={onSelect}
-              onUpdateStatus={onUpdateStatus}
-              onSendToGitHub={onSendToGitHub}
-              onDelete={onDelete}
-            />
-          ))}
-        </section>
+    <div className="divide-y divide-border/60">
+      {items.map((item) => (
+        <FeedbackQueueItem
+          key={item.id}
+          item={item}
+          selectedId={selectedId}
+          selectedIds={selectedIds}
+          onSelect={onSelect}
+          onToggleBulkSelected={onToggleBulkSelected}
+          onUpdateStatus={onUpdateStatus}
+          onSendToGitHub={onSendToGitHub}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

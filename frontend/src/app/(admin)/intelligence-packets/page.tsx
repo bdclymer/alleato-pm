@@ -13,90 +13,15 @@ import {
 } from "@/components/tables/unified";
 import { apiFetch } from "@/lib/api-client";
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: JsonValue }
-  | JsonValue[];
-
-interface IntelligencePacket {
-  id: string;
-  packet_type: string;
-  packet_version: string;
-  compiler_version: string | null;
-  generated_at: string;
-  created_at: string;
-  executive_summary: string;
-  freshness_status: string;
-  current_status: string | null;
-  target_id: string;
-  target_name: string | null;
-  target_type: string | null;
-  target_slug: string | null;
-  project_id: number | null;
-  review_queue_count: number;
-  stale_item_count: number;
-  covered_start_at: string | null;
-  covered_end_at: string | null;
-  strategic_read: string | null;
-  why_it_matters: string | null;
-  recommended_next_moves: string[];
-  confidence_summary: JsonValue;
-  source_coverage: JsonValue;
-}
-
-function summarizeConfidence(value: JsonValue): string {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return "—";
-  const entries = Object.entries(value).filter(([, v]) => v != null);
-  if (entries.length === 0) return "—";
-  return entries
-    .map(([k, v]) => {
-      if (typeof v === "number") {
-        const pct = v > 0 && v <= 1 ? Math.round(v * 100) : Math.round(v);
-        return `${k}: ${pct}${v > 0 && v <= 1 ? "%" : ""}`;
-      }
-      return `${k}: ${String(v)}`;
-    })
-    .join(" · ");
-}
-
-function summarizeSourceCoverage(value: JsonValue): string {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return "—";
-  const entries = Object.entries(value).filter(([, v]) => v != null);
-  if (entries.length === 0) return "—";
-  return entries.map(([k, v]) => `${k}: ${String(v)}`).join(" · ");
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function truncate(str: string | null | undefined, max: number): string {
-  if (!str) return "—";
-  return str.length > max ? `${str.slice(0, max)}…` : str;
-}
+import {
+  PacketDetailPanel,
+  formatDate,
+  formatDateTime,
+  summarizeConfidence,
+  summarizeSourceCoverage,
+  truncate,
+  type IntelligencePacket,
+} from "./packet-detail-panel";
 
 const COLUMNS: TableColumn<IntelligencePacket>[] = [
   {
@@ -409,6 +334,8 @@ export default function IntelligencePacketsPage() {
   const [packets, setPackets] = React.useState<IntelligencePacket[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [fetchError, setFetchError] = React.useState<Error | null>(null);
+  const [selectedPacket, setSelectedPacket] =
+    React.useState<IntelligencePacket | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -604,6 +531,8 @@ export default function IntelligencePacketsPage() {
         getRowId: (item) => item.id,
         stickyHeader: true,
         density: "compact",
+        activeRowId: selectedPacket?.id ?? null,
+        onRowClick: (item) => setSelectedPacket(item),
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -649,6 +578,25 @@ export default function IntelligencePacketsPage() {
           tableState.setPage(1);
         },
       }}
+      sidePanel={
+        selectedPacket
+          ? {
+              content: (
+                <PacketDetailPanel
+                  packet={selectedPacket}
+                  onClose={() => setSelectedPacket(null)}
+                />
+              ),
+              variant: "wide",
+              defaultWidth: 560,
+              minWidth: 440,
+              storageKey: "intelligence-packet-detail",
+              contentClassName: "pl-0 pr-0",
+              showCloseButton: false,
+              onClose: () => setSelectedPacket(null),
+            }
+          : undefined
+      }
       features={{
         enableViews: false,
       }}

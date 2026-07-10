@@ -47,7 +47,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { apiFetch, apiFetchBlob } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
+import { usePdfExport } from "@/hooks/use-pdf-export";
 import {
   calculateDurationWeeks,
   computeEstimateDetailDivisionTotal,
@@ -1805,32 +1806,11 @@ export function EstimateDetailClientV2({
   // Render
   // ---------------------------------------------------------------------------
 
-  const handleExportPDF = async () => {
-    try {
-      const blob = await apiFetchBlob(
-        `/api/projects/${projectId}/estimates/${estimate.estimate_id}/pdf`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `${estimate.title || "estimate"}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error("Failed to export estimate PDF", error);
-      showEstimateError(
-        "Estimate PDF export issue",
-        error,
-        "estimate-export-pdf",
-      );
-    }
-  };
+  const { exportPdf: handleExportPDF } = usePdfExport({
+    endpoint: `/api/projects/${projectId}/estimates/${estimate.estimate_id}/pdf`,
+    filename: estimate.title || "estimate",
+    errorMessage: "Estimate PDF export issue",
+  });
 
   const actionsMenu = (
     <div className="flex items-center gap-2">
@@ -5816,7 +5796,7 @@ function SummaryTab({
     <div className="space-y-5">
       {/* ── Letterhead ─────────────────────────────────────────────── */}
       <div className="rounded-lg p-5">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col items-start justify-between gap-6 lg:flex-row">
           {/* Logo + address */}
           <div className="flex items-start gap-4">
             <img

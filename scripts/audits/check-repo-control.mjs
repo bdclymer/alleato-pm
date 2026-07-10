@@ -40,6 +40,7 @@ const TOP_LEVEL_CLASSIFICATIONS = new Map([
   ["AGENTS.md", "agent instructions"],
   ["CLAUDE.md", "agent instructions"],
   ["CONTRIBUTING.md", "repo documentation"],
+  ["CONTEXT.md", "domain glossary / architecture vocabulary"],
   ["DESIGN.md", "design documentation"],
   ["README.md", "repo documentation"],
   ["WORKING_CONTEXT.md", "repo documentation"],

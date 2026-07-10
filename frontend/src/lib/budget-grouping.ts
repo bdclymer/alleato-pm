@@ -61,12 +61,41 @@ function getDivisionName(divisionCode: string): string {
     "42": "Process Heating, Cooling & Drying",
     "43": "Process Gas & Liquid Handling",
     "44": "Pollution & Waste Control",
+    "45": "Industry-Specific Manufacturing Equipment",
     "46": "Water & Wastewater",
     "48": "Electrical Power Generation",
+    "50": "Engineering",
+    "51": "Space Planning",
+    "52": "Architectural Services",
+    "53": "Land-Closing Cost",
+    "54": "Commissions",
     "55": "Contractor Fee",
   };
 
   return divisionNames[divisionCode] || `Division ${divisionCode}`;
+}
+
+/**
+ * Resolve the display title for a division group row.
+ *
+ * Prefers the database-backed division title carried on the line items
+ * (cost_code_divisions.title, e.g. "50 Engineering"); the leading division
+ * code is stripped because the group row already renders the code. Falls
+ * back to the static CSI map for lines without a division record.
+ */
+function resolveDivisionTitle(
+  divisionCode: string,
+  items: BudgetLineItem[],
+): string {
+  const dbTitle = items
+    .map((item) => item.divisionTitle?.trim())
+    .find((title): title is string => Boolean(title));
+  if (dbTitle) {
+    return dbTitle.startsWith(`${divisionCode} `)
+      ? dbTitle.slice(divisionCode.length + 1)
+      : dbTitle;
+  }
+  return getDivisionName(divisionCode);
 }
 
 /**
@@ -140,7 +169,7 @@ export function groupByDivision(items: BudgetLineItem[]): BudgetLineItem[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([divisionCode, divisionItems]) => {
       const totals = aggregateTotals(divisionItems);
-      const divisionName = getDivisionName(divisionCode);
+      const divisionName = resolveDivisionTitle(divisionCode, divisionItems);
 
       result.push({
         id: `division-${divisionCode}`,
@@ -209,7 +238,7 @@ export function groupBySubdivision(items: BudgetLineItem[]): BudgetLineItem[] {
 
       // Create division parent
       const divisionTotals = aggregateTotals(allDivisionItems);
-      const divisionName = getDivisionName(divisionCode);
+      const divisionName = resolveDivisionTitle(divisionCode, allDivisionItems);
 
       result.push({
         id: `division-${divisionCode}`,

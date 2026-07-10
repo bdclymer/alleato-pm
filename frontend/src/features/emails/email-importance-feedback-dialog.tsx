@@ -22,6 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
+import { toast } from "sonner";
 import type { ProjectEmail } from "@/hooks/use-emails";
 import {
   EMAIL_IMPORTANCE_REASON_LABELS,
@@ -58,10 +59,10 @@ interface EmailImportanceFeedbackDialogProps {
   onRecorded: (
     emailId: number,
     feedback: EmailImportanceFeedbackState,
-  ) => void;
+  ) => Promise<void> | void;
 }
 
-function buildEmailSnapshot(email: ProjectEmail) {
+export function buildEmailImportanceSnapshot(email: ProjectEmail) {
   return {
     id: email.id,
     projectId: email.project_id,
@@ -122,6 +123,12 @@ export function EmailImportanceFeedbackDialog({
 
   const signalLabel =
     signal === "important" ? "Mark important" : "Mark not important";
+  const isEditingExisting = existingFeedback?.signal === signal;
+  const submitLabel = isEditingExisting ? "Save reason" : signalLabel;
+  const description =
+    signal === "not_important"
+      ? "Not important emails leave the default view. Use filters to show them again."
+      : "Important emails stay in the default view and train future ranking.";
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -136,16 +143,21 @@ export function EmailImportanceFeedbackDialog({
           signal,
           reasonCategory,
           reason: reason.trim() || null,
-          emailSnapshot: buildEmailSnapshot(email),
+          emailSnapshot: buildEmailImportanceSnapshot(email),
         }),
       });
 
-      onRecorded(email.id, {
+      await onRecorded(email.id, {
         signal,
         reasonCategory,
         reason: reason.trim() || null,
         createdAt: new Date().toISOString(),
       });
+      toast.success(
+        signal === "not_important"
+          ? "Marked not important. It is hidden from the default view."
+          : "Marked important.",
+      );
       onOpenChange(false);
     } catch (error) {
       handleFormError(error, { entity: "email feedback", action: "create" });
@@ -158,11 +170,8 @@ export function EmailImportanceFeedbackDialog({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent size="md">
         <ModalHeader>
-          <ModalTitle>{signalLabel}</ModalTitle>
-          <ModalDescription>
-            This records a learning signal for how the AI should rank similar
-            emails in the future.
-          </ModalDescription>
+          <ModalTitle>{isEditingExisting ? "Edit feedback" : signalLabel}</ModalTitle>
+          <ModalDescription>{description}</ModalDescription>
         </ModalHeader>
 
         <div className="space-y-4 py-2">
@@ -215,7 +224,7 @@ export function EmailImportanceFeedbackDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Saving..." : signalLabel}
+            {submitting ? "Saving..." : submitLabel}
           </Button>
         </ModalFooter>
       </ModalContent>

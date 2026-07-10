@@ -17,14 +17,15 @@ import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardItemMeta, BoardLabel } from "./use-board-item";
 import type { CardViewSettings } from "./card-view-settings";
 import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
+import { getLinearIssueLink } from "./linear-issue-link";
+import { BOARD_CAPTURE_TOPICS, getBoardCaptureTopics } from "./topics";
 
 type BoardItemWithMeta = BoardItem;
 
-const severityConfig = {
-  high: { dot: "bg-destructive" },
-  medium: { dot: "bg-amber-500" },
-  low: { dot: "bg-muted-foreground/40" },
-};
+// Priority is surfaced only when it carries urgency: high priority reads as a
+// red-on-light-red pill (consistent with the other muted tag chips). Medium/low
+// are the norm and render nothing — no orange dots (orange is the AI/brain
+// accent color and would just blend in rather than differentiate).
 
 function DueDateChip({ dateStr }: { dateStr: string }) {
   const date = new Date(dateStr);
@@ -58,6 +59,26 @@ function LabelStrips({ labels }: { labels: BoardLabel[] }) {
   );
 }
 
+function TopicChips({ topics }: { topics: ReturnType<typeof getBoardCaptureTopics> }) {
+  if (!topics.length) return null;
+  return (
+    <div className="mb-2 flex flex-wrap gap-1.5">
+      {topics.map((topic) => {
+        const config = BOARD_CAPTURE_TOPICS[topic];
+        return (
+          <span
+            key={topic}
+            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", config.color)} />
+            {config.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AssigneeAvatar({ assignee }: { assignee: BoardAssignee }) {
   const initials = assignee.full_name
     ? assignee.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -85,14 +106,15 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
   const style = { transform: CSS.Transform.toString(transform), transition };
   const meta = (item.metadata as BoardItemMeta | null) ?? {};
   const labels = meta.labels ?? [];
+  const topics = getBoardCaptureTopics(item);
   const links = meta.links ?? [];
   const dueDate = meta.due_date;
-  const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
-  const primaryLink = links[0];
+  const isHighPriority = item.severity === "high";
+  const primaryLink = getLinearIssueLink(meta) ?? links[0];
 
   const hasFooter =
     (settings.showDueDate && dueDate) ||
-    (settings.showSeverity && severity) ||
+    (settings.showSeverity && isHighPriority) ||
     (settings.showCommentCount && item.comment_count > 0) ||
     (settings.showAssignee && item.assignee);
 
@@ -128,12 +150,14 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
             )}
 
             <div className="p-3">
+              <TopicChips topics={topics} />
+
               {/* Label strips */}
               {settings.showLabels && labels.length > 0 && (
                 <LabelStrips labels={labels} />
               )}
 
-              <p className="text-sm font-medium leading-snug text-foreground line-clamp-3">
+              <p className="text-[13px] font-medium leading-snug text-foreground line-clamp-3">
                 {item.title}
               </p>
 
@@ -159,7 +183,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
               )}
 
               {/* Source */}
-              {item.page_title && item.page_title !== "Product Board" && (
+              {item.page_title && item.page_title !== "Roadmap" && (
                 <p className="mt-1 truncate text-[11px] text-muted-foreground/50">
                   from {item.page_title}
                 </p>
@@ -170,12 +194,13 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {settings.showDueDate && dueDate && <DueDateChip dateStr={dueDate} />}
-                    {settings.showSeverity && severity && (
+                    {settings.showSeverity && isHighPriority && (
                       <span
-                        className={cn("h-1.5 w-1.5 rounded-full", severity.dot)}
-                        title={`Priority: ${item.severity}`}
-                        aria-label={`Priority ${item.severity}`}
-                      />
+                        className="inline-flex items-center rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive"
+                        title="High priority"
+                      >
+                        High
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -213,7 +238,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
 export function BoardCardOverlay({ item }: { item: BoardItem }) {
   return (
     <div className="rounded-xl bg-background p-3 shadow-sm ring-1 ring-primary/30 rotate-1 scale-[1.02] opacity-95">
-      <p className="text-sm font-medium leading-snug text-foreground line-clamp-2">{item.title}</p>
+      <p className="text-[13px] font-medium leading-snug text-foreground line-clamp-2">{item.title}</p>
     </div>
   );
 }

@@ -5,12 +5,16 @@ import {
   optionalPositiveNumber,
   requiredNumber,
 } from "./common";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 // SOV Line Item for Purchase Orders (Unit/Quantity-based)
 export const PurchaseOrderSovLineItemSchema = z.object({
   lineNumber: requiredNumber,
   changeEventLineItem: z.string().optional(),
   budgetCode: z.string().optional(),
+  budgetCodeId: z.string().optional(),
+  projectBudgetCodeId: z.string().optional(),
+  budgetCodeLabel: z.string().optional(),
   description: z.string().optional(),
   quantity: optionalNumber,
   uom: z.string().optional(), // Unit of Measure: EA, LF, SF, etc.
@@ -41,7 +45,10 @@ const PrivacySchema = z.object({
 // Main Purchase Order Schema
 export const CreatePurchaseOrderSchema = z.object({
   // General Information
-  contractNumber: z.string().min(1, "Contract number is required"),
+  contractNumber: z
+    .string()
+    .min(1, "Contract number is required")
+    .transform((value) => normalizeCommitmentContractNumber(value, "PO-")),
   contractCompanyId: z.string().optional(),
   companyLicenseNumber: z.string().trim().max(50, "License number must be 50 characters or less").optional(),
   title: z.string().min(1, "Title is required"),

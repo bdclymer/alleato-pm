@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import { FileDown } from "lucide-react";
 
@@ -34,9 +34,14 @@ import { useMeetingsTable, EMPTY_FILTERS } from "@/features/meetings/use-meeting
 interface MeetingsTablePageProps {
   initialMeetings: Meeting[];
   projectId?: string;
+  headerActions?: ReactNode;
 }
 
-export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTablePageProps): ReactElement {
+export function MeetingsTablePage({
+  initialMeetings,
+  projectId,
+  headerActions,
+}: MeetingsTablePageProps): ReactElement {
   const {
     tableState,
     pagedMeetings,
@@ -82,6 +87,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
         header={{
           title: "Meetings",
           description: "View and manage all your meetings",
+          actions: headerActions,
         }}
         layout={{
           headerAlignment: "left",

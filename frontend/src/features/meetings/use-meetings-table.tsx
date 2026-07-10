@@ -23,6 +23,7 @@ import {
   type EditableField,
   type EditContext,
 } from "@/features/meetings/meetings-table-config";
+import { getMeetingDetailHref } from "@/features/meetings/meeting-routes";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -401,6 +402,25 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns]);
 
+  // One-time migration: make Category visible (editable from the table view) and
+  // hide the Content column by default for users with persisted column state.
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:category-editable-content-hidden-2026-07-08";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) => {
+      const next = prev.filter((columnId) => columnId !== "content");
+      if (!next.includes("category")) {
+        next.push("category");
+      }
+      return next;
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns]);
+
   // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
   const searchTerm = tableState.debouncedSearch.toLowerCase();
@@ -598,7 +618,13 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleInlineCancel,
   };
 
-  const tableColumns = buildMeetingTableColumns(editContext);
+  const getMeetingHref = React.useCallback(
+    (meeting: Meeting) =>
+      getMeetingDetailHref({ meetingId: meeting.id, projectId }),
+    [projectId],
+  );
+
+  const tableColumns = buildMeetingTableColumns(editContext, getMeetingHref);
 
   // ── Sorting and pagination ────────────────────────────────────────────────────
   const sortedMeetings = sortMeetings(
@@ -662,11 +688,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   };
 
   const handleOpenMeetingPage = (meeting: Meeting) => {
-    if (projectId) {
-      router.push(`/${projectId}/meetings/${meeting.id}`);
-    } else {
-      router.push(`/meetings/${meeting.id}`);
-    }
+    router.push(getMeetingHref(meeting));
   };
 
   const handleEdit = (meeting: Meeting) => {

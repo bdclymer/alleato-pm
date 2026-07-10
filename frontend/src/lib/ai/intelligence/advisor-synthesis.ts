@@ -3,6 +3,7 @@ import type {
   InsightCard,
   ResolvedIntelligenceTarget,
 } from "./types";
+import { asArray, asRecord } from "./utils";
 import type { AssistantIntent } from "../intent-router";
 
 function findCard(packet: ClientProjectIntelligencePacket, types: string[]): InsightCard | undefined {
@@ -39,16 +40,6 @@ function formatEvidence(packet: ClientProjectIntelligencePacket): string {
   const latest = coverage.latestSourceAt ? ` Latest packet source date: ${coverage.latestSourceAt}.` : "";
   const gaps = coverage.gaps?.length ? ` Gaps: ${coverage.gaps.join("; ")}.` : "";
   return `${parts.join(", ")}.${latest}${gaps}`;
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function asArray(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
 }
 
 function compactList(value: unknown, detailFields: string[], limit = 4): string {

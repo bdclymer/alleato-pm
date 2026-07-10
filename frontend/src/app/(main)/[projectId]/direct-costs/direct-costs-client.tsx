@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, RefreshCw } from "lucide-react";
+import { MoreVertical, RefreshCw } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import { DirectCostPreviewPane } from "./direct-cost-preview-pane";
 
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
 import { apiFetch } from "@/lib/api-client";
+import { buildAcumaticaApBillHref } from "@/lib/acumatica/ap-bill-url";
 
 export type DirectCostRow = {
   id: string;
@@ -414,7 +415,7 @@ export function DirectCostsClient({
             ? `${item.acumatica_doc_type ? `${item.acumatica_doc_type} ` : ""}${item.acumatica_ref_nbr}`
             : "Synced";
           const acumaticaUrl = item.acumatica_ref_nbr
-            ? `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(item.acumatica_ref_nbr)}`
+            ? buildAcumaticaApBillHref(item.acumatica_doc_type, item.acumatica_ref_nbr)
             : null;
           return acumaticaUrl ? (
             <a
@@ -606,7 +607,7 @@ export function DirectCostsClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal />
+                  <MoreVertical />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

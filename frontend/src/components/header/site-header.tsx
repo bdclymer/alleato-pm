@@ -12,7 +12,6 @@ import {
   ChevronDown,
   Menu,
   Sparkles,
-  X,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { BreadcrumbTrail } from "@/components/ui/breadcrumb-trail";
 import {
   headerNavGroups,
   companyWideHeaderTools,
@@ -39,6 +39,7 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebarButton } from "./comments-sidebar-button";
+import { PageCommentsButton } from "./page-comments-button";
 import { FeedbackButton } from "./feedback-button";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
@@ -112,12 +113,12 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname()!;
   const nav = useHeaderNav();
+  const { setOpenMobile } = useSidebar();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId,
   );
   const isDeveloper = userType === "developer";
   const [user, setUser] = React.useState<User | null>(null);
-  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
     React.useState<string | null>(null);
 
@@ -141,24 +142,15 @@ export function SiteHeader() {
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!mobileNavOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileNavOpen]);
-
   const userManagementUserId = React.useMemo(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     if (
       segments.length >= 3 &&
       segments[0] === "user-management" &&
       segments[1] === "users" &&
-      /^[0-9a-f-]{36}$/i.test(segments[2])
+      segments[2]
     ) {
-      return segments[2];
+      return decodeURIComponent(segments[2]);
     }
 
     return null;
@@ -250,37 +242,26 @@ export function SiteHeader() {
             />
           </Link>
 
-          {/* Breadcrumbs — Desktop */}
+          {/* Breadcrumbs — only where there's room (lg+). Below lg the project
+              selector + tools dropdown already convey location, so hiding the
+              trail here keeps the header from crowding into it. */}
           {breadcrumbs.length > 1 && (
-            <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
-              {breadcrumbs.map((crumb, index) => (
-                <span
-                  key={`${crumb.href}-${index}`}
-                  className="flex items-center gap-1"
-                >
-                  {index > 0 && (
-                    <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50" />
-                  )}
-                  {index === breadcrumbs.length - 1 ? (
-                    <span className="truncate font-medium text-foreground">
-                      {crumb.label}
-                    </span>
-                  ) : (
-                    <Link
-                      href={crumb.href}
-                      className="truncate text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {crumb.label}
-                    </Link>
-                  )}
-                </span>
-              ))}
+            <div className="hidden lg:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
+              <BreadcrumbTrail
+                items={breadcrumbs}
+                listClassName="text-xs"
+                linkClassName="max-w-[8rem] xl:max-w-[10rem] text-muted-foreground"
+                currentClassName="max-w-[10rem] xl:max-w-[12rem] font-medium text-foreground"
+                maxVisibleItems={5}
+                leadingItems={2}
+                trailingItems={2}
+              />
             </div>
           )}
         </div>
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
-        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+        <div className="hidden md:flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
@@ -307,7 +288,11 @@ export function SiteHeader() {
           />
           <AiChatButton />
           <FeedbackButton />
-          <CommentsSidebarButton />
+          {process.env.NEXT_PUBLIC_PAGE_COMMENTS === "on" ? (
+            <PageCommentsButton />
+          ) : (
+            <CommentsSidebarButton />
+          )}
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
@@ -326,260 +311,14 @@ export function SiteHeader() {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => setMobileNavOpen(true)}
+          onClick={() => setOpenMobile(true)}
           aria-label="Open menu"
           className="md:hidden h-12 w-12 shrink-0 text-foreground"
         >
           <Menu className="size-6" strokeWidth={1.8} />
         </Button>
       </div>
-
-      {/* Mobile full-screen nav overlay */}
-      <MobileNavOverlay
-        open={mobileNavOpen}
-        onClose={() => setMobileNavOpen(false)}
-        projectId={nav.projectId}
-        currentProject={nav.currentProject}
-        projects={nav.projects}
-        loadingProjects={nav.loadingProjects}
-        onFetchProjects={nav.fetchProjects}
-        onProjectSelect={nav.handleProjectSelect}
-        activeToolName={nav.activeToolName}
-        permissions={permissions}
-        isAppAdmin={isAppAdmin}
-        userType={userType}
-        isDeveloper={isDeveloper}
-        user={user}
-      />
     </header>
-  );
-}
-
-function MobileNavOverlay({
-  open,
-  onClose,
-  projectId,
-  currentProject,
-  projects,
-  loadingProjects,
-  onFetchProjects,
-  onProjectSelect,
-  activeToolName,
-  permissions,
-  isAppAdmin,
-  userType,
-  isDeveloper,
-  user,
-}: {
-  open: boolean;
-  onClose: () => void;
-  projectId: number | null;
-  currentProject: {
-    id: number;
-    name: string | null;
-    "job number": string | null;
-  } | null;
-  projects: { id: number; name: string | null; "job number": string | null }[];
-  loadingProjects: boolean;
-  onFetchProjects: () => void;
-  onProjectSelect: (projectId: number) => void;
-  activeToolName: string;
-  permissions: Record<string, string[]>;
-  isAppAdmin: boolean;
-  userType: string | null;
-  isDeveloper: boolean;
-  user: User | null;
-}) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    if (open) {
-      setMounted(true);
-    } else {
-      const t = setTimeout(() => setMounted(false), 300);
-      return () => clearTimeout(t);
-    }
-  }, [open]);
-
-  if (!mounted && !open) return null;
-
-  const groups = headerNavGroups.map((group) => ({
-    ...group,
-    visibleTools: filterToolsByPermission(
-      group.tools,
-      projectId,
-      permissions,
-      isAppAdmin,
-      userType,
-      isDeveloper,
-      user?.email ?? null,
-    ),
-  }));
-  const companyToolList = [
-    ...companyWideHeaderTools,
-    // Only the single Admin Dashboard link; other internal admin tools are
-    // reachable from that page.
-    ...(isDeveloper
-      ? developerCompanyAdminTools.filter((tool) => tool.name === "Admin Dashboard")
-      : []),
-  ];
-  const companyTools = filterToolsByPermission(
-    companyToolList,
-    projectId,
-    permissions,
-    isAppAdmin,
-    userType,
-    isDeveloper,
-  );
-
-  return (
-    <div
-      className={cn(
-        "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out flex flex-col",
-        open
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-4 pointer-events-none",
-      )}
-    >
-      {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between px-4">
-        <Image
-          src="/Alleato-Group-Logo_Dark.png"
-          alt="Alleato"
-          width={96}
-          height={21}
-          className="h-auto w-24 dark:invert"
-          style={{ height: "auto" }}
-        />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          aria-label="Close menu"
-          className="h-12 w-12 shrink-0 text-foreground"
-        >
-          <X className="size-6" strokeWidth={1.8} />
-        </Button>
-      </div>
-
-      {/* Nav — fills remaining space */}
-      <nav className="flex-1 overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
-        {groups.map((group) => (
-          <div
-            key={group.id}
-            className="flex flex-col items-center gap-6 w-full"
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              {group.label}
-            </p>
-            <div className="flex flex-col items-center gap-5 w-full">
-              {group.tools.map((tool) => {
-                const isDisabled =
-                  (tool.requiresProject && !projectId) ||
-                  !group.visibleTools.includes(tool);
-                const href = buildToolUrl(
-                  tool.path,
-                  projectId,
-                  tool.requiresProject,
-                );
-                const isActive = tool.name === activeToolName;
-                return (
-                  <Link
-                    key={`${tool.path}:${tool.name}`}
-                    href={href}
-                    onClick={(e) => {
-                      if (isDisabled) {
-                        e.preventDefault();
-                        return;
-                      }
-                      onClose();
-                    }}
-                    className={cn(
-                      "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                      isDisabled
-                        ? "pointer-events-none opacity-30"
-                        : isActive
-                          ? "text-foreground font-semibold"
-                          : "text-foreground/85",
-                    )}
-                  >
-                    {tool.name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-        <div className="flex w-full flex-col items-center gap-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Company Tools
-          </p>
-          <div className="flex w-full flex-col items-center gap-5">
-            {companyToolList.map((tool) => {
-              const isDisabled = !companyTools.includes(tool);
-              const href = buildToolUrl(
-                tool.path,
-                projectId,
-                tool.requiresProject,
-              );
-              const isActive = tool.name === activeToolName;
-              return (
-                <Link
-                  key={`${tool.path}:${tool.name}`}
-                  href={href}
-                  onClick={(e) => {
-                    if (isDisabled) {
-                      e.preventDefault();
-                      return;
-                    }
-                    onClose();
-                  }}
-                  className={cn(
-                    "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
-                    isDisabled
-                      ? "pointer-events-none opacity-30"
-                      : isActive
-                        ? "font-semibold text-foreground"
-                        : "text-foreground/85",
-                  )}
-                >
-                  {tool.name}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </nav>
-
-      {/* Bottom: project selector + user menu */}
-      <div className="shrink-0 border-t border-border/50 bg-background">
-        <div className="flex justify-center px-4 pt-3 pb-2 [&_.project-selector-trigger]:!border-0 [&_.project-selector-trigger]:justify-center">
-          <ProjectSelector
-            projectId={projectId}
-            currentProject={currentProject}
-            projects={projects}
-            loadingProjects={loadingProjects}
-            onFetchProjects={onFetchProjects}
-            onProjectSelect={(id) => {
-              onProjectSelect(id);
-              onClose();
-            }}
-            onViewAll={onClose}
-          />
-        </div>
-        <div className="px-4 pb-3">
-          <HeaderUserMenu
-            user={user}
-            projectId={projectId}
-            activeToolName={activeToolName}
-            permissions={permissions}
-            isAppAdmin={isAppAdmin}
-            userType={userType}
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -664,13 +403,13 @@ function ToolsDropdown({
   }, [open, projectId]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className={cn("w-52", headerSelectTriggerClassName)}
+          className={cn("w-36 lg:w-44 xl:w-52", headerSelectTriggerClassName)}
         >
           <span
             className={cn(
@@ -693,7 +432,7 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           aria-label="Close tools menu"
-          className="fixed inset-x-0 bottom-0 top-12 z-30 h-auto cursor-default rounded-none bg-background/55 p-0 backdrop-blur-sm animate-in fade-in duration-150 hover:bg-background/55 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="fixed inset-x-0 bottom-0 top-12 z-[10000] h-auto cursor-default rounded-none bg-background/55 p-0 backdrop-blur-sm animate-in fade-in duration-150 hover:bg-background/55 focus-visible:ring-0 focus-visible:ring-offset-0"
           onClick={() => setOpen(false)}
         />
       )}
@@ -701,7 +440,7 @@ function ToolsDropdown({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="border border-border bg-popover p-0 shadow-sm"
+        className="z-[10010] overflow-hidden border border-border bg-popover p-0 shadow-sm"
         style={{
           width: "min(1040px, calc(100vw - 1.5rem))",
           maxWidth: "calc(100vw - 1.5rem)",
@@ -831,7 +570,6 @@ function CompanyToolsPanel({
   // link lives at the end of the "Company" section; other internal admin tools
   // are reachable from the Admin Dashboard page itself.
   const sections = companyWideToolSections;
-  const allTools = [...tools, ...adminTools];
   const allVisibleTools = [...visibleTools, ...visibleAdminTools];
 
   return (
@@ -843,20 +581,17 @@ function CompanyToolsPanel({
               {section.label}
             </p>
             {section.toolNames.map((toolName) => {
-              const tool = allTools.find(
+              const tool = allVisibleTools.find(
                 (candidate) => candidate.name === toolName,
               );
               if (!tool) return null;
-              // Owner-only tools are hidden outright (not greyed) when the
-              // current user isn't the owner — they never reach visibleTools.
-              if (tool.ownerOnly && !allVisibleTools.includes(tool)) return null;
               return (
                 <ToolItem
                   key={`${tool.path}:${tool.name}`}
                   tool={tool}
                   projectId={projectId}
                   isActive={tool.name === activeToolName}
-                  isDisabled={!allVisibleTools.includes(tool)}
+                  isDisabled={false}
                   onClose={onClose}
                 />
               );
@@ -889,10 +624,8 @@ function ToolsGroup({
           {group.label}
         </p>
         {group.subGroups.map((subGroup) => {
-          const subTools = group.tools.filter(
-            (tool) =>
-              subGroup.toolNames.includes(tool.name) &&
-              (!tool.developerOnly || visibleTools.includes(tool)),
+          const subTools = visibleTools.filter((tool) =>
+            subGroup.toolNames.includes(tool.name),
           );
           return (
             <div key={subGroup.label} className="mb-3 last:mb-0">
@@ -905,10 +638,7 @@ function ToolsGroup({
                   tool={tool}
                   projectId={projectId}
                   isActive={tool.name === activeToolName}
-                  isDisabled={
-                    (tool.requiresProject && !projectId) ||
-                    !visibleTools.includes(tool)
-                  }
+                  isDisabled={false}
                   onClose={onClose}
                 />
               ))}
@@ -925,21 +655,16 @@ function ToolsGroup({
       <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {group.label}
       </p>
-      {group.tools
-        .filter((tool) => !tool.developerOnly || visibleTools.includes(tool))
-        .map((tool) => (
-          <ToolItem
-            key={`${tool.path}:${tool.name}`}
-            tool={tool}
-            projectId={projectId}
-            isActive={tool.name === activeToolName}
-            isDisabled={
-              (tool.requiresProject && !projectId) ||
-              !visibleTools.includes(tool)
-            }
-            onClose={onClose}
-          />
-        ))}
+      {visibleTools.map((tool) => (
+        <ToolItem
+          key={`${tool.path}:${tool.name}`}
+          tool={tool}
+          projectId={projectId}
+          isActive={tool.name === activeToolName}
+          isDisabled={false}
+          onClose={onClose}
+        />
+      ))}
     </div>
   );
 }

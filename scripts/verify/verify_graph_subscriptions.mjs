@@ -60,6 +60,12 @@ function configuredOutlookTargets() {
     .filter(Boolean);
 }
 
+function parseExpiration(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function resolveRagSupabaseConfig() {
   return {
     url:
@@ -120,14 +126,23 @@ async function main() {
     key,
   );
 
+  const now = new Date();
   const activeSubscriptions = subscriptions.filter((row) => row.status === "active");
+  const expiredActiveSubscriptions = activeSubscriptions.filter((row) => {
+    const expiration = parseExpiration(row.expiration_at);
+    return !expiration || expiration <= now;
+  });
+  const validActiveSubscriptions = activeSubscriptions.filter((row) => {
+    const expiration = parseExpiration(row.expiration_at);
+    return expiration && expiration > now;
+  });
   const staleSubscriptions = subscriptions.filter((row) => !["active", "removed"].includes(row.status));
   const erroredSyncStates = syncStates.filter((row) => row.sync_status === "error" || row.error_message);
   const expectedTargets = options.source === "outlook_email" && options.requireConfiguredTargets
     ? configuredOutlookTargets()
     : [];
   const activeByResourceId = new Set(
-    activeSubscriptions.map((row) => String(row.resource_id || "").toLowerCase()).filter(Boolean),
+    validActiveSubscriptions.map((row) => String(row.resource_id || "").toLowerCase()).filter(Boolean),
   );
   const missingActiveTargets = expectedTargets.filter((resourceId) => !activeByResourceId.has(resourceId));
   const expectedTargetSet = new Set(expectedTargets);
@@ -139,8 +154,9 @@ async function main() {
     : [];
   const minActiveSubscriptions = options.minActive ?? (expectedTargets.length > 0 ? expectedTargets.length : 1);
   const ok = (
-    activeSubscriptions.length >= minActiveSubscriptions &&
+    validActiveSubscriptions.length >= minActiveSubscriptions &&
     missingActiveTargets.length === 0 &&
+    expiredActiveSubscriptions.length === 0 &&
     staleSubscriptions.length === 0 &&
     unconfiguredSubscriptions.length === 0
   );
@@ -153,11 +169,14 @@ async function main() {
     missingActiveTargets,
     subscriptionCount: subscriptions.length,
     activeSubscriptionCount: activeSubscriptions.length,
+    validActiveSubscriptionCount: validActiveSubscriptions.length,
+    expiredActiveSubscriptionCount: expiredActiveSubscriptions.length,
     staleSubscriptionCount: staleSubscriptions.length,
     unconfiguredSubscriptionCount: unconfiguredSubscriptions.length,
     syncStateCount: syncStates.length,
     erroredSyncStateCount: erroredSyncStates.length,
     subscriptions,
+    expiredActiveSubscriptions,
     staleSubscriptions,
     unconfiguredSubscriptions,
     syncStates,
@@ -167,15 +186,18 @@ async function main() {
     console.log(JSON.stringify(payload, null, 2));
   } else if (ok) {
     console.log(
-      `Graph subscriptions: PASS (${activeSubscriptions.length}/${subscriptions.length} active ${options.source} subscription(s); ${syncStates.length} sync state row(s))`,
+      `Graph subscriptions: PASS (${validActiveSubscriptions.length}/${subscriptions.length} unexpired active ${options.source} subscription(s); ${syncStates.length} sync state row(s))`,
     );
   } else {
     console.error("Graph subscriptions: FAIL");
     console.error(
-      `Expected at least ${minActiveSubscriptions} active ${options.source} subscription(s), found ${activeSubscriptions.length}.`,
+      `Expected at least ${minActiveSubscriptions} unexpired active ${options.source} subscription(s), found ${validActiveSubscriptions.length}.`,
     );
     if (missingActiveTargets.length > 0) {
       console.error(`Missing active subscriptions for configured target(s): ${missingActiveTargets.join(", ")}.`);
+    }
+    if (expiredActiveSubscriptions.length > 0) {
+      console.error(`Expired active subscription row(s): ${expiredActiveSubscriptions.length}.`);
     }
     if (staleSubscriptions.length > 0) {
       console.error(`Stale subscription row(s): ${staleSubscriptions.length}.`);
@@ -187,6 +209,11 @@ async function main() {
     for (const row of subscriptions.slice(0, 5)) {
       console.error(
         ` - ${row.resource_name || row.resource_id}: status=${row.status || "<missing>"} expiration=${row.expiration_at || "<missing>"} error=${row.last_error_message || "<none>"}`,
+      );
+    }
+    for (const row of expiredActiveSubscriptions.slice(0, 5)) {
+      console.error(
+        ` - expired ${row.resource_name || row.resource_id}: expiration=${row.expiration_at || "<missing>"}`,
       );
     }
   }

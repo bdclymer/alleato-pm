@@ -1,3 +1,8 @@
+import {
+  buildChangeEventWorkflowDraft,
+  type ChangeEventWorkflowDraft,
+} from "@/lib/ai/change-event-workflow";
+
 export type AssistantWidgetKind =
   | "draft_email"
   | "outlook_email_draft"
@@ -18,6 +23,7 @@ export type AssistantWidgetKind =
   | "record_write_preview"
   | "commitment_draft"
   | "create_event"
+  | "change_event_workflow"
   | "project_action_preview"
   | "decision_packet"
   | "feature_request_packet"
@@ -233,6 +239,7 @@ export type ProjectPickerWidgetPayload = {
   id: string;
   title: string;
   subtitle: string;
+  actionLabel?: string;
   intent: "owner_snapshot" | "owner_action_queue" | "meeting_insights" | "risk_review" | "financial_pulse" | "general";
   projects: Array<{
     projectId: number;
@@ -242,6 +249,7 @@ export type ProjectPickerWidgetPayload = {
     state?: string | null;
     summary?: string | null;
     contractValue?: string | null;
+    activityLabel?: string | null;
     meetingCount?: number | null;
     openCriticalItems?: number | null;
     healthStatus?: string | null;
@@ -271,6 +279,13 @@ export type ProjectActionPreviewWidgetPayload = {
   projectId?: number | null;
   fields: AssistantWidgetField[];
   confirmPrompt: string;
+};
+
+export type ChangeEventWorkflowWidgetPayload = {
+  type: "change_event_workflow";
+  id: string;
+  title: string;
+  draft: ChangeEventWorkflowDraft;
 };
 
 export type DecisionPacketWidgetPayload = {
@@ -604,6 +619,7 @@ export type AssistantWidgetPayload =
   | RecordWritePreviewWidgetPayload
   | CommitmentDraftWidgetPayload
   | CreateEventWidgetPayload
+  | ChangeEventWorkflowWidgetPayload
   | ProjectActionPreviewWidgetPayload
   | DecisionPacketWidgetPayload
   | ExecutiveDailyBriefWidgetPayload
@@ -637,6 +653,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "record_write_preview",
   "commitment_draft",
   "create_event",
+  "change_event_workflow",
   "project_action_preview",
   "decision_packet",
   "feature_request_packet",
@@ -803,21 +820,14 @@ export function buildAssistantWidgetsFromPrompt(params: {
       "change event",
     ])
   ) {
-    const title = compactTitle(prompt, "Draft change request");
     widgets.push({
-      type: "project_action_preview",
-      id: "change-event-preview",
-      title: "Change request preview",
-      actionType: "change_event",
-      projectId: params.selectedProjectId ?? null,
-      fields: [
-        { label: "Title", value: title, editable: true },
-        { label: "Description", value: prompt, editable: true, multiline: true },
-        { label: "Scope", value: "other", editable: true },
-        { label: "Status", value: "open", editable: true },
-      ],
-      confirmPrompt:
-        "Create a change request/change event from this preview. Show the final write preview first and wait for my confirmation.",
+      type: "change_event_workflow",
+      id: "change-event-workflow",
+      title: "Change event workflow",
+      draft: buildChangeEventWorkflowDraft({
+        prompt,
+        selectedProjectId: params.selectedProjectId ?? null,
+      }),
     });
   }
 

@@ -6,6 +6,7 @@
  */
 
 import type { Database } from "@/types/database.types";
+import { normalizeCommitmentContractNumber } from "@/lib/commitments/contract-number";
 
 // Use the generated types - these are the source of truth
 type SubcontractRow = Database["public"]["Tables"]["subcontracts"]["Row"];
@@ -159,7 +160,10 @@ export function mapFormToInsert(
   return {
     // Required fields
     project_id: projectId,
-    contract_number: formData.contractNumber?.trim() || "",
+    contract_number: normalizeCommitmentContractNumber(
+      formData.contractNumber,
+      "SC-",
+    ),
     status: normalizeSubcontractStatus(formData.status),
     executed: formData.executed ?? false,
 

@@ -1,0 +1,758 @@
+{
+  "ok": true,
+  "startedAt": "2026-07-07T17:52:08.630Z",
+  "completedAt": "2026-07-07T18:00:58.746Z",
+  "start": "2026-06-26",
+  "end": "2026-07-06",
+  "dryRun": false,
+  "shouldWrite": true,
+  "maxDocumentsPerDay": 125,
+  "maxSourceCharsPerDay": 900000,
+  "forceAbnormalDays": false,
+  "evidenceRoot": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2",
+  "days": [
+    {
+      "date": "2026-06-26",
+      "status": "skipped_abnormal_volume",
+      "reason": "sourceChars=1077570 exceeds maxSourceCharsPerDay=900000",
+      "preflight": {
+        "date": "2026-06-26",
+        "bounds": {
+          "startIso": "2026-06-26T04:00:00.000Z",
+          "endIso": "2026-06-27T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 8,
+          "emails": 90,
+          "teams": 54,
+          "documents": 2
+        },
+        "sourceChars": {
+          "meetings": 754900,
+          "emails": 225187,
+          "teams": 94996,
+          "documents": 2487
+        },
+        "total": 154,
+        "totalSourceChars": 1077570,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packet": {
+        "id": "a8fb06d4-9569-4eab-8aee-ff1bda249d85",
+        "packet_type": "snapshot",
+        "generated_at": "2026-07-07T17:51:12.861Z",
+        "kind": "daily_deep_read"
+      }
+    },
+    {
+      "date": "2026-06-27",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-06-27",
+        "bounds": {
+          "startIso": "2026-06-27T04:00:00.000Z",
+          "endIso": "2026-06-28T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 0,
+          "emails": 101,
+          "teams": 16,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 0,
+          "emails": 269185,
+          "teams": 37519,
+          "documents": 0
+        },
+        "total": 117,
+        "totalSourceChars": 306704,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "7935b265-ed0b-4e2b-ac2d-73e7bbc1e730",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-06-27",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-06-27",
+        "rowsConsidered": 475,
+        "included": {
+          "meetings": 0,
+          "emails": 11,
+          "teams": 0,
+          "documents": 0
+        },
+        "skipped": 464,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "7935b265-ed0b-4e2b-ac2d-73e7bbc1e730",
+          "generatedAt": "2026-07-07T17:52:49.786Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "7935b265-ed0b-4e2b-ac2d-73e7bbc1e730",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 27,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 27
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 6
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 2
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 6
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 5
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 8
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-06-27"
+      }
+    },
+    {
+      "date": "2026-06-28",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-06-28",
+        "bounds": {
+          "startIso": "2026-06-28T04:00:00.000Z",
+          "endIso": "2026-06-29T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 0,
+          "emails": 43,
+          "teams": 1,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 0,
+          "emails": 90474,
+          "teams": 8420,
+          "documents": 0
+        },
+        "total": 44,
+        "totalSourceChars": 98894,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "407632b9-e5fc-4aab-8922-b19afe082936",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-06-28",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-06-28",
+        "rowsConsidered": 321,
+        "included": {
+          "meetings": 0,
+          "emails": 24,
+          "teams": 7,
+          "documents": 0
+        },
+        "skipped": 290,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "407632b9-e5fc-4aab-8922-b19afe082936",
+          "generatedAt": "2026-07-07T17:53:55.672Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "407632b9-e5fc-4aab-8922-b19afe082936",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 28,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 28
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 7
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 1
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 13
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 5
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 2
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-06-28"
+      }
+    },
+    {
+      "date": "2026-06-29",
+      "status": "skipped_abnormal_volume",
+      "reason": "sourceChars=1350330 exceeds maxSourceCharsPerDay=900000",
+      "preflight": {
+        "date": "2026-06-29",
+        "bounds": {
+          "startIso": "2026-06-29T04:00:00.000Z",
+          "endIso": "2026-06-30T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 7,
+          "emails": 249,
+          "teams": 44,
+          "documents": 2
+        },
+        "sourceChars": {
+          "meetings": 723257,
+          "emails": 560331,
+          "teams": 58124,
+          "documents": 8618
+        },
+        "total": 302,
+        "totalSourceChars": 1350330,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packet": null
+    },
+    {
+      "date": "2026-06-30",
+      "status": "skipped_abnormal_volume",
+      "reason": "sourceChars=1483369 exceeds maxSourceCharsPerDay=900000",
+      "preflight": {
+        "date": "2026-06-30",
+        "bounds": {
+          "startIso": "2026-06-30T04:00:00.000Z",
+          "endIso": "2026-07-01T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 10,
+          "emails": 183,
+          "teams": 15,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 928238,
+          "emails": 533014,
+          "teams": 22117,
+          "documents": 0
+        },
+        "total": 208,
+        "totalSourceChars": 1483369,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packet": null
+    },
+    {
+      "date": "2026-07-01",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-07-01",
+        "bounds": {
+          "startIso": "2026-07-01T04:00:00.000Z",
+          "endIso": "2026-07-02T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 4,
+          "emails": 103,
+          "teams": 19,
+          "documents": 1
+        },
+        "sourceChars": {
+          "meetings": 191034,
+          "emails": 371048,
+          "teams": 6371,
+          "documents": 0
+        },
+        "total": 127,
+        "totalSourceChars": 568453,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "4697b5d5-45c7-43ac-bfa5-79c8c060ad78",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-07-01",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-07-01",
+        "rowsConsidered": 686,
+        "included": {
+          "meetings": 1,
+          "emails": 164,
+          "teams": 2,
+          "documents": 1
+        },
+        "skipped": 518,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "4697b5d5-45c7-43ac-bfa5-79c8c060ad78",
+          "generatedAt": "2026-07-07T17:56:35.587Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "4697b5d5-45c7-43ac-bfa5-79c8c060ad78",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 31,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 31
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 11
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 3
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 12
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 2
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 3
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-01"
+      }
+    },
+    {
+      "date": "2026-07-02",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-07-02",
+        "bounds": {
+          "startIso": "2026-07-02T04:00:00.000Z",
+          "endIso": "2026-07-03T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 0,
+          "emails": 186,
+          "teams": 20,
+          "documents": 2
+        },
+        "sourceChars": {
+          "meetings": 0,
+          "emails": 701518,
+          "teams": 23297,
+          "documents": 1300
+        },
+        "total": 208,
+        "totalSourceChars": 726115,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "57c0db78-cf95-49bd-bc12-9de35d0eb231",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-07-02",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-07-02",
+        "rowsConsidered": 526,
+        "included": {
+          "meetings": 0,
+          "emails": 133,
+          "teams": 0,
+          "documents": 2
+        },
+        "skipped": 391,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "57c0db78-cf95-49bd-bc12-9de35d0eb231",
+          "generatedAt": "2026-07-07T17:58:39.947Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "57c0db78-cf95-49bd-bc12-9de35d0eb231",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 35,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 35
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 5
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 1
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 25
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 2
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 2
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-02"
+      }
+    },
+    {
+      "date": "2026-07-03",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-07-03",
+        "bounds": {
+          "startIso": "2026-07-03T04:00:00.000Z",
+          "endIso": "2026-07-04T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 0,
+          "emails": 54,
+          "teams": 4,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 0,
+          "emails": 158362,
+          "teams": 5267,
+          "documents": 0
+        },
+        "total": 58,
+        "totalSourceChars": 163629,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "091b039a-290c-4e7e-b32b-93260eb54b43",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-07-03",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-07-03",
+        "rowsConsidered": 402,
+        "included": {
+          "meetings": 0,
+          "emails": 2,
+          "teams": 0,
+          "documents": 0
+        },
+        "skipped": 400,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "091b039a-290c-4e7e-b32b-93260eb54b43",
+          "generatedAt": "2026-07-07T17:59:11.474Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "091b039a-290c-4e7e-b32b-93260eb54b43",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 17,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 17
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 3
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 2
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 4
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-03"
+      }
+    },
+    {
+      "date": "2026-07-04",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-07-04",
+        "bounds": {
+          "startIso": "2026-07-04T04:00:00.000Z",
+          "endIso": "2026-07-05T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 8,
+          "emails": 29,
+          "teams": 0,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 690602,
+          "emails": 66873,
+          "teams": 0,
+          "documents": 0
+        },
+        "total": 37,
+        "totalSourceChars": 757475,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "45dab84f-ac23-41ef-9ba6-2e06e19d79dc",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-07-04",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-07-04",
+        "rowsConsidered": 180,
+        "included": {
+          "meetings": 0,
+          "emails": 4,
+          "teams": 0,
+          "documents": 0
+        },
+        "skipped": 176,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "45dab84f-ac23-41ef-9ba6-2e06e19d79dc",
+          "generatedAt": "2026-07-07T17:59:51.420Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "45dab84f-ac23-41ef-9ba6-2e06e19d79dc",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 22,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 22
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 3
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 3
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 8
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 4
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-04"
+      }
+    },
+    {
+      "date": "2026-07-05",
+      "status": "completed",
+      "preflight": {
+        "date": "2026-07-05",
+        "bounds": {
+          "startIso": "2026-07-05T04:00:00.000Z",
+          "endIso": "2026-07-06T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 1,
+          "emails": 64,
+          "teams": 0,
+          "documents": 0
+        },
+        "sourceChars": {
+          "meetings": 121084,
+          "emails": 132072,
+          "teams": 0,
+          "documents": 0
+        },
+        "total": 65,
+        "totalSourceChars": 253156,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packetId": "5498f3d1-5b92-406b-acfd-eec5d3c8a48d",
+      "brief": {
+        "ok": true,
+        "businessDate": "2026-07-05",
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-finalization/backfill-live-remaining-2/2026-07-05",
+        "rowsConsidered": 174,
+        "included": {
+          "meetings": 0,
+          "emails": 9,
+          "teams": 0,
+          "documents": 0
+        },
+        "skipped": 165,
+        "packet": {
+          "targetId": "7081c5bb-71c9-48b3-a92e-01aaf259ac25",
+          "packetId": "5498f3d1-5b92-406b-acfd-eec5d3c8a48d",
+          "generatedAt": "2026-07-07T18:00:52.595Z"
+        }
+      },
+      "consumer": {
+        "ok": true,
+        "packetId": "5498f3d1-5b92-406b-acfd-eec5d3c8a48d",
+        "compilerVersion": "daily_deep_read_consumers_v1",
+        "shouldWrite": true,
+        "candidateCount": 24,
+        "writeResult": {
+          "deleted": 0,
+          "inserted": 24
+        },
+        "readBack": [
+          {
+            "signal_type": "decision",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "process_issue",
+            "status": "needs_review",
+            "count": 3
+          },
+          {
+            "signal_type": "project_update",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "risk",
+            "status": "needs_review",
+            "count": 4
+          },
+          {
+            "signal_type": "task",
+            "status": "needs_review",
+            "count": 9
+          }
+        ],
+        "evidenceDir": "/Users/meganharrison/Documents/alleato-pm/docs/ops/evidence/2026-07-07-daily-deep-read-consumers/2026-07-05"
+      }
+    },
+    {
+      "date": "2026-07-06",
+      "status": "skipped_abnormal_volume",
+      "reason": "sourceChars=2964087 exceeds maxSourceCharsPerDay=900000",
+      "preflight": {
+        "date": "2026-07-06",
+        "bounds": {
+          "startIso": "2026-07-06T04:00:00.000Z",
+          "endIso": "2026-07-07T04:00:00.000Z"
+        },
+        "laneCounts": {
+          "meetings": 21,
+          "emails": 167,
+          "teams": 1,
+          "documents": 70
+        },
+        "sourceChars": {
+          "meetings": 2450322,
+          "emails": 427060,
+          "teams": 1544,
+          "documents": 85161
+        },
+        "total": 259,
+        "totalSourceChars": 2964087,
+        "threshold": {
+          "maxDocumentsPerDay": 125,
+          "maxSourceCharsPerDay": 900000
+        }
+      },
+      "packet": {
+        "id": "f5ba7ef9-a3d2-40d0-8ed6-907c327f2f64",
+        "packet_type": "current",
+        "generated_at": "2026-07-07T11:32:33.213Z",
+        "kind": "daily_deep_read"
+      }
+    }
+  ]
+}

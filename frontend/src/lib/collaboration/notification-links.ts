@@ -25,3 +25,44 @@ export function getCollaborationNotificationHref(
   const suffix = notification.entityId ? `/${notification.entityId}` : "";
   return `/${notification.projectId}/${segment}${suffix}`;
 }
+
+export function getCommentDiscussionHref(
+  documentId: string | null | undefined,
+  annotationId: string | null | undefined,
+) {
+  if (!annotationId) {
+    return "/comments";
+  }
+
+  if (!documentId || !documentId.startsWith("/")) {
+    return `/comments?thread=${encodeURIComponent(annotationId)}`;
+  }
+
+  const params = new URLSearchParams({ discussion: annotationId });
+  return documentId === "/"
+    ? `/?${params.toString()}`
+    : `${documentId}?${params.toString()}`;
+}
+
+export function getCommentFollowUpAction(
+  annotationId: string | null | undefined,
+) {
+  if (!annotationId) {
+    return {
+      href: "/comments",
+      label: "Comments workspace",
+    };
+  }
+
+  const params = new URLSearchParams({ discussion: annotationId });
+  return {
+    href: `/team-chat?${params.toString()}`,
+    label: "Team chat",
+  };
+}
+
+export function getCommentTeamChatHref(
+  annotationId: string | null | undefined,
+) {
+  return getCommentFollowUpAction(annotationId).href;
+}

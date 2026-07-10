@@ -20,6 +20,9 @@ interface RHFTextFieldProps<TFieldValues extends FieldValues> {
   autoComplete?: string;
   disabled?: boolean;
   maxLength?: number;
+  /** Associates a `<datalist>` id for free-text-with-suggestions inputs. */
+  list?: string;
+  onFocus?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 export function RHFTextField<TFieldValues extends FieldValues>({
@@ -32,6 +35,8 @@ export function RHFTextField<TFieldValues extends FieldValues>({
   autoComplete,
   disabled,
   maxLength,
+  list,
+  onFocus,
 }: RHFTextFieldProps<TFieldValues>) {
   return (
     <FormField
@@ -50,6 +55,8 @@ export function RHFTextField<TFieldValues extends FieldValues>({
               autoComplete={autoComplete}
               disabled={disabled}
               maxLength={maxLength}
+              list={list}
+              onFocus={onFocus}
             />
           </FormControl>
           <FormMessage />

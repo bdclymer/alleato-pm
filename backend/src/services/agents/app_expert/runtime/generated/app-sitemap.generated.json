@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "generatedAt": "2026-06-22T20:34:20.815Z",
   "source": "scripts/docs/generate-app-expert-artifacts.mjs",
-  "routeCount": 308,
+  "routeCount": 307,
   "documentedRouteCount": 52,
   "helpArticleCount": 60,
   "routes": [
@@ -5117,32 +5117,6 @@
           "id": "route:/auth/login",
           "title": "Login",
           "description": "Route discovered from frontend/src/app/auth/login/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
-          "tags": [
-            "auth",
-            "page"
-          ]
-        }
-      ],
-      "relatedHelpArticles": []
-    },
-    {
-      "route": "/auth/login-legacy",
-      "title": "Login Legacy",
-      "category": "Authentication",
-      "type": "page",
-      "scope": "auth",
-      "dynamic": false,
-      "dynamicSegments": [],
-      "routeGroup": null,
-      "appFile": "frontend/src/app/auth/login-legacy/page.tsx",
-      "lastModified": "2026-05-13T19:51:40.868Z",
-      "relatedFeatures": [
-        {
-          "id": "route:/auth/login-legacy",
-          "title": "Login Legacy",
-          "description": "Route discovered from frontend/src/app/auth/login-legacy/page.tsx. User-facing help article not yet linked.",
           "status": "route_discovered",
           "source": "route_inventory",
           "tags": [

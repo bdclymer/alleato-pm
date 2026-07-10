@@ -368,7 +368,6 @@ export function ChangeEventLineItemsTable({
               value={formState.vendorId}
               onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
               vendors={vendors}
-              onAddCompany={() => {}}
             />
           </div>
 
@@ -551,14 +550,14 @@ export function ChangeEventLineItemsTable({
                 <InlineTableHeaderCell className="w-40 px-0.5 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="line-item-group-end w-36 px-0.5 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Vendor</InlineTableHeaderCell>
-                <InlineTableHeaderCell className="line-item-group-start w-28 border-l border-border/60 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
-                <InlineTableHeaderCell className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="line-item-group-start w-28 border-l border-border/60 px-2 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-44 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
                 <InlineTableHeaderCell className="line-item-group-end w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</InlineTableHeaderCell>
                 {expectingRevenue && (
                   <>
                     <InlineTableHeaderCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">UOM</InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="line-item-group-end w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-28 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="line-item-group-end w-44 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
                   </>
                 )}
                 <InlineTableHeaderCell className="line-item-group-start w-32 border-l border-border/60 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</InlineTableHeaderCell>

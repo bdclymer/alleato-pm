@@ -3,6 +3,7 @@ import {
   getModelPricing,
   estimateCost,
   estimateCostWithFallback,
+  extractModelId,
   FALLBACK_PRICING,
 } from "../model-pricing";
 
@@ -98,6 +99,29 @@ describe("estimateCostWithFallback", () => {
   it("returns zero cost for zero tokens", () => {
     const { cost } = estimateCostWithFallback("claude-sonnet-4-6", 0, 0);
     expect(cost).toBe(0);
+  });
+});
+
+describe("extractModelId", () => {
+  // Guardrail: the chat write path records the model under `model`, not `modelId`.
+  // Reading the wrong key made AI System Health report every call as "unknown".
+  it("reads the `model` key written by the chat handler", () => {
+    expect(extractModelId({ model: "openai/gpt-5.4", usage: {} })).toBe("openai/gpt-5.4");
+  });
+
+  it("falls back to the legacy `modelId` key", () => {
+    expect(extractModelId({ modelId: "anthropic/claude-sonnet-4-6" })).toBe("anthropic/claude-sonnet-4-6");
+  });
+
+  it("prefers `model` over `modelId` when both exist", () => {
+    expect(extractModelId({ model: "openai/gpt-5.4", modelId: "old" })).toBe("openai/gpt-5.4");
+  });
+
+  it("returns empty string for missing/invalid metadata", () => {
+    expect(extractModelId(null)).toBe("");
+    expect(extractModelId(undefined)).toBe("");
+    expect(extractModelId({})).toBe("");
+    expect(extractModelId({ model: 42 })).toBe("");
   });
 });
 

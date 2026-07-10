@@ -7,8 +7,11 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-ResearchMode = Literal["deep_agents", "unavailable"]
-ResearchToolStatus = Literal["success", "failed", "skipped"]
+# "deep_agents_degraded": the runtime produced an answer but the app database
+# was unreachable, so structured PM tools were down and the answer carries a
+# loud degraded-mode banner. "degraded" trace status marks that same condition.
+ResearchMode = Literal["deep_agents", "deep_agents_degraded", "unavailable"]
+ResearchToolStatus = Literal["success", "failed", "skipped", "degraded"]
 ResearchSourceType = Literal["web", "alleato", "internal", "unknown"]
 
 

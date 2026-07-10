@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   Check,
   ChevronDown,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   PinIcon,
   Plus,
@@ -354,7 +354,7 @@ export function TableViewsMenu({
                 </Button>
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent/40 hover:text-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100">
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <MoreVertical className="h-3.5 w-3.5" />
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
                     <DropdownMenuItem

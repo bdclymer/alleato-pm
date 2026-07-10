@@ -8,6 +8,8 @@ const ACTIVE_BACKEND_HOST = "alleato-backend-rbnj.onrender.com";
 const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 const RENDER_SERVICE_ID = process.env.RENDER_BACKEND_SERVICE_ID || "srv-d8271ohj2pic739klb7g";
 const SHORT_TIMEOUT_MS = Number(process.env.DEEP_AGENTS_RENDER_ENV_TIMEOUT_MS || 30000);
+const REQUIRE_LIVE_RENDER_ENV =
+  process.env.RENDER_ENV_STRICT === "true" || process.env.REQUIRE_RENDER_PROVIDER_READBACK === "true";
 
 const REQUIRED_ENV = new Map([
   ["DEEP_AGENTS_DOCS_RESEARCH_ENABLED", "true"],
@@ -15,6 +17,9 @@ const REQUIRED_ENV = new Map([
   ["LANGCHAIN_DOCS_MCP_URL", "https://docs.langchain.com/mcp"],
   ["DEEP_AGENTS_LLM_WIKI_ENABLED", "true"],
   ["DEEP_AGENTS_LLM_WIKI_MODEL", "gpt-5.4-mini"],
+  ["LLM_WIKI_OUTPUT_ROOT", "/data/llm-wiki"],
+  ["DOCS_RESEARCH_OUTPUT_ROOT", "/data/docs-research"],
+  ["CONTENT_BUILDER_OUTPUT_ROOT", "/data/content-builder"],
 ]);
 
 const failures = [];
@@ -77,9 +82,14 @@ async function fetchJsonWithTimeout(url, options = {}) {
 }
 
 async function verifyLiveRenderEnv() {
-  const token = process.env.RENDER_API_KEY;
+  const token = process.env.RENDER_API_KEY || process.env.RENDER_TOKEN;
   if (!token) {
-    warn("RENDER_API_KEY is not available; skipped live Render env check.");
+    const message = "RENDER_API_KEY or RENDER_TOKEN is not available; skipped live Render env check.";
+    if (REQUIRE_LIVE_RENDER_ENV) {
+      fail(message);
+    } else {
+      warn(message);
+    }
     return null;
   }
 

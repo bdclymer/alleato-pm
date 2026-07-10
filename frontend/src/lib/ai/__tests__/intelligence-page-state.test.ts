@@ -128,4 +128,40 @@ describe("buildIntelligencePageState", () => {
 
     expect(state.briefing.title).toBe("Daily intelligence could not produce a usable strategic read.");
   });
+
+  it("surfaces stale and uncited packet warnings in the fail-loud state", () => {
+    const state = buildIntelligencePageState(makePacket({
+      sourceCoverage: {
+        qualityGate: {
+          status: "passed",
+          reason: "Operating summary passed checks.",
+        },
+      },
+      cards: [
+        {
+          id: "card-uncited",
+          title: "Current read",
+          cardType: "project_update",
+          section: "current_read",
+          rank: 1,
+          summary: "Permit and financing coordination are the current operating read.",
+          whyItMatters: "These decisions drive schedule and owner approval risk.",
+          currentStatus: "active",
+          confidence: "high",
+          attributionStatus: "approved",
+          nextAction: "Confirm permit-critical scope.",
+          sourceCount: 0,
+          metadata: {},
+          evidence: [],
+          latestFeedback: null,
+        },
+      ],
+      ageHours: 12,
+      isStale: true,
+    }));
+
+    expect(state.briefing.title).toBe("Daily intelligence failed source-quality checks.");
+    expect(state.warnings).toContain("The packet is older than the expected refresh window.");
+    expect(state.warnings).toContain("No linked citations are attached to the current packet.");
+  });
 });

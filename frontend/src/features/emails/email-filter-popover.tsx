@@ -21,6 +21,11 @@ import type { EmailSource } from "@/hooks/use-emails";
 import type { FilterValue } from "@/components/tables/unified";
 
 type FilterState = Record<string, FilterValue>;
+type EmailImportanceVisibilityFilter =
+  | "default"
+  | "all"
+  | "important"
+  | "not_important";
 
 interface EmailFilterPopoverProps {
   activeFilters: FilterState;
@@ -33,6 +38,7 @@ interface EmailFilterPopoverProps {
 }
 
 const ALL_VALUE = "__all__";
+const DEFAULT_IMPORTANCE_VALUE = "__default__";
 
 /**
  * Compact filter control for the mail (reading-pane) view. Writes through the
@@ -64,6 +70,9 @@ export function EmailFilterPopover({
   const isStarred = activeFilters.is_starred === true;
   const sentFrom = (activeFilters.sent_at_from as string | undefined) ?? "";
   const sentTo = (activeFilters.sent_at_to as string | undefined) ?? "";
+  const importance =
+    (activeFilters.importance as EmailImportanceVisibilityFilter | undefined) ??
+    "default";
   const sourceActive = showSourceFilter && sourceFilter !== "all";
 
   const activeCount =
@@ -73,6 +82,7 @@ export function EmailFilterPopover({
     (hasAttachments ? 1 : 0) +
     (isStarred ? 1 : 0) +
     (sentFrom || sentTo ? 1 : 0) +
+    (importance !== "default" ? 1 : 0) +
     (sourceActive ? 1 : 0);
 
   const clearAll = () => {
@@ -83,6 +93,7 @@ export function EmailFilterPopover({
       to: undefined,
       has_attachments: undefined,
       is_starred: undefined,
+      importance: undefined,
       sent_at_from: undefined,
       sent_at_to: undefined,
     });
@@ -197,6 +208,37 @@ export function EmailFilterPopover({
             >
               Starred
             </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Relevance
+            </span>
+            <Select
+              value={
+                importance === "default" ? DEFAULT_IMPORTANCE_VALUE : importance
+              }
+              onValueChange={(value) =>
+                update({
+                  importance:
+                    value === DEFAULT_IMPORTANCE_VALUE
+                      ? undefined
+                      : (value as EmailImportanceVisibilityFilter),
+                })
+              }
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DEFAULT_IMPORTANCE_VALUE}>
+                  Default inbox
+                </SelectItem>
+                <SelectItem value="important">Important</SelectItem>
+                <SelectItem value="not_important">Not important</SelectItem>
+                <SelectItem value="all">All relevance</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
