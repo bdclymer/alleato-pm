@@ -1,0 +1,81 @@
+{
+  "project": "Westfield Collective (id 43 / 24-115)",
+  "codes_affected": 12,
+  "jtd_before": 1603361.27,
+  "jtd_after": 1803621.01,
+  "jtd_correction": 200259.74,
+  "rows": [
+    {
+      "code": "5a8cc9c5",
+      "before": 565912.59,
+      "after": 628162.98,
+      "delta": 62250.39
+    },
+    {
+      "code": "49676894",
+      "before": 229774.77,
+      "after": 278380,
+      "delta": 48605.23
+    },
+    {
+      "code": "ae830205",
+      "before": 402241.1,
+      "after": 446487.62,
+      "delta": 44246.52
+    },
+    {
+      "code": "aee72a1f",
+      "before": 163842.34,
+      "after": 181865,
+      "delta": 18022.66
+    },
+    {
+      "code": "34889235",
+      "before": 99825.34,
+      "after": 111366.13,
+      "delta": 11540.79
+    },
+    {
+      "code": "b3ae8303",
+      "before": 48034.01,
+      "after": 53317.75,
+      "delta": 5283.74
+    },
+    {
+      "code": "dec77f8a",
+      "before": 45219.28,
+      "after": 50193.4,
+      "delta": 4974.12
+    },
+    {
+      "code": "acc72c63",
+      "before": 28252.66,
+      "after": 31360.45,
+      "delta": 3107.79
+    },
+    {
+      "code": "e9d7b6a7",
+      "before": 12556.47,
+      "after": 13937.68,
+      "delta": 1381.21
+    },
+    {
+      "code": "ed370e6b",
+      "before": 5225.23,
+      "after": 5800,
+      "delta": 574.77
+    },
+    {
+      "code": "c10c4073",
+      "before": 1689.19,
+      "after": 1875,
+      "delta": 185.81
+    },
+    {
+      "code": "0d08eeb8",
+      "before": 788.29,
+      "after": 875,
+      "delta": 86.71
+    }
+  ]
+}
