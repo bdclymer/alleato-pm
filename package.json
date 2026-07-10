@@ -87,6 +87,7 @@
     "jobplanner:import-submittals": "node scripts/jobplanner/import-submittals.mjs",
     "jobplanner:import-drawings": "node scripts/jobplanner/import-drawings.mjs",
     "jobplanner:audit-submittal-docs": "node scripts/jobplanner/audit-submittal-docs-fallback.mjs",
+    "jobplanner:import-daily-reports": "node scripts/jobplanner/import-daily-reports.mjs",
     "test:jobplanner-submittals-import": "node --test scripts/jobplanner/__tests__/import-submittals.test.mjs",
     "test:jobplanner-drawings-import": "node --test scripts/jobplanner/__tests__/import-drawings.test.mjs",
     "ops:suspend-db-pressure-crons": "node scripts/ops/suspend-render-db-pressure-crons.mjs",
