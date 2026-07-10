@@ -54,3 +54,21 @@ export const getMeetingsByDateInputSchema = z.object({
     .describe("Max meetings to return (default 20)"),
 });
 
+export const createMeetingNoteDescription =
+  "Log notes from a meeting into the project record. Use when the user says " +
+  "'log notes from today's meeting', 'record what we discussed', or " +
+  "'save meeting notes for [project]'. Can pre-fill from Fireflies context if available. " +
+  "Always preview before writing.";
+
+export const createMeetingNoteInputSchema = z.object({
+  projectId: z.number().describe("Project ID"),
+  title: z.string().describe("Meeting title, e.g. 'OAC Meeting — March 2026'"),
+  date: z.string().describe("ISO date string, e.g. '2026-03-23'"),
+  summary: z.string().describe("Summary of what was discussed"),
+  actionItems: z.string().optional().describe("Comma-separated action items from the meeting"),
+  participants: z.string().optional().describe("Comma-separated list of attendees"),
+  durationMinutes: z.number().optional().describe("Meeting duration in minutes"),
+  confirmed: z.boolean().default(false),
+  idempotencyKey: z.string().optional(),
+});
+
