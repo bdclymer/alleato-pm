@@ -104,8 +104,12 @@ function getAddedLines(path) {
 // (RAG tables live in the AI Database project, not database.types.ts).
 const FROM_RE = /(?<!storage\s*)\.from\(\s*['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]\s*\)/g;
 
-// Identifiers that hold a Supabase client pointed at the RAG (AI Database) project.
-// Calls through these clients legitimately reference tables not in database.types.ts.
+// Identifiers whose `.from()` legitimately references tables not in
+// database.types.ts. Two kinds:
+//  - Supabase clients pointed at the RAG (AI Database) project.
+//  - `serviceDb`, the Service data router (@/lib/supabase/service-db): it routes
+//    each table to the right project and type-checks its argument against BOTH
+//    schemas, so TypeScript — not this regex — is the guard for its calls.
 const RAG_CLIENT_IDENTS = [
   "ragClient",
   "ragRead",
@@ -115,6 +119,7 @@ const RAG_CLIENT_IDENTS = [
   "ragReadClient",
   "ragWriteClient",
   "rag",
+  "serviceDb",
 ];
 const RAG_FROM_RE = new RegExp(
   `\\b(?:${RAG_CLIENT_IDENTS.join("|")})\\s*\\.from\\(`,

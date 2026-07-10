@@ -51,6 +51,44 @@ a parity test.
 
 ---
 
+## Data access / Supabase project routing
+
+**Service data router** — the one module that answers "for this table, which Supabase
+project, which service-role client, and which generated-types generic?" Exposed as
+`serviceDb.from(table)` (planned home: `frontend/src/lib/supabase/service-db.ts`). It owns
+the table→project decision *by construction*: it selects the client and calls `.from()`
+itself, returning the native Supabase query builder already bound to the right project — so
+the table you route on is the table you query, and querying the wrong project is
+unrepresentable. The same map drives the return type (`<Database>` for PM-APP tables,
+`<RagDatabase>` for AI-DB tables), so a client can no longer be typed for the wrong project
+(the `createOutlookIntakeServiceClient` mistype). Scope is the **service-role** surface only
+(~470 call sites): RAG is reached exclusively via service-role, so RLS cookie/browser paths
+are always PM-APP, already correct, and are left untouched. Two adapters sit behind the
+seam — the PM-app service client and the RAG service client (today's `createServiceClient` /
+`createRagServiceClient`), constructed once and hidden. Before this module the
+project choice was leaked across ~1,300 call sites and re-derived from developer memory,
+a lint array, and a DB trigger — the recurring "wrong DB" incident class.
+
+**RAG table registry** — the single exported allowlist of tables that physically live in the
+**AI Database** (`document_chunks`, `rag_document_metadata`, `rag_pipeline_state`,
+`outlook_email_intake*`, and their siblings). It is the one source of truth the Service data
+router routes on, replacing the three scattered copies that exist today: the
+`KNOWN_EXTERNAL_TABLES` array in `scripts/audits/check-no-phantom-doc-tables.mjs` (used only
+to silence a linter), the "rule of thumb" prose in `CLAUDE.md`, and every developer's memory.
+A completeness test pins it to `RagDatabase["public"]["Tables"]` so it can't drift when
+types regenerate. Note the legacy overlap: `document_chunks` / `rag_pipeline_state` still
+exist in the PM-APP project as trigger-protected read-only copies, so membership is an
+explicit allowlist, not "is it absent from the PM-APP types."
+
+**RAG-unconfigured = loud throw (never PM-APP fallback)** — when a RAG table is routed but
+`RAG_SUPABASE_URL` is missing, the router throws a specific error rather than falling back to
+the PM-APP client. Silent fallback is what "makes the inbox look empty even when sync is
+healthy" (the reason `createOutlookIntakeServiceClient` was added as a workaround). The
+router owns this drift check; the Python side already has the equivalent
+(`rag_supabase_configured()`).
+
+---
+
 ## Project intelligence / content retrieval
 
 **Project content source** — the one operation "get me the content for project X in
