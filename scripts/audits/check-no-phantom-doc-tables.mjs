@@ -81,6 +81,7 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "rag_pipeline_state",
   "source_intelligence_jobs",
   "source_processing_jobs",
+  "source_signal_candidates",
   "outlook_email_intake",
   "source_syntheses",
   "project_daily_deltas",

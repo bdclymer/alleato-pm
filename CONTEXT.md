@@ -91,17 +91,28 @@ router owns this drift check; the Python side already has the equivalent
 
 ## Project intelligence / content retrieval
 
-**Project content source** — the one operation "get me the content for project X in
-window Y at granularity G." Today it has no home: it is reimplemented across the executive
-brief script, the AI assistant tools, the synthesis sweep, and the intelligence pages,
-each independently choosing a database, a table, a date-window predicate, and a
-project-name lookup. The deepening target is a single module,
-`frontend/src/lib/intelligence/content-source.ts`, exposing `getProjectContent(...)`, that
-absorbs all four decisions behind one interface — so switching a source (RAG chunks ↔ full
-transcripts) is one edit behind the seam, not six edits across copies. This is why the
-2026-06/07 "RAG → full transcripts" change broke the assistant, the daily-brief pages, and
-`/intelligence`: the switch had to be made in every copy, and the copies nobody remembered
-(the Python synthesis sweep) simply froze.
+**Project content source** — the operation "get me the `document_metadata` content for
+project X in window Y at granularity G." Owned by `frontend/src/lib/intelligence/content-
+source.ts`, `getProjectContent(...)`, which absorbs the PM-APP client, the
+`document_metadata` table, the date/created_at/captured_at window predicate, and
+project_id → name resolution (with its int8-as-string coercion) behind one interface.
+This is why the 2026-06/07 "RAG → full transcripts" change broke the assistant, the
+daily-brief pages, and `/intelligence`: the switch had to be made in every copy. The seam
+now owns the **`document_metadata` retrieval-and-window** decision; `brandon-daily-update`
+routes through it and `canonical-operating-packet` reuses its exported `resolveProjectNames`.
+
+**Scope of the content-source seam (ADR-0001).** A 2026-07-10 analysis corrected the
+original "six shallow copies of one operation" framing: most of the apparent copies are
+**legitimately different operations** that read different tables and MUST NOT be folded in,
+or the module becomes a bloated multi-source god-module. Specifically OUT of scope:
+`source_signal_candidates` readers (`canonical-operating-packet`, `daily-deep-read-
+promotion` — RAG DB, `source_occurred_at`, and a *write* workflow), `rag_document_metadata`
+readers (`daily-executive-brief.mjs` — RAG DB, `last_*` ingestion ladder), the per-source
+RAG *answer builder* (`source-specific-rag` — live Graph merges, scope gating, ranking), and
+financial/RFI readers (`financial.ts`, `project-data-tools.ts` — not content). The only true
+`document_metadata` forks are in `ai/tools/project-tools.ts`; migrating them is a
+**deliberate, verified behavior change** (the module's meeting lane is `type=meeting`-only and
+always windows), NOT a mechanical swap — see ADR-0001 before re-attempting it.
 
 **Content granularity** — the axis the content source is parameterised on, replacing the
 implicit storage choice each caller hardcodes today:
