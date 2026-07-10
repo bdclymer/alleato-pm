@@ -85,6 +85,30 @@ def test_missing_all_amounts_yields_zero_not_crash():
     assert line_total == 0.0
 
 
+def test_ap_honors_ext_cost_alias_as_gross():
+    # Guardrail for the 2026-07-10 preventive fix: a detail carrying only the
+    # `ExtCost` alias (not `ExtendedCost`) plus a net `Amount` must resolve to the
+    # GROSS ExtCost, not silently fall through to the net Amount. Before the fix
+    # the AP path omitted the alias and would have stored 950 (net).
+    detail = {"ExtCost": "1000.00", "Amount": "950.00", "UnitCost": "950.00", "Qty": "1"}
+    quantity, unit_cost, line_total = _ap_bill_detail_amounts(detail)
+
+    assert line_total == 1000.00
+    assert unit_cost != 950.00  # not the net value
+    assert _generated_line_total(quantity, unit_cost) == 1000.00
+
+
+def test_ap_unwraps_wrapped_extended_cost():
+    # Guardrail: a wrapped `{"value": ...}` envelope on ExtendedCost must be
+    # unwrapped to the gross number, not mis-read as non-numeric (which the old
+    # AP path did, falling through to the net Amount).
+    detail = {"ExtendedCost": {"value": "777.70"}, "Amount": "700.00", "Qty": "1"}
+    quantity, unit_cost, line_total = _ap_bill_detail_amounts(detail)
+
+    assert line_total == 777.70
+    assert _generated_line_total(quantity, unit_cost) == 777.70
+
+
 def test_header_total_equals_sum_of_generated_line_totals_multiline():
     # A bill with mixed retained lines: the header (sum of gross line_total)
     # must equal the sum of the generated line totals within tolerance.

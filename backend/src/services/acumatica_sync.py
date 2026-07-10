@@ -138,12 +138,14 @@ def _ap_bill_detail_amounts(detail: Dict[str, Any]) -> Tuple[float, float, float
     here — the raw net value is preserved verbatim in ``acumatica_ap_bill_lines``.
     """
     quantity = _num(detail.get("Qty")) or 1.0
-    # Gross extended value via the canonical resolver. The legacy flags
-    # (no envelope unwrap, no ExtCost alias) preserve this writer's exact
-    # pre-extract behavior; the isolated follow-up drops them as the money fix.
-    line_total = resolve_gross_extended(
-        detail, unwrap=False, include_ext_cost=False
-    )
+    # Gross extended value via the canonical resolver (defaults: unwrap envelopes
+    # and honor the ExtCost alias, matching the subcontract / purchase-order SOV
+    # writers). Previously this path omitted both, so an AP detail carrying
+    # ExtCost (not ExtendedCost) or a wrapped value silently fell through to the
+    # net Amount — the same understatement class as the retainage bug (PR #878).
+    # Verified zero-impact on existing data (0 of 4,611 AP detail lines carry that
+    # shape as of 2026-07-10); this is a preventive fix against future syncs.
+    line_total = resolve_gross_extended(detail)
     if line_total is None:
         # No extended value at all — fall back to the (net) unit cost so the row
         # is not silently zeroed. This path only fires when ExtendedCost/Amount
