@@ -11,9 +11,9 @@
 > `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
 > data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (338)
+## UI Routes (339)
 
-_301/338 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
+_301/339 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
@@ -292,6 +292,7 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/notifications` | The notification service is temporarily unreachable. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
 | `/outlook-draft-feedback` | — | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
+| `/outlook-draft-feedback/rules` | — | frontend/src/app/(admin)/outlook-draft-feedback/rules/page.tsx |
 | `/outlook-intake` | Outlook email intake queue for processing new incoming messages | frontend/src/app/(tables)/outlook-intake/page.tsx |
 | `/permissions` | Redirect to /user-management for managing user roles and permissions | frontend/src/app/(admin)/permissions/page.tsx |
 | `/permissions/users/[personId]` | Redirect to /user-management for individual user permission management | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
@@ -356,7 +357,7 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/user-management/templates/[templateId]` | — | frontend/src/app/(admin)/user-management/templates/[templateId]/page.tsx |
 | `/user-management/users/[userSlug]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[userSlug]/page.tsx |
 
-## API Endpoints (757)
+## API Endpoints (761)
 
 | Endpoint | Methods | File |
 |----------|---------|------|
@@ -654,6 +655,8 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/og/fetch` | GET | frontend/src/app/api/og/fetch/route.ts |
 | `/api/og/proxy` | GET | frontend/src/app/api/og/proxy/route.ts |
 | `/api/outlook-draft-feedback/mailbox-stats` | GET | frontend/src/app/api/outlook-draft-feedback/mailbox-stats/route.ts |
+| `/api/outlook-inbox-rules` | GET, POST | frontend/src/app/api/outlook-inbox-rules/route.ts |
+| `/api/outlook-inbox-rules/[ruleId]` | PATCH, DELETE | frontend/src/app/api/outlook-inbox-rules/[ruleId]/route.ts |
 | `/api/outlook-intake` | GET | frontend/src/app/api/outlook-intake/route.ts |
 | `/api/outlook-intake/[intakeId]` | PATCH | frontend/src/app/api/outlook-intake/[intakeId]/route.ts |
 | `/api/outlook-intake/attachments/[attachmentId]/download` | GET | frontend/src/app/api/outlook-intake/attachments/[attachmentId]/download/route.ts |
@@ -833,6 +836,8 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/projects/[projectId]/documents/group-counts` | GET | frontend/src/app/api/projects/[projectId]/documents/group-counts/route.ts |
 | `/api/projects/[projectId]/drawings` | GET, POST | frontend/src/app/api/projects/[projectId]/drawings/route.ts |
 | `/api/projects/[projectId]/drawings/[drawingId]` | GET, PATCH, DELETE | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/route.ts |
+| `/api/projects/[projectId]/drawings/[drawingId]/annotations` | GET, POST | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/annotations/route.ts |
+| `/api/projects/[projectId]/drawings/[drawingId]/annotations/[annotationId]` | PATCH, DELETE | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/annotations/[annotationId]/route.ts |
 | `/api/projects/[projectId]/drawings/[drawingId]/change-history` | GET | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/change-history/route.ts |
 | `/api/projects/[projectId]/drawings/[drawingId]/download` | GET | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/download/route.ts |
 | `/api/projects/[projectId]/drawings/[drawingId]/intelligence` | GET | frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/intelligence/route.ts |
@@ -1118,7 +1123,7 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (63)
+## AI Tools (107)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
 

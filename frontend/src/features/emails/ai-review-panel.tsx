@@ -21,7 +21,10 @@ import * as React from "react";
 import {
   Check,
   ChevronDown,
+  ExternalLink,
+  ListFilter,
   Loader2,
+  Plus,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -54,6 +57,10 @@ import {
   type ReviewAction,
   type ReviewPriority,
 } from "./ai-review-payload";
+import { InboxRuleDialog } from "./inbox-rule-dialog";
+
+/** Owner/Brandon-gated page listing every inbox rule (opened in a new tab). */
+const INBOX_RULES_PAGE = "/outlook-draft-feedback/rules";
 
 /**
  * Feature flag for the redesigned "Confirm & Correct" AI Review panel.
@@ -148,10 +155,10 @@ function formatFeedbackDate(value: string | null | undefined): string | null {
 
 const STATUS_CHIP_CLASS: Record<DecisionStatus, string> = {
   confirmed: "bg-status-success/10 text-status-success",
-  // Corrected reads in plain foreground — NOT the brand orange, which is the
-  // "AI/brain" accent used across this surface and so wouldn't differentiate a
-  // reviewer's edit at all. This chip only renders for a genuine correction.
-  corrected: "bg-foreground/10 text-foreground",
+  // A correction is the one thing that changed against the AI's call, so it
+  // reads in red (with the original value struck through in red too). This chip
+  // only renders for a genuine correction.
+  corrected: "bg-destructive/10 text-destructive",
   unreviewed: "bg-muted text-muted-foreground",
 };
 
@@ -258,7 +265,7 @@ function DecisionRow({
               {value}
             </span>
             {showStrikethrough ? (
-              <span className="text-[11.5px] font-medium text-muted-foreground line-through">
+              <span className="text-[11.5px] font-medium text-destructive line-through">
                 {aiValue}
               </span>
             ) : null}
@@ -274,7 +281,7 @@ function DecisionRow({
           size="sm"
           onClick={onToggleEdit}
           aria-expanded={isEditing}
-          className="h-auto shrink-0 px-0 py-0 text-[12px] font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground hover:underline"
+          className="h-auto shrink-0 px-0 py-0 text-[12px] font-semibold text-primary hover:bg-transparent hover:text-primary hover:underline"
         >
           {isEditing ? "Close" : "Change"}
         </Button>
@@ -384,6 +391,7 @@ export function AiReviewPanel({
   const [submitted, setSubmitted] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [savedAt, setSavedAt] = React.useState<string | null>(null);
+  const [ruleDialogOpen, setRuleDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (!selectedEmail) return;
@@ -708,10 +716,10 @@ export function AiReviewPanel({
   return (
     <div className={cn("flex h-full flex-col", className)}>
       {/* Header */}
-      <div className="flex flex-col gap-0.5 border-b border-border/70 px-5 py-4">
+      <div className="flex flex-col gap-0.5 px-5 py-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-muted-foreground" />
-          <span className="text-[15px] font-semibold text-foreground">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span className="text-[15px] font-semibold text-primary">
             AI Review
           </span>
         </div>
@@ -931,63 +939,102 @@ export function AiReviewPanel({
             </div>
           </div>
           ) : null}
+
+          {/* Submit sits directly below the last item and scrolls with the
+              plan rather than pinning to a separate footer. */}
+          <div className="mt-6">
+            {submitted ? (
+              <div className="flex items-center gap-3 rounded-xl bg-status-success/10 px-4 py-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-status-success text-primary-foreground">
+                  <Check className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold text-status-success">
+                    Feedback saved
+                  </div>
+                  <div className="text-[11.5px] text-status-success/80">
+                    {counts.confirmed} confirmed · {counts.corrected} corrected
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => setSubmitted(false)}
+                  className="h-auto px-1 py-0 text-xs font-semibold text-status-success no-underline hover:underline"
+                >
+                  Undo
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void handleSaveAll()}
+                  disabled={isSaving}
+                  className="gap-2"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  {isSaving ? "Submitting..." : "Submit feedback"}
+                </Button>
+                {savedAt ? (
+                  <div className="mt-2 text-[11px] text-muted-foreground/70">
+                    Last saved {formatFeedbackDate(savedAt)}
+                  </div>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          {/* Inbox rules — Gmail/Outlook-style filters that train the assistant
+              for this mailbox (always important, never inbox, set priority). */}
+          <div className="mt-8">
+            <div className={SECTION_LABEL_CLASS}>Inbox rules</div>
+            <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
+              Train the assistant on mail from a sender, subject, or phrase —
+              always important, never inbox, or a set priority.
+            </p>
+            <div className="mt-3 flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRuleDialogOpen(true)}
+                className="gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create inbox rule
+              </Button>
+              <a
+                href={INBOX_RULES_PAGE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:underline"
+              >
+                <ListFilter className="h-3.5 w-3.5" />
+                View rules
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
         </div>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="shrink-0 border-t border-border/70 px-5 py-3.5">
-        {submitted ? (
-          <div className="flex items-center gap-3 rounded-xl bg-status-success/10 px-4 py-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-status-success text-primary-foreground">
-              <Check className="h-4 w-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-status-success">
-                Feedback saved
-              </div>
-              <div className="text-[11.5px] text-status-success/80">
-                {counts.confirmed} confirmed · {counts.corrected} corrected
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={() => setSubmitted(false)}
-              className="h-auto px-1 py-0 text-xs font-semibold text-status-success no-underline hover:underline"
-            >
-              Undo
-            </Button>
-          </div>
-        ) : (
-          <>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => void handleSaveAll()}
-              disabled={isSaving}
-              className="gap-2"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="h-4 w-4" />
-              )}
-              {isSaving ? "Saving..." : "Looks right — save feedback"}
-            </Button>
-            <div className="mt-2 text-center text-[11px] text-muted-foreground/70">
-              {onRequestNext ? (
-                <>Change any line above first if the AI got it wrong — or press &crarr; to save &amp; go to the next email.</>
-              ) : savedAt ? (
-                <>Last saved {formatFeedbackDate(savedAt)}</>
-              ) : (
-                <>Change any line above first if the AI got it wrong.</>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      <InboxRuleDialog
+        open={ruleDialogOpen}
+        onOpenChange={setRuleDialogOpen}
+        prefill={{
+          field: "sender",
+          operator: "equals",
+          value: selectedEmail?.from_email ?? "",
+          action: "always_important",
+        }}
+      />
     </div>
   );
 }

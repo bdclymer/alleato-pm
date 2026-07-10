@@ -6,6 +6,11 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 import { deriveBrandonEmailAssistantDecision } from "@/lib/email-assistant/brandon-triage";
+import {
+  applyInboxRules,
+  type InboxRule,
+} from "@/lib/email-assistant/inbox-rules";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { NextResponse } from "next/server";
 
 /**
@@ -256,6 +261,39 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
     }
   }
 
+  // Inbox rules (Gmail/Outlook-style filters) only apply to a specific reviewed
+  // mailbox — never to a user's own project-scoped mail. They deterministically
+  // force priority/category, mark always-important, or drop "never-inbox" mail.
+  let inboxRules: InboxRule[] = [];
+  if (mailboxUserId) {
+    const { data: ruleRows, error: rulesError } = await appService
+      .from("outlook_inbox_rules")
+      .select("id,match_field,match_operator,match_value,action,action_value,enabled")
+      .eq("mailbox_user_id", mailboxUserId)
+      .eq("enabled", true);
+    if (rulesError) {
+      // Non-fatal: a rules-table hiccup must never blank the whole inbox.
+      reportNonCriticalFailure({
+        area: "emails-route",
+        operation: "load-inbox-rules",
+        error: rulesError,
+        userVisibleFallback: "Inbox rules could not be applied to this inbox.",
+        metadata: { mailboxUserId },
+      });
+    } else {
+      inboxRules = (ruleRows ?? []).map((row) => ({
+        id: row.id as string,
+        field: row.match_field as InboxRule["field"],
+        operator: row.match_operator as InboxRule["operator"],
+        value: row.match_value as string,
+        action: row.action as InboxRule["action"],
+        actionValue: (row.action_value as string | null) ?? null,
+        enabled: row.enabled as boolean,
+      }));
+    }
+  }
+  let rulesSkippedCount = 0;
+
   // Resolve project names from the PM APP in one batch.
   const projectIds = Array.from(
     new Set(rows.map((r) => r.project_id).filter((id): id is number => typeof id === "number")),
@@ -294,9 +332,34 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
         ? latestReview.source_metadata
         : {};
       const assistantAction = latestReview?.assistant_action ?? derivedDecision.action;
-      const assistantPriority = latestReview?.assistant_priority ?? derivedDecision.priority;
+
+      const ruleEffect = inboxRules.length
+        ? applyInboxRules(
+            {
+              fromEmail: r.from_email,
+              subject: r.subject,
+              body: r.body_text ?? r.body,
+            },
+            inboxRules,
+          )
+        : null;
+
+      // A "never inbox" rule drops the mail from the feed — but never hides one a
+      // human already reviewed (that would erase their record).
+      if (ruleEffect?.skipInbox && !latestReview) {
+        rulesSkippedCount += 1;
+        return null;
+      }
+
+      // Precedence: an explicit human review wins; otherwise an inbox rule
+      // overrides the derived guess (that's the rule "training" the assistant).
+      const rulePriority =
+        ruleEffect?.priority ?? (ruleEffect?.important ? "urgent" : null);
+      const assistantPriority =
+        latestReview?.assistant_priority ?? rulePriority ?? derivedDecision.priority;
       const assistantCategory =
         nullableString(reviewMetadata.sandboxCategory) ??
+        ruleEffect?.category ??
         defaultAssistantCategory(assistantAction);
 
       return {
@@ -355,7 +418,21 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
         deleted_at: null,
         project: typeof r.project_id === "number" ? (projects.get(r.project_id) ?? null) : null,
       };
-    });
+    })
+    // Drop "never inbox" rule matches (returned as null above). Loud, not silent:
+    // the count is logged so a misfiring rule that hides real mail is visible.
+    .filter((email): email is NonNullable<typeof email> => email !== null);
+
+  if (rulesSkippedCount > 0) {
+    console.info(
+      JSON.stringify({
+        event: "inbox_rules_applied",
+        mailboxUserId,
+        skippedNeverInbox: rulesSkippedCount,
+        activeRules: inboxRules.length,
+      }),
+    );
+  }
 
   return NextResponse.json(emails);
 });

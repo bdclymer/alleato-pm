@@ -1874,9 +1874,94 @@ tables:
       Writes from frontend/src/app/api/email-filter-rules/ (admin-only POST/PATCH/DELETE).
       Allow actions short-circuit allowlist; skip drops the email with no DB writes;
       review writes to outlook_email_skip_audit only.
+      NOT the same as outlook_inbox_rules: this is the SYNC-TIME junk gate
+      (skip/review/allow); outlook_inbox_rules is the READ-TIME assistant-training
+      layer (always-important / never-inbox / set priority|category) for the
+      Outlook Draft Feedback inbox.
     relatedTables:
       - outlook_email_skip_audit
       - outlook_email_intake
+      - outlook_inbox_rules
+
+  - name: outlook_inbox_rules
+    db: MAIN
+    domain: communications
+    owner: communications
+    status: live
+    purpose: >-
+      Gmail/Outlook-style inbox rules for the Outlook Draft Feedback surface.
+      Each rule matches a sender / sender_domain / subject / body / any pattern
+      (contains, equals, starts_with, ends_with) and forces an assistant action:
+      always_important, never_inbox, set_priority, or set_category. This trains
+      the assistant on how to treat mail from a person/pattern.
+    notes_for_ai: >-
+      Applied at READ time in frontend/src/app/api/emails/route.ts (the pure
+      matcher is frontend/src/lib/email-assistant/inbox-rules.ts) — NOT in the
+      backend sync. Human reviews (outlook_email_assistant_reviews) always win
+      over a rule; a rule overrides the derived triage guess. never_inbox drops
+      the mail from the feed (count logged, never a silent hide) but never hides
+      an email a human already reviewed. CRUD via
+      frontend/src/app/api/outlook-inbox-rules/ (owner/admin/mailbox-owner gated,
+      service client + RLS current_is_app_admin). Managed from the AI Review
+      panel and /outlook-draft-feedback/rules. Distinct from email_filter_rules
+      (the sync-time junk gate).
+    relatedTables:
+      - outlook_email_intake
+      - outlook_email_assistant_reviews
+      - email_filter_rules
+
+  # --- Pre-existing tables that were live but undocumented (drift backfill) ---
+  - name: admin_feedback_assistant_threads
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Links an admin feedback item to an assistant session/thread that works it,
+      tracking status, runtime, relay comments, and last message/error.
+    relatedTables: []
+
+  - name: app_page_tags
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Admin-managed catalog of page tags applied from the site map. Reusable
+      across pages; drives curated tagged-page views.
+    relatedTables:
+      - app_page_tag_assignments
+
+  - name: app_page_tag_assignments
+    db: MAIN
+    domain: admin
+    owner: platform
+    status: live
+    purpose: >-
+      Join table mapping a route from the app route inventory to a tag in
+      app_page_tags.
+    relatedTables:
+      - app_page_tags
+
+  - name: change_event_project_settings
+    db: MAIN
+    domain: financial
+    owner: financial
+    status: live
+    purpose: >-
+      Per-project change-event configuration flags (budget-code sync, ROM
+      columns, line-item autopopulation, attachment copy, PCO/CO behavior).
+    relatedTables: []
+
+  - name: daily_corpus_syntheses
+    db: MAIN
+    domain: intelligence
+    owner: intelligence
+    status: live
+    purpose: >-
+      Canonical previous-day full-corpus synthesis artifact for executive
+      briefing and downstream intelligence consumers.
+    relatedTables: []
 
   - name: email_events
     db: MAIN

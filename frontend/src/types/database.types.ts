@@ -6867,6 +6867,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          jobplanner_id: number | null
           latest_price: number | null
           non_committed_cost: number | null
           quantity: number | null
@@ -6889,6 +6890,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
@@ -6911,6 +6913,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
@@ -6991,6 +6994,7 @@ export type Database = {
         Row: {
           change_event_id: string
           id: string
+          jobplanner_id: number | null
           linked_at: string
           linked_by: string | null
           pco_id: string
@@ -6999,6 +7003,7 @@ export type Database = {
         Insert: {
           change_event_id: string
           id?: string
+          jobplanner_id?: number | null
           linked_at?: string
           linked_by?: string | null
           pco_id: string
@@ -7007,6 +7012,7 @@ export type Database = {
         Update: {
           change_event_id?: string
           id?: string
+          jobplanner_id?: number | null
           linked_at?: string
           linked_by?: string | null
           pco_id?: string
@@ -7444,6 +7450,7 @@ export type Database = {
           expecting_revenue: boolean
           id: string
           internal_subtype: string | null
+          jobplanner_id: number | null
           line_item_revenue_source: string | null
           number: string
           origin: string | null
@@ -7471,6 +7478,7 @@ export type Database = {
           expecting_revenue?: boolean
           id?: string
           internal_subtype?: string | null
+          jobplanner_id?: number | null
           line_item_revenue_source?: string | null
           number: string
           origin?: string | null
@@ -7498,6 +7506,7 @@ export type Database = {
           expecting_revenue?: boolean
           id?: string
           internal_subtype?: string | null
+          jobplanner_id?: number | null
           line_item_revenue_source?: string | null
           number?: string
           origin?: string | null
@@ -8611,6 +8620,7 @@ export type Database = {
           field_change: boolean | null
           id: string
           is_private: boolean | null
+          jobplanner_id: number | null
           location: string | null
           paid_in_full: boolean | null
           pco_number: string | null
@@ -8644,6 +8654,7 @@ export type Database = {
           field_change?: boolean | null
           id?: string
           is_private?: boolean | null
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean | null
           pco_number?: string | null
@@ -8677,6 +8688,7 @@ export type Database = {
           field_change?: boolean | null
           id?: string
           is_private?: boolean | null
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean | null
           pco_number?: string | null
@@ -12751,60 +12763,6 @@ export type Database = {
             columns: ["drawing_revision_id"]
             isOneToOne: false
             referencedRelation: "drawing_revisions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      drawing_annotations: {
-        Row: {
-          annotation_type: string
-          created_at: string
-          created_by: string | null
-          data: Json
-          drawing_id: string
-          id: string
-          is_published: boolean
-          page: number
-          project_id: number
-          updated_at: string
-        }
-        Insert: {
-          annotation_type: string
-          created_at?: string
-          created_by?: string | null
-          data: Json
-          drawing_id: string
-          id?: string
-          is_published?: boolean
-          page?: number
-          project_id: number
-          updated_at?: string
-        }
-        Update: {
-          annotation_type?: string
-          created_at?: string
-          created_by?: string | null
-          data?: Json
-          drawing_id?: string
-          id?: string
-          is_published?: boolean
-          page?: number
-          project_id?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "drawing_annotations_drawing_id_fkey"
-            columns: ["drawing_id"]
-            isOneToOne: false
-            referencedRelation: "drawings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drawing_annotations_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -20686,6 +20644,54 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_inbox_rules: {
+        Row: {
+          action: string
+          action_value: string | null
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          enabled: boolean
+          id: string
+          mailbox_user_id: string
+          match_field: string
+          match_operator: string
+          match_value: string
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          action_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          enabled?: boolean
+          id?: string
+          mailbox_user_id: string
+          match_field: string
+          match_operator: string
+          match_value: string
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          action_value?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          enabled?: boolean
+          id?: string
+          mailbox_user_id?: string
+          match_field?: string
+          match_operator?: string
+          match_value?: string
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       owner_invoice_documents: {
         Row: {
           attached_at: string
@@ -21334,6 +21340,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          jobplanner_id: number | null
           pco_id: string
           pco_type: string
           quantity: number | null
@@ -21350,6 +21357,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           pco_id: string
           pco_type: string
           quantity?: number | null
@@ -21366,6 +21374,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          jobplanner_id?: number | null
           pco_id?: string
           pco_type?: string
           quantity?: number | null
@@ -23100,6 +23109,7 @@ export type Database = {
           field_change: boolean
           id: string
           is_private: boolean
+          jobplanner_id: number | null
           location: string | null
           paid_in_full: boolean
           pco_number: string | null
@@ -23131,6 +23141,7 @@ export type Database = {
           field_change?: boolean
           id?: string
           is_private?: boolean
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean
           pco_number?: string | null
@@ -23162,6 +23173,7 @@ export type Database = {
           field_change?: boolean
           id?: string
           is_private?: boolean
+          jobplanner_id?: number | null
           location?: string | null
           paid_in_full?: boolean
           pco_number?: string | null
@@ -31028,6 +31040,7 @@ export type Database = {
           id: number
           invoice_number: string | null
           is_retainage_release: boolean
+          jobplanner_pay_app_number: string | null
           notes: string | null
           period_end: string | null
           period_start: string | null
@@ -31050,6 +31063,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           is_retainage_release?: boolean
+          jobplanner_pay_app_number?: string | null
           notes?: string | null
           period_end?: string | null
           period_start?: string | null
@@ -31072,6 +31086,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           is_retainage_release?: boolean
+          jobplanner_pay_app_number?: string | null
           notes?: string | null
           period_end?: string | null
           period_start?: string | null
@@ -33257,7 +33272,7 @@ export type Database = {
           file_name?: string | null
           id?: string
           meeting_item_id?: string | null
-          metadata_id: string | null
+          metadata_id?: string | null
           priority?: string | null
           project_id?: number | null
           project_ids?: number[] | null
@@ -38145,7 +38160,7 @@ export type Database = {
           file_name: string | null
           id: string
           meeting_item_id: string | null
-          metadata_id: string
+          metadata_id: string | null
           priority: string | null
           project_id: number | null
           project_ids: number[] | null
