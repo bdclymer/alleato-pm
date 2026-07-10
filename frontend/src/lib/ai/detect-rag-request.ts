@@ -209,6 +209,53 @@ const CORPUS_GROUPS: RegExp[] = [
   /\b(onedrive|one drive|sharepoint)\b/i,
 ];
 
+// A GENERIC "anything important happen today/this week?" catch-up question is
+// NOT an investigation — it just happens to name 2+ corpora (email/Teams/
+// meetings) because the user wants a portfolio-wide sweep, not a semantic
+// vector search over embeddings (which is date-agnostic and surfaces whatever
+// is topically similar regardless of when it happened — the exact bug traced
+// twice from live /ai sessions on 2026-07-10: `11a3d842-...` and
+// `a985a15c-...`, both scoped to "today" but answered from weeks-old May
+// results). Category-based (temporal + catch-up topic words) rather than
+// literal-phrase matching so it generalizes across paraphrases instead of
+// requiring a new pattern per wording variant. "inbox" is excluded so the
+// dedicated Microsoft inbox-triage specialist still wins for that phrasing.
+const CATCHUP_TOPIC_WORDS =
+  /\b(anything|any\w*|important|urgent|notable|major|exciting|worth\s+(knowing|flagging|mentioning)|happen(ed|ing)?|going on|come up|came up)\b/i;
+const CATCHUP_TEMPORAL_WORDS =
+  /\b(today|this morning|this week|recently|lately|overnight|since (yesterday|last week))\b/i;
+
+// Presence of a non-email channel word is what actually distinguishes a
+// multi-channel portfolio catch-up ("...over email or in teams or meeting
+// transcripts") from single-channel inbox triage ("what important emails
+// have I received?") — detectRecentEmailInboxRequest's own "email" trigger
+// fires on both, so it can't be used as the sole gate here.
+const NON_EMAIL_CHANNEL_WORDS =
+  /\b(teams|meetings?|transcripts?|fireflies|onedrive|one drive|sharepoint)\b/i;
+
+export function isBroadTemporalCatchupQuestion(message: string): boolean {
+  // Single-channel inbox/message triage ("what important emails have I
+  // received this morning?", "any important messages I got today?") has its
+  // own tuned Microsoft specialist delegation and must win over the broader
+  // portfolio catch-up path — reuse its own detector rather than a narrower
+  // "inbox" keyword check, since these phrasings often never say "inbox".
+  // Only defer when no OTHER channel is also named; "email or teams or
+  // meetings" is a portfolio sweep, not inbox triage, even though it
+  // contains "email".
+  if (
+    !NON_EMAIL_CHANNEL_WORDS.test(message) &&
+    detectRecentEmailInboxRequest(message)
+  ) {
+    return false;
+  }
+  if (INVESTIGATION_VERBS.test(message) || ORIGIN_PHRASES.test(message)) {
+    return false;
+  }
+  return (
+    CATCHUP_TOPIC_WORDS.test(message) && CATCHUP_TEMPORAL_WORDS.test(message)
+  );
+}
+
 export type CrossSourceInvestigationRequest = {
   reason: "cross_source_investigation";
 };
@@ -220,11 +267,16 @@ export type CrossSourceInvestigationRequest = {
  * OR when the message references two or more distinct corpora at once.
  *
  * Returns null for ordinary single-source triage ("anything urgent in my inbox?",
- * "review recent meetings") so those keep their tuned fast-paths.
+ * "review recent meetings") so those keep their tuned fast-paths, and for broad
+ * temporal catch-up questions ("anything important happen today?") so those reach
+ * the executive briefing path instead of a date-agnostic semantic search — see
+ * `isBroadTemporalCatchupQuestion`.
  */
 export function detectCrossSourceInvestigationRequest(
   message: string,
 ): CrossSourceInvestigationRequest | null {
+  if (isBroadTemporalCatchupQuestion(message)) return null;
+
   const corpusCount = CORPUS_GROUPS.reduce(
     (count, re) => count + (re.test(message) ? 1 : 0),
     0,

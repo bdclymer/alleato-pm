@@ -194,6 +194,7 @@ describe("planRetrieval", () => {
     "Has there been anything important that's happened today over email or in teams or email or meeting transcripts?",
     "Anything important happen this week?",
     "What happened today?",
+    "Have there been any important or exciting things that have happened in the meetings team messages or emails today?",
   ])(
     "delegates broad operator question to executive Deep Agents workflow: %s",
     (message) => {

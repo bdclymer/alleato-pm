@@ -8,6 +8,7 @@ import {
   detectCrossSourceInvestigationRequest,
   detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
+  isBroadTemporalCatchupQuestion,
 } from "@/lib/ai/detect-rag-request";
 import type { RetrievalPlan, SubAgent } from "./types";
 
@@ -91,25 +92,6 @@ const EXECUTIVE_DEEP_AGENT_PATTERNS: Array<{
       /\b(today'?s meetings?|meetings? today|meeting insights?|insights from today'?s meetings?)\b/i,
     intent: "latest_status",
   },
-  // Broad "catch me up" / "anything important" questions with no project
-  // selected and no explicit source-scoping verb ("search", "pull up") must
-  // route to the executive briefing synthesis path, not raw source_lookup.
-  // Without this, SOURCE_LOOKUP_PATTERNS' unconditional "email"/"teams"
-  // triggers in intent-router.ts stole this phrasing into a dump of raw
-  // semantic-search hits (unsynthesized, undated to "today", full of internal
-  // IDs) instead of an actual answer. See docs/architecture/AI-RAG-ARCHITECTURE.md.
-  // Excludes "inbox" wording — that stays on the dedicated Microsoft inbox
-  // triage specialist delegation below (single-channel, not a portfolio brief).
-  {
-    pattern:
-      /^(?!.*\binbox\b).*\b(anything (important|urgent|notable|major)|worth (knowing|flagging|mentioning))\b.{0,100}\b(today|this week|recently|lately|overnight|since (yesterday|last week)|happen(ed|ing)?)\b/i,
-    intent: "latest_status",
-  },
-  {
-    pattern:
-      /^(?!.*\binbox\b).*\b(what|anything)\b.{0,20}\b(happened|going on|come up|came up)\b.{0,60}\b(today|this week|recently|lately|overnight)\b/i,
-    intent: "latest_status",
-  },
   {
     pattern:
       /\b(clients? upset|client relationship risk|relationship risk|unhappy clients?|frustrated clients?|client frustration|clients? angry)\b/i,
@@ -131,6 +113,14 @@ function detectExecutiveDeepAgentIntent(
   selectedProjectId?: number,
 ): ReturnType<typeof classifyAssistantIntent> | null {
   if (typeof selectedProjectId === "number") return null;
+
+  // Category-based (temporal + catch-up topic words), not literal-phrase
+  // matching, so paraphrases of "anything important happen today?" generalize
+  // instead of needing a new pattern per wording. Shared with
+  // detectCrossSourceInvestigationRequest so both routing decisions agree —
+  // see isBroadTemporalCatchupQuestion for the rationale and incident trace.
+  if (isBroadTemporalCatchupQuestion(message)) return "latest_status";
+
   const match = EXECUTIVE_DEEP_AGENT_PATTERNS.find(({ pattern }) =>
     pattern.test(message),
   );
