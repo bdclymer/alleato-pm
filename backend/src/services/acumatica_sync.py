@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 import httpx
 
+from .acumatica_cost_line import resolve_gross_extended
 from .env_loader import load_env
 from .supabase_helpers import get_supabase_client
 
@@ -137,9 +138,12 @@ def _ap_bill_detail_amounts(detail: Dict[str, Any]) -> Tuple[float, float, float
     here — the raw net value is preserved verbatim in ``acumatica_ap_bill_lines``.
     """
     quantity = _num(detail.get("Qty")) or 1.0
-    line_total = _num(detail.get("ExtendedCost"))
-    if line_total is None:
-        line_total = _num(detail.get("Amount"))
+    # Gross extended value via the canonical resolver. The legacy flags
+    # (no envelope unwrap, no ExtCost alias) preserve this writer's exact
+    # pre-extract behavior; the isolated follow-up drops them as the money fix.
+    line_total = resolve_gross_extended(
+        detail, unwrap=False, include_ext_cost=False
+    )
     if line_total is None:
         # No extended value at all — fall back to the (net) unit cost so the row
         # is not silently zeroed. This path only fires when ExtendedCost/Amount
@@ -2742,14 +2746,9 @@ class AcumaticaFinancialSyncService:
                 # retainage. Retainage must NOT be baked into the SOV value —
                 # it is applied at invoicing via retainage_percent. Using
                 # `Amount` understated every retained line by the retainage %.
-                raw_amount = _unwrap(detail.get("ExtendedCost"))
-                if raw_amount is None:
-                    raw_amount = _unwrap(detail.get("ExtCost"))
-                if raw_amount is None:
-                    raw_amount = _unwrap(detail.get("Amount"))
                 # Negative lines are legitimate deductive adjustments and are
                 # kept as-is so the SOV reconciles to the subcontract total.
-                amount = _num(raw_amount) or 0
+                amount = resolve_gross_extended(detail, use_first_present_raw=True) or 0
                 description = _unwrap(detail.get("Description")) or _unwrap(
                     detail.get("TransactionDescription")
                 )
@@ -2913,12 +2912,7 @@ class AcumaticaFinancialSyncService:
                     continue
                 # Gross extended line value (sums to the order total); `Amount`
                 # is net of retainage and must not be used for the SOV value.
-                amount = (
-                    _num(_unwrap(detail.get("ExtendedCost")))
-                    or _num(_unwrap(detail.get("ExtCost")))
-                    or _num(_unwrap(detail.get("Amount")))
-                    or 0
-                )
+                amount = resolve_gross_extended(detail, treat_zero_as_missing=True) or 0
                 description = _unwrap(detail.get("Description")) or _unwrap(
                     detail.get("TransactionDescription")
                 )
