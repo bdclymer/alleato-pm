@@ -72,6 +72,16 @@ export interface MBOnTrackProject {
   status: string;
 }
 
+/** A cross-cutting owner item not tied to a single project (the "loose ends"
+ * the brief hands Brandon to chase). */
+export interface MBLooseEnd {
+  id: string;
+  runs: MBRun[];
+  /** Flattened plain text — used to pre-fill the create-task panel. */
+  plain: string;
+  sources: string[];
+}
+
 export interface MBResolvedSeed {
   id: string;
   project: string;
@@ -90,6 +100,7 @@ export interface MorningBriefModel {
   calls: MBCall[];
   projects: MBProject[];
   onTrack: MBOnTrackProject[];
+  looseEnds: MBLooseEnd[];
   resolvedSeed: MBResolvedSeed[];
   sources: Record<string, MBSource>;
   /** Fallback document anchor for a manually created task, when one exists. */
@@ -280,7 +291,23 @@ function buildIssues(project: BriefV3Project): MBIssue[] {
 
 function buildRead(brief: BriefV3): MBRun[] {
   const count = brief.callsToday.length;
+  const looseCount = brief.looseEnds.length;
   if (count === 0) {
+    if (looseCount > 0) {
+      return [
+        { text: "No project decisions today, but ", bold: false },
+        {
+          text: `${looseCount} loose end${looseCount === 1 ? "" : "s"} ${
+            looseCount === 1 ? "is" : "are"
+          } yours to chase`,
+          bold: true,
+        },
+        {
+          text: " — see below. Every job is moving and captured in project status.",
+          bold: false,
+        },
+      ];
+    }
     return [
       {
         text:
@@ -321,6 +348,7 @@ const EMPTY_MODEL: Omit<MorningBriefModel, "weekday" | "dateLabel" | "businessDa
   calls: [],
   projects: [],
   onTrack: [],
+  looseEnds: [],
   resolvedSeed: [],
   sources: {},
   defaultAnchorMetadataId: null,
@@ -380,6 +408,13 @@ export function buildMorningBriefModel(
       (project.resolvedToday ? "Resolved today." : "On track."),
   }));
 
+  const looseEnds: MBLooseEnd[] = brief.looseEnds.map((looseEnd, index) => ({
+    id: `loose-${index + 1}`,
+    runs: parseInline(looseEnd.text),
+    plain: plainText(looseEnd.text),
+    sources: looseEnd.sourceIds.filter(Boolean),
+  }));
+
   const resolvedSeed: MBResolvedSeed[] = ordered
     .filter((project) => project.resolvedToday)
     .map((project) => ({
@@ -401,6 +436,7 @@ export function buildMorningBriefModel(
     calls,
     projects,
     onTrack,
+    looseEnds,
     resolvedSeed,
     sources,
     defaultAnchorMetadataId,

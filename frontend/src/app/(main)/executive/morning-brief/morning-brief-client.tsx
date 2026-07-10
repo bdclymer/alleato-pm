@@ -624,6 +624,31 @@ export function MorningBriefClient({
                 </section>
               ) : null}
 
+              {model.looseEnds.length ? (
+                <section className="mb-section" id="loose-ends">
+                  <div className="mb-h2" role="heading" aria-level={2}>
+                    Loose ends — yours to chase
+                  </div>
+                  <p className="mb-subhead">
+                    Cross-cutting items not tied to a single project. Owner-grade — they need
+                    you, not the team.
+                  </p>
+                  <ul className="mb-issues">
+                    {model.looseEnds.map((item) => (
+                      <li className="mb-issue" key={item.id}>
+                        <span className="mb-issue__marker orange" />
+                        <div className="mb-issue__text">
+                          <Runs runs={item.runs} sources={model.sources} />
+                          {item.sources.map((alias) => (
+                            <SourceChip key={alias} alias={alias} sources={model.sources} />
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
               {model.projects.length ? <div className="mb-label">Project detail</div> : null}
 
               {model.projects.map((project) => (
