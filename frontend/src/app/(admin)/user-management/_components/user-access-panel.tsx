@@ -166,7 +166,7 @@ export function UserAccessPanel({
   return (
     <div className="space-y-8">
       <section className="py-2">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 md:grid-cols-4">
           <div className="group relative min-w-0 space-y-2">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               User role
