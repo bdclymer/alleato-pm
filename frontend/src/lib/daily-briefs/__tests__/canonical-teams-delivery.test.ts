@@ -68,6 +68,20 @@ describe("canonical Teams daily brief delivery", () => {
     );
   });
 
+  it("includes an authenticated Download PDF action alongside the live brief link", () => {
+    const card = buildCanonicalDailyBriefTeamsCard(packet);
+    const serialized = JSON.stringify(card.card);
+
+    expect(serialized).toEqual(expect.stringContaining("Download PDF"));
+    expect(serialized).toEqual(
+      expect.stringContaining("/api/executive/daily-brief/packet-1/pdf"),
+    );
+    // The live-brief button must still be present — PDF is additive, not a swap.
+    expect(serialized).toEqual(
+      expect.stringContaining("/daily-briefs/packet-1"),
+    );
+  });
+
   it("returns preview payload fields tied to intelligence_packets", async () => {
     await expect(
       previewCanonicalDailyBriefTeamsPayload(packet),

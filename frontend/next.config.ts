@@ -242,6 +242,7 @@ const nextConfig: NextConfig = {
     "/api/projects/[projectId]/rfis/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/submittals/[submittalId]/pdf": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/submittals/pdf": CHROMIUM_TRACE_GLOBS,
+    "/api/executive/daily-brief/[briefId]/pdf": CHROMIUM_TRACE_GLOBS,
   },
   outputFileTracingExcludes: {
     // Exclude ALL non-runtime artifact directories from every serverless function.

@@ -55,6 +55,17 @@ function appBaseUrl() {
   );
 }
 
+/**
+ * Deep link to the on-demand PDF render of a brief packet. The route
+ * (`/api/executive/daily-brief/[briefId]/pdf`) generates a branded PDF at click
+ * time, guarded by the same `view_executive_briefing` capability that gates the
+ * brief page — so the "Download PDF" button is always fresh and never leaks the
+ * brief to an unauthenticated visitor.
+ */
+export function dailyBriefPdfUrl(packetId: string, baseUrl = appBaseUrl()) {
+  return `${baseUrl}/api/executive/daily-brief/${encodeURIComponent(packetId)}/pdf`;
+}
+
 function clip(value: string, maxLength: number) {
   const normalized = value.replace(/\s+/g, " ").trim();
   if (normalized.length <= maxLength) return normalized;
@@ -112,6 +123,10 @@ export function buildCanonicalDailyBriefTeamsCard(
       LinkButton({
         label: "Open brief",
         url: `${appBaseUrl()}/daily-briefs/${packet.id}`,
+      }),
+      LinkButton({
+        label: "Download PDF",
+        url: dailyBriefPdfUrl(packet.id),
       }),
       LinkButton({
         label: "Open Alleato",
