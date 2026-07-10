@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
@@ -156,11 +155,6 @@ import {
   type MemoryUsage,
 } from "./memory-usage-disclosure";
 import { AssistantSkillTrace, type SkillUsage } from "./skill-usage-disclosure";
-import { AssistantSuggestionList } from "./assistant-suggestion-list";
-import {
-  resolveAssistantSuggestions,
-  type AssistantSuggestion,
-} from "@/lib/ai/assistant-suggestion-resolver";
 import { AssistantChangeEventFormCardV2 } from "./assistant-change-event-form-card-v2";
 import { AssistantPreviewReviewCard } from "./assistant-preview-review-card";
 import { isStandalonePreviewCardPart } from "./preview-review-card";
@@ -1265,10 +1259,7 @@ export function ChatArea({
   onToolApprovalResponse,
   onStop,
   welcomeHideOrb = false,
-  showWidgetWelcomePrompt = false,
-  onWidgetWelcomeDismiss,
 }: ChatAreaProps) {
-  const pathname = usePathname();
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
 
@@ -1715,32 +1706,6 @@ export function ChatArea({
     [onSubmit],
   );
 
-  const handleWidgetWelcomeAction = useCallback(
-    (prompt: string) => {
-      if (isStreaming) return;
-      onWidgetWelcomeDismiss?.();
-      onInputChange(prompt);
-    },
-    [isStreaming, onInputChange, onWidgetWelcomeDismiss],
-  );
-
-  const handleCatalogAction = useCallback(
-    (prompt: string) => {
-      if (isStreaming) return;
-      onInputChange(prompt);
-    },
-    [isStreaming, onInputChange],
-  );
-
-  const assistantSuggestions = useMemo(
-    () =>
-      resolveAssistantSuggestions({
-        pathname,
-        surface: welcomeHideOrb ? "widget" : "command_center",
-      }),
-    [pathname, welcomeHideOrb],
-  );
-
   const hasMessages = messages.length > 0;
   const showWelcome =
     !hasMessages && !isLoadingMessages && !activeChangeEventDraft;
@@ -1760,8 +1725,11 @@ export function ChatArea({
       Boolean(lastMessageStatus) ||
       (lastIsAssistantWithToolCalls && !lastMessageText.trim()));
 
+  // Mobile needs real 44px touch targets with legible ~20px icons; desktop
+  // stays compact (32px / 16px). The [&_svg] selector sizes the glyph without
+  // editing every icon call-site.
   const composerIconButtonClass =
-    "h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8";
+    "h-11 w-11 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground [&_svg]:size-5 sm:h-8 sm:w-8 sm:[&_svg]:size-4";
 
   // Shared prompt input element
   const promptInputEl = (
@@ -1809,7 +1777,7 @@ export function ChatArea({
           welcomeHideOrb
             ? hasMessages
               ? "min-h-8 pb-1.5 pt-0.5"
-              : "min-h-8 pb-1 pt-0"
+              : "min-h-16 pb-2 pt-1"
             : hasMessages
               ? "min-h-8 pb-2 pt-0.5"
               : "min-h-12 pb-3 pt-1",
@@ -1871,7 +1839,6 @@ export function ChatArea({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon-sm"
                       className={cn(
                         composerIconButtonClass,
                         selectedProject && "text-primary hover:text-primary",
@@ -1969,7 +1936,6 @@ export function ChatArea({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon-sm"
                       className={composerIconButtonClass}
                       aria-label="Select model"
                     >
@@ -2043,27 +2009,6 @@ export function ChatArea({
             hideOrb={welcomeHideOrb}
             variant={welcomeHideOrb ? "widget" : "full"}
             composer={promptInputEl}
-            beforeComposer={
-              welcomeHideOrb ? (
-                <WidgetWelcomePrompt
-                  disabled={isStreaming}
-                  suggestions={assistantSuggestions}
-                  onAction={handleWidgetWelcomeAction}
-                  onDismiss={
-                    showWidgetWelcomePrompt ? onWidgetWelcomeDismiss : undefined
-                  }
-                />
-              ) : null
-            }
-            afterComposer={
-              !welcomeHideOrb ? (
-                <AssistantSuggestionList
-                  disabled={isStreaming}
-                  suggestions={assistantSuggestions}
-                  onSelectPrompt={handleCatalogAction}
-                />
-              ) : null
-            }
             error={
               chatError ? (
                 <InfoAlert variant="error" className="py-2">
@@ -2681,41 +2626,3 @@ export function ChatArea({
   );
 }
 
-function WidgetWelcomePrompt({
-  disabled,
-  suggestions,
-  onAction,
-  onDismiss,
-}: {
-  disabled: boolean;
-  suggestions: AssistantSuggestion[];
-  onAction: (prompt: string) => void;
-  onDismiss?: () => void;
-}) {
-  return (
-    <div className="text-left">
-      {onDismiss && (
-        <div className="mb-1 flex justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onDismiss}
-            aria-label="Dismiss AI welcome message"
-            className="-mr-1 -mt-1 h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <XIcon className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      )}
-      <div>
-        <AssistantSuggestionList
-          disabled={disabled}
-          suggestions={suggestions.slice(0, 3)}
-          variant="compact"
-          onSelectPrompt={onAction}
-        />
-      </div>
-    </div>
-  );
-}

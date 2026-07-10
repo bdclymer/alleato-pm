@@ -5,18 +5,25 @@ import {
   useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
 } from "@liveblocks/react";
+import { Bell, MoreVertical } from "lucide-react";
 
 import { AppInboxList } from "@/components/collaboration/app-inbox-list";
-import { EmptyState, Badge } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Bell } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 // Liveblocks hooks throw if the provider is unavailable. Keep the page shell up
-// and degrade to a quiet empty state instead of crashing.
+// and degrade to a quiet empty state instead of crashing — and report the
+// failure so a missing inbox is diagnosable rather than an invisible no-op.
 class InboxBoundary extends React.Component<
   { children: React.ReactNode; fallback: React.ReactNode },
   { failed: boolean }
@@ -25,34 +32,44 @@ class InboxBoundary extends React.Component<
   static getDerivedStateFromError() {
     return { failed: true };
   }
-  componentDidCatch() {
-    /* intentionally silent — notifications are non-critical */
+  componentDidCatch(error: unknown) {
+    console.warn("[notifications] inbox unavailable:", error);
   }
   render() {
     return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
 
-function UnreadCountBadge() {
+// The unread count is shown once — on the Unread tab. No separate count pill.
+function UnreadTabLabel() {
   const { count } = useUnreadInboxNotificationsCount();
-  if (!count) return null;
-  return <Badge variant="secondary">{count}</Badge>;
+  return <>Unread{count ? ` (${count})` : ""}</>;
 }
 
-function MarkAllReadAction() {
+// "Mark all read" lives in the overflow menu, not as floating header text.
+function NotificationsMenu() {
   const markAllAsRead = useMarkAllInboxNotificationsAsRead();
   const { count } = useUnreadInboxNotificationsCount();
   if (!count) return null;
   return (
-    <Button variant="ghost" size="sm" onClick={() => markAllAsRead()}>
-      Mark all read
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Notification actions"
+          className="h-9 w-9 text-muted-foreground"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => markAllAsRead()}>
+          Mark all read
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
-}
-
-function UnreadTabLabel() {
-  const { count } = useUnreadInboxNotificationsCount();
-  return <>Unread{count ? ` (${count})` : ""}</>;
 }
 
 export default function NotificationsPage() {
@@ -60,10 +77,7 @@ export default function NotificationsPage() {
 
   const actions = (
     <InboxBoundary fallback={null}>
-      <div className="flex items-center gap-2">
-        <UnreadCountBadge />
-        <MarkAllReadAction />
-      </div>
+      <NotificationsMenu />
     </InboxBoundary>
   );
 

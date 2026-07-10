@@ -300,7 +300,7 @@ function ExpandedNavGroup({
                     ? "bg-primary text-primary-foreground font-medium"
                     : "font-medium text-sidebar-foreground"
                   : isMobile
-                    ? "text-neutral-300 hover:bg-neutral-900/80 hover:text-neutral-50"
+                    ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
                     : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )
 
@@ -368,7 +368,7 @@ function ExpandedCompanyWideTools({
             className={cn(
               "mb-3 h-8 justify-start gap-2 rounded-md px-2 text-xs font-medium",
               isMobile
-                ? "text-neutral-300 hover:bg-neutral-900/80 hover:text-neutral-50"
+                ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
                 : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
             )}
           >
@@ -421,7 +421,7 @@ function ExpandedCompanyWideTools({
                       ? "bg-primary text-primary-foreground font-medium"
                       : "font-medium text-sidebar-foreground"
                     : isMobile
-                      ? "text-neutral-300 hover:bg-neutral-900/80 hover:text-neutral-50"
+                      ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
                       : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                 )
 
@@ -731,7 +731,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       collapsible="icon"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={cn(isMobile && "border-r border-neutral-800 bg-neutral-950 text-neutral-100 shadow-xl")}
+      className={cn(isMobile && "bg-neutral-800 text-neutral-100 shadow-2xl")}
       data-hover-expanded={isHovering && !isPinned ? "true" : undefined}
       {...props}
     >
@@ -739,7 +739,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader
         className={cn(
           isMobile
-            ? "bg-neutral-950 px-5 pb-4 pt-5 text-neutral-100"
+            ? "bg-neutral-800 px-5 pb-4 pt-5 text-neutral-100"
             : "px-0 pb-4 pt-5"
         )}
       >
@@ -781,7 +781,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   size="icon"
                   aria-label="Close navigation"
                   onClick={() => setOpenMobile(false)}
-                  className="h-8 w-8 rounded-md text-neutral-400 hover:bg-neutral-900/80 hover:text-neutral-50"
+                  className="h-8 w-8 rounded-md text-neutral-400 hover:bg-neutral-700/70 hover:text-neutral-50"
                 >
                   <X className="h-4 w-4" strokeWidth={1.7} />
                 </Button>
@@ -811,10 +811,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <div className={cn(
               "md:hidden",
               "[&_.project-selector-trigger]:w-full",
-              "[&_.project-selector-trigger]:border-neutral-800",
+              "[&_.project-selector-trigger]:border-neutral-700",
               "[&_.project-selector-trigger]:bg-neutral-900/60",
               "[&_.project-selector-trigger]:text-neutral-100",
-              "[&_.project-selector-trigger]:hover:bg-neutral-900/80",
+              "[&_.project-selector-trigger]:hover:bg-neutral-700/70",
               "[&_.project-selector-trigger_*]:text-neutral-300"
             )}>
               <ProjectSelector
@@ -846,7 +846,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           isCollapsed
             ? "items-center pl-1 pr-0 py-2"
             : isMobile
-              ? "bg-neutral-950 px-5 py-1 text-neutral-100"
+              ? "bg-neutral-800 px-5 py-1 text-neutral-100"
               : "px-3 py-1",
           "group-data-[hover-expanded=true]:overflow-y-auto"
         )}
@@ -939,7 +939,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {visibleCompanyWideTools.length > 0 && (
                   <div className={cn(
                     "mt-4 pt-3",
-                    isMobile ? "border-t border-neutral-800" : "border-t border-sidebar-border/70"
+                    isMobile ? "border-t border-neutral-700" : "border-t border-sidebar-border/70"
                   )}>
                     <Button
                       type="button"
@@ -949,7 +949,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className={cn(
                         "h-9 w-full justify-start gap-2 px-3 text-xs font-medium",
                         isMobile
-                          ? "text-neutral-300 hover:bg-neutral-900/80 hover:text-neutral-50"
+                          ? "text-neutral-300 hover:bg-neutral-700/70 hover:text-neutral-50"
                           : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                       )}
                     >
@@ -967,11 +967,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* User row — mobile sidebar only */}
       {isMobile && (
-        <SidebarFooter className="border-t border-neutral-800 bg-neutral-950 px-5 py-4 text-neutral-100">
+        <SidebarFooter className="border-t border-neutral-700 bg-neutral-800 px-5 py-4 text-neutral-100">
           <Link
             href="/settings/profile"
             onClick={() => setOpenMobile(false)}
-            className="flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-900/80 hover:text-neutral-50"
+            className="flex min-h-9 items-center gap-2 rounded-md px-3 text-xs font-medium text-neutral-300 transition-colors hover:bg-neutral-700/70 hover:text-neutral-50"
           >
             <Users className="h-4 w-4" strokeWidth={1.5} />
             <span className="truncate">{user?.email || mobileDisplayName}</span>

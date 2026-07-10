@@ -25,7 +25,10 @@ export default function TablesLayout({
               className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0"
               style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
             >
-              <SiteHeader />
+              {/* Mobile is app-style: bottom nav owns navigation, header is desktop-only. */}
+              <div className="hidden md:contents">
+                <SiteHeader />
+              </div>
               <main
                 id="app-main-content"
                 className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 pb-4 pt-2"

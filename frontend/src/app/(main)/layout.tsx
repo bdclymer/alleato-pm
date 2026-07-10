@@ -106,7 +106,13 @@ export default function MainLayout({
                 }
                 style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
               >
-                {!isDrawingViewer && <SiteHeader key="site-header" />}
+                {/* Mobile is app-style: the bottom nav owns navigation, so the
+                    top site header is desktop-only. */}
+                {!isDrawingViewer && (
+                  <div key="site-header" className="hidden md:contents">
+                    <SiteHeader />
+                  </div>
+                )}
                 <main
                   id="app-main-content"
                   key="main-content"

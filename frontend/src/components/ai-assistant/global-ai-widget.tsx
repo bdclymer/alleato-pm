@@ -278,7 +278,7 @@ export function GlobalAiWidget() {
           aria-label="Alleato AI"
           onKeyDown={handlePanelKeyDown}
           className={cn(
-            "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl bg-background",
+            "global-ai-widget-panel flex flex-col overflow-hidden rounded-xl border border-border bg-background",
             "transition-[opacity,transform] duration-200 ease-out",
             compactPanel && !expanded && "global-ai-widget-panel-compact",
             expanded && "global-ai-widget-panel-expanded",
