@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   SidePanel,
   SidePanelBody,
@@ -44,8 +45,12 @@ export function BaseSidebar({
         if (!isOpen) onClose();
       }}
     >
-      <SidePanelContent size={size} side="right" className="flex h-full flex-col bg-background">
-        <SidePanelHeader className="border-b border-border/60 px-4 py-4 sm:px-6">
+      <SidePanelContent
+        size={size}
+        side="right"
+        className="flex h-full flex-col bg-background"
+      >
+        <SidePanelHeader className="px-4 py-4 sm:px-6">
           {subtitle ? (
             <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               {subtitle}
@@ -84,7 +89,7 @@ export function SidebarFooter({
 }) {
   return (
     <SidePanelFooter
-      className={cn("border-t border-border/60 bg-background px-4 py-4 sm:px-6", className)}
+      className={cn("bg-background px-4 py-4 sm:px-6", className)}
     >
       {children}
     </SidePanelFooter>
@@ -114,6 +119,43 @@ export function SidebarStats({
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * SidebarFilterTabs - the single segmented control every drilldown uses to
+ * filter its table (status / type). One shared primitive replaces the per-modal
+ * hand-rolled pill-button rows (noise-gate: no one-off overrides, no pills where
+ * a segmented control is clearer).
+ */
+export function SidebarFilterTabs<T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  options: Array<{ value: T; label: string }>;
+  value: T;
+  onChange: (value: T) => void;
+  ariaLabel?: string;
+}) {
+  return (
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      value={value}
+      onValueChange={(next) => {
+        if (next) onChange(next as T);
+      }}
+      aria-label={ariaLabel}
+    >
+      {options.map((option) => (
+        <ToggleGroupItem key={option.value} value={option.value}>
+          {option.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
 

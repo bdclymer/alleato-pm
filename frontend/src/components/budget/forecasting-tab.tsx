@@ -8,7 +8,12 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
-  Minus,
+  Sparkles,
+  Pencil,
+  Coins,
+  Gauge,
+  SquarePen,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -77,8 +82,7 @@ function mapBudgetDataToForecast(
     totalProjectedBudget: grandTotals?.projectedBudget ?? 0,
     totalProjectedCosts: grandTotals?.projectedCosts ?? 0,
     totalProjectedCostToComplete: grandTotals?.forecastToComplete ?? 0,
-    totalEstimatedCostAtCompletion:
-      grandTotals?.estimatedCostAtCompletion ?? 0,
+    totalEstimatedCostAtCompletion: grandTotals?.estimatedCostAtCompletion ?? 0,
     totalProjectedVariance: grandTotals?.projectedOverUnder ?? 0,
     variancePercentage:
       (grandTotals?.projectedBudget ?? 0) > 0
@@ -121,17 +125,44 @@ function VarianceCell({ value }: { value: number }) {
           ? "text-muted-foreground"
           : positive
             ? "text-emerald-600 dark:text-emerald-400"
-            : "text-destructive"
+            : "text-destructive",
       )}
     >
-      {neutral ? (
-        <Minus className="h-3 w-3" />
-      ) : positive ? (
+      {neutral ? null : positive ? (
         <TrendingUp className="h-3 w-3" />
       ) : (
         <TrendingDown className="h-3 w-3" />
       )}
       {formatCurrency(Math.abs(value))}
+    </span>
+  );
+}
+
+const FORECAST_METHOD_META: Record<
+  ForecastData["forecastByCostCode"][number]["forecastMethod"],
+  { icon: LucideIcon; label: string }
+> = {
+  automatic: { icon: Sparkles, label: "Automatic" },
+  manual: { icon: Pencil, label: "Manual" },
+  lump_sum: { icon: Coins, label: "Lump sum" },
+  monitored_resources: { icon: Gauge, label: "Monitored resources" },
+};
+
+function MethodIcon({
+  method,
+}: {
+  method: ForecastData["forecastByCostCode"][number]["forecastMethod"];
+}) {
+  const meta = FORECAST_METHOD_META[method] ?? FORECAST_METHOD_META.automatic;
+  const Icon = meta.icon;
+
+  return (
+    <span
+      className="inline-flex text-muted-foreground"
+      title={meta.label}
+      aria-label={meta.label}
+    >
+      <Icon className="h-4 w-4" />
     </span>
   );
 }
@@ -143,7 +174,7 @@ function CostBar({ budget, costs }: { budget: number; costs: number }) {
 
   return (
     <div className="h-1 w-full overflow-hidden rounded-full bg-border">
-      { }
+      {}
       <div
         className={cn("h-full rounded-full transition-all", tone)}
         style={{ width: `${pct}%` }}
@@ -194,8 +225,9 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
   const [loading, setLoading] = React.useState(true);
   const [recalculating, setRecalculating] = React.useState(false);
   const [forecast, setForecast] = React.useState<ForecastData | null>(null);
-  const [selectedLine, setSelectedLine] =
-    React.useState<ForecastData["forecastByCostCode"][number] | null>(null);
+  const [selectedLine, setSelectedLine] = React.useState<
+    ForecastData["forecastByCostCode"][number] | null
+  >(null);
   const [showFtcEditor, setShowFtcEditor] = React.useState(false);
 
   const fetchForecast = React.useCallback(
@@ -218,7 +250,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         setRecalculating(false);
       }
     },
-    [projectId]
+    [projectId],
   );
 
   React.useEffect(() => {
@@ -272,10 +304,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         />
         Recalculate
       </Button>
-      <Button
-        size="sm"
-        onClick={() => void handleExport()}
-      >
+      <Button size="sm" onClick={() => void handleExport()}>
         <FileSpreadsheet className="h-3.5 w-3.5" />
         Export
       </Button>
@@ -352,7 +381,11 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
       ];
 
       xlsx.utils.book_append_sheet(workbook, summarySheet, "Summary");
-      xlsx.utils.book_append_sheet(workbook, forecastSheet, "Forecast by Cost Code");
+      xlsx.utils.book_append_sheet(
+        workbook,
+        forecastSheet,
+        "Forecast by Cost Code",
+      );
 
       const workbookArray = xlsx.write(workbook, {
         bookType: "xlsx",
@@ -441,150 +474,183 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             <div className="min-w-max rounded-lg border border-border bg-background">
               <div className="w-max min-w-full">
-              {/* Table header */}
-              <div
-                className={cn(
-                  "grid gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
-                  FORECAST_GRID_COLUMNS,
-                )}
-              >
-                <span className="sticky left-0 z-[2] whitespace-nowrap bg-muted/40">Cost Code</span>
-                <span className="whitespace-nowrap text-right">Projected Budget</span>
-                <span className="whitespace-nowrap text-right">Projected Costs</span>
-                <span className="whitespace-nowrap text-right">Cost to Complete</span>
-                <span className="whitespace-nowrap text-right">Est. at Completion</span>
-                <span className="whitespace-nowrap text-right">Forecast Start</span>
-                <span className="whitespace-nowrap text-right">Forecast End</span>
-                <span className="whitespace-nowrap text-right">Method</span>
-                <span className="whitespace-nowrap text-right">Variance</span>
-              </div>
-
-              {/* Table rows */}
-              <div className="divide-y divide-border">
-                {items.map((item) => {
-                  const pct = getBudgetUsedPercent(
-                    item.projectedBudget,
-                    item.projectedCosts,
-                  );
-
-                  return (
-                    <div
-                      key={item.budgetLineId || `${item.costCode}-${item.costCodeName}`}
-                      className={cn(
-                        "group grid items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/30",
-                        FORECAST_GRID_COLUMNS,
-                      )}
-                    >
-                      {/* Code + name */}
-                      <div className="sticky left-0 z-[1] min-w-0 space-y-2 bg-background group-hover:bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
-                            {item.costCode}
-                          </span>
-                          <span className="truncate text-sm font-medium text-foreground">
-                            {item.costCodeName}
-                          </span>
-                          <span className="ml-auto shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
-                            {formatBudgetUsedPercent(pct)}
-                          </span>
-                        </div>
-                        <CostBar
-                          budget={item.projectedBudget}
-                          costs={item.projectedCosts}
-                        />
-                      </div>
-
-                      {/* Projected Budget */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedBudget)}
-                      </div>
-
-                      {/* Projected Costs */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedCosts)}
-                      </div>
-
-                      {/* Projected Cost to Complete */}
-                      <div className="text-right text-sm tabular-nums text-foreground/80">
-                        {formatCurrency(item.projectedCostToComplete)}
-                      </div>
-
-                      {/* Estimated Cost at Completion */}
-                      <div className="text-right text-sm tabular-nums font-medium text-foreground">
-                        {formatCurrency(item.estimatedCostAtCompletion)}
-                      </div>
-
-                      {/* Forecast Start */}
-                      <div className="text-right text-xs tabular-nums text-muted-foreground">
-                        {formatDate(item.forecastStartDate)}
-                      </div>
-
-                      {/* Forecast End */}
-                      <div className="text-right text-xs tabular-nums text-muted-foreground">
-                        {formatDate(item.forecastEndDate)}
-                      </div>
-
-                      {/* Method */}
-                      <div className="text-right text-xs text-muted-foreground capitalize">
-                        {item.forecastMethod.replace("_", " ")}
-                      </div>
-
-                      {/* Variance */}
-                      <div className="text-right text-sm flex items-center justify-end gap-2">
-                        <VarianceCell value={item.projectedVariance} />
-                        {item.budgetLineId && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedLine(item);
-                              setShowFtcEditor(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer summary */}
-              {items.length > 0 && (
+                {/* Table header */}
                 <div
                   className={cn(
-                    "grid gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold",
+                    "grid gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
                     FORECAST_GRID_COLUMNS,
                   )}
                 >
-                  <span className="sticky left-0 z-[1] bg-muted/40 text-muted-foreground">Total</span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedBudget ?? 0)}
+                  <span className="sticky left-0 z-[2] whitespace-nowrap bg-muted/40">
+                    Cost Code
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedCosts ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Projected Budget
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalProjectedCostToComplete ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Projected Costs
                   </span>
-                  <span className="text-right tabular-nums">
-                    {formatCurrency(summary?.totalEstimatedCostAtCompletion ?? 0)}
+                  <span className="whitespace-nowrap text-right">
+                    Cost to Complete
                   </span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <span className="text-right text-xs text-muted-foreground">—</span>
-                  <div className="text-right">
-                    <VarianceCell value={summary?.totalProjectedVariance ?? 0} />
-                  </div>
+                  <span className="whitespace-nowrap text-right">
+                    Est. at Completion
+                  </span>
+                  <span className="whitespace-nowrap text-right">
+                    Forecast Start
+                  </span>
+                  <span className="whitespace-nowrap text-right">
+                    Forecast End
+                  </span>
+                  <span className="whitespace-nowrap text-right">Method</span>
+                  <span className="whitespace-nowrap text-right">Variance</span>
                 </div>
-              )}
+
+                {/* Table rows */}
+                <div className="divide-y divide-border">
+                  {items.map((item) => {
+                    const pct = getBudgetUsedPercent(
+                      item.projectedBudget,
+                      item.projectedCosts,
+                    );
+
+                    return (
+                      <div
+                        key={
+                          item.budgetLineId ||
+                          `${item.costCode}-${item.costCodeName}`
+                        }
+                        className={cn(
+                          "group grid items-center gap-4 px-5 py-3.5 transition-colors hover:bg-muted/30",
+                          FORECAST_GRID_COLUMNS,
+                        )}
+                      >
+                        {/* Code + name */}
+                        <div className="sticky left-0 z-[1] min-w-0 space-y-2 bg-background group-hover:bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
+                              {item.costCode}
+                            </span>
+                            <span className="truncate text-sm font-medium text-foreground">
+                              {item.costCodeName}
+                            </span>
+                            <span className="ml-auto shrink-0 text-[11px] font-medium tabular-nums text-muted-foreground">
+                              {formatBudgetUsedPercent(pct)}
+                            </span>
+                          </div>
+                          <CostBar
+                            budget={item.projectedBudget}
+                            costs={item.projectedCosts}
+                          />
+                        </div>
+
+                        {/* Projected Budget */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedBudget)}
+                        </div>
+
+                        {/* Projected Costs */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedCosts)}
+                        </div>
+
+                        {/* Projected Cost to Complete */}
+                        <div className="text-right text-sm tabular-nums text-foreground/80">
+                          {formatCurrency(item.projectedCostToComplete)}
+                        </div>
+
+                        {/* Estimated Cost at Completion */}
+                        <div className="text-right text-sm tabular-nums font-medium text-foreground">
+                          {formatCurrency(item.estimatedCostAtCompletion)}
+                        </div>
+
+                        {/* Forecast Start */}
+                        <div className="text-right text-xs tabular-nums text-muted-foreground">
+                          {formatDate(item.forecastStartDate)}
+                        </div>
+
+                        {/* Forecast End */}
+                        <div className="text-right text-xs tabular-nums text-muted-foreground">
+                          {formatDate(item.forecastEndDate)}
+                        </div>
+
+                        {/* Method */}
+                        <div className="flex justify-end">
+                          <MethodIcon method={item.forecastMethod} />
+                        </div>
+
+                        {/* Variance */}
+                        <div className="flex items-center justify-end gap-2 text-sm">
+                          {item.budgetLineId && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Edit forecast"
+                              title="Edit forecast"
+                              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
+                              onClick={() => {
+                                setSelectedLine(item);
+                                setShowFtcEditor(true);
+                              }}
+                            >
+                              <SquarePen className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <VarianceCell value={item.projectedVariance} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer summary */}
+                {items.length > 0 && (
+                  <div
+                    className={cn(
+                      "grid gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold",
+                      FORECAST_GRID_COLUMNS,
+                    )}
+                  >
+                    <span className="sticky left-0 z-[1] bg-muted/40 text-muted-foreground">
+                      Total
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(summary?.totalProjectedBudget ?? 0)}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(summary?.totalProjectedCosts ?? 0)}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(
+                        summary?.totalProjectedCostToComplete ?? 0,
+                      )}
+                    </span>
+                    <span className="text-right tabular-nums">
+                      {formatCurrency(
+                        summary?.totalEstimatedCostAtCompletion ?? 0,
+                      )}
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <span className="text-right text-xs text-muted-foreground">
+                      —
+                    </span>
+                    <div className="text-right">
+                      <VarianceCell
+                        value={summary?.totalProjectedVariance ?? 0}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          </div>
         )}
-
       </div>
 
       {selectedLine && (
