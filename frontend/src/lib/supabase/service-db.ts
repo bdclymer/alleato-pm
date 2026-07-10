@@ -95,23 +95,24 @@ export function __resetServiceDbClientsForTests(): void {
   ragClient = null;
 }
 
-function routedFrom(relation: string) {
+// The public `from` reuses Supabase's own two `from` return types (rather than
+// reconstructing PostgrestQueryBuilder's generics), so it stays correct across
+// supabase-js versions. Declared as overloads over one broad implementation —
+// the RAG overload is listed first, so tables that exist in both projects (the
+// legacy `document_chunks` / `rag_pipeline_state`) type as, and route to, the
+// RAG project, matching the runtime. No casts: the implementation signature
+// returns `unknown`, which every overload return is assignable to.
+function serviceDbFrom<T extends RagTableName>(
+  table: T,
+): ReturnType<SupabaseClient<RagDatabase>["from"]>;
+function serviceDbFrom(
+  table: keyof Database["public"]["Tables"] & string,
+): ReturnType<SupabaseClient<Database>["from"]>;
+function serviceDbFrom(relation: string): unknown {
   if (isRagTable(relation)) {
     return getRagClient().from(relation);
   }
   return getPmClient().from(relation as keyof Database["public"]["Tables"] & string);
 }
 
-// The public interface is the intersection of Supabase's own two `from` methods.
-// Reusing the installed `SupabaseClient<DB>["from"]` types (rather than
-// reconstructing PostgrestQueryBuilder's generics) keeps per-table row typing
-// precise and robust across supabase-js versions. Overload resolution tries the
-// RAG signatures first, so tables that exist in both projects (the legacy
-// `document_chunks` / `rag_pipeline_state`) type as — and route to — the RAG
-// project, matching the runtime.
-type RagFrom = SupabaseClient<RagDatabase>["from"];
-type PmFrom = SupabaseClient<Database>["from"];
-
-export const serviceDb: { readonly from: RagFrom & PmFrom } = {
-  from: routedFrom as unknown as RagFrom & PmFrom,
-};
+export const serviceDb = { from: serviceDbFrom };
