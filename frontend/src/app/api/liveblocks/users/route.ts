@@ -9,6 +9,18 @@ export const dynamic = "force-dynamic";
 
 const ROUTE = "/api/liveblocks/users#GET";
 
+// Deterministic avatar color per user id — Liveblocks' native Avatar/CommentPin
+// render a colored circle with the user's initials when no avatar image exists,
+// and we don't store avatar images. Stable hash -> pleasant HSL hue.
+function colorForId(id: string): string {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) | 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 60%, 45%)`;
+}
+
 // Backs Liveblocks `resolveUsers` — maps user ids to display info so comment
 // threads render names instead of raw ids. Returns records in the SAME ORDER as
 // the requested ids (Liveblocks matches by index); unknown ids come back as null.
@@ -47,10 +59,15 @@ export const GET = withApiGuardrails(ROUTE, async ({ request }) => {
 
   const byId = new Map((data ?? []).map((row) => [row.id, row]));
   const users = ids.map((id) => {
-    if (isAgentUserId(id)) return { name: AGENT_USERS[id].name };
+    if (isAgentUserId(id)) {
+      return { name: AGENT_USERS[id].name, color: colorForId(id) };
+    }
     const row = byId.get(id);
     if (!row) return null;
-    return { name: row.full_name ?? row.email ?? "Teammate" };
+    return {
+      name: row.full_name ?? row.email ?? "Teammate",
+      color: colorForId(id),
+    };
   });
 
   return NextResponse.json({ users });

@@ -10,13 +10,24 @@ import { MessageSquarePlus, X } from "lucide-react";
 import {
   ClientSideSuspense,
   RoomProvider,
+  useEditThreadMetadata,
+  useSelf,
   useThreads,
 } from "@liveblocks/react/suspense";
 import type { ThreadData } from "@liveblocks/client";
-import { Composer, Thread } from "@liveblocks/react-ui";
+import { CommentPin, FloatingComposer, FloatingThread } from "@liveblocks/react-ui";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useDraggable,
+  useSensor,
+  useSensors,
+  type DataRef,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { usePageCommentsStore } from "@/lib/stores/page-comments-store";
 
 // This overlay mounts on top of the app. A comments/connection failure must
@@ -47,59 +58,124 @@ function pageRoomId(pathname: string): string {
   return `alleato:page:${clean || "root"}`;
 }
 
-const Z = 2147483000; // above app chrome; Liveblocks portals sit on top of this
+// Base above app chrome; per-thread zIndex is added on top of this.
+const Z_BASE = 2147483000;
 
-// A single pin marker anchored to its stored page coordinates; opens its thread.
-function Pin({
+// Highest zIndex across all threads, so opening/dragging a pin can raise it
+// above its neighbours (mirrors the Liveblocks canvas-comments example).
+function useMaxZIndex(): number {
+  const { threads } = useThreads();
+  return React.useMemo(() => {
+    let max = 0;
+    for (const thread of threads) {
+      const z = thread.metadata.zIndex ?? 0;
+      if (z > max) max = z;
+    }
+    return max;
+  }, [threads]);
+}
+
+// A single draggable thread: the native Liveblocks CommentPin (author avatar,
+// not a chat icon) wrapped in a FloatingThread that opens the full thread — with
+// its built-in reply composer — on click. Drag the pin to reposition it.
+function DraggableThread({
   thread,
-  open,
-  onToggle,
+  maxZIndex,
 }: {
   thread: ThreadData;
-  open: boolean;
-  onToggle: () => void;
+  maxZIndex: number;
 }) {
-  const x = thread.metadata.x;
-  const y = thread.metadata.y;
-  if (typeof x !== "number" || typeof y !== "number") return null;
+  // Auto-open a thread the moment it's created.
+  const defaultOpen = React.useMemo(
+    () => Date.now() - new Date(thread.createdAt).getTime() <= 200,
+    [thread.createdAt],
+  );
+  const [open, setOpen] = React.useState(defaultOpen);
+
+  const { isDragging, attributes, listeners, setNodeRef, transform } =
+    useDraggable({ id: thread.id, data: { thread } });
+
+  const baseX = thread.metadata.x ?? 0;
+  const baseY = thread.metadata.y ?? 0;
+  const x = transform ? transform.x + baseX : baseX;
+  const y = transform ? transform.y + baseY : baseY;
+  const z =
+    open || isDragging ? maxZIndex + 1 : thread.metadata.zIndex ?? 0;
 
   return (
-    <div style={{ position: "absolute", left: x, top: y, zIndex: Z }}>
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={onToggle}
-        aria-label="Open comment"
-        className={cn(
-          "flex h-7 w-7 -translate-x-1 -translate-y-7 items-center justify-center rounded-full rounded-bl-sm p-0",
-          "bg-primary text-primary-foreground shadow-sm ring-2 ring-background hover:bg-primary/90",
-          "transition-transform hover:scale-110",
-        )}
+    <FloatingThread
+      thread={thread}
+      open={open}
+      onOpenChange={setOpen}
+      side="right"
+      style={{ pointerEvents: isDragging ? "none" : "auto" }}
+    >
+      <div
+        ref={setNodeRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transform: `translate3d(${x}px, ${y}px, 0)`,
+          zIndex: Z_BASE + z,
+        }}
       >
-        <MessageSquarePlus className="h-3.5 w-3.5" />
-      </Button>
-      {open ? (
-        <div
-          className="w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-lg border border-border bg-card shadow-lg"
-          style={{ position: "absolute", left: 8, top: 4 }}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Thread thread={thread} />
-        </div>
-      ) : null}
-    </div>
+        <CommentPin
+          userId={thread.comments[0]?.userId}
+          corner="top-left"
+          {...listeners}
+          {...attributes}
+        />
+      </div>
+    </FloatingThread>
   );
 }
 
-// Rendered only while comment mode is active. The whole page becomes clickable
-// to drop a pin; existing pins are shown; Esc or the banner's × exits.
+// The new-comment composer, anchored to a pin at the clicked coordinates.
+function NewThreadComposer({
+  coords,
+  maxZIndex,
+  onDone,
+}: {
+  coords: { x: number; y: number };
+  maxZIndex: number;
+  onDone: () => void;
+}) {
+  const creatorId = useSelf((me) => me.id);
+  return (
+    <FloatingComposer
+      defaultOpen
+      metadata={{ x: coords.x, y: coords.y, zIndex: maxZIndex + 1 }}
+      onComposerSubmit={onDone}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          transform: `translate3d(${coords.x}px, ${coords.y}px, 0)`,
+          zIndex: Z_BASE + maxZIndex + 1,
+        }}
+      >
+        <CommentPin userId={creatorId ?? undefined} corner="top-left" />
+      </div>
+    </FloatingComposer>
+  );
+}
+
+// Rendered while the comments layer is active. Existing pins are always visible,
+// clickable, and draggable (view mode); the page stays usable. Only after "Add
+// comment" does the page become a click-to-place surface, until one is placed.
 function OverlayInner() {
   const setActive = usePageCommentsStore((state) => state.setActive);
   const { threads } = useThreads();
-  const [draft, setDraft] = React.useState<{ x: number; y: number } | null>(
-    null,
-  );
-  const [openId, setOpenId] = React.useState<string | null>(null);
+  const editThreadMetadata = useEditThreadMetadata();
+  const maxZIndex = useMaxZIndex();
+  const [mode, setMode] = React.useState<"view" | "placing" | "placed">("view");
+  const [coords, setCoords] = React.useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
 
   const pins = threads.filter(
     (thread) =>
@@ -107,103 +183,135 @@ function OverlayInner() {
       typeof thread.metadata.y === "number",
   );
 
+  // A tiny drag threshold keeps a plain click on the pin (open thread) distinct
+  // from a drag (reposition).
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 3 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 3 } }),
+  );
+
+  const onDragEnd = React.useCallback(
+    ({ active, delta }: DragEndEvent) => {
+      const thread = (active.data as DataRef<{ thread: ThreadData }>).current
+        ?.thread;
+      if (!thread) return;
+      editThreadMetadata({
+        threadId: thread.id,
+        metadata: {
+          x: (thread.metadata.x ?? 0) + delta.x,
+          y: (thread.metadata.y ?? 0) + delta.y,
+          zIndex: maxZIndex + 1,
+        },
+      });
+    },
+    [editThreadMetadata, maxZIndex],
+  );
+
+  const exit = React.useCallback(() => {
+    setMode("view");
+    setActive(false);
+  }, [setActive]);
+
   React.useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setDraft(null);
+      if (event.key !== "Escape") return;
+      // Esc backs out of placement first, then closes the layer.
+      setMode((current) => {
+        if (current !== "view") return "view";
         setActive(false);
-      }
+        return current;
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [setActive]);
 
-  const onPlaceClick = (event: React.MouseEvent) => {
-    setDraft({
-      x: event.clientX + window.scrollX,
-      y: event.clientY + window.scrollY,
-    });
-  };
-
   const overlay = (
     <>
-      {/* Mode hint + exit */}
+      {/* Toolbar: count, add action, and exit. */}
       <div
         className="fixed left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-lg"
-        style={{ zIndex: Z + 2 }}
+        style={{ zIndex: Z_BASE + 100000 }}
       >
-        <MessageSquarePlus className="h-3.5 w-3.5" />
-        Click anywhere to comment
-        <span className="opacity-60">· Esc to exit</span>
+        {mode === "placing" ? (
+          <>
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+            Click anywhere to place your comment
+          </>
+        ) : (
+          <>
+            <span>
+              {pins.length === 0
+                ? "No comments on this page yet"
+                : `${pins.length} comment${pins.length === 1 ? "" : "s"} on this page`}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setMode("placing")}
+              className="ml-1 h-6 gap-1 rounded-full px-2 text-background hover:bg-background/20 hover:text-background"
+            >
+              <MessageSquarePlus className="h-3.5 w-3.5" />
+              Add comment
+            </Button>
+          </>
+        )}
+        <span className="opacity-60">· Esc</span>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label="Exit comment mode"
-          onClick={() => {
-            setDraft(null);
-            setActive(false);
-          }}
+          aria-label="Close comments"
+          onClick={exit}
           className="ml-1 h-5 w-5 rounded-full text-background hover:bg-background/20 hover:text-background"
         >
           <X className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      {/* Existing pins */}
-      {pins.map((thread) => (
-        <Pin
-          key={thread.id}
-          thread={thread}
-          open={openId === thread.id}
-          onToggle={() =>
-            setOpenId((id) => (id === thread.id ? null : thread.id))
-          }
-        />
-      ))}
+      {/* Existing pins — always visible, clickable, and draggable. */}
+      <DndContext onDragEnd={onDragEnd} sensors={sensors}>
+        {pins.map((thread) => (
+          <DraggableThread
+            key={thread.id}
+            thread={thread}
+            maxZIndex={maxZIndex}
+          />
+        ))}
+      </DndContext>
 
-      {/* New-thread composer at the clicked location */}
-      {draft ? (
+      {/* Placement surface — only while adding, so normal page clicks are never
+          intercepted in view mode. */}
+      {mode === "placing" ? (
         <div
-          style={{ position: "absolute", left: draft.x, top: draft.y, zIndex: Z + 1 }}
-        >
-          <div
-            className="w-[min(20rem,calc(100vw-1rem))] -translate-y-2 overflow-hidden rounded-lg border border-border bg-card shadow-lg"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-3 pt-2 text-xs font-medium text-muted-foreground">
-              <span>New comment</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Cancel"
-                onClick={() => setDraft(null)}
-                className="h-5 w-5"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            <Composer
-              autoFocus
-              metadata={{ x: draft.x, y: draft.y }}
-              onComposerSubmit={() => setDraft(null)}
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {/* Click-catcher (only when not already placing a draft) */}
-      {!draft ? (
-        <div
-          onClick={onPlaceClick}
           className="bg-foreground/5"
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: Z - 1,
+            zIndex: Z_BASE + 50000,
             cursor: "crosshair",
           }}
+          onClick={(event) => {
+            setCoords({
+              x: event.clientX + window.scrollX,
+              y: event.clientY + window.scrollY,
+            });
+            setMode("placed");
+          }}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            setMode("view");
+          }}
+        />
+      ) : null}
+
+      {/* The new-comment composer at the placed location. */}
+      {mode === "placed" ? (
+        <NewThreadComposer
+          coords={coords}
+          maxZIndex={maxZIndex}
+          onDone={() => setMode("view")}
         />
       ) : null}
     </>
@@ -213,11 +321,11 @@ function OverlayInner() {
   return createPortal(overlay, document.body);
 }
 
-// Global click-anywhere pin overlay, backed by Liveblocks, scoped to the current
-// page URL. Toggled from the header comment icon (usePageCommentsStore). Consumes
-// the app-level CollaborationProvider (mounted in the (main) layout) and adds only
-// a RoomProvider for the current page's room while comment mode is active. Gated
-// by NEXT_PUBLIC_PAGE_COMMENTS.
+// Global page-comments layer, backed by Liveblocks, scoped to the current page
+// URL. Toggled from the header comment icon (usePageCommentsStore). Consumes the
+// app-level CollaborationProvider (mounted in the (main) layout) and adds only a
+// RoomProvider for the current page's room while the layer is active. Gated by
+// NEXT_PUBLIC_PAGE_COMMENTS.
 export function PageCommentsOverlay() {
   const pathname = usePathname();
   const active = usePageCommentsStore((state) => state.active);

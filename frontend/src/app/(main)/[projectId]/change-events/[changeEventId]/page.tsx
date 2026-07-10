@@ -64,6 +64,7 @@ import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/Ch
 import { ChangeEventRfqsTab } from "@/components/domain/change-events/ChangeEventRfqsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
+import { ChangeEventLinkageTags } from "@/components/domain/change-events/ChangeEventLinkageTags";
 import { EntityComments } from "@/components/comments/entity-comments";
 import { EntityRoom } from "@/components/comments/entity-room";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -612,6 +613,12 @@ export default function ChangeEventDetailPage() {
       actions={headerActions}
       onBack={handleBack}
     >
+      <ChangeEventLinkageTags
+        projectId={projectId}
+        changeEventId={changeEventId}
+        lineItems={lineItems}
+      />
+
       <PageTabs
         variant="inline"
         tabs={[

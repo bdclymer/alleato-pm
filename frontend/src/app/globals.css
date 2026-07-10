@@ -2224,3 +2224,21 @@ velt-comment-dialog-internal velt-sidebar-button {
   }
 
 }
+
+/* Liveblocks inbox notifications — tighten to app density. Stock defaults are a
+   36px avatar with 1em spacing, which reads oversized in the compact side panel.
+   These custom-property overrides are set on a closer ancestor than Liveblocks'
+   own `.lb-root`, so they win by inheritance regardless of stylesheet order. */
+.lb-inbox-notification-list {
+  --lb-spacing: 0.8rem;
+}
+
+.lb-inbox-notification {
+  --lb-inbox-notification-aside-size: 28px;
+}
+
+.lb-inbox-notification-title {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+

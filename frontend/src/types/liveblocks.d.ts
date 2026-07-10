@@ -21,6 +21,16 @@ declare global {
     ThreadMetadata: {
       x?: number;
       y?: number;
+      // Stacking order for overlapping draggable pins (raised on open/drag).
+      zIndex?: number;
+    };
+
+    // Room display info returned by `resolveRoomsInfo` (collaboration-provider).
+    // Gives comment/thread inbox notifications a human name + click-through URL
+    // instead of falling back to the raw room id.
+    RoomInfo: {
+      name: string;
+      url?: string;
     };
 
     // Custom inbox-notification kinds (must start with `$`). Every app-domain

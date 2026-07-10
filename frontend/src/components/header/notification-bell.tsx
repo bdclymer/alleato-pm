@@ -93,7 +93,10 @@ export function NotificationBell() {
       <SidePanel open={open} onOpenChange={setOpen}>
         <SidePanelContent side="right" size="compact">
           <SidePanelHeader className="border-b border-border/60">
-            <div className="flex items-center justify-between gap-3">
+            {/* pr-8 clears the SidePanel's built-in close (X) button, which sits
+                absolutely at top-4 right-4 — otherwise "Mark all read" collides
+                with it. */}
+            <div className="flex items-center justify-between gap-3 pr-8">
               <SidePanelTitle>Notifications</SidePanelTitle>
               <BellBoundary fallback={null}>
                 <MarkAllReadButton />

@@ -1,0 +1,415 @@
+{
+  "summary": {
+    "mode": "APPLY (no retire)",
+    "jpProjectId": 9299,
+    "appProjectId": 1067,
+    "jpCommitments": 5,
+    "toCreate": 0,
+    "toRebuildSov": 5,
+    "createsWithVendor": 0,
+    "createsMissingVendor": [],
+    "integrityFailures": [],
+    "totalJpSovLines": 36,
+    "acumaticaDuplicatesToRetire": 0,
+    "acumaticaOnlyFlagged": 0,
+    "unresolvedCodeLines": 0,
+    "unresolvedTypeLines": 0
+  },
+  "applied": {
+    "headersUpserted": 5,
+    "sovLinesWritten": 36,
+    "budgetCodesUpserted": 5,
+    "retired": 0
+  },
+  "plan": {
+    "jpCommitments": [
+      {
+        "number": "SC-9299-0006",
+        "kind": "subcontract",
+        "title": "Polished Concrete",
+        "vendorName": "Renovations And Services LLC",
+        "vendorCompanyId": null,
+        "jpHeaderTotal": 36000,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "98408f11-673f-4869-af14-a7d1096dc022",
+        "appCurrentSovCount": 1,
+        "appHasVendor": false,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "03-3500",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "03-3500.S",
+            "description": "Polished Concrete at the Game Room, Bar & Dining Room",
+            "amount": 36000
+          }
+        ]
+      },
+      {
+        "number": "SC-9299-0005",
+        "kind": "subcontract",
+        "title": null,
+        "vendorName": "Nasse Enterprises, LLC",
+        "vendorCompanyId": null,
+        "jpHeaderTotal": 13100,
+        "jpSovLineCount": 1,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "178e4d6d-6c2b-4cb9-a56a-15ab42137bf8",
+        "appCurrentSovCount": 1,
+        "appHasVendor": false,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "03-3000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "03-3000.S",
+            "description": "Supply & install a topping slab in the dining room and the bar",
+            "amount": 13100
+          }
+        ]
+      },
+      {
+        "number": "SC-9299-0004",
+        "kind": "subcontract",
+        "title": "TPO Roofing ",
+        "vendorName": "Local Roofing Contractor",
+        "vendorCompanyId": null,
+        "jpHeaderTotal": 20000,
+        "jpSovLineCount": 4,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "afa9f5e7-b780-436c-b137-b72fdc3d009b",
+        "appCurrentSovCount": 4,
+        "appHasVendor": false,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "07-5400",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5400.S",
+            "description": "(1) 40' x 30' Main Patch (Membrane, Flashing, All Penetration)",
+            "amount": 12000
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "07-5400",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5400.S",
+            "description": "Close Out Documents",
+            "amount": 1000
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "07-5400",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5400.S",
+            "description": "(6) 2'x2' Patches",
+            "amount": 5000
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "07-5400",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "07-5400.S",
+            "description": "Permit and Clean up",
+            "amount": 2000
+          }
+        ]
+      },
+      {
+        "number": "SC-9299-0003",
+        "kind": "subcontract",
+        "title": null,
+        "vendorName": "Orion Electric & Lighting ",
+        "vendorCompanyId": null,
+        "jpHeaderTotal": 21450,
+        "jpSovLineCount": 11,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "37f61a4a-2406-4d72-9794-1cae2461303a",
+        "appCurrentSovCount": 0,
+        "appHasVendor": false,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Replace existing romex in the dining room ceiling with MC cable.",
+            "amount": 400
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install 4 new receptacles for TVs above the bar.",
+            "amount": 800
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install 16 exterior lights on the porch",
+            "amount": 2500
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install 6 new receptacles for TVs in the dining room",
+            "amount": 1200
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install 14 new 2x2 LED lights in the kitchen.",
+            "amount": 2100
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Remove old abandoned wires from the dining room ceiling & clean up wires that remain",
+            "amount": 2000
+          },
+          {
+            "line_number": 7,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Remove string lights from porch",
+            "amount": 400
+          },
+          {
+            "line_number": 8,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install 4 new receptacles for TVs in the game room",
+            "amount": 1000
+          },
+          {
+            "line_number": 9,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Supply & install new 2x4 LED lights in the bathrooms & in the hallways outside of the bathrooms.",
+            "amount": 1300
+          },
+          {
+            "line_number": 10,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Install phase converter for Hobart mixer",
+            "amount": 1250
+          },
+          {
+            "line_number": 11,
+            "costCodeId": "26-1000",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "26-1000.S",
+            "description": "Replace 3 electrical panels in the kitchen",
+            "amount": 8500
+          }
+        ]
+      },
+      {
+        "number": "SC-9299-0002",
+        "kind": "subcontract",
+        "title": "Playmakers Restaurant TI",
+        "vendorName": "Right Image Construction LLC",
+        "vendorCompanyId": "a24e9512-742a-492f-b32f-a858653eeb20",
+        "jpHeaderTotal": 55650,
+        "jpSovLineCount": 19,
+        "integrityOk": true,
+        "action": "REBUILD_SOV",
+        "appCommitmentId": "7b218f1a-ea33-412e-bd5d-3c73d07a4d4b",
+        "appCurrentSovCount": 19,
+        "appHasVendor": true,
+        "budgetCodesNeeded": 1,
+        "unresolvedCodes": 0,
+        "unresolvedTypes": 0,
+        "resolvedLines": [
+          {
+            "line_number": 1,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Hang, Tape & Finish new drywall.",
+            "amount": 500
+          },
+          {
+            "line_number": 2,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Paint existing wood ceiling and exposed structure above bar.",
+            "amount": 600
+          },
+          {
+            "line_number": 3,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Expoxy painting of kitchen walls,  clean and paint existing wood walls.",
+            "amount": 8000
+          },
+          {
+            "line_number": 4,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Paint kitchen hoods",
+            "amount": 500
+          },
+          {
+            "line_number": 5,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Demo existing furniture and place in dumpster.",
+            "amount": 1600
+          },
+          {
+            "line_number": 6,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Remove & Re-install plumbing fixtures, FRP work, faux stone install..",
+            "amount": 3800
+          },
+          {
+            "line_number": 7,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Remove existing ceiling tile, install new ceiling tile, touch up grid.",
+            "amount": 12000
+          },
+          {
+            "line_number": 8,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Demo existing Host Desk",
+            "amount": 300
+          },
+          {
+            "line_number": 9,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Remove existing walk in cooler/freezer door.",
+            "amount": 300
+          },
+          {
+            "line_number": 10,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Demo Exterior patio wood decking.",
+            "amount": 2300
+          },
+          {
+            "line_number": 11,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Install LVT over existing tile, vinyl base.",
+            "amount": 2000
+          },
+          {
+            "line_number": 12,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Frame new host stand, clad in wood.",
+            "amount": 300
+          },
+          {
+            "line_number": 13,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Frame new kitchen wall, install door.",
+            "amount": 1200
+          },
+          {
+            "line_number": 14,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Patch damaged laminate on partitions, replace hardware and paint",
+            "amount": 2300
+          },
+          {
+            "line_number": 15,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Epoxy paint concrete patio front area.",
+            "amount": 1000
+          },
+          {
+            "line_number": 16,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Disconnect and remove existing kitchen equipment and shelving, place in connex.",
+            "amount": 1500
+          },
+          {
+            "line_number": 17,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Clean existing FRP in Kitchen",
+            "amount": 350
+          },
+          {
+            "line_number": 18,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Pressure wash and paint exterior of buiding.",
+            "amount": 16400
+          },
+          {
+            "line_number": 19,
+            "costCodeId": "09-5100",
+            "costTypeId": "8de0c55a-96d6-48cf-b2e9-35b1ff25f300",
+            "budget_code": "09-5100.S",
+            "description": "Install new 1\"x10\" exterior fascia trim",
+            "amount": 700
+          }
+        ]
+      }
+    ],
+    "retireDuplicates": [],
+    "acumaticaOnlyFlags": [],
+    "errors": []
+  },
+  "completedAt": "2026-07-10T03:50:08.291Z"
+}

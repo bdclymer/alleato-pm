@@ -14,6 +14,7 @@ import {
 } from "@liveblocks/react-ui";
 
 import { EmptyState } from "@/components/ds";
+import { describeRoom } from "@/lib/collaboration/resolve-rooms-info";
 
 // Renders app-domain notifications mirrored from `collaboration_notifications`
 // into the Liveblocks inbox under the flat `$alleato` kind. Native comment /
@@ -113,10 +114,15 @@ export function AppInboxList({
           key={notification.id}
           inboxNotification={notification}
           onClick={(event) => {
+            // $alleato carries its own href; native comment/thread/mention
+            // notifications resolve to the page URL via the room id so they're
+            // clickable too (previously they did nothing).
             const href =
               notification.kind === "$alleato"
                 ? notification.activities[0]?.data.href
-                : undefined;
+                : "roomId" in notification && notification.roomId
+                  ? describeRoom(notification.roomId).url
+                  : undefined;
             if (href) {
               event.preventDefault();
               onNavigate?.();

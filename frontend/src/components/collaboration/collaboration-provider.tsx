@@ -4,15 +4,16 @@ import * as React from "react";
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 
 import { apiFetch } from "@/lib/api-client";
+import { resolveRoomsInfo } from "@/lib/collaboration/resolve-rooms-info";
 
 // Resolves Liveblocks user ids -> display info so comment threads, mentions, and
 // inbox notifications render names instead of raw ids. Backed by
 // /api/liveblocks/users, which returns records in the SAME ORDER as the ids.
 async function resolveUsers(userIds: readonly string[]) {
   if (userIds.length === 0) return [];
-  const data = await apiFetch<{ users: ({ name: string } | null)[] }>(
-    `/api/liveblocks/users?ids=${encodeURIComponent(userIds.join(","))}`,
-  );
+  const data = await apiFetch<{
+    users: ({ name: string; color?: string } | null)[];
+  }>(`/api/liveblocks/users?ids=${encodeURIComponent(userIds.join(","))}`);
   return data.users.map((user) => user ?? undefined);
 }
 
@@ -67,6 +68,7 @@ export function CollaborationProvider({
       <LiveblocksProvider
         authEndpoint="/api/liveblocks/auth"
         resolveUsers={({ userIds }) => resolveUsers(userIds)}
+        resolveRoomsInfo={resolveRoomsInfo}
         resolveMentionSuggestions={resolveMentionSuggestions}
       >
         {children}

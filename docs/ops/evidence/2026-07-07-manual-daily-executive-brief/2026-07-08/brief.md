@@ -2,99 +2,84 @@
 
 ## Executive Brief
 
-Owner attention today is on **permit-critical design decisions, approval-dependent scopes, and procurement blockers**:
-
-- **Union Collective** is burning GC labor while the team waits on final design inputs; solar direction now appears to be a **45-array**, but battery storage remains unconfirmed, and Brandon is pushing early civil/foundation release instead of waiting for perfect drawings. `S247`
-- **Uniqlo Phillipsburg NJ** needs a fire-alarm panel cost breakdown and direct approval from Yusuke; Skypod disruption is unacceptable to UQ, so Alleato needs either a no-disruption execution plan or a credible option-B. `S260` `S307`
-- **Vermillion Rise Warehouse** can keep moving in the field, but permitting remains the main blocker; owner money exposure includes a deferred potential **$20,000 electrical rush fee**, a **$2,500 roof hatch**, and a possible **$11,000 paving scope change**. `S53`
-- **Goodwill Allisonville Rd IN** is tracking toward turnover pressure: signs are scheduled **July 20–22**, substantial completion is set for **August 7**, and canopy readiness remains the dependency for donation letters. `S20` `S25` `S265`
-- **Playmakers** has $15,263.95 in long-lead material purchases and is waiting on final permit movement plus the Notice of Commencement before work can start. `S305` `S263`
+- **Owner attention today:** Union Collective is the biggest leverage point: solar direction has moved to the **45 kW array, not 250 kW**, but battery storage remains open; permit strategy is being pushed earlier because general-condition labor is being burned before the job is moving. `S247`
+- **Schedule-critical:** Goodwill Allisonville Rd IN has substantial completion set for **August 7**, with signage scheduled **July 20–22** and donation letters still dependent on canopy readiness. `S265` `S9` `S20` `S25`
+- **Money exposure:** Vermillion Rise Warehouse has a potential **$20,000 electrical rush fee** deferred to project-end contingency review and an **$11,000 parking-lot resurfacing decision** needing approval. `S53`
+- **Start blocker:** Playmakers construction permit is in final review, but the **Notice of Commencement is still blocking start**. `S263`
+- **Closeout / client pressure:** Uniqlo Phillipsburg NJ needs a scope-by-scope estimate by **July 17** and leadership approval path on the FA panel while avoiding Skypod disruption. `S127` `S260`
+- **Documentation blocker:** Ulta Beauty Fresno still lacks verified BAS/HVAC pretest documentation showing working vs. non-working RTUs and fans. `S68` `S74` `S108`
 
 ## Highest-Leverage Owner Decisions
 
-1. **Union Collective — lock solar/battery direction and authorize early-release strategy.** Solar affects roof layout, trusses, electrical loads, switchboard, and electrical room sizing. `S54` Brandon wants civil/foundation/dirt pushed earlier, with civil permit potentially submitted July 22–23 and early foundation release pursued. `S247`
-
-2. **Uniqlo Phillipsburg NJ — decide FA panel approval path and disruption standard.** Alleato must send the FA panel cost breakdown, then follow up directly with Yusuke for formal approval; TPG is not contracted to coordinate the new FA panel. `S260` UQ says Skypod disruption is not acceptable and requested option-B if disruption is possible. `S260` `S307`
-
-3. **Vermillion Rise Warehouse — decide whether to carry/approve paving change and rush-fee posture.** Electrical supplier switch reduced gear lead time from 28 weeks to 8–10 weeks, while a possible $20,000 rush fee was accepted in concept but deferred for project-end contingency review. `S53` Paving change is roughly $11,000 and drawings are to be sent for owner review. `S53`
-
-4. **Goodwill Brookville Road — push Koontz-Wagner execution.** Koontz-Wagner needs the fully executed contract before submittals and vendor pricing can lock; signed subcontract, W-9, and COI are still required. `S126`
-
-5. **Superior Beverage Exotec — resolve Mack Plumbing commercial/material risk.** Mack wants contract/progress billing direction, COI/license permit requirements, and a plan for leaking Core & Main loose-material couplings if they perform poorly. `S79`
+1. **Union Collective — permit acceleration / early release.** Decide whether to force a split/early submission path and early foundation release rather than waiting for fully polished drawings; current plan could push dirt work to mid-September, while a July 22–23 submission may be possible. `S247`
+2. **Union Collective — solar/battery closure.** Confirm the 45 kW solar baseline and close the battery-storage question so roof, truss, and electrical-room design can finish. `S54` `S247`
+3. **Vermillion Rise Warehouse — added paving scope.** Approve or reject the roughly **$11,000** resurfacing/extension scope for the existing parking lot. `S53`
+4. **Goodwill Brookville Road — subcontract/change-order cleanup.** Push execution of Koontz-Wagner’s subcontract so submittals and vendor pricing can proceed, and return ATMI Indy’s change order on revised precast wall panel criteria. `S126` `S131`
+5. **Uniqlo Phillipsburg NJ — FA panel / operations risk.** Decide how to handle the new FA panel approval path and whether Alleato must present an option that avoids any Skypod disruption. `S260`
 
 ## Project Intelligence Updates
 
-- **Vermillion Rise Warehouse:** Mechanical pad footings are poured; slab pours are planned next week, followed by indoor trash compactor slab work. `S53` Underground plumbing/roof drains continue, HVAC layout follows, and electrical mobilization is planned next week. `S53` Permitting remains blocked at the state level, with county ready once state clears. `S53`
-
-- **Union Collective:** Permit submission target is late July, with site earthwork goal in September to avoid winter-condition impacts. `S54` Steel budgets are moving: R.A.D. Fabrication lists structural steel/decking install at **$950,109**, while prior G&H Welding budget was **$820,000** and multiple steel bidders were asked to re-review updated drawings. `S287` `S42` `S41`
-
-- **Goodwill Allisonville Rd IN:** Sign permits are approved and SignCraft is scheduled for **July 20–22** install, supporting first-week-August turnover. `S20` Access panel/truss concern appears resolved because the canopy ceiling is flat and framing should be below trusses. `S14` HVAC closeout package is requested by **July 24** ahead of substantial completion **August 7**. `S265`
-
-- **Goodwill Brookville Road:** Tony Courtney and Douglas Franklin are now the forward project contacts. `S118` Merritt records are incomplete because Lisa Turner lacks JobPlanner access. `S118` ATMI Indy is awaiting return/update of a precast wall panel design change order; no cost was visible. `S131`
-
-- **Playmakers:** Slate gray flooring was approved. `S8` Largo permit is in final reviewer queue, roofing permit remains in progress, and Notice of Commencement is required before work starts. `S263` Long-lead spend documented at **$15,263.95**. `S305`
-
-- **Uniqlo Phillipsburg NJ:** West WH estimating must be itemized by scope for internal budget alignment by **July 17**. `S236` FA panel cost breakdown is approval-sensitive and punch-list photo closeout remains outstanding. `S307`
-
-- **Exol Morrisville:** Phase 1 is green with mobilization started, fiber underway, and chargers being assembled. `S65` Phase 2 construction start is targeted around **July 22**, dependent on permit approval or starting at risk. `S65` Structural review and Symbotic electrical coordination remain blockers. `S65`
-
-- **Ulta Beauty Fresno:** BAS/HVAC shutdown validation is blocked because HCI does not have marked-up RTU/fan pretest documentation and redirected Alleato to the facility. `S74`
-
-- **McLane Jazz - UT:** Alleato accepted Exotec’s bracket-based sprinkler support approach using rear uprights only. `S259` `S261` `S262` Front uprights are rejected due to robot-arm access and 9 mm hole / 1/2-inch bolt incompatibility. `S259` `S261` `S262`
-
-- **Champaign Ace Addition:** Permit was submitted to City of Champaign under application **BS-26-2149**. `S237` Separate state design-firm registration approval is still required before building permit issuance, with timing possibly “a few weeks.” `S302`
-
-- **Westfield Collective:** TIF, CID, and IRB/sales-tax exemption applications are active; owner/developer inputs are needed for sources/uses, pro forma, capital stack, phasing, and construction-cost support. `S301`
+- **Vermillion Rise Warehouse:** Footings for three mechanical equipment pads are poured; slab pours and indoor trash-compactor slab are planned next week; underground plumbing and roof-drain work continue. `S53` Electrical gear lead time dropped from **28 weeks to 8–10 weeks** by switching suppliers, enabling electricians to mobilize next week. `S53` Permit approval still depends on state clearance; the county is reportedly ready once the state approves. `S53`
+- **Union Collective:** Target is late-July permit submission, roughly one month of permit review, and September construction/earthwork to avoid winter impacts. `S54` Steel budgets are being refreshed off `Union Collective_PROGRESS SET_2026-06-26.pdf`; G&H Welding’s prior quote was **$820,000**, while R.A.D. Fabrication’s pricing included **$950,109** for structural steel/decking install plus separate stairs/rail/ladder numbers. `S42` `S285`
+- **Goodwill Allisonville Rd IN:** Sign permits are approved, access-panel locations are acceptable, and sign install is scheduled for **July 20–22** except donation letters tied to canopy readiness. `S20` `S25` HVAC closeout package is requested by **July 24**, with retainage release tied to accepted documents. `S265`
+- **Goodwill Brookville Road:** Tony Courtney and Douglas Franklin are taking over project management correspondence. `S118` Koontz-Wagner still needs the fully executed subcontract, W-9, and COI before submittals and vendor pricing can be locked. `S126`
+- **Playmakers:** Long-lead materials were purchased: **$8,825.98** at Lowe’s, **$503.97** at Home Depot, and **$5,934.00** at FRP Specialties, totaling **$15,263.95** across listed purchases. `S121` `S134` Permit is in final reviewer queue, roofing permit remains in progress, and the NOC is critical to start. `S263`
+- **Exol Morrisville:** Status was reported green; mobilization began, fiber install is underway, and chargers are being assembled. `S65` Phase 2 construction is targeted around the 22nd, dependent on permit approval or acceptable risk to start. `S65`
+- **Ulta Beauty Fresno:** HCI does not have a markup showing working vs. non-working RTUs/fans; Alleato is still seeking facility verification. `S68` `S74` Citadel Roofing payment is being processed, but there is a small amount discrepancy between **$2,327.03** and **$2,326.72**. `S107` `S104`
+- **Uniqlo Phillipsburg NJ:** Estimate must be broken out by scope item by **July 17** for landlord/vendor responsibility alignment. `S127` FA cost breakdown was expected July 8, and formal UQ approval must come through Yusuke after submission. `S260`
+- **Superior Beverae Exotec:** Hy-Tek has no more detailed rack install schedule yet and is using roughly **125 chimneys per week** as planning basis. `S77` Mack Plumbing is waiting on contract/billing direction and flagged grooved-coupling leak risk. `S79`
+- **McLane Jazz - UT:** Alleato accepted rear-upright-only sprinkler support after Exotec confirmed front uprights cannot be used. `S262` Support height must match the horizontal beam to avoid bending moment risk. `S262`
+- **Westfield Collective:** Incentive applications for TIF, CID, and IRB/sales tax exemption are available, but the owner/developer package needs sources/uses, pro forma, capital stack, equity status, financing terms, and construction cost support. `S301`
+- **Crate Escapes:** Partial conditional lien waiver exposure is documented at **$341,841.15**, tied to the payment/application and work covered up to the waiver date. `S248`
 
 ## Risk Candidates
 
-- **Union Collective schedule/GC burn:** Brandon said Union must move because it is burning through general-condition labor; July 27 permit path could push dirt work to mid-September. `S247`
-- **Vermillion Rise Warehouse permit:** State approval is still pending; county cannot proceed until state clears. `S53`
-- **Uniqlo Phillipsburg NJ approval/schedule:** FA panel approval timing is live risk because TPG asked when UQ response is needed before cost or schedule impacts occur. `S260`
-- **Goodwill Brookville Road procurement:** Koontz-Wagner cannot proceed with submittals/vendor pricing without executed contract. `S126`
-- **Superior Beverage Exotec material quality:** Mack flagged prior leakage issues from Anvil-type grooved couplings and asked how leaking couplings would be fixed/replaced. `S79`
-- **Ulta Beauty Fresno scope validation:** Missing verified pretest documentation prevents BAS/HVAC shutdown scope validation. `S68`
-- **Playmakers start condition:** Notice of Commencement is required before work can start. `S263`
-- **Champaign Ace Addition permitting:** City can review but will not issue until state design-firm approvals are in place. `S302`
+- **Union Collective schedule/cost risk:** General-condition labor is being consumed before the job is moving, and dirt work could slip to mid-September without earlier permit/foundation release. `S247`
+- **Union Collective utility risk:** Existing water/sewer locations remain unverified; reuse could avoid costly new utility work. `S54`
+- **Vermillion Rise Warehouse permit risk:** Work is proceeding around a pending state clearance, but full permit approval remains blocked by the state. `S53`
+- **Goodwill Allisonville Rd IN turnover risk:** Donation-letter install depends on canopy completion, and turnover is planned for the first week of August. `S9` `S20` `S25`
+- **Playmakers start risk:** NOC remains the blocker even though the construction permit is near completion. `S263`
+- **Ulta Beauty Fresno coordination risk:** BAS/HVAC issue cannot be closed cleanly without verified working/non-working unit documentation. `S68` `S74`
+- **Uniqlo Phillipsburg NJ client/vendor risk:** UQ says it cannot accept Skypod disruption and wants an option-B if disruption is possible. `S260`
+- **Company cash/credit risk:** Capital One warned the Venture X Business account ending **8141** was close to exceeding purchasing power; a **$187,102.08** payment was scheduled July 8. `S90` `S89`
+- **Documents lane risk:** A large portion of documents are older AP/lien/waiver items; useful for exposure cleanup, but less reliable for current field movement.
 
 ## Decision Candidates
 
-- **Union Collective:** Confirm final solar and battery storage position; authorize split/early civil or foundation submission. `S247`
-- **Uniqlo Phillipsburg NJ:** Decide whether one-day Skypod transfer is acceptable or require option-B/no-disruption plan before approval. `S260`
-- **Vermillion Rise Warehouse:** Approve/reject $11,000 paving uniformity/durability scope and confirm how to carry deferred $20,000 electrical rush exposure. `S53`
-- **Goodwill Brookville Road:** Decide whether Tony should escalate Koontz-Wagner signature directly to avoid procurement delay. `S126`
-- **Superior Beverage Exotec:** Approve LOI/contract path and progress billing structure for Mack Plumbing. `S79`
-- **Exol Morrisville:** Decide whether Phase 2 starts at risk around July 22 if permit approval is not yet in hand. `S65`
+- **Approve Vermillion Rise Warehouse parking-lot resurfacing/extension at roughly $11,000.** `S53`
+- **Confirm whether Vermillion Rise Warehouse accepts the potential $20,000 rush fee as contingency exposure or seeks a different commercial resolution.** `S53`
+- **Confirm Union Collective battery-storage position after selecting the 45 kW solar array.** `S247`
+- **Decide whether Union Collective should submit imperfect drawings early and scrub during review for R1 construction set.** `S247`
+- **Approve/sign CyberCoders clean direct-hire agreement with acceptable signature block if Alleato wants recruiting support active.** `S63`
+- **Decide Westfield Collective incentive pursuit timing and assign ownership for the required developer package.** `S301`
 
 ## Task Candidates
 
-- **Union Collective:** Andrew to push Viox for July 14 70% progress set and copy Brandon. `S247`
-- **Uniqlo Phillipsburg NJ:** Send FA panel cost breakdown, follow directly with Yusuke for formal approval, and issue punch-list closeout report with photos. `S260` `S307`
-- **Goodwill Allisonville Rd IN:** Confirm canopy completion date to SignCraft for donation letters. `S25`
-- **Goodwill Brookville Road:** Collect Koontz-Wagner signed subcontract, W-9, and COI. `S126`
-- **Playmakers:** Get Dale to complete/return Notice of Commencement. `S263`
-- **Ulta Beauty Fresno:** Obtain facility RTU/fan pretest list, markup, or verification from Adam/facility team. `S74`
-- **Superior Beverage Exotec:** Provide Mack Plumbing contract timing, billing process, COI/license response, and coupling remediation plan. `S79`
-- **Champaign Ace Addition:** Track Illinois design-firm registration confirmations for architect, MEP, and structural team. `S302`
+- **Goodwill Allisonville Rd IN:** Answer SignCraft’s canopy-completion question so donation-letter install can be coordinated. `S9` `S20` `S25`
+- **Goodwill Allisonville Rd IN:** Confirm Performance Mechanical progress billings and track HVAC closeout package by July 24. `S265`
+- **Goodwill Brookville Road:** Get Koontz-Wagner subcontract, W-9, and COI fully executed/returned. `S126`
+- **Goodwill Brookville Road:** Return ATMI Indy change order for revised precast wall panel design criteria. `S131`
+- **Playmakers:** Obtain completed NOC from Dale and keep him updated on current permit status/schedule. `S263` `S264`
+- **Ulta Beauty Fresno:** Get facility/HCI verification list or marked-up drawing for RTUs, HVAC units, and fans. `S68` `S74` `S108`
+- **Uniqlo Phillipsburg NJ:** Deliver scope-by-scope estimate and align with Yusuke by July 17. `S127`
+- **Exol Morrisville:** Resolve outstanding structural/electrical/Symbotic items and issue consolidated questions/revisions list. `S65`
+- **Superior Beverae Exotec:** Issue Mack Plumbing contract/LOI path, billing instructions, material inventory, and coupling-quality response. `S79`
 
 ## Initiative Candidates
 
-- **Early-release permitting playbook:** Use Union Collective as the template for civil/foundation-first submissions where full drawings lag but dirt/structure can move. `S247`
-- **Approval-risk dashboard:** Track scopes requiring owner/client formal approval before cost/schedule exposure: Uniqlo FA panel, Vermillion paving/rush fee, Union solar/battery, Exol start-at-risk. `S260` `S53` `S247` `S65`
-- **Procurement blocker log:** Centralize unsigned contracts, payment-before-pickup orders, joint-check needs, PO gaps, and account setup blockers across Goodwill Brookville Road, FRP, Core & Main, and sprinkler vendors. `S126` `S93` `S76` `S4`
-- **Closeout evidence standard:** Require photo-backed closeout reports for punch-list items and closeout packages before turnover milestones. `S307` `S265`
+- **Permit acceleration playbook:** Apply the Union Collective split-submission / early-release strategy to other jobs where design is close enough for review but not final. `S247`
+- **Closeout discipline push:** Use Goodwill Allisonville Rd IN’s July 24 HVAC closeout and August 7 substantial completion as a model for retainage-linked closeout tracking. `S265`
+- **AP / lien cleanup sprint:** Documents show multiple waiver, lien, and older AP exposures across Crate Escapes, Radial Avon, Ulta Greenwood, and company/admin payables; assign a cleanup owner to separate real current liabilities from archive noise. `S137` `S163` `S194`
+- **Credit-card compliance control:** Reinforce weekly Notion coding with one project, one cost code, cost type “EXPENSE,” receipt attached, and status “Coded.” `S238`
 
 ## Source Coverage
 
-- Coverage included **5 meetings, 188 emails, 12 Teams items, and 103 documents**.
-- Strongest lanes: **emails and Teams** for live decisions, procurement blockers, permit status, and client/vendor coordination.
-- Meetings lane is strong for **Vermillion Rise Warehouse** and partially useful for **Union Collective**, but Union meeting detail is thin/truncated.
-- Documents lane is heavy on AP, lien waivers, invoices, and administrative controls; useful for money exposure but thinner for current field schedule.
-- Evidence thin lanes: **Goodwill Brookville Road email content was thin in one thread**, with one note containing only signature/contact information. `S17`
+- **Coverage volume:** 5 meetings, 189 emails, 11 Teams items, and 103 documents were included.
+- **Strongest lanes:** Emails were strongest for live project movement, vendor/client issues, permit blockers, and purchasing. Documents were strongest for AP, waiver, lien, and historical exposure.
+- **Meetings lane thin:** Port Collective meeting coverage is thin because the note is truncated before actionable
 
 ## Automation Instructions Learned
 
-- Preserve source tags exactly inline, wrapped in backticks.
-- Refer to projects by name only; do not use numeric project references.
-- Prioritize owner decisions, money exposure, schedule risk, client/vendor blockers, and follow-ups over chronological recap.
-- If a source lane is thin, state which lane is thin.
+- Keep Daily Deep Read synthesis packet-first: full transcript/email/Teams/document source notes create the packet; RAG chunks support search and citation only.
+- Promote tasks, risks, decisions, initiatives, and project updates through review-gated candidates before updating project intelligence packets.
+- Fail loudly when required sections are missing instead of writing incomplete packets.

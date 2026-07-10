@@ -1,7 +1,7 @@
 # Daily Executive Brief Source Corpus - 2026-07-08
 
 Window: 2026-07-08T04:00:00.000Z to 2026-07-09T04:00:00.000Z (America/New_York business day)
-Generated: 2026-07-09T12:09:08.021Z
+Generated: 2026-07-10T02:04:21.399Z
 
 ## Included Sources
 
@@ -146,63 +146,61 @@ Generated: 2026-07-09T12:09:08.021Z
 - S241 = outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchYAAA= | Email: RE: St Pete Sales Gallery | project=unassigned | sourceAt=2026-07-08T14:16:15.000Z | chars=3351 | basis=parsed-source-timestamp | storage=no
 - S242 = outlook_AAMkADI0ZjEzNjMwLTU4NmUtNDk4NC1iZmQ4LTI2NmRjMjkzZmM1MQBGAAAAAACAYscORK6JT5eyaS-IidSEBwCC50zXN8TtRJwBGup5LOOuAAAAAAEMAACC50zXN8TtRJwBGup5LOOuAALgMchmAAA= | Email: Proposal Submitted - Union Food Hall | project=unassigned | sourceAt=2026-07-08T17:37:40.000Z | chars=733 | basis=parsed-source-timestamp | storage=no
 - S249 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sRAAA= | Email: Fw: Project Jazz - TST Overall FS Drawings | project=unassigned | sourceAt=2026-07-08T18:17:28.000Z | chars=1007 | basis=parsed-source-timestamp | storage=no
-- S250 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1KAAA= | Email: McLane Drawings | project=unassigned | sourceAt=2026-07-09T00:21:10.526Z | chars=1300 | basis=loaded-or-row-timestamp | storage=no
-- S251 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1GAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:12.589Z | chars=2107 | basis=loaded-or-row-timestamp | storage=no
-- S252 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1FAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:14.422Z | chars=1656 | basis=loaded-or-row-timestamp | storage=no
-- S253 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1EAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:16.647Z | chars=1443 | basis=loaded-or-row-timestamp | storage=no
-- S254 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1DAAA= | Email: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:18.428Z | chars=1384 | basis=loaded-or-row-timestamp | storage=no
-- S255 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1BAAA= | Email: RE: 2'' Pipe Needed For Jazz McLane | project=unassigned | sourceAt=2026-07-09T00:21:20.811Z | chars=1738 | basis=loaded-or-row-timestamp | storage=no
-- S256 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1AAAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-09T00:21:22.655Z | chars=2561 | basis=loaded-or-row-timestamp | storage=no
-- S257 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0-AAA= | Email: RE: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-09T00:21:24.665Z | chars=2556 | basis=loaded-or-row-timestamp | storage=no
-- S258 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0_AAA= | Email: RE: 2'' Pipe Needed For Jazz McLane | project=unassigned | sourceAt=2026-07-08T19:06:12.000Z | chars=1744 | basis=parsed-source-timestamp | storage=no
-- S259 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:26:35.000Z | chars=7187 | basis=parsed-source-timestamp | storage=no
-- S260 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA= | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   | project=Uniqlo Phillipsburg NJ | sourceAt=2026-07-08T18:37:08.000Z | chars=7680 | basis=parsed-source-timestamp | storage=no
-- S261 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm08AAA= | Email: RE: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:41:43.000Z | chars=7157 | basis=parsed-source-timestamp | storage=no
-- S262 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm09AAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:49:59.000Z | chars=7051 | basis=parsed-source-timestamp | storage=no
-- S263 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA= | Email: TAG 7/8/26 Playmakers Permit Update | project=Playmakers | sourceAt=2026-07-09T02:21:10.923Z | chars=1147 | basis=loaded-or-row-timestamp | storage=no
-- S264 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAEAAA= | Email: Fw: permits | project=unassigned | sourceAt=2026-07-09T02:21:12.921Z | chars=1836 | basis=loaded-or-row-timestamp | storage=no
-- S265 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA= | Email: RE: Goodwill Allisonville Rd (26-113) - Closeout Document Request - Performance Mechanical Contracting, Inc. | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-09T02:21:14.866Z | chars=1525 | basis=loaded-or-row-timestamp | storage=no
-- S266 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrABAAA= | Email: Re: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:18.100Z | chars=1558 | basis=loaded-or-row-timestamp | storage=no
-- S267 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAAAAA= | Email: Re: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:20.015Z | chars=1439 | basis=loaded-or-row-timestamp | storage=no
-- S268 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq--AAA= | Email: Fw: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:21.822Z | chars=1499 | basis=loaded-or-row-timestamp | storage=no
-- S269 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-8AAA= | Email: RE: Goodwill Allisonville Road CIH | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-09T02:21:23.948Z | chars=2105 | basis=loaded-or-row-timestamp | storage=no
-- S270 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-7AAA= | Email: Re: TAG 6/22/26: FRP Pricing Request | project=unassigned | sourceAt=2026-07-09T02:21:26.271Z | chars=1656 | basis=loaded-or-row-timestamp | storage=no
-- S271 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-xAAA= | Email: Payment - Goodwill | project=unassigned | sourceAt=2026-07-09T02:21:27.910Z | chars=1249 | basis=loaded-or-row-timestamp | storage=no
-- S272 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7TSKAAAA= | Email: Photo | project=unassigned | sourceAt=2026-07-08T11:54:50.000Z | chars=296 | basis=parsed-source-timestamp | storage=no
-- S275 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sTAAA= | Email: Re: Jeff | project=unassigned | sourceAt=2026-07-08T18:29:52.000Z | chars=3745 | basis=parsed-source-timestamp | storage=no
-- S276 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sSAAA= | Email: We need to verify your Verizon Business account. | project=unassigned | sourceAt=2026-07-08T18:21:35.000Z | chars=819 | basis=parsed-source-timestamp | storage=no
-- S277 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckcAAA= | Email: Job site trailer | project=unassigned | sourceAt=2026-07-08T18:44:08.000Z | chars=564 | basis=parsed-source-timestamp | storage=no
-- S278 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckSAAA= | Email: RE: Goodwill Allisonville Road CAD File - Control Points | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T13:58:54.000Z | chars=2737 | basis=parsed-source-timestamp | storage=no
-- S279 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckUAAA= | Email: Re: Goodwill Allisonville Road CIH | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T14:37:33.000Z | chars=5271 | basis=parsed-source-timestamp | storage=no
-- S280 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JC9AAA= | Email: Goodwill Allisonville - Closeout Documents | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T17:49:50.000Z | chars=472 | basis=parsed-source-timestamp | storage=no
-- S281 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JDAAAA= | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep | project=unassigned | sourceAt=2026-07-08T19:25:15.000Z | chars=6339 | basis=parsed-source-timestamp | storage=no
-- S282 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnWAAA= | Email: Re: Union Collective Drawings | project=Union Collective | sourceAt=2026-07-08T18:45:09.000Z | chars=486 | basis=parsed-source-timestamp | storage=no
-- S283 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnXAAA= | Email: The Feather | August 20th - 22nd | Men's Member/Guest | project=unassigned | sourceAt=2026-07-08T18:51:18.000Z | chars=2767 | basis=parsed-source-timestamp | storage=no
-- S284 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnYAAA= | Email: Proposal Submitted - Union Food Hall | project=unassigned | sourceAt=2026-07-08T18:55:25.000Z | chars=685 | basis=parsed-source-timestamp | storage=no
-- S285 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnZAAA= | Email: Re: Union Collective Drawings | project=Union Collective | sourceAt=2026-07-08T18:55:52.000Z | chars=303 | basis=parsed-source-timestamp | storage=no
-- S286 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnaAAA= | Email: Fw: Union Food Hall Invite to Bid  | project=unassigned | sourceAt=2026-07-08T18:58:52.000Z | chars=931 | basis=parsed-source-timestamp | storage=no
-- S287 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA= | Email: RE: 26-142 'Union Collective' Steel Bid Proposal Revision 1 | project=Union Collective | sourceAt=2026-07-08T18:59:39.000Z | chars=2949 | basis=parsed-source-timestamp | storage=no
-- S288 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glndAAA= | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep | project=unassigned | sourceAt=2026-07-08T19:25:15.000Z | chars=6339 | basis=parsed-source-timestamp | storage=no
-- S289 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1szAAA= | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   | project=Uniqlo Phillipsburg NJ | sourceAt=2026-07-09T01:53:32.000Z | chars=7712 | basis=parsed-source-timestamp | storage=no
-- S290 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1swAAA= | Email: Re: Shawnee Collective Reconnect | project=Port Collective | sourceAt=2026-07-08T23:37:15.000Z | chars=360 | basis=parsed-source-timestamp | storage=no
-- S291 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1suAAA= | Email: Re: Shawnee Collective Reconnect | project=Port Collective | sourceAt=2026-07-08T23:14:56.000Z | chars=593 | basis=parsed-source-timestamp | storage=no
-- S292 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1stAAA= | Email: Notification: New NLV Invoice # INV-00232111 | project=unassigned | sourceAt=2026-07-08T23:11:34.000Z | chars=547 | basis=parsed-source-timestamp | storage=no
-- S293 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1ssAAA= | Email: Notification: New NLV Invoice # INV-00232111 | project=unassigned | sourceAt=2026-07-08T23:11:32.000Z | chars=547 | basis=parsed-source-timestamp | storage=no
-- S294 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1srAAA= | Email: Re: Joint Check setup and contact info | project=unassigned | sourceAt=2026-07-08T23:00:23.000Z | chars=1619 | basis=parsed-source-timestamp | storage=no
-- S295 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sqAAA= | Email: Re: Shawnee Collective Reconnect | project=unassigned | sourceAt=2026-07-08T22:58:41.000Z | chars=2884 | basis=parsed-source-timestamp | storage=no
-- S296 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1spAAA= | Email: Re: St Pete Sales Gallery | project=unassigned | sourceAt=2026-07-08T22:53:35.000Z | chars=3992 | basis=parsed-source-timestamp | storage=no
-- S297 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1smAAA= | Email: Re: Your replacement device has shipped. | project=unassigned | sourceAt=2026-07-08T21:48:26.000Z | chars=2302 | basis=parsed-source-timestamp | storage=no
-- S298 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1slAAA= | Email: Your replacement device has shipped. | project=unassigned | sourceAt=2026-07-08T21:43:22.000Z | chars=1262 | basis=parsed-source-timestamp | storage=no
-- S299 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1skAAA= | Email: Fw: Landscape Plan - Union Collective | project=Union Collective | sourceAt=2026-07-08T21:08:10.000Z | chars=3798 | basis=parsed-source-timestamp | storage=no
-- S300 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1siAAA= | Email: Your credit score has changed-here's how | project=unassigned | sourceAt=2026-07-08T20:45:53.000Z | chars=3642 | basis=parsed-source-timestamp | storage=no
-- S301 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA= | Email: FW: Shawnee Collective Reconnect | project=Westfield Collective | sourceAt=2026-07-08T20:44:03.000Z | chars=1628 | basis=parsed-source-timestamp | storage=no
-- S302 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA= | Email: Re: Architect, Structural and MEP - Ace Hardware | project=unassigned | sourceAt=2026-07-08T20:01:54.000Z | chars=4489 | basis=parsed-source-timestamp | storage=no
-- S303 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1scAAA= | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep | project=unassigned | sourceAt=2026-07-08T19:25:16.000Z | chars=6339 | basis=parsed-source-timestamp | storage=no
-- S304 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sZAAA= | Email: Re: Union, KY Collective Estimate from Superior Contractors | project=unassigned | sourceAt=2026-07-08T19:02:55.000Z | chars=1210 | basis=parsed-source-timestamp | storage=no
-- S305 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sYAAA= | Email: Re: Playmakers Material Purchase  | project=Playmakers | sourceAt=2026-07-08T18:59:31.000Z | chars=1545 | basis=parsed-source-timestamp | storage=no
-- S306 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sXAAA= | Email: Your order for a replacement device has been placed. | project=unassigned | sourceAt=2026-07-08T18:52:23.000Z | chars=834 | basis=parsed-source-timestamp | storage=no
-- S307 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA= | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   | project=Uniqlo Phillipsburg NJ | sourceAt=2026-07-08T18:37:08.000Z | chars=7680 | basis=parsed-source-timestamp | storage=no
-- S308 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sUAAA= | Email: Re: Jeff | project=unassigned | sourceAt=2026-07-08T18:32:48.000Z | chars=4047 | basis=parsed-source-timestamp | storage=no
+- S250 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1GAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:12.589Z | chars=2107 | basis=loaded-or-row-timestamp | storage=no
+- S251 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1FAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:14.422Z | chars=1656 | basis=loaded-or-row-timestamp | storage=no
+- S252 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1EAAA= | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:16.647Z | chars=1443 | basis=loaded-or-row-timestamp | storage=no
+- S253 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1DAAA= | Email: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-09T00:21:18.428Z | chars=1384 | basis=loaded-or-row-timestamp | storage=no
+- S254 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1BAAA= | Email: RE: 2'' Pipe Needed For Jazz McLane | project=unassigned | sourceAt=2026-07-09T00:21:20.811Z | chars=1738 | basis=loaded-or-row-timestamp | storage=no
+- S255 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1AAAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-09T00:21:22.655Z | chars=2561 | basis=loaded-or-row-timestamp | storage=no
+- S256 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0-AAA= | Email: RE: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-09T00:21:24.665Z | chars=2556 | basis=loaded-or-row-timestamp | storage=no
+- S257 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0_AAA= | Email: RE: 2'' Pipe Needed For Jazz McLane | project=unassigned | sourceAt=2026-07-08T19:06:12.000Z | chars=1744 | basis=parsed-source-timestamp | storage=no
+- S258 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:26:35.000Z | chars=7187 | basis=parsed-source-timestamp | storage=no
+- S259 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA= | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   | project=Uniqlo Phillipsburg NJ | sourceAt=2026-07-08T18:37:08.000Z | chars=7680 | basis=parsed-source-timestamp | storage=no
+- S260 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm08AAA= | Email: RE: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:41:43.000Z | chars=7157 | basis=parsed-source-timestamp | storage=no
+- S261 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm09AAA= | Email: Re: Vertical Pipe Attachment - McLane Jazz Project | project=McLane Jazz - UT | sourceAt=2026-07-08T18:49:59.000Z | chars=7051 | basis=parsed-source-timestamp | storage=no
+- S262 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA= | Email: TAG 7/8/26 Playmakers Permit Update | project=Playmakers | sourceAt=2026-07-09T02:21:10.923Z | chars=1147 | basis=loaded-or-row-timestamp | storage=no
+- S263 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAEAAA= | Email: Fw: permits | project=unassigned | sourceAt=2026-07-09T02:21:12.921Z | chars=1836 | basis=loaded-or-row-timestamp | storage=no
+- S264 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA= | Email: RE: Goodwill Allisonville Rd (26-113) - Closeout Document Request - Performance Mechanical Contracting, Inc. | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-09T02:21:14.866Z | chars=1525 | basis=loaded-or-row-timestamp | storage=no
+- S265 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrABAAA= | Email: Re: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:18.100Z | chars=1558 | basis=loaded-or-row-timestamp | storage=no
+- S266 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAAAAA= | Email: Re: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:20.015Z | chars=1439 | basis=loaded-or-row-timestamp | storage=no
+- S267 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq--AAA= | Email: Fw: Signed Contract | project=unassigned | sourceAt=2026-07-09T02:21:21.822Z | chars=1499 | basis=loaded-or-row-timestamp | storage=no
+- S268 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-8AAA= | Email: RE: Goodwill Allisonville Road CIH | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-09T02:21:23.948Z | chars=2105 | basis=loaded-or-row-timestamp | storage=no
+- S269 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-7AAA= | Email: Re: TAG 6/22/26: FRP Pricing Request | project=unassigned | sourceAt=2026-07-09T02:21:26.271Z | chars=1656 | basis=loaded-or-row-timestamp | storage=no
+- S270 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-xAAA= | Email: Payment - Goodwill | project=unassigned | sourceAt=2026-07-09T02:21:27.910Z | chars=1249 | basis=loaded-or-row-timestamp | storage=no
+- S271 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7TSKAAAA= | Email: Photo | project=unassigned | sourceAt=2026-07-08T11:54:50.000Z | chars=296 | basis=parsed-source-timestamp | storage=no
+- S272 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sTAAA= | Email: Re: Jeff | project=unassigned | sourceAt=2026-07-08T18:29:52.000Z | chars=3745 | basis=parsed-source-timestamp | storage=no
+- S273 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sSAAA= | Email: We need to verify your Verizon Business account. | project=unassigned | sourceAt=2026-07-08T18:21:35.000Z | chars=819 | basis=parsed-source-timestamp | storage=no
+- S274 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckcAAA= | Email: Job site trailer | project=unassigned | sourceAt=2026-07-08T18:44:08.000Z | chars=564 | basis=parsed-source-timestamp | storage=no
+- S275 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckSAAA= | Email: RE: Goodwill Allisonville Road CAD File - Control Points | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T13:58:54.000Z | chars=2737 | basis=parsed-source-timestamp | storage=no
+- S276 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckUAAA= | Email: Re: Goodwill Allisonville Road CIH | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T14:37:33.000Z | chars=5271 | basis=parsed-source-timestamp | storage=no
+- S277 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JC9AAA= | Email: Goodwill Allisonville - Closeout Documents | project=Goodwill Allisonville Rd IN | sourceAt=2026-07-08T17:49:50.000Z | chars=472 | basis=parsed-source-timestamp | storage=no
+- S278 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JDAAAA= | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep | project=unassigned | sourceAt=2026-07-08T19:25:15.000Z | chars=6339 | basis=parsed-source-timestamp | storage=no
+- S279 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnWAAA= | Email: Re: Union Collective Drawings | project=Union Collective | sourceAt=2026-07-08T18:45:09.000Z | chars=486 | basis=parsed-source-timestamp | storage=no
+- S280 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnXAAA= | Email: The Feather | August 20th - 22nd | Men's Member/Guest | project=unassigned | sourceAt=2026-07-08T18:51:18.000Z | chars=2767 | basis=parsed-source-timestamp | storage=no
+- S281 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnYAAA= | Email: Proposal Submitted - Union Food Hall | project=unassigned | sourceAt=2026-07-08T18:55:25.000Z | chars=685 | basis=parsed-source-timestamp | storage=no
+- S282 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnZAAA= | Email: Re: Union Collective Drawings | project=Union Collective | sourceAt=2026-07-08T18:55:52.000Z | chars=303 | basis=parsed-source-timestamp | storage=no
+- S283 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnaAAA= | Email: Fw: Union Food Hall Invite to Bid  | project=unassigned | sourceAt=2026-07-08T18:58:52.000Z | chars=931 | basis=parsed-source-timestamp | storage=no
+- S284 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA= | Email: RE: 26-142 'Union Collective' Steel Bid Proposal Revision 1 | project=Union Collective | sourceAt=2026-07-08T18:59:39.000Z | chars=2949 | basis=parsed-source-timestamp | storage=no
+- S285 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sUAAA= | Email: Re: Jeff | project=unassigned | sourceAt=2026-07-08T18:32:48.000Z | chars=4047 | basis=parsed-source-timestamp | storage=no
+- S286 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1scAAA= | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep | project=unassigned | sourceAt=2026-07-08T19:25:16.000Z | chars=6339 | basis=parsed-source-timestamp | storage=no
+- S287 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sZAAA= | Email: Re: Union, KY Collective Estimate from Superior Contractors | project=unassigned | sourceAt=2026-07-08T19:02:55.000Z | chars=1210 | basis=parsed-source-timestamp | storage=no
+- S288 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sYAAA= | Email: Re: Playmakers Material Purchase  | project=Playmakers | sourceAt=2026-07-08T18:59:31.000Z | chars=1545 | basis=parsed-source-timestamp | storage=no
+- S289 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sXAAA= | Email: Your order for a replacement device has been placed. | project=unassigned | sourceAt=2026-07-08T18:52:23.000Z | chars=834 | basis=parsed-source-timestamp | storage=no
+- S290 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqxAAA= | Email: Re: Superior Sprinklers | project=Superior Beverae Exotec | sourceAt=2026-07-08T19:28:16.000Z | chars=2687 | basis=parsed-source-timestamp | storage=no
+- S291 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqyAAA= | Email: Re: 2'' Pipe Needed For Jazz McLane | project=unassigned | sourceAt=2026-07-08T19:28:32.000Z | chars=3856 | basis=parsed-source-timestamp | storage=no
+- S292 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqzAAA= | Email: Re: TAG 7/1/26: Ulta Beauty - AC4 Duct Sock and AC1 Pricing | project=unassigned | sourceAt=2026-07-08T19:38:45.000Z | chars=1624 | basis=parsed-source-timestamp | storage=no
+- S293 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq0AAA= | Email: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project | project=unassigned | sourceAt=2026-07-08T20:02:49.000Z | chars=2527 | basis=parsed-source-timestamp | storage=no
+- S294 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1smAAA= | Email: Re: Your replacement device has shipped. | project=unassigned | sourceAt=2026-07-08T21:48:26.000Z | chars=2302 | basis=parsed-source-timestamp | storage=no
+- S295 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1slAAA= | Email: Your replacement device has shipped. | project=unassigned | sourceAt=2026-07-08T21:43:22.000Z | chars=1262 | basis=parsed-source-timestamp | storage=no
+- S296 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1skAAA= | Email: Fw: Landscape Plan - Union Collective | project=Union Collective | sourceAt=2026-07-08T21:08:10.000Z | chars=3798 | basis=parsed-source-timestamp | storage=no
+- S297 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1siAAA= | Email: Your credit score has changed-here's how | project=unassigned | sourceAt=2026-07-08T20:45:53.000Z | chars=3642 | basis=parsed-source-timestamp | storage=no
+- S298 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA= | Email: FW: Shawnee Collective Reconnect | project=unassigned | sourceAt=2026-07-08T20:44:03.000Z | chars=1628 | basis=parsed-source-timestamp | storage=no
+- S299 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA= | Email: Re: Architect, Structural and MEP - Ace Hardware | project=unassigned | sourceAt=2026-07-08T20:01:54.000Z | chars=4489 | basis=parsed-source-timestamp | storage=no
+- S301 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5ZAAA= | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 | project=unassigned | sourceAt=2026-07-08T22:43:16.000Z | chars=4533 | basis=parsed-source-timestamp | storage=no
+- S302 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5aAAA= | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 | project=unassigned | sourceAt=2026-07-08T22:43:47.000Z | chars=3027 | basis=parsed-source-timestamp | storage=no
+- S303 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5bAAA= | Email: Re: Contract  | project=unassigned | sourceAt=2026-07-08T22:56:21.000Z | chars=4489 | basis=parsed-source-timestamp | storage=no
+- S304 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5cAAA= | Email: Re: Contract  | project=unassigned | sourceAt=2026-07-08T22:58:55.000Z | chars=5078 | basis=parsed-source-timestamp | storage=no
+- S305 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5dAAA= | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 | project=unassigned | sourceAt=2026-07-08T22:59:47.000Z | chars=5257 | basis=parsed-source-timestamp | storage=no
 
 ### teams
 
@@ -216,8 +214,7 @@ Generated: 2026-07-09T12:09:08.021Z
 - S245 = teamsdm_be216efdb7c22230_2026-07-08 | Teams DM Conversation: Company Vehicle Owners | project=unassigned | sourceAt=2026-07-08T21:27:58.000Z | chars=1070 | basis=teams-message-timestamps-utc | storage=no
 - S246 = teamsdm_33fed32e02adebbb_2026-07-08 | Teams DM Conversation: 19:31fc2e2e2 | project=unassigned | sourceAt=2026-07-08T17:56:31.000Z | chars=2723 | basis=teams-message-timestamps-utc | storage=no
 - S247 = teamsdm_cd0dcb2f4f189d3c_2026-07-08 | Teams DM Conversation: 19:81e9018c- | project=Alleato Finance | sourceAt=2026-07-08T20:10:08.000Z | chars=7432 | basis=teams-message-timestamps-utc | storage=no
-- S273 = teamsdm_1a7d3f7ac20ac0ff_2026-07-09 | Teams DM Conversation: Company announcements | project=unassigned | sourceAt=2026-07-09T02:18:16.000Z | chars=198 | basis=teams-message-timestamps-utc | storage=no
-- S274 = teamsdm_cb6f98af5c2b209d_2026-07-09 | Teams DM Conversation: Indiana Office | project=unassigned | sourceAt=2026-07-09T02:18:27.000Z | chars=191 | basis=teams-message-timestamps-utc | storage=no
+- S300 = teamsdm_cb6f98af5c2b209d_2026-07-09 | Teams DM Conversation: Indiana Office | project=unassigned | sourceAt=2026-07-09T02:18:27.000Z | chars=1436 | basis=teams-message-timestamps-utc | storage=no
 
 ### documents
 
@@ -22870,24 +22867,9 @@ To: Brandon Clymer <bclymer@alleatogroup.com>, Kebba Mass <kmass@alleatogroup.co
 See attached drawings sent to us from Layton in regards to our riser plan. Thank You Mike Parsons Traveling Superintendent Mobile   757.602.6047  | Email   mparsons@alleatogroup.com Web   www.alleatogroup.com    |         8383 Craig Street, Suite #150 Indianapolis, IN 46250     From: Ellis Gillespie <Ellis.Gillespie@laytonconstruction.com> Sent: Wednesday, 08 July 2026 12:14:36 To: Mike Parsons <mparsons@alleatogroup.com> Subject: Project Jazz - TST Overall FS Drawings   You don't often get email from ellis.gillespie@laytonconstruction.com. Learn why this is important See attached. Ellis Gillespie Project Engineer Layton | Abbott | STSW Construction 9090 Sandy Parkway, Sandy, UT 84070 P  801.563.3614 | M  801.819.9027 Layton Portfolio  & Licensing
 ```
 
-### EMAILS | Email: McLane Drawings
-
-Source ID: S250 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1KAAA=
-Project: Unassigned
-Source at: 2026-07-09T00:21:10.526Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1KAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-This document is an email titled **“McLane Drawings”** dated **2026-07-08T21:07:27Z**. It appears to be a brief internal/work-related message rather than a formal report, contract, or specification. The visible content consists primarily of the sender’s signature block for **Mike Parsons, Traveling Superintendent**, including contact information and company office locations. No substantive project narrative or technical discussion is included in the text provided.
-
-The main “topic” indicated by the subject line is **McLane Drawings**, which suggests the email is related to drawings for the McLane project. However, the body content shown does not include any actual drawing notes, revisions, instructions, or attachments, so the document’s specific purpose beyond that subject cannot be confirmed from the excerpt. The only concrete details present are the contact phone number **757.602.6047**, email address **mparsons@alleatogroup.com**, and office locations in **Indianapolis, IN** and **St. Petersburg, FL**.
-
-No explicit action items, deadlines, or next steps are stated in the provided text. If this email included attachments or additional message content beyond the signature, those would likely contain the relevant instructions or drawing information, but they are not visible here.
-```
-
 ### EMAILS | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
 
-Source ID: S251 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1GAAA=
+Source ID: S250 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1GAAA=
 Project: Unassigned
 Source at: 2026-07-09T00:21:12.589Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1GAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22904,7 +22886,7 @@ Next steps are centered on confirming the paint specifications and updating the 
 
 ### EMAILS | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
 
-Source ID: S252 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1FAAA=
+Source ID: S251 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1FAAA=
 Project: Unassigned
 Source at: 2026-07-09T00:21:14.422Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22919,7 +22901,7 @@ The thread also includes a request from Kebba Mass asking whether painting costs
 
 ### EMAILS | Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
 
-Source ID: S253 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1EAAA=
+Source ID: S252 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1EAAA=
 Project: Unassigned
 Source at: 2026-07-09T00:21:16.647Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1EAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22934,7 +22916,7 @@ A follow-up message from Kebba Mass asks whether painting cost can be included a
 
 ### EMAILS | Email: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
 
-Source ID: S254 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1DAAA=
+Source ID: S253 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1DAAA=
 Project: Unassigned
 Source at: 2026-07-09T00:21:18.428Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1DAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22949,7 +22931,7 @@ After receiving the quote, Kebba Mass followed up asking whether painting cost c
 
 ### EMAILS | Email: RE: 2'' Pipe Needed For Jazz McLane
 
-Source ID: S255 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1BAAA=
+Source ID: S254 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1BAAA=
 Project: Unassigned
 Source at: 2026-07-09T00:21:20.811Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1BAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22966,7 +22948,7 @@ The key next steps are: Core & Main is loading the pipe and will contact Mike Pa
 
 ### EMAILS | Email: Re: Vertical Pipe Attachment - McLane Jazz Project
 
-Source ID: S256 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1AAAA=
+Source ID: S255 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm1AAAA=
 Project: McLane Jazz - UT
 Source at: 2026-07-09T00:21:22.655Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm1AAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -22983,7 +22965,7 @@ The next step implied by the thread is for Alleato Group to **adopt the Exotec-p
 
 ### EMAILS | Email: RE: Vertical Pipe Attachment - McLane Jazz Project
 
-Source ID: S257 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0-AAA=
+Source ID: S256 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0-AAA=
 Project: McLane Jazz - UT
 Source at: 2026-07-09T00:21:24.665Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm0%2FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23000,7 +22982,7 @@ The key next step is for Alleato to **revise the installation approach and drawi
 
 ### EMAILS | Email: RE: 2'' Pipe Needed For Jazz McLane
 
-Source ID: S258 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0_AAA=
+Source ID: S257 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm0_AAA=
 Project: Unassigned
 Source at: 2026-07-08T19:06:12.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm0%2BAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23016,7 +22998,7 @@ Hey Mike, If you have guys on site, I can have my driver run this over this afte
 
 ### EMAILS | Email: Re: Vertical Pipe Attachment - McLane Jazz Project
 
-Source ID: S259 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA=
+Source ID: S258 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm06AAA=
 Project: McLane Jazz - UT
 Source at: 2026-07-08T18:26:35.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm06AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23032,7 +23014,7 @@ Hello Sebastian and Dadano- We can take this approach then. That way we can util
 
 ### EMAILS | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  
 
-Source ID: S260 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=
+Source ID: S259 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm07AAA=
 Project: Uniqlo Phillipsburg NJ
 Source at: 2026-07-08T18:37:08.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm07AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23048,7 +23030,7 @@ The FA contractor is working on the breakdown and will have that sent over today
 
 ### EMAILS | Email: RE: Vertical Pipe Attachment - McLane Jazz Project
 
-Source ID: S261 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm08AAA=
+Source ID: S260 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm08AAA=
 Project: McLane Jazz - UT
 Source at: 2026-07-08T18:41:43.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm08AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23064,7 +23046,7 @@ Some people who received this message don't often get email from dadano.thouk@ex
 
 ### EMAILS | Email: Re: Vertical Pipe Attachment - McLane Jazz Project
 
-Source ID: S262 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm09AAA=
+Source ID: S261 = outlook_AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2_XQZJZM15izKp5AAAAAAEMAADEL6z4g2_XQZJZM15izKp5AAEowm09AAA=
 Project: McLane Jazz - UT
 Source at: 2026-07-08T18:49:59.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADk2MTgxYzJhLTUzZjctNDIzZS05ZDkxLTg2NTcyNTRiOWRhYQBGAAAAAAC44Z9cGTA6SKuHAQ6MZsBABwDEL6z4g2%2BXQZJZM15izKp5AAAAAAEMAADEL6z4g2%2BXQZJZM15izKp5AAEowm09AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23080,7 +23062,7 @@ We will take this approach then and avoid the front uprights. Thanks! ... Kebba 
 
 ### EMAILS | Email: TAG 7/8/26 Playmakers Permit Update
 
-Source ID: S263 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA=
+Source ID: S262 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF78dFpAAA=
 Project: Playmakers
 Source at: 2026-07-09T02:21:10.923Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF78dFpAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23095,7 +23077,7 @@ The key action item is for Dale to fill out the attached NOC and return it as so
 
 ### EMAILS | Email: Fw: permits
 
-Source ID: S264 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAEAAA=
+Source ID: S263 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAEAAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:12.921Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qrAEAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23112,7 +23094,7 @@ Next steps implied by the email are to confirm whether the permit has been appro
 
 ### EMAILS | Email: RE: Goodwill Allisonville Rd (26-113) - Closeout Document Request - Performance Mechanical Contracting, Inc.
 
-Source ID: S265 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA=
+Source ID: S264 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrACAAA=
 Project: Goodwill Allisonville Rd IN
 Source at: 2026-07-09T02:21:14.866Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qrACAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23127,7 +23109,7 @@ In the reply, **Mathew Amonett** confirms he will prepare the requested paperwor
 
 ### EMAILS | Email: Re: Signed Contract
 
-Source ID: S266 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrABAAA=
+Source ID: S265 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrABAAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:18.100Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qrABAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23142,7 +23124,7 @@ In Candon’s reply sent at **8:22 PM** the same day, he confirms receipt of the
 
 ### EMAILS | Email: Re: Signed Contract
 
-Source ID: S267 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAAAAA=
+Source ID: S266 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qrAAAAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:20.015Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qrAAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23157,7 +23139,7 @@ In response, Candon thanks Desiree for the signed contract and says the team is 
 
 ### EMAILS | Email: Fw: Signed Contract
 
-Source ID: S268 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq--AAA=
+Source ID: S267 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq--AAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:21.822Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qq%2F%2FAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23172,7 +23154,7 @@ The email also includes contact/signature details for **Candon Rusin, Superinten
 
 ### EMAILS | Email: RE: Goodwill Allisonville Road CIH
 
-Source ID: S269 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-8AAA=
+Source ID: S268 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-8AAA=
 Project: Goodwill Allisonville Rd IN
 Source at: 2026-07-09T02:21:23.948Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qq%2F8AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23189,7 +23171,7 @@ Next steps appear to be confirming that Bradley’s scope recap is correct so pr
 
 ### EMAILS | Email: Re: TAG 6/22/26: FRP Pricing Request
 
-Source ID: S270 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-7AAA=
+Source ID: S269 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-7AAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:26.271Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qq%2F7AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23204,7 +23186,7 @@ The final exchange confirms that payment was completed and pickup coordination i
 
 ### EMAILS | Email: Payment - Goodwill
 
-Source ID: S271 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-xAAA=
+Source ID: S270 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7qq-xAAA=
 Project: Unassigned
 Source at: 2026-07-09T02:21:27.910Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7qq%2FxAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23221,7 +23203,7 @@ The implied next step is for Nick Jepson to respond with a payment update and in
 
 ### EMAILS | Email: Photo
 
-Source ID: S272 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7TSKAAAA=
+Source ID: S271 = outlook_AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI_YS-aTa-WfI2I27OjBwBSH-6ez2GEQa7aQkeMp2smAAAAAAEMAABSH-6ez2GEQa7aQkeMp2smAAF7TSKAAAA=
 Project: Unassigned
 Source at: 2026-07-08T11:54:50.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGU5ZWY5OGRhLTE4MzMtNGQ2ZC1hMWQ5LTA4NTBlZTlhZjg4YwBGAAAAAADPXrI%2BYS%2FaTa%2FWfI2I27OjBwBSH%2F6ez2GEQa7aQkeMp2smAAAAAAEMAABSH%2F6ez2GEQa7aQkeMp2smAAF7TSKAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23235,37 +23217,9 @@ To: Nick Jepson <njepson@alleatogroup.com>
 [You don't often get email from dougkasey@sbcglobal.net. Learn why this is important at https://aka.ms/LearnAboutSenderIdentification ] Doug Franklin (317) 437-5361
 ```
 
-### TEAMS | Teams DM Conversation: Company announcements
-
-Source ID: S273 = teamsdm_1a7d3f7ac20ac0ff_2026-07-09
-Project: Unassigned
-Source at: 2026-07-09T02:18:16.000Z
-URL: none
-
-```text
-[Teams Direct Message Conversation: Company announcements]
-Date: 2026-07-09
-
-[message:1783563496947] [2026-07-09 02:18:16] Brandon Clymer: https://www.loom.com/share/6370f7bcb1df442fbd1cfc80ac699594
-```
-
-### TEAMS | Teams DM Conversation: Indiana Office
-
-Source ID: S274 = teamsdm_cb6f98af5c2b209d_2026-07-09
-Project: Unassigned
-Source at: 2026-07-09T02:18:27.000Z
-URL: none
-
-```text
-[Teams Direct Message Conversation: Indiana Office]
-Date: 2026-07-09
-
-[message:1783563507375] [2026-07-09 02:18:27] Brandon Clymer: https://www.loom.com/share/6370f7bcb1df442fbd1cfc80ac699594
-```
-
 ### EMAILS | Email: Re: Jeff
 
-Source ID: S275 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sTAAA=
+Source ID: S272 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sTAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:29:52.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sTAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23281,7 +23235,7 @@ Luke,  Thank you for the clarification. Brandon is traveling right now until Fri
 
 ### EMAILS | Email: We need to verify your Verizon Business account.
 
-Source ID: S276 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sSAAA=
+Source ID: S273 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sSAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:21:35.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sSAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23297,7 +23251,7 @@ Review details on your Verizon Business account verification. Shop Support Sign 
 
 ### EMAILS | Email: Job site trailer
 
-Source ID: S277 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckcAAA=
+Source ID: S274 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckcAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:44:08.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC%2BbeQ7sDh3v2c48VAAAAAAEMAACFWXIMC%2BbeQ7sDh3v2c48VAAFTKckcAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23313,7 +23267,7 @@ Sir, what are you thinking your needs are for this size and equipped ? Let me kn
 
 ### EMAILS | Email: RE: Goodwill Allisonville Road CAD File - Control Points
 
-Source ID: S278 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckSAAA=
+Source ID: S275 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckSAAA=
 Project: Goodwill Allisonville Rd IN
 Source at: 2026-07-08T13:58:54.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC%2BbeQ7sDh3v2c48VAAAAAAEMAACFWXIMC%2BbeQ7sDh3v2c48VAAFTKckSAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23329,7 +23283,7 @@ You don't often get email from timcjr@forefrontse.com. Learn why this is importa
 
 ### EMAILS | Email: Re: Goodwill Allisonville Road CIH
 
-Source ID: S279 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckUAAA=
+Source ID: S276 = outlook_AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC_beQ7sDh3v2c48VAAAAAAEMAACFWXIMC_beQ7sDh3v2c48VAAFTKckUAAA=
 Project: Goodwill Allisonville Rd IN
 Source at: 2026-07-08T14:37:33.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkAGZjYjZlN2VkLTA3MTEtNDc0OC1hZTRiLTlmMDczYTI2YTllYgBGAAAAAABoTqhEmTJxRIyhH5zmyaPGBwCFWXIMC%2BbeQ7sDh3v2c48VAAAAAAEMAACFWXIMC%2BbeQ7sDh3v2c48VAAFTKckUAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23345,7 +23299,7 @@ Brad,  We decided that one of the existing doors needs to be replaced. Attached 
 
 ### EMAILS | Email: Goodwill Allisonville - Closeout Documents
 
-Source ID: S280 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JC9AAA=
+Source ID: S277 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JC9AAA=
 Project: Goodwill Allisonville Rd IN
 Source at: 2026-07-08T17:49:50.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6%2Bw2Yj%2Fuak3BwD4vC1aK1zsQKNInNTFG%2FEkAAAAAAEMAAD4vC1aK1zsQKNInNTFG%2FEkAABf8JC9AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23361,7 +23315,7 @@ You don't often get email from nchapman@browningchapman.com. Learn why this is i
 
 ### EMAILS | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep
 
-Source ID: S281 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JDAAAA=
+Source ID: S278 = outlook_AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6_w2Yj-uak3BwD4vC1aK1zsQKNInNTFG-EkAAAAAAEMAAD4vC1aK1zsQKNInNTFG-EkAABf8JDAAAA=
 Project: Unassigned
 Source at: 2026-07-08T19:25:15.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADg3OTlhODY5LWZmM2UtNGU3Ny1iMzM3LTAwOGQ1YmNmZTdjMgBGAAAAAAB5uPyG9I17Q6%2Bw2Yj%2Fuak3BwD4vC1aK1zsQKNInNTFG%2FEkAAAAAAEMAAD4vC1aK1zsQKNInNTFG%2FEkAABf8JDAAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23377,7 +23331,7 @@ Thanks for the quick response, everyone! If you have a leaf blower , please brin
 
 ### EMAILS | Email: Re: Union Collective Drawings
 
-Source ID: S282 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnWAAA=
+Source ID: S279 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnWAAA=
 Project: Union Collective
 Source at: 2026-07-08T18:45:09.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnWAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23393,7 +23347,7 @@ Current cad files for floor plans and rcps are attached. Sketchup file can be do
 
 ### EMAILS | Email: The Feather | August 20th - 22nd | Men's Member/Guest
 
-Source ID: S283 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnXAAA=
+Source ID: S280 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnXAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:51:18.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnXAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23409,7 +23363,7 @@ Guys, I know I've talked to many of you about this, but I wanted to make sure I 
 
 ### EMAILS | Email: Proposal Submitted - Union Food Hall
 
-Source ID: S284 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnYAAA=
+Source ID: S281 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnYAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:55:25.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnYAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23425,7 +23379,7 @@ Bid submitted from Christopher Dorn of Dorn Fire Protection LLC for Union Food H
 
 ### EMAILS | Email: Re: Union Collective Drawings
 
-Source ID: S285 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnZAAA=
+Source ID: S282 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnZAAA=
 Project: Union Collective
 Source at: 2026-07-08T18:55:52.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnZAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23441,7 +23395,7 @@ Thanks Jerome! We'll holler if we have any q's. E On Wed, Jul 8, 2026 at 12:44 P
 
 ### EMAILS | Email: Fw: Union Food Hall Invite to Bid 
 
-Source ID: S286 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnaAAA=
+Source ID: S283 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnaAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:58:52.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnaAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23457,7 +23411,7 @@ These are the painters who I reached out to. Thanks, Hunter Rutledge Intern Mobi
 
 ### EMAILS | Email: RE: 26-142 'Union Collective' Steel Bid Proposal Revision 1
 
-Source ID: S287 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA=
+Source ID: S284 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA=
 Project: Union Collective
 Source at: 2026-07-08T18:59:39.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glnbAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23471,249 +23425,25 @@ To: Andrew Cannon <acannon@alleatogroup.com>, Demitrace Satterfield <dsatterfiel
 Updated 2 nd Level Rail Post Pricing Partial East, partial South, full West and full North:      $14,516.00   JD Proctor | Estimator R.A.D. Fabrication, LLC C:  317.410.6861 O: 317.617.6799 2415 Alexandria Pike Anderson, Indiana, 46012    From: jproctor@radfabrication.com <jproctor@radfabrication.com> Sent: Wednesday, July 8, 2026 1:51 PM To: 'Andrew Cannon' <acannon@alleatogroup.com>; 'Demitrace Satterfield' <dsatterfield@alleatogroup.com> Cc: 'Douglas Franklin' <dfranklin@alleatogroup.com> Subject: RE: 26-142 'Union Collective' Steel Bid Proposal Revision 1   Structural Steel & Decking Install:         $950,109.00 Elevator Package (No Hoist Beam):       Sill Angle:                                   $241.00 Sump Pit Frame:                     $433.00 Sump Pit Grate:                      $200.00 Pit Ladder:                                 $625.00 Roof Access Ladder:                                    $3,684.00 (3) Flights of Stairs:                                       $37,243.00 Mezzanine Rail (Two- Line Open)            $62,771.00 2 nd Level Rail Post (Supply Only)             $6,362.00   If you have any questions don’t hesitate to reach out.   JD Proctor | Estimator R.A.D. Fabrication, LLC C:  317.410.6861 O: 317.617.6799 2415 Alexandria Pike Anderson, Indiana, 46012    From: Andrew Cannon < acannon@alleatogroup.com > Sent: Wednesday, July 8, 2026 12:33 PM To: jproctor@radfabrication.com ; Demitrace Satterfield < dsatterfield@alleatogroup.com > Cc: Douglas Franklin < dfranklin@alleatogroup.com > Subject: Re: 26-142 'Union Collective' Steel Bid Proposal Revision 1   JD,   Please see the attached marked up proposal. I added notes and pictures explaining what we went over on our phone call.    Please break out pricing where noted, include alternate price for hog wire mesh rail, and metal posts for 2 nd  lvl patio.    Best,       Andrew Cannon    Assistant Project Manager at Alleato Group Mobile  317.315.3968 |   Email   acannon@alleatogroup.com Web   www.alleatogroup.com   |       Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From: jproctor@radfabrication.com < jproctor@radfabrication.com > Sent: Wednesday, July 8, 2026 11:15 AM To: Demitrace Satterfield < dsatterfield@alleatogroup.com > Cc: Andrew Cannon < acannon@alleatogroup.com > Subject: 26-142 'Union Collective' Steel Bid Proposal Revision 1   Demitrace,   Please see attached proposal revision for ‘Union Collective’. Feel free to reach out with any questions.   JD Proctor | Estimator R.A.D. Fabrication, LLC C:  317.410.6861 O: 317.617.6799 2415 Alexandria Pike Anderson, Indiana, 46012
 ```
 
-### EMAILS | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep
+### EMAILS | Email: Re: Jeff
 
-Source ID: S288 = outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glndAAA=
+Source ID: S285 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sUAAA=
 Project: Unassigned
-Source at: 2026-07-08T19:25:15.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4%2Feo4iQITmxDs%2BAMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glndAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+Source at: 2026-07-08T18:32:48.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sUAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
 
 ```text
-Subject: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep
-Date: 2026-07-08T19:25:15Z
-From: La' Kisha Green <kgreen@alleatogroup.com>
-To: Andrew Cannon <acannon@alleatogroup.com>, Douglas Franklin <dfranklin@alleatogroup.com>, Chad Tragesser <Ctragesser@alleatogroup.com>, Colin Gillespie <cgillespie@alleatogroup.com>
+Subject: Re: Jeff
+Date: 2026-07-08T18:32:48Z
+From: Luke Holm <Luke.Holm@CyberCoders.com>
+To: Maria Calcetero <Mcalcetero@alleatogroup.com>, Brandon Clymer <bclymer@alleatogroup.com>
 
-Thanks for the quick response, everyone! If you have a leaf blower , please bring it with you so we can help clean up our work area when we’re finished &#128522; . Chad has listed the items he will be bringing in his red responses below. Chad, I added my notes back to you in blue. Once Jesse has finalized the shelter drawings and we have a better understanding of the post requirements, I will connect with you to start gathering the necessary materials so we can get the posts set and ready to go. Hunter, can you please review the items highlighted in yellow and see if we have any of those available in the storage. Thanks, everyone, for helping us get prepared and making this event a success! Tool & Equipment Checklist Shovels: I can bring at least 2. Post-hole Digger: Pending confirmation from Jesse on the post requirements . I have a gas-powered auger available if needed; I just need to know the required hole size . Wheelbarrow: I can bring 1. If we have another available in storage, please bring that one as well. Levels: Yes. What size level is needed? I have 2', 4', and 6' levels available. Speed Squares: Yes, I have multiple available . Tape Measures: Yes, I have multiple available . Ratchet Set: (Standard or metric?) SAE (standard) and metric ratchet/socket set . Clamps: (what type of clamps are you thinking)? 4 large bar clamps 2 corner clamps 4 quick-grip clamps Miter Saw: Yes. Circular Saw: Yes. Sawhorses/Work Tables for Cutting & Material Support: Chad, do you have these available, or do we have any in storage? Impact Drivers: 1 available. Drills: 1 available. Ladder(s): 6' ladder — Available in the trailer at Allisonville . (2) 10' ladders — Need to confirm availability . Extension ladder — See above. Extension Cords: How many feet of cord will be needed ? This will vary depending on setup and tool locations . Trash Cans/Buckets: Need (2).   La’Kisha Green    Assistant Project Manager at Alleato Group Mobile  317.664.2441 |   Email   kgreen@alleatogroup.com Web   www.alleatogroup.com   |       Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From: Andrew Cannon <acannon@alleatogroup.com> Sent: Monday, July 6, 2026 11:35 AM To: La' Kisha Green <kgreen@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com>; Chad Tragesser <Ctragesser@alleatogroup.com>; Colin Gillespie <cgillespie@alleatogroup.com> Cc: Jesse Dawson <jdawson@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com>; Jazmin Gaona <jgaona@alleatogroup.com>; Maria Calcetero <Mcalcetero@alleatogroup.com>; Hunter Rutledge <hrutledge@alleatogroup.com> Subject: Re: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep   Shovels Yes Post-hole digger (if needed) Hunter will check storage unit Wheelbarrow Hunter will check storage unit Levels Yes Speed squares Yes Tape measures Yes Ratchet set Yes Clamps Is there a particular size or type of clamp you want?  Size to be able hold the post in place Miter saw Yes Circular saw Yes (4) Impact drivers Yes (4) Drills Yes 6' ladder Hunter to check storage unit (2) 10' ladders Hunter to check storage unit Extension ladder Hunter to check storage unit, doubtful though Extension cords Hunter to check office and storage unit for cord counts and lengths   Hunter will stop by the storage unit today or tomorrow to verify what we have. Thank you La'Kisha for planning this awesome event!   Best,         Andrew Cannon    Assistant Project Manager at Alleato Group Mobile  317.315.3968 |   Email   acannon@alleatogroup.com Web   www.alleatogroup.com   |       Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From: La' Kisha Green < kgreen@alleatogroup.com > Sent: Monday, July 6, 2026 10:27 AM To: Douglas Franklin < dfranklin@alleatogroup.com >; Chad Tragesser < Ctragesser@alleatogroup.com >; Andrew Cannon < acannon@alleatogroup.com >; Colin Gillespie < cgillespie@alleatogroup.com > Cc: Jesse Dawson < jdawson@alleatogroup.com >; Brandon Clymer < bclymer@alleatogroup.com >; Jazmin Gaona < jgaona@alleatogroup.com >; Maria Calcetero < Mcalcetero@alleatogroup.com >; Hunter Rutledge < hrutledge@alleatogroup.com > Subject: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep   Good Morning Guys, As we continue preparing for the upcoming volunteer project, I wanted to see if anyone has access to any of the following tools that we can use for the event: Shovels Post-hole digger (if needed) Wheelbarrow Levels Speed squares Tape measures Ratchet set Clamps Miter saw Circular saw (4) Impact drivers (4) Drills 6' ladder (2) 10' ladders Extension ladder Extension cords If you have any of these tools and are willing to bring them for the event, please let me know what you can provide so we can avoid purchasing items we already have available. Also, I need a few volunteers to stop by the project site next Wednesday or Thursday to pre-set the shelter posts and verify the layout before the volunteer day. Getting this completed ahead of time will help ensure everything runs smoothly and keeps us on schedule during the event. Please let me know if you're available to help on Wednesday or Thursday and what time would work best for you. Andrew, when do you think you can stop by the storage unit to verify what tools and materials we already have on hand? I'd like to get an inventory together so Jazmin can order any remaining items needed for the event and avoid purchasing things we already have. Thanks, everyone! I appreciate your help and support in making this project a success.   La’Kisha Green    Assistant Project Manager at Alleato Group Mobile  317.664.2441 |   Email   kgreen@alleatogroup.com Web   www.alleatogroup.com   |       Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702
-```
-
-### EMAILS | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  
-
-Source ID: S289 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1szAAA=
-Project: Uniqlo Phillipsburg NJ
-Source at: 2026-07-09T01:53:32.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1szAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  
-Date: 2026-07-09T01:53:32Z
-From: Kebba Mass <kmass@alleatogroup.com>
-To: Elkarrimy, Ahmed <AElkarrimy@TPGArchitecture.com>, 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>, Brandon Clymer <bclymer@alleatogroup.com>
-
-Hello Yusuke- Here is the price breakdown- Material: $10,530.00 NFW-50X panel, relays, monitoring modules, wire, mounting hardware, misc. Devices Labor / Installation & Programming: $18,603.00Install labor, panel programming, relay wiring/integration, pre-directing Design / Engineering / Permits: 5,967.00Drawings, engineering time for panel integration Total: $35,100.00 Revised Schedule is attached. Let me know if you need anything further. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Elkarrimy, Ahmed <AElkarrimy@TPGArchitecture.com> Sent: Wednesday, July 8, 2026 2:08 PM To: 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>; Kebba Mass <kmass@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Cc: 'Kevin.Ly@uniqlo-usa.com' <Kevin.Ly@uniqlo-usa.com>; 'ted.cheski@nipponexpress.com' <ted.cheski@nipponexpress.com>; 'john.min@uniqlo-usa.com' <john.min@uniqlo-usa.com>; Schwartz, Benjamin <bschwartz@TPGArchitecture.com>; Mike Parsons <mparsons@alleatogroup.com>; 'joseph.burdzy@exotec.com' <joseph.burdzy@exotec.com>; Critzman, Brian <BCritzman@TPGArchitecture.com>; Alec Wehner <awehner@alleatogroup.com>; Gregory Davis <gdavis@alleatogroup.com> Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hi Brandon / Kebba, Following up.  We have received an email from the Landlord asking where are we with the FA panel.  Yusuke needs a cost breakdown inorder to gather approval from his leadership team.     Please provide an update regarding ASAP. Thank you   Ahmed Elkarrimy Associate   212.536.5192 T | 973.444.1314 M | vCard   TPG Architecture 132 West 31st Street, 5th floor, New York, NY 10001   New York | Long Island | Orlando | West Palm Beach | TPGArchitecture.com     From: Elkarrimy, Ahmed Sent: Monday, July 6, 2026 2:14 PM To: 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>; kmass@alleatogroup.com; bclymer@alleatogroup.com Cc: Kevin.Ly@uniqlo-usa.com; ted.cheski@nipponexpress.com; john.min@uniqlo-usa.com; Schwartz, Benjamin <bschwartz@TPGArchitecture.com>; mparsons@alleatogroup.com; joseph.burdzy@exotec.com; Critzman, Brian <BCritzman@TPGArchitecture.com>; awehner@alleatogroup.com; gdavis@alleatogroup.com Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Dear Kebba, We wanted to check in and request prompt responses, especially regarding the open FA work. Please provide Yusuke with a more detailed cost breakdown that he can take back to leadership for review and approval. Please note that TPG /HNY/AUE are not contracted to coordinate the new FA panel, so once the cost breakdown summary is submitted to UQ, please follow up with Yusuke directly to obtain formal approval to proceed.    Additionally, please confirm by when you need a response from UQ on the change order before costs and schedules are impacted?   Lastly, we have not yet received punch list close‑out responses from your team for the MEP and Architectural items. A close‑out report with photos documenting each addressed item is required.   Please provide feedback by end of day. Thank you   Ahmed Elkarrimy Associate   212.536.5192 T | 973.444.1314 M | vCard   TPG Architecture 132 West 31st Street, 5th floor, New York, NY 10001   New York | Long Island | Orlando | West Palm Beach | TPGArchitecture.com     From: yusuke.nakanishi@fastretailing.com < yusuke.nakanishi@fastretailing.com > Sent: Monday, July 6, 2026 9:12 AM To: kmass@alleatogroup.com ; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; bclymer@alleatogroup.com Cc: Kevin.Ly@uniqlo-usa.com ; ted.cheski@nipponexpress.com ; john.min@uniqlo-usa.com ; Schwartz, Benjamin < bschwartz@TPGArchitecture.com >; mparsons@alleatogroup.com ; joseph.burdzy@exotec.com ; Critzman, Brian < BCritzman@TPGArchitecture.com >; awehner@alleatogroup.com ; gdavis@alleatogroup.com Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   CAUTION: This email originated from outside your organization. Exercise caution when opening attachments or clicking links, especially from unknown senders. Hi Kebba Please make sure it won’t affect any disruption to the Skypod. If you have any possibilities, please let me know as soon as possible. We cannot do that, so need option-B.     From: Kebba Mass < kmass@alleatogroup.com > Sent: Saturday, July 4, 2026 1:11 PM To: NAKANISHI Yusuke[FRJP:GSCM Global Logistics Support(Warehouse Development)]( 中西 雄亮 ) < yusuke.nakanishi@fastretailing.com >; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: LY Kevin[UQUS:Logistics] < Kevin.Ly@uniqlo-usa.com >; ted.cheski < ted.cheski@nipponexpress.com >; MIN John[UQUS:Store Design and Construction] < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com ; Mike Parsons < mparsons@alleatogroup.com >; Joseph BURDZY < joseph.burdzy@exotec.com >; Critzman, Brian < BCritzman@TPGArchitecture.com >; Alec Wehner < awehner@alleatogroup.com >; Gregory Davis < gdavis@alleatogroup.com > Subject: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hello Yusuke- The plan is to get all the installation completed without disrupting the current Skypod operations. We will need one day after installation is completed to disconnect the Skypod from the main panel and connect it to the new sub panel. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: yusuke.nakanishi@fastretailing.com < yusuke.nakanishi@fastretailing.com > Sent: Tuesday, June 30, 2026 12:09 PM To: Kebba Mass < kmass@alleatogroup.com >; AElkarrimy@TPGArchitecture.com < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: Kevin.Ly@uniqlo-usa.com < Kevin.Ly@uniqlo-usa.com >; ted.cheski@nipponexpress.com < ted.cheski@nipponexpress.com >; john.min@uniqlo-usa.com < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com < bschwartz@TPGArchitecture.com >; Mike Parsons < mparsons@alleatogroup.com >; joseph.burdzy@exotec.com < joseph.burdzy@exotec.com >; BCritzman@TPGArchitecture.com < BCritzman@TPGArchitecture.com >; Alec Wehner < awehner@alleatogroup.com >; Gregory Davis < gdavis@alleatogroup.com > Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hi Kebba Let me reconfirm that we are not have any impact tot the operation or Skypod during these works. Best regards   From: Kebba Mass < kmass@alleatogroup.com > Sent: Monday, June 29, 2026 10:05 PM To: NAKANISHI Yusuke[FRJP:GSCM Global Logistics Support(Warehouse Development)]( 中西 雄亮 ) < yusuke.nakanishi@fastretailing.com >; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: LY Kevin[UQUS:Logistics] < Kevin.Ly@uniqlo-usa.com >; ted.cheski < ted.cheski@nipponexpress.com >; MIN John[UQUS:Store Design and Construction] < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com ; M
-```
-
-### EMAILS | Email: Re: Shawnee Collective Reconnect
-
-Source ID: S290 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1swAAA=
-Project: Port Collective
-Source at: 2026-07-08T23:37:15.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1swAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Shawnee Collective Reconnect
-Date: 2026-07-08T23:37:15Z
-From: Philip Johnson <philip@ibexdevgroup.com>
-To: Mike Ewers <mike@collectivehg.com>, Brandon Clymer <bclymer@alleatogroup.com>
-
-Yeah I can use the format we’ve used for Basinski Philip Johnson philip@ ibexdevgroup.com On July 8, 2026 at 7:14 PM, Mike Ewers ( mike@collectivehg.com ) wrote:
-```
-
-### EMAILS | Email: Re: Shawnee Collective Reconnect
-
-Source ID: S291 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1suAAA=
-Project: Port Collective
-Source at: 2026-07-08T23:14:56.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1suAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Shawnee Collective Reconnect
-Date: 2026-07-08T23:14:56Z
-From: Mike Ewers <mike@collectivehg.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-I can take a stab at the pro forma. I’ve never been asked for a 10 year before, but I’ll build that from our current three-year ones that we have. Phil - can you take a stab at the sources and uses using the information we have from Steve and from what we put together on the other collectives? Separately we can build in the information on the sports facility. I’ve got a couple of quotes on that. Thanks guys, Mike Sent from my iPhone
-```
-
-### EMAILS | Email: Notification: New NLV Invoice # INV-00232111
-
-Source ID: S292 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1stAAA=
-Project: Unassigned
-Source at: 2026-07-08T23:11:34.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1stAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Notification: New NLV Invoice # INV-00232111
-Date: 2026-07-08T23:11:34Z
-From: internet@cityofnorthlasvegas.com <internet@cityofnorthlasvegas.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>, rmcdonald@vargomail.com <rmcdonald@vargomail.com>
-
-You don't often get email from internet@cityofnorthlasvegas.com. Learn why this is important A new invoice has been generated for your Business License, Permit or Plan. Please login or register to pay the invoice online at https://eg.cityofnorthlasvegas.com . Thank you, City of North Las Vegas
-```
-
-### EMAILS | Email: Notification: New NLV Invoice # INV-00232111
-
-Source ID: S293 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1ssAAA=
-Project: Unassigned
-Source at: 2026-07-08T23:11:32.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1ssAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Notification: New NLV Invoice # INV-00232111
-Date: 2026-07-08T23:11:32Z
-From: internet@cityofnorthlasvegas.com <internet@cityofnorthlasvegas.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>, rmcdonald@vargomail.com <rmcdonald@vargomail.com>
-
-You don't often get email from internet@cityofnorthlasvegas.com. Learn why this is important A new invoice has been generated for your Business License, Permit or Plan. Please login or register to pay the invoice online at https://eg.cityofnorthlasvegas.com . Thank you, City of North Las Vegas
-```
-
-### EMAILS | Email: Re: Joint Check setup and contact info
-
-Source ID: S294 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1srAAA=
-Project: Unassigned
-Source at: 2026-07-08T23:00:23.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1srAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Joint Check setup and contact info
-Date: 2026-07-08T23:00:23Z
-From: Jesse Dawson <jdawson@alleatogroup.com>
-To: Misty Rogers <mrogers@alleatogroup.com>, Brandon Clymer <bclymer@alleatogroup.com>, Bob  Wright <bwright@alleatogroup.com>
-
-I did not see an attachment? Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From:  Misty Rogers <mrogers@alleatogroup.com> Sent:  Wednesday, July 8, 2026 11:43 AM To:  Brandon Clymer <bclymer@alleatogroup.com>; Bob Wright <bwright@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com> Subject:  Re: Joint Check setup and contact info   Hello, Attached is a Joint Check Agreement request. Jesse please complete the attached form and return it to Bob Wright. Let me know if you need anything from me   Misty Rogers  Accounting Lead Office : 727-201-9058 Mobile:   406-410-6115 |   Email   mrogers@alleatogroup.com Web:   www.alleatogroup.com   |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 Believe you can and you're halfway there ~ Teddy Roosevelt From:  Brandon Clymer <bclymer@alleatogroup.com> Sent:  Wednesday, July 8, 2026 9:22 AM To:  Misty Rogers <mrogers@alleatogroup.com> Subject:  Re: Joint Check setup and contact info   You need to loop Jesse in and get it filled out together, if you need help let me know.  Thank You  Brandon Clymer 317-760-0088
-```
-
-### EMAILS | Email: Re: Shawnee Collective Reconnect
-
-Source ID: S295 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sqAAA=
-Project: Unassigned
-Source at: 2026-07-08T22:58:41.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sqAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Shawnee Collective Reconnect
-Date: 2026-07-08T22:58:41Z
-From: Jesse Dawson <jdawson@alleatogroup.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-10-4 I have a call with the Gerry the pre-con guy out of Sarasota tomorrow, next week with Pat Dills the DD guy we need to bring one of them on board or someone similar to take the lead on the pre-con and estimate Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Brandon Clymer <bclymer@alleatogroup.com> Sent: Wednesday, July 8, 2026 6:50 PM To: Jesse Dawson <jdawson@alleatogroup.com> Subject: Fw: Shawnee Collective Reconnect   See below, we need to meet about this Monday morning to figure out who is going to take the lead on this precon work, mainly the budget and schedule. Thank You  Brandon Clymer CEO at Alleato Group  Mobile   317.760.0088   |   Email   bclymer@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From: mike@ibexdevgroup.com <mike@ibexdevgroup.com> Sent: Wednesday, July 8, 2026 2:42 PM To: Brandon Clymer <bclymer@alleatogroup.com> Subject: FW: Shawnee Collective Reconnect       From: Jeff White <jwhite@columbiacapital.com> Sent: Saturday, May 23, 2026 10:36 AM To: mike@ibexdevgroup.com Cc: Philip Johnson <philip@ibexdevgroup.com> Subject: Re: Shawnee Collective Reconnect   Hey Mike-   Thanks again for your time yesterday! I’m excited to see this coming together.   I’ve attached the City’s applications for TIF, CID and IRB/sales tax exemption. I’ve also included the City’s policy statements relating to these for your records.   In addition to the completed apps and the deposits (you can direct these to George Kandt at the City; please copy me on the apps, though, if you would), I’ll need from you:   • a detailed sources/uses of funds, ideally with detail by project component. This should detail the amount of developer fee in the budget, as well as any third-party sources you expect (key money, etc.)   • a timing/phasing plan   • a 10-year operating pro forma   • any information you can provide about the capital stack, including debt vs. equity, private financing details (bank term sheet, etc.), source(s) of equity and their status   • any third-party support for your construction cost estimates (maybe from Choice on the hotel, contractor’s estimates, etc.)   None of the bulleted items need to be pretty. As long as I can decipher what you’re up to, that’ll be fine.   Thanks!   Jeff   Jeff White Managing Member Columbia Capital Management, LLC Direct: 913.312.8077 Main: 913.248.8500 jwhite@columbiacapital.com
-```
-
-### EMAILS | Email: Re: St Pete Sales Gallery
-
-Source ID: S296 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1spAAA=
-Project: Unassigned
-Source at: 2026-07-08T22:53:35.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1spAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: St Pete Sales Gallery
-Date: 2026-07-08T22:53:35Z
-From: Jesse Dawson <jdawson@alleatogroup.com>
-To: Alexandra Barletta <Alexandra@valorc.com>
-
-Good Afternoon Alexandra, sorry to hear about your loss.  When you are ready to review let us know. Thanks Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Alexandra Barletta <Alexandra@valorc.com> Sent: Wednesday, July 8, 2026 10:16 AM To: Jesse Dawson <jdawson@alleatogroup.com> Cc: Bill Hudak <BillH@valorc.com>; Brandon Clymer <bclymer@alleatogroup.com>; Enzo Andrade <eandrade@alleatogroup.com> Subject: RE: St Pete Sales Gallery   HI Jesse,   Thank you for sending – I’ve been out of the office the past two days due to a death in the family. Please allow me to review and get back to you.   Alexandra Barletta, RA Project Manager, Planning Valor Real Estate Development       m.          518-441-6998 t.             727-441-2144 e.            alexandra@valorc.com w.           www.valorc.com   From: Jesse Dawson <jdawson@alleatogroup.com> Sent: Friday, July 3, 2026 11:19 AM To: Alexandra Barletta <Alexandra@valorc.com> Cc: Bill Hudak <BillH@valorc.com>; Brandon Clymer <bclymer@alleatogroup.com>; Enzo Andrade <eandrade@alleatogroup.com> Subject: Re: St Pete Sales Gallery   Good Morning Alexandra, please see attached proposal for the St. Pete Sales Gallery.   We plugged estimated costs for the MEP costs as we don't have the final plans from the designers at this time.  The architectural services are included and detailed.      Please let me know when you would like to review.   Thanks   Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Alexandra Barletta <Alexandra@valorc.com> Sent: Friday, June 19, 2026 3:28 PM To: Jesse Dawson <jdawson@alleatogroup.com> Cc: Bill Hudak <BillH@valorc.com> Subject: St Pete Sales Gallery   You don't often get email from alexandra@valorc.com. Learn why this is important Hi Jesse,   Thanks for jumping on a call with us earlier. As discussed, please see the attached permit set we are looking to get signed & sealed for the sales gallery, which our design architects in Mexico have prepared. I’m awaiting revisions per the attached comments by Monday. We’re looking for an AOR to assist us through the permitting process as we are fast tracking this project and ideally moving into construction by August. ECS will be brought on board to do a private review of our drawings in order to expedite the permitting process before we go to the city.   Let me know if you have any questions – feel free to reach me on my cell 518-441-6998.     Kind regards, Alexandra Barletta, RA Project Manager, Planning Valor Real Estate Development m.  518-441-6998 t. 727-441-2144 e. Alexandra@valorc.com w. www.valorc.com             This e-mail and any attachment(s) are for the exclusive and confidential use of the intended recipient. If you are not the intended recipient, please do not read and you must not use, copy, disclose, or take any action based on this message or any information herein. If you have received this message in error, please advise the sender immediately by reply e-mail and delete this message and its attachments from your computer system. Notice: Statements contained in emails to and from real estate professionals are not intended to create binding contractual agreements for the sale of real property, nor are such statements intended to establish terms and conditions of such agreements. A contract for the sale of real property is not established until a written agreement containing all agreed-upon terms and conditions, is properly ratified by the parties.
-```
-
-### EMAILS | Email: Re: Your replacement device has shipped.
-
-Source ID: S297 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1smAAA=
-Project: Unassigned
-Source at: 2026-07-08T21:48:26.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1smAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Your replacement device has shipped.
-Date: 2026-07-08T21:48:26Z
-From: Maria Calcetero <Mcalcetero@alleatogroup.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-Gregory’s hotspot was not turning on, so Verizon is sending a free replacement.  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Brandon Clymer <bclymer@alleatogroup.com> Date: Wednesday, 8 July 2026 at 4:47 PM To: Maria Calcetero <Mcalcetero@alleatogroup.com> Subject: Fw: Your replacement device has shipped. What is this for?  Brandon Clymer  CEO at Alleato Group  Mobile   317.760.0088   |   Email   bclymer@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From:  Verizon Wireless <VZWMail@ecrmemail.verizonwireless.com> Sent:  Wednesday, July 8, 2026 3:43 PM To:  Brandon Clymer <bclymer@alleatogroup.com> Subject:  Your replacement device has shipped.   Track your shipment. Shop Support Sign In Account number ending in : 4657-00001 Track your shipment. Your replacement device ID and shipping details are below. Once you receive your new device, please call us at 877-807-4646 to activate it. Please return the original device within 30 days to avoid being charged for it. Please use the return shipping label included in the box you received with your replacement device. Order details Order number: 7591007 Location code: 2153601 Order MDN: 7731 Name: ALLEATO LLC ATTN:BRANDON CLYMER Alleato Llc Device description: NOV MIFI X PRO 5G UW Device IMEI/SIM number: 990018054861384 Track it at: UPS Tracking number: 1Z4367642409455741 Questions? Need assistance with your service? Please call us at 800.922.0204. Thanks for choosing Verizon. Phones Tablets Plans Contact Rep © 2026 Verizon This email was sent to BCLYMER@ALLEATOGROUP.COM . We respect your privacy. Please review our Privacy Policy . Verizon, One Verizon Way, Mail Code: 180WVB, Basking Ridge, NJ 07920
-```
-
-### EMAILS | Email: Your replacement device has shipped.
-
-Source ID: S298 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1slAAA=
-Project: Unassigned
-Source at: 2026-07-08T21:43:22.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1slAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Your replacement device has shipped.
-Date: 2026-07-08T21:43:22Z
-From: Verizon Wireless <VZWMail@ecrmemail.verizonwireless.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-Track your shipment. Shop Support Sign In Account number ending in : 4657-00001 Track your shipment. Your replacement device ID and shipping details are below. Once you receive your new device, please call us at 877-807-4646 to activate it. Please return the original device within 30 days to avoid being charged for it. Please use the return shipping label included in the box you received with your replacement device. Order details Order number: 7591007 Location code: 2153601 Order MDN: 7731 Name: ALLEATO LLC ATTN:BRANDON CLYMER Alleato Llc Device description: NOV MIFI X PRO 5G UW Device IMEI/SIM number: 990018054861384 Track it at: UPS Tracking number: 1Z4367642409455741 Questions? Need assistance with your service? Please call us at 800.922.0204. Thanks for choosing Verizon. Phones Tablets Plans Contact Rep © 2026 Verizon This email was sent to BCLYMER@ALLEATOGROUP.COM . We respect your privacy. Please review our Privacy Policy . Verizon, One Verizon Way, Mail Code: 180WVB, Basking Ridge, NJ 07920 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-```
-
-### EMAILS | Email: Fw: Landscape Plan - Union Collective
-
-Source ID: S299 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1skAAA=
-Project: Union Collective
-Source at: 2026-07-08T21:08:10.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1skAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Fw: Landscape Plan - Union Collective
-Date: 2026-07-08T21:08:10Z
-From: Douglas Franklin <dfranklin@alleatogroup.com>
-To: Andrew Cannon <acannon@alleatogroup.com>, Demitrace Satterfield <dsatterfield@alleatogroup.com>, Patrick Antone <pantone@alleatogroup.com>
-
-Team, I received the attached landscape plan from Viox and Nate said this is the minimum requirements based on the ordinance. Let's send this out tomorrow morning to the bidders as there are plenty of details and quantities provided.  Two items I am pushing back on to Nate is we have 3,000 additional square footage of VUA (Vehicle Usage Area landscape) that is above the required amount.  I'm talking to him tomorrow to review because I want him to remove islands and plantings to get us closer to the 5,209 square footage.  They close at 4:30. The second item: this site is required to have a  horse style fence .  We can ask for a waiver on this, but Nate and Alex said they doubt they would approve.  The photo is of a development down the road from the Collective site. I have 3 landscapers that I will add tomorrow that were not on the building connected site that I got from a contractor who said this job is too large for him but recommended 3 landscape contractors to me. Thank you, Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702   From:  Nate Adams <NAdams@vioxinc.com> Sent:  Wednesday, July 8, 2026 4:19 PM To:  Alex Russell <arussell@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Re: Landscape Plan - Union Collective You don't often get email from nadams@vioxinc.com. Learn why this is important Hi Doug, See attached for the landscape plan per code minimum for review. The fence turns out is only required in the front yard. Thank you.  Best Regards, Nate Nate Adams, PLA Landscape Architect   vioxinc.com   859-727-3293  |     859-620-9420     From:  Nate Adams <NAdams@vioxinc.com> Sent:  Wednesday, July 8, 2026 10:50 AM To:  Alex Russell <arussell@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Re: Landscape requirements - Union Hi Doug,  See below for the guidelines to the Union Town Plan. We have included a horse fence and bike rack and are still working out other items such as furniture. Let us know if you have any questions or have any direction for us. I should have a draft landscape plan to you by the end of the day. Thank you. Document Viewer | Zoning Ordinance Regards, Nate Adams, PLA Landscape Architect   vioxinc.com   859-727-3293  |     859-620-9420     From:  Alex Russell <arussell@vioxinc.com> Sent:  Wednesday, July 8, 2026 10:33 AM To:  Nate Adams <NAdams@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  FW: Landscape requirements - Union   Nate,   Can you please send Doug the landscape requirements that you are using for your design?   Thanks,   Alex Russell, P.E. Design Engineer   vioxinc.com   513-576-1000  |     859-620-0287                 From:  Douglas Franklin <dfranklin@alleatogroup.com> Sent:  Tuesday, July 7, 2026 2:33 PM To:  Alex Russell <arussell@vioxinc.com> Subject:  Landscape requirements - Union   Alex,   Can you send me the landscape requirements for Union.  If it's listed on a web site page that is fine as well.   The owner wants me to send this to him for review.   Thank you,   Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702
-```
-
-### EMAILS | Email: Your credit score has changed-here's how
-
-Source ID: S300 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1siAAA=
-Project: Unassigned
-Source at: 2026-07-08T20:45:53.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1siAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Your credit score has changed-here's how
-Date: 2026-07-08T20:45:53Z
-From: Capital One <capitalone@notification.capitalone.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-Access your newest report to learn more. ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­   Sign in       See the changes in your credit score     Show me my new score   Brandon, Here's a quick look at your credit score activity from June 30, 2026 to July 07, 2026 that was monitored by CreditWise from Capital One. CreditWise monitors your FICO® Score 8 and factors that can affect it—like on-time payments, available credit and new accounts.   Credit score change     Sign in daily to check your credit score and to get personalized suggestions to help improve your credit health.     Show me my new score   Was this email relevant? Not at all   Extremely About this message The site may be unavailable during normal maintenance or due to unforeseen circumstances.   Important information from Capital One Contact us   |   Privacy   |   Help prevent fraud This email was sent to bclymer@alleatogroup.com and contains information directly related to your CreditWise account (including CreditWise alerts) and other services to which you have subscribed. If you no longer want to receive these emails, unfortunately you’ll have to unenroll from CreditWise . Where does my CreditWise score come from? The credit score provided in CreditWise is a FICO® Score 8 based on TransUnion® data. The FICO Score 8 gives you a good sense of your credit health, but it may not be the same score model used by your lender or creditor. The availability of the CreditWise tool and certain features in the tool depends on our ability to obtain your credit history from TransUnion and whether you have sufficient credit history to generate a FICO Score 8. Some monitoring and alerts may not be available to you if the information you enter at enrollment does not match the information in your credit file at (or you do not have a file at) one or more consumer reporting agencies. Capital One does not provide, endorse or guarantee any third-party product, service, information or recommendation listed above. The third parties listed are not affiliated with Capital One and are solely responsible for their products and services. All trademarks are the property of their respective owners. Please do not reply to this message, as this email inbox is not monitored. To contact us, visit www.capitalone.com/help-center/contact-us. Products and services are offered by Capital One, N.A. FICO is a registered trademark of Fair Isaac Corporation in the United States and other countries. © 2026 Capital One. Capital One is a federally registered service mark. SE3794 52225 6211200 2118 OID2118 TP1001
-```
-
-### EMAILS | Email: FW: Shawnee Collective Reconnect
-
-Source ID: S301 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA=
-Project: Westfield Collective
-Source at: 2026-07-08T20:44:03.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1shAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: FW: Shawnee Collective Reconnect
-Date: 2026-07-08T20:44:03Z
-From: mike@ibexdevgroup.com <mike@ibexdevgroup.com>
-To: Brandon Clymer <bclymer@alleatogroup.com>
-
-    From: Jeff White <jwhite@columbiacapital.com> Sent: Saturday, May 23, 2026 10:36 AM To: mike@ibexdevgroup.com Cc: Philip Johnson <philip@ibexdevgroup.com> Subject: Re: Shawnee Collective Reconnect   Hey Mike-   Thanks again for your time yesterday! I’m excited to see this coming together.   I’ve attached the City’s applications for TIF, CID and IRB/sales tax exemption. I’ve also included the City’s policy statements relating to these for your records.   In addition to the completed apps and the deposits (you can direct these to George Kandt at the City; please copy me on the apps, though, if you would), I’ll need from you:   • a detailed sources/uses of funds, ideally with detail by project component. This should detail the amount of developer fee in the budget, as well as any third-party sources you expect (key money, etc.)   • a timing/phasing plan   • a 10-year operating pro forma   • any information you can provide about the capital stack, including debt vs. equity, private financing details (bank term sheet, etc.), source(s) of equity and their status   • any third-party support for your construction cost estimates (maybe from Choice on the hotel, contractor’s estimates, etc.)   None of the bulleted items need to be pretty. As long as I can decipher what you’re up to, that’ll be fine.   Thanks!   Jeff   Jeff White Managing Member Columbia Capital Management, LLC Direct: 913.312.8077 Main: 913.248.8500 jwhite@columbiacapital.com
-```
-
-### EMAILS | Email: Re: Architect, Structural and MEP - Ace Hardware
-
-Source ID: S302 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA=
-Project: Unassigned
-Source at: 2026-07-08T20:01:54.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sgAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
-
-```text
-Subject: Re: Architect, Structural and MEP - Ace Hardware
-Date: 2026-07-08T20:01:54Z
-From: Douglas Franklin <dfranklin@alleatogroup.com>
-To: Randy Smith <Randy.Smith@champaignil.gov>, Jeff Marino <Jeff.Marino@champaignil.gov>, Duane Allen <duane.allen@champaignil.gov>, Brandon Clymer <bclymer@alleatogroup.com>
-
-Randy, Yes, all the design professionals have sent the paperwork back to the Illinois Department of Financial and Professional Regulation, but no official confirmation has been sent back to the architectural team, MEP team or the structural engineer yet.  As soon as the official approval is received, we will let you know.  They said it could take a few weeks and after I talked to Jeff and Denise, she stated they would start the review process of the project but no building permit would be issued into the Arch, MEP and structural have approval from the State of Illinois. Thanks, Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702   From: Randy Smith <Randy.Smith@champaignil.gov> Sent: Wednesday, July 8, 2026 3:43 PM To: Douglas Franklin <dfranklin@alleatogroup.com>; Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov>; Brandon Clymer <bclymer@alleatogroup.com> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Re: Architect, Structural and MEP - Ace Hardware   You don't often get email from randy.smith@champaignil.gov. Learn why this is important Good afternoon, everyone, I have added Brandon Clymer to this chain as he has sent a few messages in the portal.  I am hoping to close the communication loop so we can help move this project forward.   Has the Design Firm Registration been applied for with the Illinois Department of Financial and Professional Regulation?  The State will send an acknowledgement back that they have received it.  Are you able to provide this to us?  If so we can upload them to the Contractor Registration. Kind Regards,     From: Randy Smith <Randy.Smith@champaignil.gov> Sent: Tuesday, July 7, 2026 8:07 AM To: Douglas Franklin <dfranklin@alleatogroup.com>; Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Re: Architect, Structural and MEP - Ace Hardware   Good morning, Doug, I want to tie the other email chain to this from yesterday.  It appears we need the Design Firm Registration Certificate from the State of Illinois to proceed with the Contractor registration (CR-1399).   Has this been applied for yet with the Illinois Department of Financial and Professional Regulation?  If an architectural firm offers professional design services in Illinois that pertains to the practice of Architecture, a company must be registered as a Professional Design Firm with IDFPR. Duane sent a change request on CR-1399 requesting it to be uploaded. If it has been applied for, the State will typically send a confirmation.  If so, can you please send that to us? Thanks, From: Douglas Franklin <dfranklin@alleatogroup.com> Sent: Tuesday, July 7, 2026 7:08 AM To: Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov>; Randy Smith <Randy.Smith@champaignil.gov> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Architect, Structural and MEP - Ace Hardware   [EXTERNAL] Jeff and Team, I logged back in today and it appears the architect, structural and MEP are not processed yet, but everyone has CR #. Alleato Group and the Civil Engineer are registered and in the system.  I don't know the exact review timing and approval process, but can I submit the drawings with final approval being contingent on the approval process with the architect, structural and MEP? Thanks for your help with this item! Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702
+Thanks Maria. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From: Maria Calcetero <Mcalcetero@alleatogroup.com> Sent: Wednesday, July 8, 2026 2:29 PM To: Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject: Re: Jeff   Luke,  Thank you for the clarification. Brandon is traveling right now until Friday.  He can send the document signed by next Monday.  Thank you for understanding,  Regards, María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Luke Holm <Luke.Holm@CyberCoders.com> Date: Wednesday, 8 July 2026 at 7:03 AM To: Maria Calcetero <Mcalcetero@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject: Re: Jeff Hi Maria, It's the same contract.  Our Contracts Counsel took the red lined document that Brandon signed and created a clean version of it for him to sign.  This is my fault, I assumed the version that Brandon signed would suffice but we do require either a wet or verified e-signature and for the entire signature block to be completed.  I apologize for the mistake, thanks for understanding.  Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From:  Maria Calcetero <Mcalcetero@alleatogroup.com> Sent:  Wednesday, July 8, 2026 7:56 AM To:  Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Luke, Brandon told me he already signed one contract with the changes he made. Can you confirm that this is the same contract? Did something change? Thank you,  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250   Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Luke Holm <Luke.Holm@CyberCoders.com> Sent:  Tuesday, 07 July 2026 16:23:14 To:  Maria Calcetero <Mcalcetero@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Hi Maria, Is there a way you can print this off and have Brandon sign it tomorrow?  I'm having the docusign sent again in the morning too I think it only allows access to it for a few days.  Thanks for you help with this. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From:  Maria Calcetero <Mcalcetero@alleatogroup.com> Sent:  Wednesday, July 1, 2026 11:33 AM To:  Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Luke,  Brandon is busy all day working on a project in FL.  I’ll make sure he signs tonight or tomorrow morning.  Thank you,  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Luke Holm <Luke.Holm@CyberCoders.com> Date: Wednesday, 1 July 2026 at 7:08 AM To: Brandon Clymer <bclymer@alleatogroup.com> Cc: Maria Calcetero <Mcalcetero@alleatogroup.com> Subject: Jeff Morning Brandon, I just spoke with Jeff, he's going to call you at some point today.  I'm having the docusign sent again, please get that signed asap. If it doesn't work please print and sign the attached.  Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs
 ```
 
 ### EMAILS | Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep
 
-Source ID: S303 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1scAAA=
+Source ID: S286 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1scAAA=
 Project: Unassigned
 Source at: 2026-07-08T19:25:16.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1scAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23729,7 +23459,7 @@ Thanks for the quick response, everyone! If you have a leaf blower , please brin
 
 ### EMAILS | Email: Re: Union, KY Collective Estimate from Superior Contractors
 
-Source ID: S304 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sZAAA=
+Source ID: S287 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sZAAA=
 Project: Unassigned
 Source at: 2026-07-08T19:02:55.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sZAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23745,7 +23475,7 @@ Received, thank you Brian.  I let Tony know to update you on your pricing for Go
 
 ### EMAILS | Email: Re: Playmakers Material Purchase 
 
-Source ID: S305 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sYAAA=
+Source ID: S288 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sYAAA=
 Project: Playmakers
 Source at: 2026-07-08T18:59:31.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sYAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23761,7 +23491,7 @@ Purchase Made: FRP Specialties LLC - Black FRP and Trim: $5934.00 Please let me 
 
 ### EMAILS | Email: Your order for a replacement device has been placed.
 
-Source ID: S306 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sXAAA=
+Source ID: S289 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sXAAA=
 Project: Unassigned
 Source at: 2026-07-08T18:52:23.000Z
 URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sXAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
@@ -23775,36 +23505,263 @@ To: Brandon Clymer <bclymer@alleatogroup.com>
 Shop Support Sign In Account number ending in : 4657-00001 Review your order details. Your replacement device will arrive shortly. Order details Order number: 7591007 Location code: 2153601 Order MDN: 7731 Name: ALLEATO LLC Alleato Llc Questions? Need assistance with your service? Please call us at 800.922.0204. Thanks for choosing Verizon. Phones Tablets Plans Contact Rep © 2026 Verizon This email was sent to BCLYMER@ALLEATOGROUP.COM . We respect your privacy. Please review our Privacy Policy . Verizon, One Verizon Way, Mail Code: 180WVB, Basking Ridge, NJ 07920 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
 
-### EMAILS | Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  
+### EMAILS | Email: Re: Superior Sprinklers
 
-Source ID: S307 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA=
-Project: Uniqlo Phillipsburg NJ
-Source at: 2026-07-08T18:37:08.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sWAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+Source ID: S290 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqxAAA=
+Project: Superior Beverae Exotec
+Source at: 2026-07-08T19:28:16.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q%2FXxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqxAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
 
 ```text
-Subject: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  
-Date: 2026-07-08T18:37:08Z
+Subject: Re: Superior Sprinklers
+Date: 2026-07-08T19:28:16Z
 From: Kebba Mass <kmass@alleatogroup.com>
-To: Elkarrimy, Ahmed <AElkarrimy@TPGArchitecture.com>, 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>, Brandon Clymer <bclymer@alleatogroup.com>
+To: Dadano THOUK <dadano.thouk@exotec.com>, Connor Clark <Connor.Clark@hy-tek.com>, Aaron Pitzer <Aaron.Pitzer@Hy-Tek.Team>
 
-The FA contractor is working on the breakdown and will have that sent over today. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Elkarrimy, Ahmed <AElkarrimy@TPGArchitecture.com> Sent: Wednesday, July 8, 2026 2:08 PM To: 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>; Kebba Mass <kmass@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Cc: 'Kevin.Ly@uniqlo-usa.com' <Kevin.Ly@uniqlo-usa.com>; 'ted.cheski@nipponexpress.com' <ted.cheski@nipponexpress.com>; 'john.min@uniqlo-usa.com' <john.min@uniqlo-usa.com>; Schwartz, Benjamin <bschwartz@TPGArchitecture.com>; Mike Parsons <mparsons@alleatogroup.com>; 'joseph.burdzy@exotec.com' <joseph.burdzy@exotec.com>; Critzman, Brian <BCritzman@TPGArchitecture.com>; Alec Wehner <awehner@alleatogroup.com>; Gregory Davis <gdavis@alleatogroup.com> Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hi Brandon / Kebba, Following up.  We have received an email from the Landlord asking where are we with the FA panel.  Yusuke needs a cost breakdown inorder to gather approval from his leadership team.     Please provide an update regarding ASAP. Thank you   Ahmed Elkarrimy Associate   212.536.5192 T | 973.444.1314 M | vCard   TPG Architecture 132 West 31st Street, 5th floor, New York, NY 10001   New York | Long Island | Orlando | West Palm Beach | TPGArchitecture.com     From: Elkarrimy, Ahmed Sent: Monday, July 6, 2026 2:14 PM To: 'yusuke.nakanishi@fastretailing.com' <yusuke.nakanishi@fastretailing.com>; kmass@alleatogroup.com; bclymer@alleatogroup.com Cc: Kevin.Ly@uniqlo-usa.com; ted.cheski@nipponexpress.com; john.min@uniqlo-usa.com; Schwartz, Benjamin <bschwartz@TPGArchitecture.com>; mparsons@alleatogroup.com; joseph.burdzy@exotec.com; Critzman, Brian <BCritzman@TPGArchitecture.com>; awehner@alleatogroup.com; gdavis@alleatogroup.com Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Dear Kebba, We wanted to check in and request prompt responses, especially regarding the open FA work. Please provide Yusuke with a more detailed cost breakdown that he can take back to leadership for review and approval. Please note that TPG /HNY/AUE are not contracted to coordinate the new FA panel, so once the cost breakdown summary is submitted to UQ, please follow up with Yusuke directly to obtain formal approval to proceed.    Additionally, please confirm by when you need a response from UQ on the change order before costs and schedules are impacted?   Lastly, we have not yet received punch list close‑out responses from your team for the MEP and Architectural items. A close‑out report with photos documenting each addressed item is required.   Please provide feedback by end of day. Thank you   Ahmed Elkarrimy Associate   212.536.5192 T | 973.444.1314 M | vCard   TPG Architecture 132 West 31st Street, 5th floor, New York, NY 10001   New York | Long Island | Orlando | West Palm Beach | TPGArchitecture.com     From: yusuke.nakanishi@fastretailing.com < yusuke.nakanishi@fastretailing.com > Sent: Monday, July 6, 2026 9:12 AM To: kmass@alleatogroup.com ; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; bclymer@alleatogroup.com Cc: Kevin.Ly@uniqlo-usa.com ; ted.cheski@nipponexpress.com ; john.min@uniqlo-usa.com ; Schwartz, Benjamin < bschwartz@TPGArchitecture.com >; mparsons@alleatogroup.com ; joseph.burdzy@exotec.com ; Critzman, Brian < BCritzman@TPGArchitecture.com >; awehner@alleatogroup.com ; gdavis@alleatogroup.com Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   CAUTION: This email originated from outside your organization. Exercise caution when opening attachments or clicking links, especially from unknown senders. Hi Kebba Please make sure it won’t affect any disruption to the Skypod. If you have any possibilities, please let me know as soon as possible. We cannot do that, so need option-B.     From: Kebba Mass < kmass@alleatogroup.com > Sent: Saturday, July 4, 2026 1:11 PM To: NAKANISHI Yusuke[FRJP:GSCM Global Logistics Support(Warehouse Development)]( 中西 雄亮 ) < yusuke.nakanishi@fastretailing.com >; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: LY Kevin[UQUS:Logistics] < Kevin.Ly@uniqlo-usa.com >; ted.cheski < ted.cheski@nipponexpress.com >; MIN John[UQUS:Store Design and Construction] < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com ; Mike Parsons < mparsons@alleatogroup.com >; Joseph BURDZY < joseph.burdzy@exotec.com >; Critzman, Brian < BCritzman@TPGArchitecture.com >; Alec Wehner < awehner@alleatogroup.com >; Gregory Davis < gdavis@alleatogroup.com > Subject: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hello Yusuke- The plan is to get all the installation completed without disrupting the current Skypod operations. We will need one day after installation is completed to disconnect the Skypod from the main panel and connect it to the new sub panel. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: yusuke.nakanishi@fastretailing.com < yusuke.nakanishi@fastretailing.com > Sent: Tuesday, June 30, 2026 12:09 PM To: Kebba Mass < kmass@alleatogroup.com >; AElkarrimy@TPGArchitecture.com < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: Kevin.Ly@uniqlo-usa.com < Kevin.Ly@uniqlo-usa.com >; ted.cheski@nipponexpress.com < ted.cheski@nipponexpress.com >; john.min@uniqlo-usa.com < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com < bschwartz@TPGArchitecture.com >; Mike Parsons < mparsons@alleatogroup.com >; joseph.burdzy@exotec.com < joseph.burdzy@exotec.com >; BCritzman@TPGArchitecture.com < BCritzman@TPGArchitecture.com >; Alec Wehner < awehner@alleatogroup.com >; Gregory Davis < gdavis@alleatogroup.com > Subject: RE: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Hi Kebba Let me reconfirm that we are not have any impact tot the operation or Skypod during these works. Best regards   From: Kebba Mass < kmass@alleatogroup.com > Sent: Monday, June 29, 2026 10:05 PM To: NAKANISHI Yusuke[FRJP:GSCM Global Logistics Support(Warehouse Development)]( 中西 雄亮 ) < yusuke.nakanishi@fastretailing.com >; Elkarrimy, Ahmed < AElkarrimy@TPGArchitecture.com >; Brandon Clymer < bclymer@alleatogroup.com > Cc: LY Kevin[UQUS:Logistics] < Kevin.Ly@uniqlo-usa.com >; ted.cheski < ted.cheski@nipponexpress.com >; MIN John[UQUS:Store Design and Construction] < john.min@uniqlo-usa.com >; bschwartz@TPGArchitecture.com ; Mike Parsons < mparsons@alleatogroup.com >; Joseph BURDZY < joseph.burdzy@exotec.com >; Critzman, Brian < BCritzman@TPGArchitecture.com >; Alec Wehner < awehner@alleatogroup.com >; Gregory Davis < gdavis@alleatogroup.com > Subject: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination   Kevin and Yusuke- Please see
+Dadano- Use the link below to access our design for fire suppression for the Superior Beverage project. As for now, we have the same approach for the verticals as the McLane project. We will look at the calculations and explore the option of doing one vertical per bay. ​ Latest ​ Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Dadano THOUK <dadano.thouk@exotec.com> Sent: Wednesday, July 8, 2026 2:44 PM To: Connor Clark <Connor.Clark@hy-tek.com>; Kebba Mass <kmass@alleatogroup.com>; Aaron Pitzer <Aaron.Pitzer@Hy-Tek.Team> Cc: Ronnie Mitchell, PMP <Ronnie.Mitchell@hy-tek.com>; Joe Metz <Joe.Metz@hy-tek.com> Subject: RE: Superior Sprinklers   Hello @Kebba Mass ,   I don’t know your questions about Superior Beverage, but I strongly suggest using only one Vertical pipe per bay as recommended on our Exotec specs :   You will then avoid all the on-going struggles you have at McLane Salt Lake City.   Best Regards,     Dadano THOUK Rack Engineer II 1745 Peachtree St NE, Ste G, Atlanta, GA 30309, United States     From: Connor Clark <Connor.Clark@hy-tek.com> Sent: Wednesday, July 8, 2026 2:18 PM To: Kebba Mass <kmass@alleatogroup.com>; Dadano THOUK <dadano.thouk@exotec.com> Cc: Ronnie Mitchell, PMP <Ronnie.Mitchell@hy-tek.com>; Joe Metz <Joe.Metz@hy-tek.com> Subject: Superior Sprinklers   Kebba,   I have attached Dadano from Exotec to this email. Please provide the latest drawings for Superior and the questions you had regarding the vertical runs on the rack.   Thanks,  Connor Clark ​ ​ ​ ​ Project Manager II Connor.Clark@hy-tek.com O: (859) 657-7589 M: (513) 609-1769 This email and any files transmitted with it are confidential and intended solely for the use of the individual  ​or entity whom ​it is addressed. ​If you are not the intended recipient or the person responsible for delivering  ​the email to the intended recipient, ​be advised that you have received ​this ​email in error and that any use,  ​dissemination, forwarding, printing, or copying of this ​email and any file attachments is strictly prohibited. ​If  ​you have received ​this email in error, please notify us by reply email to ​the sender. You must destroy the  ​original transmission and its contents.
 ```
 
-### EMAILS | Email: Re: Jeff
+### EMAILS | Email: Re: 2'' Pipe Needed For Jazz McLane
 
-Source ID: S308 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sUAAA=
+Source ID: S291 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqyAAA=
 Project: Unassigned
-Source at: 2026-07-08T18:32:48.000Z
-URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sUAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+Source at: 2026-07-08T19:28:32.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q%2FXxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqyAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
 
 ```text
-Subject: Re: Jeff
-Date: 2026-07-08T18:32:48Z
-From: Luke Holm <Luke.Holm@CyberCoders.com>
-To: Maria Calcetero <Mcalcetero@alleatogroup.com>, Brandon Clymer <bclymer@alleatogroup.com>
+Subject: Re: 2'' Pipe Needed For Jazz McLane
+Date: 2026-07-08T19:28:32Z
+From: Mike Parsons <mparsons@alleatogroup.com>
+To: Lawton, Robert <robert.lawton@coreandmain.com>
 
-Thanks Maria. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From: Maria Calcetero <Mcalcetero@alleatogroup.com> Sent: Wednesday, July 8, 2026 2:29 PM To: Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject: Re: Jeff   Luke,  Thank you for the clarification. Brandon is traveling right now until Friday.  He can send the document signed by next Monday.  Thank you for understanding,  Regards, María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Luke Holm <Luke.Holm@CyberCoders.com> Date: Wednesday, 8 July 2026 at 7:03 AM To: Maria Calcetero <Mcalcetero@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject: Re: Jeff Hi Maria, It's the same contract.  Our Contracts Counsel took the red lined document that Brandon signed and created a clean version of it for him to sign.  This is my fault, I assumed the version that Brandon signed would suffice but we do require either a wet or verified e-signature and for the entire signature block to be completed.  I apologize for the mistake, thanks for understanding.  Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From:  Maria Calcetero <Mcalcetero@alleatogroup.com> Sent:  Wednesday, July 8, 2026 7:56 AM To:  Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Luke, Brandon told me he already signed one contract with the changes he made. Can you confirm that this is the same contract? Did something change? Thank you,  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250   Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Luke Holm <Luke.Holm@CyberCoders.com> Sent:  Tuesday, 07 July 2026 16:23:14 To:  Maria Calcetero <Mcalcetero@alleatogroup.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Hi Maria, Is there a way you can print this off and have Brandon sign it tomorrow?  I'm having the docusign sent again in the morning too I think it only allows access to it for a few days.  Thanks for you help with this. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs     From:  Maria Calcetero <Mcalcetero@alleatogroup.com> Sent:  Wednesday, July 1, 2026 11:33 AM To:  Luke Holm <Luke.Holm@CyberCoders.com>; Brandon Clymer <bclymer@alleatogroup.com> Subject:  Re: Jeff   Luke,  Brandon is busy all day working on a project in FL.  I’ll make sure he signs tonight or tomorrow morning.  Thank you,  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Luke Holm <Luke.Holm@CyberCoders.com> Date: Wednesday, 1 July 2026 at 7:08 AM To: Brandon Clymer <bclymer@alleatogroup.com> Cc: Maria Calcetero <Mcalcetero@alleatogroup.com> Subject: Jeff Morning Brandon, I just spoke with Jeff, he's going to call you at some point today.  I'm having the docusign sent again, please get that signed asap. If it doesn't work please print and sign the attached.  Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.5090 View my open jobs
+Awesome, Thank You Mike Parsons Traveling Superintendent Mobile   757.602.6047  | Email   mparsons@alleatogroup.com Web   www.alleatogroup.com    |         Indianapolis  - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete  - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Lawton, Robert <robert.lawton@coreandmain.com> Sent: Wednesday, July 8, 2026 1:27 PM To: Mike Parsons <mparsons@alleatogroup.com> Cc: Kebba Mass <kmass@alleatogroup.com>; Alec Wehner <awehner@alleatogroup.com> Subject: RE: 2'' Pipe Needed For Jazz McLane   Hey Mike, here’s that order confirmation. My driver is loading the pipe now and he’ll be in contact with you.   Thank you.           *NOTE * Please update your C&M contacts and include the following emails for SLC Branch 738 Inside Sales Team & Outside Fabrication Team: Inside Sales / Bids and Orders: SaltLakeFP@coreandmain.com / SLC SALES – 738     Robert Lawton Branch Operations Manager - Fire Protection Branch #738 - Salt Lake City 275 W 2855 S St, Salt Lake City, UT 84115   Office: 385-419-3950 Mobile: 385-441-6773   robert.lawton@coreandmain.com         Private From: Mike Parsons <mparsons@alleatogroup.com> Sent: Wednesday, July 8, 2026 1:13 PM To: Lawton, Robert <robert.lawton@coreandmain.com> Cc: Kebba Mass <kmass@alleatogroup.com>; Alec Wehner <awehner@alleatogroup.com> Subject: Re: 2'' Pipe Needed For Jazz McLane   CAUTION: External   Hi Robert,   I will be here so I'll be the contact. Getting here this afternoon would be awesome. PO and address are the same.   Thank You   Mike Parsons Traveling Superintendent Mobile   757.602.6047  | Email   mparsons@alleatogroup.com Web   www.alleatogroup.com    |         Indianapolis  - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete  - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From: Lawton, Robert <robert.lawton@coreandmain.com> Sent: Wednesday, July 8, 2026 1:05 PM To: Mike Parsons <mparsons@alleatogroup.com> Cc: Kebba Mass <kmass@alleatogroup.com>; Alec Wehner <awehner@alleatogroup.com> Subject: RE: 2'' Pipe Needed For Jazz McLane   Hey Mike, If you have guys on site, I can have my driver run this over this afternoon. Who would be the contact, and what would the PO be? I can process this now if needed. I assume same address as the previous deliveries?         *NOTE * Please update your C&M contacts and include the following emails for SLC Branch 738 Inside Sales Team & Outside Fabrication Team: Inside Sales / Bids and Orders: SaltLakeFP@coreandmain.com / SLC SALES – 738     Robert Lawton Branch Operations Manager - Fire Protection Branch #738 - Salt Lake City 275 W 2855 S St, Salt Lake City, UT 84115   Office: 385-419-3950 Mobile: 385-441-6773   robert.lawton@coreandmain.com           Private From: Mike Parsons <mparsons@alleatogroup.com> Sent: Wednesday, July 8, 2026 1:03 PM To: Lawton, Robert <robert.lawton@coreandmain.com> Cc: Kebba Mass <kmass@alleatogroup.com>; Alec Wehner <awehner@alleatogroup.com>; Stalkup, Nick <nick.stalkup@coreandmain.com> Subject: 2'' Pipe Needed For Jazz McLane   CAUTION: External   Good afternoon Robert,   I understand Nick is out of the office so I want to reach out and see if you're able to assist.    We need 20 sticks of 2'' sch10 pipe ASAP. How quick would we be able to get a truck here with that?   Please reach out if you have any questions or concerns,   Thank You   Mike Parsons Traveling Superintendent Mobile   757.602.6047  | Email   mparsons@alleatogroup.com Web   www.alleatogroup.com    |         Indianapolis  - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete  - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702
+```
+
+### EMAILS | Email: Re: TAG 7/1/26: Ulta Beauty - AC4 Duct Sock and AC1 Pricing
+
+Source ID: S292 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqzAAA=
+Project: Unassigned
+Source at: 2026-07-08T19:38:45.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q%2FXxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqzAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: TAG 7/1/26: Ulta Beauty - AC4 Duct Sock and AC1 Pricing
+Date: 2026-07-08T19:38:45Z
+From: Candon Rusin <crusin@alleatogroup.com>
+To: Keith Dunn <kdunn@accoes.com>
+
+Received Thanks Keith.  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Keith Dunn <kdunn@accoes.com> Sent: Wednesday, July 8, 2026 3:08 PM To: Candon Rusin <crusin@alleatogroup.com> Cc: Joey Hernandez <jmhernandez@accoes.com>; Grant Cloud <gcloud@alleatogroup.com>; Alec Wehner <awehner@alleatogroup.com> Subject: Re: TAG 7/1/26: Ulta Beauty - AC4 Duct Sock and AC1 Pricing   Hi Candon, Please see the attached change order options. Let me know if you have any questions.  Best Regards, OUT OF OFFICE NOTICE: 7/15/26 - 7/17/26  ~ 7/24/26 - 7/27/26   Keith Dunn  Project Manager   Mobile:  ( 559) 400-2914   Office:  (559) 251-2226 24 Hour Service:  (800) 598-2226 Email:   kdunn@accoes.com       Web:   www.accoes.com 4980 E University Ave #103, Fresno, CA 93727 New Customer Setup Link:   http://www.accoes.com/newcustomersetup On Tue, Jul 7, 2026 at 10:52 AM Candon Rusin < crusin@alleatogroup.com > wrote:   -- Joey Hernandez Sheet Metal   General Foreman ACCO Engineered Systems  4980 E. University Ave #103 Fresno, Ca 93727-1658 Cell /559-358-9112   -- Joey Hernandez Sheet Metal   General Foreman ACCO Engineered Systems  4980 E. University Ave #103 Fresno, Ca 93727-1658 Cell /559-358-9112
+```
+
+### EMAILS | Email: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
+
+Source ID: S293 = outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq0AAA=
+Project: Unassigned
+Source at: 2026-07-08T20:02:49.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q%2FXxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq0AAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project
+Date: 2026-07-08T20:02:49Z
+From: Kebba Mass <kmass@alleatogroup.com>
+To: Wemhoff, Lisa <Lisa.Wemhoff@coreandmain.com>, Mike Parsons <mparsons@alleatogroup.com>, Alec Wehner <awehner@alleatogroup.com>
+
+Are you able to include painting cost as well? Also add this in the loose material quote please. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |         Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Wemhoff, Lisa <Lisa.Wemhoff@coreandmain.com> Sent: Wednesday, July 8, 2026 2:03 PM To: Kebba Mass <kmass@alleatogroup.com>; Mike Parsons <mparsons@alleatogroup.com> Cc: mobilefp <mobilefp@coreandmain.com> Subject: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project   You don't often get email from lisa.wemhoff@coreandmain.com. Learn why this is important Good afternoon,   Attached are the quotes for Nexcom   Total quote for Fab: $18,009.05 Total quote for Loose: $12,681.66 Total quote: $30,690.71 Notes: Domestic ****QUOTE EXCLUDES PAINTING*** Quoted 6x2 GxT reducer & 6x11/2 grv mt as a non-stock item. Item will be non-cancellable/ non- returnable. Drain cap and u-bolt quoted as import due to domestic not being available.   Lisa Wemhoff Stock Lister Core and Main Fire Protection Office: (260) 589-5815 www.coreandmain.com   Private From: Kebba Mass < kmass@alleatogroup.com > Sent: Saturday, July 4, 2026 9:36 PM To: Crews, Miranda < Miranda.Crews@coreandmain.com > Cc: Mike Parsons < mparsons@alleatogroup.com > Subject: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project   CAUTION: External   Hello Miranda- We have a project coming up in a couple of weeks, and we are looking for material pricing. Attached is the list of pipes that need to be fabricated, along with the loose materials list we need pricing for. Please get us a quote at your earliest convenience. Let me know if you have any questions. Thank you! ... Kebba Mass  Project Manager at Alleato Group  Mobile   917.244.3918   |   Email   kmass@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702
+```
+
+### EMAILS | Email: Re: Your replacement device has shipped.
+
+Source ID: S294 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1smAAA=
+Project: Unassigned
+Source at: 2026-07-08T21:48:26.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1smAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: Your replacement device has shipped.
+Date: 2026-07-08T21:48:26Z
+From: Maria Calcetero <Mcalcetero@alleatogroup.com>
+To: Brandon Clymer <bclymer@alleatogroup.com>
+
+Gregory’s hotspot was not turning on, so Verizon is sending a free replacement.  María Alejandra Calcetero   Executive Assistant to Brandon Clymer | Marketing Specialist Mobile   682.273.7110   |   Email   mcalcetero@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702 From: Brandon Clymer <bclymer@alleatogroup.com> Date: Wednesday, 8 July 2026 at 4:47 PM To: Maria Calcetero <Mcalcetero@alleatogroup.com> Subject: Fw: Your replacement device has shipped. What is this for?  Brandon Clymer  CEO at Alleato Group  Mobile   317.760.0088   |   Email   bclymer@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702     From:  Verizon Wireless <VZWMail@ecrmemail.verizonwireless.com> Sent:  Wednesday, July 8, 2026 3:43 PM To:  Brandon Clymer <bclymer@alleatogroup.com> Subject:  Your replacement device has shipped.   Track your shipment. Shop Support Sign In Account number ending in : 4657-00001 Track your shipment. Your replacement device ID and shipping details are below. Once you receive your new device, please call us at 877-807-4646 to activate it. Please return the original device within 30 days to avoid being charged for it. Please use the return shipping label included in the box you received with your replacement device. Order details Order number: 7591007 Location code: 2153601 Order MDN: 7731 Name: ALLEATO LLC ATTN:BRANDON CLYMER Alleato Llc Device description: NOV MIFI X PRO 5G UW Device IMEI/SIM number: 990018054861384 Track it at: UPS Tracking number: 1Z4367642409455741 Questions? Need assistance with your service? Please call us at 800.922.0204. Thanks for choosing Verizon. Phones Tablets Plans Contact Rep © 2026 Verizon This email was sent to BCLYMER@ALLEATOGROUP.COM . We respect your privacy. Please review our Privacy Policy . Verizon, One Verizon Way, Mail Code: 180WVB, Basking Ridge, NJ 07920
+```
+
+### EMAILS | Email: Your replacement device has shipped.
+
+Source ID: S295 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1slAAA=
+Project: Unassigned
+Source at: 2026-07-08T21:43:22.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1slAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Your replacement device has shipped.
+Date: 2026-07-08T21:43:22Z
+From: Verizon Wireless <VZWMail@ecrmemail.verizonwireless.com>
+To: Brandon Clymer <bclymer@alleatogroup.com>
+
+Track your shipment. Shop Support Sign In Account number ending in : 4657-00001 Track your shipment. Your replacement device ID and shipping details are below. Once you receive your new device, please call us at 877-807-4646 to activate it. Please return the original device within 30 days to avoid being charged for it. Please use the return shipping label included in the box you received with your replacement device. Order details Order number: 7591007 Location code: 2153601 Order MDN: 7731 Name: ALLEATO LLC ATTN:BRANDON CLYMER Alleato Llc Device description: NOV MIFI X PRO 5G UW Device IMEI/SIM number: 990018054861384 Track it at: UPS Tracking number: 1Z4367642409455741 Questions? Need assistance with your service? Please call us at 800.922.0204. Thanks for choosing Verizon. Phones Tablets Plans Contact Rep © 2026 Verizon This email was sent to BCLYMER@ALLEATOGROUP.COM . We respect your privacy. Please review our Privacy Policy . Verizon, One Verizon Way, Mail Code: 180WVB, Basking Ridge, NJ 07920 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+```
+
+### EMAILS | Email: Fw: Landscape Plan - Union Collective
+
+Source ID: S296 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1skAAA=
+Project: Union Collective
+Source at: 2026-07-08T21:08:10.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1skAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Fw: Landscape Plan - Union Collective
+Date: 2026-07-08T21:08:10Z
+From: Douglas Franklin <dfranklin@alleatogroup.com>
+To: Andrew Cannon <acannon@alleatogroup.com>, Demitrace Satterfield <dsatterfield@alleatogroup.com>, Patrick Antone <pantone@alleatogroup.com>
+
+Team, I received the attached landscape plan from Viox and Nate said this is the minimum requirements based on the ordinance. Let's send this out tomorrow morning to the bidders as there are plenty of details and quantities provided.  Two items I am pushing back on to Nate is we have 3,000 additional square footage of VUA (Vehicle Usage Area landscape) that is above the required amount.  I'm talking to him tomorrow to review because I want him to remove islands and plantings to get us closer to the 5,209 square footage.  They close at 4:30. The second item: this site is required to have a  horse style fence .  We can ask for a waiver on this, but Nate and Alex said they doubt they would approve.  The photo is of a development down the road from the Collective site. I have 3 landscapers that I will add tomorrow that were not on the building connected site that I got from a contractor who said this job is too large for him but recommended 3 landscape contractors to me. Thank you, Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702   From:  Nate Adams <NAdams@vioxinc.com> Sent:  Wednesday, July 8, 2026 4:19 PM To:  Alex Russell <arussell@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Re: Landscape Plan - Union Collective You don't often get email from nadams@vioxinc.com. Learn why this is important Hi Doug, See attached for the landscape plan per code minimum for review. The fence turns out is only required in the front yard. Thank you.  Best Regards, Nate Nate Adams, PLA Landscape Architect   vioxinc.com   859-727-3293  |     859-620-9420     From:  Nate Adams <NAdams@vioxinc.com> Sent:  Wednesday, July 8, 2026 10:50 AM To:  Alex Russell <arussell@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Re: Landscape requirements - Union Hi Doug,  See below for the guidelines to the Union Town Plan. We have included a horse fence and bike rack and are still working out other items such as furniture. Let us know if you have any questions or have any direction for us. I should have a draft landscape plan to you by the end of the day. Thank you. Document Viewer | Zoning Ordinance Regards, Nate Adams, PLA Landscape Architect   vioxinc.com   859-727-3293  |     859-620-9420     From:  Alex Russell <arussell@vioxinc.com> Sent:  Wednesday, July 8, 2026 10:33 AM To:  Nate Adams <NAdams@vioxinc.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com> Subject:  FW: Landscape requirements - Union   Nate,   Can you please send Doug the landscape requirements that you are using for your design?   Thanks,   Alex Russell, P.E. Design Engineer   vioxinc.com   513-576-1000  |     859-620-0287                 From:  Douglas Franklin <dfranklin@alleatogroup.com> Sent:  Tuesday, July 7, 2026 2:33 PM To:  Alex Russell <arussell@vioxinc.com> Subject:  Landscape requirements - Union   Alex,   Can you send me the landscape requirements for Union.  If it's listed on a web site page that is fine as well.   The owner wants me to send this to him for review.   Thank you,   Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702
+```
+
+### EMAILS | Email: Your credit score has changed-here's how
+
+Source ID: S297 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1siAAA=
+Project: Unassigned
+Source at: 2026-07-08T20:45:53.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1siAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Your credit score has changed-here's how
+Date: 2026-07-08T20:45:53Z
+From: Capital One <capitalone@notification.capitalone.com>
+To: Brandon Clymer <bclymer@alleatogroup.com>
+
+Access your newest report to learn more. ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ͏ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­ ­   Sign in       See the changes in your credit score     Show me my new score   Brandon, Here's a quick look at your credit score activity from June 30, 2026 to July 07, 2026 that was monitored by CreditWise from Capital One. CreditWise monitors your FICO® Score 8 and factors that can affect it—like on-time payments, available credit and new accounts.   Credit score change     Sign in daily to check your credit score and to get personalized suggestions to help improve your credit health.     Show me my new score   Was this email relevant? Not at all   Extremely About this message The site may be unavailable during normal maintenance or due to unforeseen circumstances.   Important information from Capital One Contact us   |   Privacy   |   Help prevent fraud This email was sent to bclymer@alleatogroup.com and contains information directly related to your CreditWise account (including CreditWise alerts) and other services to which you have subscribed. If you no longer want to receive these emails, unfortunately you’ll have to unenroll from CreditWise . Where does my CreditWise score come from? The credit score provided in CreditWise is a FICO® Score 8 based on TransUnion® data. The FICO Score 8 gives you a good sense of your credit health, but it may not be the same score model used by your lender or creditor. The availability of the CreditWise tool and certain features in the tool depends on our ability to obtain your credit history from TransUnion and whether you have sufficient credit history to generate a FICO Score 8. Some monitoring and alerts may not be available to you if the information you enter at enrollment does not match the information in your credit file at (or you do not have a file at) one or more consumer reporting agencies. Capital One does not provide, endorse or guarantee any third-party product, service, information or recommendation listed above. The third parties listed are not affiliated with Capital One and are solely responsible for their products and services. All trademarks are the property of their respective owners. Please do not reply to this message, as this email inbox is not monitored. To contact us, visit www.capitalone.com/help-center/contact-us. Products and services are offered by Capital One, N.A. FICO is a registered trademark of Fair Isaac Corporation in the United States and other countries. © 2026 Capital One. Capital One is a federally registered service mark. SE3794 52225 6211200 2118 OID2118 TP1001
+```
+
+### EMAILS | Email: FW: Shawnee Collective Reconnect
+
+Source ID: S298 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1shAAA=
+Project: Unassigned
+Source at: 2026-07-08T20:44:03.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1shAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: FW: Shawnee Collective Reconnect
+Date: 2026-07-08T20:44:03Z
+From: mike@ibexdevgroup.com <mike@ibexdevgroup.com>
+To: Brandon Clymer <bclymer@alleatogroup.com>
+
+    From: Jeff White <jwhite@columbiacapital.com> Sent: Saturday, May 23, 2026 10:36 AM To: mike@ibexdevgroup.com Cc: Philip Johnson <philip@ibexdevgroup.com> Subject: Re: Shawnee Collective Reconnect   Hey Mike-   Thanks again for your time yesterday! I’m excited to see this coming together.   I’ve attached the City’s applications for TIF, CID and IRB/sales tax exemption. I’ve also included the City’s policy statements relating to these for your records.   In addition to the completed apps and the deposits (you can direct these to George Kandt at the City; please copy me on the apps, though, if you would), I’ll need from you:   • a detailed sources/uses of funds, ideally with detail by project component. This should detail the amount of developer fee in the budget, as well as any third-party sources you expect (key money, etc.)   • a timing/phasing plan   • a 10-year operating pro forma   • any information you can provide about the capital stack, including debt vs. equity, private financing details (bank term sheet, etc.), source(s) of equity and their status   • any third-party support for your construction cost estimates (maybe from Choice on the hotel, contractor’s estimates, etc.)   None of the bulleted items need to be pretty. As long as I can decipher what you’re up to, that’ll be fine.   Thanks!   Jeff   Jeff White Managing Member Columbia Capital Management, LLC Direct: 913.312.8077 Main: 913.248.8500 jwhite@columbiacapital.com
+```
+
+### EMAILS | Email: Re: Architect, Structural and MEP - Ace Hardware
+
+Source ID: S299 = outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sgAAA=
+Project: Unassigned
+Source at: 2026-07-08T20:01:54.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD%2B%2By9hPlJRRYxFT5QN%2BMgoAAAAAAEMAAD%2B%2By9hPlJRRYxFT5QN%2BMgoAARKh1sgAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: Architect, Structural and MEP - Ace Hardware
+Date: 2026-07-08T20:01:54Z
+From: Douglas Franklin <dfranklin@alleatogroup.com>
+To: Randy Smith <Randy.Smith@champaignil.gov>, Jeff Marino <Jeff.Marino@champaignil.gov>, Duane Allen <duane.allen@champaignil.gov>, Brandon Clymer <bclymer@alleatogroup.com>
+
+Randy, Yes, all the design professionals have sent the paperwork back to the Illinois Department of Financial and Professional Regulation, but no official confirmation has been sent back to the architectural team, MEP team or the structural engineer yet.  As soon as the official approval is received, we will let you know.  They said it could take a few weeks and after I talked to Jeff and Denise, she stated they would start the review process of the project but no building permit would be issued into the Arch, MEP and structural have approval from the State of Illinois. Thanks, Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702   From: Randy Smith <Randy.Smith@champaignil.gov> Sent: Wednesday, July 8, 2026 3:43 PM To: Douglas Franklin <dfranklin@alleatogroup.com>; Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov>; Brandon Clymer <bclymer@alleatogroup.com> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Re: Architect, Structural and MEP - Ace Hardware   You don't often get email from randy.smith@champaignil.gov. Learn why this is important Good afternoon, everyone, I have added Brandon Clymer to this chain as he has sent a few messages in the portal.  I am hoping to close the communication loop so we can help move this project forward.   Has the Design Firm Registration been applied for with the Illinois Department of Financial and Professional Regulation?  The State will send an acknowledgement back that they have received it.  Are you able to provide this to us?  If so we can upload them to the Contractor Registration. Kind Regards,     From: Randy Smith <Randy.Smith@champaignil.gov> Sent: Tuesday, July 7, 2026 8:07 AM To: Douglas Franklin <dfranklin@alleatogroup.com>; Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Re: Architect, Structural and MEP - Ace Hardware   Good morning, Doug, I want to tie the other email chain to this from yesterday.  It appears we need the Design Firm Registration Certificate from the State of Illinois to proceed with the Contractor registration (CR-1399).   Has this been applied for yet with the Illinois Department of Financial and Professional Regulation?  If an architectural firm offers professional design services in Illinois that pertains to the practice of Architecture, a company must be registered as a Professional Design Firm with IDFPR. Duane sent a change request on CR-1399 requesting it to be uploaded. If it has been applied for, the State will typically send a confirmation.  If so, can you please send that to us? Thanks, From: Douglas Franklin <dfranklin@alleatogroup.com> Sent: Tuesday, July 7, 2026 7:08 AM To: Jeff Marino <Jeff.Marino@champaignil.gov>; Duane Allen <duane.allen@champaignil.gov>; Randy Smith <Randy.Smith@champaignil.gov> Cc: Jerome Daksiewicz <jerome.daksiewicz@dkgrar.com>; La' Kisha Green <kgreen@alleatogroup.com>; Nicholas Brimie <nbrimie@alleatogroup.com> Subject: Architect, Structural and MEP - Ace Hardware   [EXTERNAL] Jeff and Team, I logged back in today and it appears the architect, structural and MEP are not processed yet, but everyone has CR #. Alleato Group and the Civil Engineer are registered and in the system.  I don't know the exact review timing and approval process, but can I submit the drawings with final approval being contingent on the approval process with the architect, structural and MEP? Thanks for your help with this item! Doug Franklin   Senior Project Manager at Alleato Group  Mobile   317.437.5361   |   Email: dfranklin@alleatogroup.com Web   www.alleatogroup.com     |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702
+```
+
+### TEAMS | Teams DM Conversation: Indiana Office
+
+Source ID: S300 = teamsdm_cb6f98af5c2b209d_2026-07-09
+Project: Unassigned
+Source at: 2026-07-09T02:18:27.000Z
+URL: none
+
+```text
+[Teams Direct Message Conversation: Indiana Office]
+Date: 2026-07-09
+
+[message:1783563507375] [2026-07-09 02:18:27] Brandon Clymer: https://www.loom.com/share/6370f7bcb1df442fbd1cfc80ac699594
+[message:1783597227047] [2026-07-09 11:40:27] Jazmin Gaona: Andrew   Cannon  please let me know if you did it... its a yes or no youre the only one missing...   
+[message:1783600381035] [2026-07-09 12:33:01] Jazmin Gaona: 🎉 Volunteer Day Update – Alleato Shirts & Lunch 🎉   Hi Team!    As we get ready for our Volunteer Day on July 17 , I have a couple of quick updates:   👕 Alleato Volunteer Shirts Your Alleato t-shirts are in! You can stop by the office this week or next week to pick yours up before Volunteer Day. If you're already planning to be in the office, feel free to grab it then.   🥪 Lunch Catering I'm beginning to plan lunch for that day , please reply to this message and let me know if you have any food allergies or dietary restrictions (allergies, gluten-free, vegetarian, vegan, etc.) so I can keep everyone in mind when selecting our catering.   Thanks, everyone! Looking forward to a great day volunteering together. 😊
+[message:1783602701594] [2026-07-09 13:11:41] Andrew Cannon: no food allergies 
+[message:1783603084296] [2026-07-09 13:18:04] Chad Tragesser: No food allergies for Colin and I. 
+[message:1783603106203] [2026-07-09 13:18:26] Brandon Clymer: How about only message her if you do have food allergies.
+```
+
+### EMAILS | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+
+Source ID: S301 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5ZAAA=
+Project: Unassigned
+Source at: 2026-07-08T22:43:16.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375%2FHRoiO2Tl%2BR0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5ZAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+Date: 2026-07-08T22:43:16Z
+From: Tony Courtney <tcourtney@alleatogroup.com>
+To: Jesse Dawson <jdawson@alleatogroup.com>, Candon Rusin <crusin@alleatogroup.com>
+
+We do sir we will stay on it ! Get Outlook for iOS From: Jesse Dawson <jdawson@alleatogroup.com> Sent: Wednesday, 08 July 2026 18:30:10 To: Candon Rusin <crusin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Doug or Tony do you guys have a log in or get Candon's log in so you are in control of the permit process for Brookville? Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Candon Rusin <crusin@alleatogroup.com> Sent: Wednesday, July 8, 2026 4:29 PM To: Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Goodwill Brookville Rd Permit has been resubmitted.  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Tony Courtney <tcourtney@alleatogroup.com> Sent: Wednesday, July 8, 2026 12:39 PM To: Candon Rusin <crusin@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Condon, Is this a narrative of what the engineer completed that we could use to prepare our write-up? I'm a little concerned this may not be at the top of Andrew's priority list the way it is for us. I don't want us to lose another day—or even another week—waiting on it. Please let me know your thoughts, sir. Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Candon Rusin <crusin@alleatogroup.com> Sent: Wednesday, July 8, 2026 9:18 AM To: Andrew Adegbamigbe <aade@curran-architecture.com>; Maria Meza <mmeza@curran-architecture.com> Cc: Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Subject: Fw: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Andrew,  Looks like the electrical engineer completed the updates requested by the city. Attached is the updated sheet E301. Please update the narrative document and send over asap today so we can get this resubmitted.  Thanks,  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Jacob Sheese <jsheese@millcreek-design.com> Sent:  Wednesday, July 8, 2026 10:07 AM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Phillip Hix <phix@millcreek-design.com>; Douglas Franklin <dfranklin@alleatogroup.com>; bill overby <boverby@millcreek-design.com> Subject:  Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 You don't often get email from jsheese@millcreek-design.com. Learn why this is important From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Tuesday, July 7, 2026 12:03 PM To:  Jacob Sheese <jsheese@millcreek-design.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Fwd: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 Please call me Sir we need to turn this around today and get back to the city .  Tony Sent from my iPhone Begin forwarded message:
+```
+
+### EMAILS | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+
+Source ID: S302 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5aAAA=
+Project: Unassigned
+Source at: 2026-07-08T22:43:47.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375%2FHRoiO2Tl%2BR0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5aAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+Date: 2026-07-08T22:43:47Z
+From: Tony Courtney <tcourtney@alleatogroup.com>
+To: Candon Rusin <crusin@alleatogroup.com>
+
+Great, thanks for letting us know! Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Andrew Adegbamigbe <aade@curran-architecture.com> Sent:  Wednesday, July 8, 2026 12:24 PM To:  Candon Rusin <crusin@alleatogroup.com>; Maria Meza <mmeza@curran-architecture.com> Cc:  Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Subject:  Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Candon, Please see attached. Thank you, PLEASE NOTE MY UPCOMING PARENTAL LEAVE JULY 17 ‑ SEPTEMBER 14 ​ ​ ​ ​ ​ ‑‑‑‑‑ Andrew Adegbamigbe From:  Candon Rusin <crusin@alleatogroup.com> Sent:  Wednesday, July 8, 2026 12:18 PM To:  Andrew Adegbamigbe <aade@curran-architecture.com>; Maria Meza <mmeza@curran-architecture.com> Cc:  Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Subject:  Fw: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Andrew,  Looks like the electrical engineer completed the updates requested by the city. Attached is the updated sheet E301. Please update the narrative document and send over asap today so we can get this resubmitted.  Thanks,  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Jacob Sheese <jsheese@millcreek-design.com> Sent:  Wednesday, July 8, 2026 10:07 AM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Phillip Hix <phix@millcreek-design.com>; Douglas Franklin <dfranklin@alleatogroup.com>; bill overby <boverby@millcreek-design.com> Subject:  Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 You don't often get email from jsheese@millcreek-design.com. Learn why this is important From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Tuesday, July 7, 2026 12:03 PM To:  Jacob Sheese <jsheese@millcreek-design.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Fwd: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 Please call me Sir we need to turn this around today and get back to the city .  Tony Sent from my iPhone Begin forwarded message: This message was sent by someone outside your organization.
+```
+
+### EMAILS | Email: Re: Contract 
+
+Source ID: S303 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5bAAA=
+Project: Unassigned
+Source at: 2026-07-08T22:56:21.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375%2FHRoiO2Tl%2BR0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5bAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: Contract 
+Date: 2026-07-08T22:56:21Z
+From: Tony Courtney <tcourtney@alleatogroup.com>
+To: Jesse Dawson <jdawson@alleatogroup.com>
+
+Ok I will get with them in the morning sir Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Jesse Dawson <jdawson@alleatogroup.com> Sent: Wednesday, July 8, 2026 3:52 PM To: Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: Contract   I don't remember any issues with Merritt when they did the collective.  I would make a call to whoever sold us in their estimating/pre-con department and talk to them to see why we should disregard out contract and the protection it provides, if they are not going to get back to work or start fixing something in 3 days what is going to change about them doing it in 5 days??  If you guys don't fee comfortable making that call I can Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From:  Jesse Dawson <jdawson@alleatogroup.com> Sent:  Wednesday, July 8, 2026 6:49 PM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Re: Contract   What were the next lower bid numbers for concrete and site work? Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Wednesday, July 8, 2026 11:41 AM To:  Jesse Dawson <jdawson@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Fw: Contract   These guys are not giving up on changes . They have added few more sir and did not send back the one we signed first time. Need your signature again.  Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Colton Ranney <cranney@merrittcontracting.com> Sent:  Wednesday, July 8, 2026 7:45 AM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com>; Brian Wiley <brian@merrittcontracting.com> Subject:  Re: Contract Tony, We have made a couple more revisions to the scope of work portion. Concrete scope - Changed verbiage on anchor bolts from &quot;we do not install&quot; to &quot; we do not provide&quot; Line Item #23 - no joint sealant included in concrete scope Civil Scope - Eliminating line 45. We wont be providing wheel stops / parking lot accessories or anchorage.  If you are good with these changes, we will get this signed and sent over to you! Best Regards,   Colton Ranney Senior Estimator in Earthwork & Utilities 900 South St Rd 39 Lebanon, IN 46052 (M) 765-215-3817 cranney@merrittcontracting.com   From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Monday, July 6, 2026 10:48 AM To:  Colton Ranney <cranney@merrittcontracting.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Contract   ⚠ EXTERNAL EMAIL:  This message originated from outside Merritt Contracting. Do not click links or open attachments unless you recognize the sender and verify the content is safe. Please sign and get back to us please. Colton can you look at your schedule and let me know what the earliest time you all would have to start on this site as far as demo, erosion control, construction drive etc...   Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702
+```
+
+### EMAILS | Email: Re: Contract 
+
+Source ID: S304 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5cAAA=
+Project: Unassigned
+Source at: 2026-07-08T22:58:55.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375%2FHRoiO2Tl%2BR0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5cAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: Contract 
+Date: 2026-07-08T22:58:55Z
+From: Tony Courtney <tcourtney@alleatogroup.com>
+To: Jesse Dawson <jdawson@alleatogroup.com>
+
+Jessie we cannot wait till October for them to start I'll will find someone to do this scope of work within budget and if Merrit doesn't want to do concrete I will get it done as well .  Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Jesse Dawson <jdawson@alleatogroup.com> Sent: Wednesday, July 8, 2026 3:56 PM To: Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: Contract Perfect, at least when you call Merritt you have back up to convince them to sign the contract Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Wednesday, July 8, 2026 6:53 PM To:  Jesse Dawson <jdawson@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Re: Contract   I talked with Precision tonight and he is going to review in the morning and says he can get a crew there on or before August 1 st  to start demo, gravel drive, erosion control etc.  So hoping to take off Merrits plate and leave concrete with them.    Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Jesse Dawson <jdawson@alleatogroup.com> Sent:  Wednesday, July 8, 2026 3:49 PM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Re: Contract What were the next lower bid numbers for concrete and site work? Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |          8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Wednesday, July 8, 2026 11:41 AM To:  Jesse Dawson <jdawson@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Fw: Contract   These guys are not giving up on changes . They have added few more sir and did not send back the one we signed first time. Need your signature again.  Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Colton Ranney <cranney@merrittcontracting.com> Sent:  Wednesday, July 8, 2026 7:45 AM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com>; Brian Wiley <brian@merrittcontracting.com> Subject:  Re: Contract Tony, We have made a couple more revisions to the scope of work portion. Concrete scope - Changed verbiage on anchor bolts from &quot;we do not install&quot; to &quot; we do not provide&quot; Line Item #23 - no joint sealant included in concrete scope Civil Scope - Eliminating line 45. We wont be providing wheel stops / parking lot accessories or anchorage.  If you are good with these changes, we will get this signed and sent over to you! Best Regards,   Colton Ranney Senior Estimator in Earthwork & Utilities 900 South St Rd 39 Lebanon, IN 46052 (M) 765-215-3817 cranney@merrittcontracting.com   From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Monday, July 6, 2026 10:48 AM To:  Colton Ranney <cranney@merrittcontracting.com> Cc:  Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject:  Contract   ⚠ EXTERNAL EMAIL:  This message originated from outside Merritt Contracting. Do not click links or open attachments unless you recognize the sender and verify the content is safe. Please sign and get back to us please. Colton can you look at your schedule and let me know what the earliest time you all would have to start on this site as far as demo, erosion control, construction drive etc...   Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702
+```
+
+### EMAILS | Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+
+Source ID: S305 = outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5dAAA=
+Project: Unassigned
+Source at: 2026-07-08T22:59:47.000Z
+URL: https://outlook.office365.com/owa/?ItemID=AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375%2FHRoiO2Tl%2BR0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5dAAA%3D&exvsurl=1&viewmodel=ReadMessageItem
+
+```text
+Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267
+Date: 2026-07-08T22:59:47Z
+From: Jesse Dawson <jdawson@alleatogroup.com>
+To: Tony Courtney <tcourtney@alleatogroup.com>, Candon Rusin <crusin@alleatogroup.com>
+
+Good Deal, not saying Candon can't help out but you all should be receiving the notifications in case he is tied up on another project. Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Tony Courtney <tcourtney@alleatogroup.com> Sent: Wednesday, July 8, 2026 6:42 PM To: Jesse Dawson <jdawson@alleatogroup.com>; Candon Rusin <crusin@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   We do sir we will stay on it ! Get Outlook for iOS From: Jesse Dawson <jdawson@alleatogroup.com> Sent: Wednesday, 08 July 2026 18:30:10 To: Candon Rusin <crusin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Doug or Tony do you guys have a log in or get Candon's log in so you are in control of the permit process for Brookville? Jesse Dawson COO at Alleato Group  Mobile   502.612.2089   |   Email: jdawson@alleatogroup.com Web   www.alleatogroup.com   |         8383 Craig Street, Suite #150 Indianapolis, IN 46250  701 94 th  Ave. N, Suite #118 St. Petersburg, FL 33702     From: Candon Rusin <crusin@alleatogroup.com> Sent: Wednesday, July 8, 2026 4:29 PM To: Tony Courtney <tcourtney@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Goodwill Brookville Rd Permit has been resubmitted.  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Tony Courtney <tcourtney@alleatogroup.com> Sent: Wednesday, July 8, 2026 12:39 PM To: Candon Rusin <crusin@alleatogroup.com> Cc: Douglas Franklin <dfranklin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Patrick Antone <pantone@alleatogroup.com> Subject: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Condon, Is this a narrative of what the engineer completed that we could use to prepare our write-up? I'm a little concerned this may not be at the top of Andrew's priority list the way it is for us. I don't want us to lose another day—or even another week—waiting on it. Please let me know your thoughts, sir. Tony L. Courtney  Project Manager  Mobile   (317)339-0690 |   Email  tcourtney@alleatogroup.com Web   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From: Candon Rusin <crusin@alleatogroup.com> Sent: Wednesday, July 8, 2026 9:18 AM To: Andrew Adegbamigbe <aade@curran-architecture.com>; Maria Meza <mmeza@curran-architecture.com> Cc: Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com>; Tony Courtney <tcourtney@alleatogroup.com> Subject: Fw: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267   Andrew,  Looks like the electrical engineer completed the updates requested by the city. Attached is the updated sheet E301. Please update the narrative document and send over asap today so we can get this resubmitted.  Thanks,  Candon Rusin  Superintendent at Alleato Group  Mobile:   727.599.4832   | Email: crusin@alleatogroup.com Web:   www.alleatogroup.com     |          Indianapolis - 8383 Craig Street, Suite 150 Indianapolis, IN 46250  Tampa/St Pete - 701 94th Avenue North, Suite 118, St. Petersburg, FL 33702   From:  Jacob Sheese <jsheese@millcreek-design.com> Sent:  Wednesday, July 8, 2026 10:07 AM To:  Tony Courtney <tcourtney@alleatogroup.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Phillip Hix <phix@millcreek-design.com>; Douglas Franklin <dfranklin@alleatogroup.com>; bill overby <boverby@millcreek-design.com> Subject:  Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 You don't often get email from jsheese@millcreek-design.com. Learn why this is important From:  Tony Courtney <tcourtney@alleatogroup.com> Sent:  Tuesday, July 7, 2026 12:03 PM To:  Jacob Sheese <jsheese@millcreek-design.com> Cc:  Candon Rusin <crusin@alleatogroup.com>; Jesse Dawson <jdawson@alleatogroup.com>; Douglas Franklin <dfranklin@alleatogroup.com> Subject:  Fwd: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267 Please call me Sir we need to turn this around today and get back to the city .  Tony Sent from my iPhone Begin forwarded message:
 ```
 
 ## Skipped Candidates
@@ -25189,13 +25146,6 @@ Thanks Maria. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.
     "lane": "emails",
     "reason": "not in 2026-07-08 by parsed-source-timestamp",
     "sourceAt": "2026-06-23T15:07:54.000Z"
-  },
-  {
-    "id": "outlook_conversation_7caa3a44d6b18316cab9fbd990e85110",
-    "title": "Outlook conversation: Follow Up Max Trial",
-    "lane": "emails",
-    "reason": "not in 2026-07-08 by parsed-source-timestamp",
-    "sourceAt": "2026-06-23T21:31:50.000Z"
   },
   {
     "id": "outlook_conversation_1d7fd28bedf528598849fc51ff2893d9",
@@ -27900,6 +27850,12 @@ Thanks Maria. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.
     "sourceAt": "2026-07-09T08:23:56.073Z"
   },
   {
+    "id": "outlook_AAMkADllNTZkYTFlLTZiZDQtNGVlNS05MmNlLTBlNDRhMTdiMThiYwBGAAAAAAAwum4-eo4iQITmxDs_AMxLBwA2bV2EJf1iQqoGMNCZ1WvLAAAAAAEMAAA2bV2EJf1iQqoGMNCZ1WvLAAH3glndAAA=",
+    "title": "Email: RE: Volunteer Project – Tool Availability & Wednesday / Thursday Site Prep",
+    "lane": "emails",
+    "reason": "duplicate content of S278"
+  },
+  {
     "id": "outlook_AAMkADcwZjlmZGFiLTUwZWEtNDY4MS04ZDI2LTMxMjRjZmI1MDBkZgBGAAAAAABVVjp7l0HfTqaaHuVB-9WvBwBM5PfbQMxJTaJw2xgtmvLFAAAAAAEMAABM5PfbQMxJTaJw2xgtmvLFAAOGjebFAAA=",
     "title": "Email: Construction Waste Statement-Alleato Group",
     "lane": "emails",
@@ -28005,11 +27961,297 @@ Thanks Maria. Thank you, Luke  Luke Holm Sr. Executive Recruiter Phone: 561.240.
     "sourceAt": "2026-06-29T13:01:45.000Z"
   },
   {
-    "id": "01KWFP7H24D9TS7JAG3Y9R806H",
-    "title": "Accountant job interview (Natali Malveaux)",
+    "id": "outlook_AAMkADAwNzg3ZTA5LTJmMWEtNDczNi04ODcxLTk1MTA1ODhmYmIyNABGAAAAAAAU1WTKtGciQa9go1eRAG9JBwD__y9hPlJRRYxFT5QN_MgoAAAAAAEMAAD__y9hPlJRRYxFT5QN_MgoAARKh1sWAAA=",
+    "title": "Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  ",
+    "lane": "emails",
+    "reason": "duplicate content of S259"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YrAAAA=",
+    "title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:09.910Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq9AAA=",
+    "title": "Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  ",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:12.277Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq8AAA=",
+    "title": "Email: RE: Superior beverage",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:14.052Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq7AAA=",
+    "title": "Email: RE: superior",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:16.571Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq6AAA=",
+    "title": "Email: RE: Superior Beverage - Plan Review Permit Application - Registration Mack Plumbing",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:18.620Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq5AAA=",
+    "title": "Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:20.721Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq3AAA=",
+    "title": "Email: RE: Superior Sprinklers",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:22.703Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1Yq2AAA=",
+    "title": "Email: RE: RFQ - Sprinkler Pipe Fabrication and Loose Materials - Pensacola, FL - Fire Sprinkler Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:21:25.059Z"
+  },
+  {
+    "id": "sharepoint_01AFX6IXNFMZT4VRUMUNF3XABTLGLK3PYJ",
+    "title": "Final Check Confirmation.pdf",
+    "lane": "documents",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:08.594Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqjAAA=",
+    "title": "Email: Fw: Project Jazz - TST Overall FS Drawings",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:10.976Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqlAAA=",
+    "title": "Email: Re: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:13.971Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqmAAA=",
+    "title": "Email: Re: [EXTERNAL] RE: UQ - Philipsburg - Day1 Vs Day2 scope coordination  ",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:16.376Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqnAAA=",
+    "title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:18.413Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqoAAA=",
+    "title": "Email: Re: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:20.971Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqpAAA=",
+    "title": "Email: Re: Project Jazz - TST Overall FS Drawings",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:22.818Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqqAAA=",
+    "title": "Email: 2'' Pipe Needed For Jazz McLane",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:24.738Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqrAAA=",
+    "title": "Email: RE: 2'' Pipe Needed For Jazz McLane",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:26.584Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqsAAA=",
+    "title": "Email: RE: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:28.642Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqtAAA=",
+    "title": "Email: Re: TAG 7/1/26: Ulta Beauty - AC4 Duct Sock and AC1 Pricing",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:30.792Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YquAAA=",
+    "title": "Email: Re: 2'' Pipe Needed For Jazz McLane",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:32.920Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqvAAA=",
+    "title": "Email: Re: Vertical Pipe Attachment - McLane Jazz Project",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:36.211Z"
+  },
+  {
+    "id": "outlook_AAMkADBjMWMyYWI1LWE4ZjAtNDUwMy04NzBmLWYyN2Q3MDg0ZDU2ZgBGAAAAAACGVNWcC9x6TZ3hpX2q-XxPBwDu9QOyYKZbS5NACM9H9erIAAAAAAEMAADu9QOyYKZbS5NACM9H9erIAADv1YqwAAA=",
+    "title": "Email: RE: 2'' Pipe Needed For Jazz McLane",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T12:23:38.469Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2JAAA=",
+    "title": "Email: Re: TAG 7/8/26 Playmakers Permit Update",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:22.315Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2HAAA=",
+    "title": "Email: Playmakers Orion Electric",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:24.925Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2GAAA=",
+    "title": "Email: Re: City login info Brookville ",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:26.878Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2FAAA=",
+    "title": "Email: Healthcare and industrial ground-up work, Candon",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:28.511Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2EAAA=",
+    "title": "Email: Re: City login info Brookville ",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:30.740Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGNUo2CAAA=",
+    "title": "Email: Nasse Concrete Subcontract for Signature",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:32.885Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5gAAA=",
+    "title": "Email: Storefront shop drawing submittal - Goodwill Brookville",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:34.838Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5fAAA=",
+    "title": "Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:36.733Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5eAAA=",
+    "title": "Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:38.645Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5UAAA=",
+    "title": "Email: permits",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:21:52.565Z"
+  },
+  {
+    "id": "outlook_conversation_7caa3a44d6b18316cab9fbd990e85110",
+    "title": "Outlook conversation: Follow Up Max Trial",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by parsed-source-timestamp",
+    "sourceAt": "2026-06-23T21:31:50.000Z"
+  },
+  {
+    "id": "outlook_conversation_fe06b372b60667c0012693e43bb2921f",
+    "title": "Outlook conversation: TAG 7/8/26 Playmakers Permit Update",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by parsed-source-timestamp",
+    "sourceAt": "2026-07-09T14:19:28.000Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5QAAA=",
+    "title": "Email: Largo Permit #REMODEL-26-000198",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:23:20.130Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5RAAA=",
+    "title": "Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:23:22.343Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5SAAA=",
+    "title": "Email: Re: Signed Contract",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:23:24.368Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5XAAA=",
+    "title": "Email: Fw: permits",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:23:27.405Z"
+  },
+  {
+    "id": "outlook_AAMkAGMxYzliZjNlLTA0NWMtNGRhOS05NTQ2LTQ1NjExNDk1N2Y0NQBGAAAAAADrd1V375-HRoiO2Tl_R0q5BwArbjWw6PNIQpcQAs78r3haAAAAAAEMAAArbjWw6PNIQpcQAs78r3haAAGMHK5YAAA=",
+    "title": "Email: Re: TAG 7/7/26 - Plan Review Comments 3 – Resubmittal STR26-02267",
+    "lane": "emails",
+    "reason": "not in 2026-07-08 by loaded-or-row-timestamp",
+    "sourceAt": "2026-07-09T14:23:29.684Z"
+  },
+  {
+    "id": "01KWWC06P2CQZRMFT70YVHYHK4",
+    "title": "Weekly// Ace Hardware Champaign IL Meeting",
     "lane": "meetings",
     "reason": "not in 2026-07-08 by parsed-source-timestamp",
-    "sourceAt": "2026-07-06T19:30:00.000Z"
+    "sourceAt": "2026-07-09T15:00:00.000Z"
+  },
+  {
+    "id": "01KWH7GA0WM1056H4PSJ7B5PQ0",
+    "title": "Union Collective: OAC",
+    "lane": "meetings",
+    "reason": "not in 2026-07-08 by parsed-source-timestamp",
+    "sourceAt": "2026-07-09T14:00:00.000Z"
   }
 ]
 ```
