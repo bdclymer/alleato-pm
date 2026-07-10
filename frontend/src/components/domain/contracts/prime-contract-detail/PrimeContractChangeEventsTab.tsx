@@ -81,13 +81,18 @@ export function PrimeContractChangeEventsTab({
           ) : (
             rows.map((changeEvent) => (
               <InlineTableRow key={String(changeEvent.id)}>
-                <InlineTableCell className="font-medium text-foreground">
-                  {changeEvent.number || "—"}
+                <InlineTableCell className="font-medium">
+                  <Link
+                    href={`/${projectId}/change-events/${changeEvent.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {changeEvent.number || "—"}
+                  </Link>
                 </InlineTableCell>
                 <InlineTableCell>
                   <Link
                     href={`/${projectId}/change-events/${changeEvent.id}`}
-                    className="text-primary hover:underline"
+                    className="text-foreground hover:underline"
                   >
                     {changeEvent.title || "Untitled"}
                   </Link>

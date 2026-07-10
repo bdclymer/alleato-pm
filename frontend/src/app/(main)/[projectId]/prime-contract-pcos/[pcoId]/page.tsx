@@ -30,12 +30,6 @@ import {
   Skeleton,
 } from "@/components/ui/skeleton";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
   DetailField,
   DetailFieldGrid,
   EditableDetailField,
@@ -562,18 +556,17 @@ export default function PrimeContractPcoDetailPage() {
 
   /* ── Header ────────────────────────────────────────────────────── */
 
-  const pageTitle = [
-    "Potential Change Order",
-    formatPcoHeadingNumber(pco.pco_number),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .concat(pco.title ? `: ${pco.title}` : "");
-
-  const resolvedContractId = contractIdFromRoute ?? pco.prime_contract_id;
-  const contractDisplayName = pco.prime_contract
-    ? [pco.prime_contract.contract_number, pco.prime_contract.title].filter(Boolean).join(" - ")
-    : "Prime Contract";
+  // Header: number sits in the eyebrow (matching prime-contract / change-event
+  // detail pages); the h1 is the real title. Fall back to the entity name when
+  // the title is missing or is just the PCO number, so the number never renders
+  // twice (records promoted from a change event often default title = number).
+  const headingNumber = formatPcoHeadingNumber(pco.pco_number);
+  const trimmedTitle = pco.title?.trim() ?? "";
+  const trimmedNumber = pco.pco_number?.trim() ?? "";
+  const pageTitle =
+    trimmedTitle && trimmedTitle !== trimmedNumber
+      ? trimmedTitle
+      : "Potential Change Order";
 
   const headerActions = (
     <PrimeContractPcoHeaderActions
@@ -593,6 +586,7 @@ export default function PrimeContractPcoDetailPage() {
   return (
     <PageShell
       variant="detailWide"
+      eyebrow={headingNumber || undefined}
       title={pageTitle}
       onBack={handleBack}
       backLabel="Back"
@@ -600,34 +594,6 @@ export default function PrimeContractPcoDetailPage() {
       contentClassName="space-y-8"
     >
       <div className="space-y-4 border-b border-border pb-6">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${projectId}/prime-contracts`}>Prime Contracts</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link href={`/${projectId}/prime-contracts/${resolvedContractId}`}>
-                  {contractDisplayName}
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Change Orders</BreadcrumbPage>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>
-                {formatPcoHeadingNumber(pco.pco_number) || "Potential Change Order"}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
         <PageTabs
           variant="inline"
           tabs={[

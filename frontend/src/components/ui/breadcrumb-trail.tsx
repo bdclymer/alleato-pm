@@ -18,6 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export interface BreadcrumbTrailItem {
@@ -60,6 +65,71 @@ function collapseItems(
   };
 }
 
+/**
+ * A single crumb whose label is truncated by CSS. When (and only when) the
+ * label is actually clipped, hovering/focusing it reveals the full label in a
+ * tooltip — the crumb itself stays a real link, so a click still navigates.
+ */
+function TruncatingCrumb({
+  crumb,
+  isCurrent,
+  linkClassName,
+  currentClassName,
+}: {
+  crumb: BreadcrumbTrailItem;
+  isCurrent: boolean;
+  linkClassName?: string;
+  currentClassName?: string;
+}) {
+  const ref = React.useRef<HTMLElement | null>(null);
+  const [isTruncated, setIsTruncated] = React.useState(false);
+
+  React.useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
+    const measure = () => {
+      setIsTruncated(element.scrollWidth > element.clientWidth + 1);
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [crumb.label]);
+
+  const inner =
+    isCurrent || !crumb.href ? (
+      <BreadcrumbPage
+        ref={ref as React.Ref<HTMLSpanElement>}
+        className={cn("truncate", currentClassName)}
+      >
+        {crumb.label}
+      </BreadcrumbPage>
+    ) : (
+      <BreadcrumbLink asChild className={cn("block truncate", linkClassName)}>
+        <Link ref={ref as React.Ref<HTMLAnchorElement>} href={crumb.href}>
+          {crumb.label}
+        </Link>
+      </BreadcrumbLink>
+    );
+
+  // Trigger is always present so the measured node never remounts; the tooltip
+  // content only mounts when the label is clipped, so untruncated crumbs get no
+  // redundant hover card.
+  return (
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>{inner}</TooltipTrigger>
+      {isTruncated ? (
+        <TooltipContent side="bottom" className="max-w-xs">
+          {crumb.label}
+        </TooltipContent>
+      ) : null}
+    </Tooltip>
+  );
+}
+
 function renderCrumb(
   crumb: BreadcrumbTrailItem,
   isLast: boolean,
@@ -70,18 +140,12 @@ function renderCrumb(
   return (
     <React.Fragment key={indexKey}>
       <BreadcrumbItem className="min-w-0 shrink">
-        {isLast || !crumb.href ? (
-          <BreadcrumbPage className={cn("truncate", currentClassName)}>
-            {crumb.label}
-          </BreadcrumbPage>
-        ) : (
-          <BreadcrumbLink
-            asChild
-            className={cn("block truncate", linkClassName)}
-          >
-            <Link href={crumb.href}>{crumb.label}</Link>
-          </BreadcrumbLink>
-        )}
+        <TruncatingCrumb
+          crumb={crumb}
+          isCurrent={isLast}
+          linkClassName={linkClassName}
+          currentClassName={currentClassName}
+        />
       </BreadcrumbItem>
       {!isLast ? <BreadcrumbSeparator className="shrink-0" /> : null}
     </React.Fragment>
