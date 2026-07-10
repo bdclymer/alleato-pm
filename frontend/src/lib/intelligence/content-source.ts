@@ -153,9 +153,11 @@ export function normalizeProjectId(
 
 /**
  * Resolve project_id → display name in ONE query. Only positive-integer ids are
- * looked up (see `normalizeProjectId`).
+ * looked up (see `normalizeProjectId`). Exported so consumers stop hand-rolling
+ * their own copy (which drift on the int8→number coercion — the "all projects
+ * render Unassigned" regression).
  */
-async function resolveProjectNames(
+export async function resolveProjectNames(
   pmClient: SupabaseClient<Database>,
   projectIds: Array<number | string | null | undefined>,
 ): Promise<Map<number, string>> {

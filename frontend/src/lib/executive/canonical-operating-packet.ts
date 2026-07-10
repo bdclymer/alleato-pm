@@ -9,6 +9,7 @@
 // tiles come from the same Acumatica reader as before (`loadFinancialPulse`).
 
 import { createRagServiceClient, createServiceClient } from "@/lib/supabase/service";
+import { resolveProjectNames } from "@/lib/intelligence/content-source";
 import {
   loadCurrentDailyExecutiveBriefPacket,
   type CanonicalDailyBriefPacket,
@@ -84,27 +85,6 @@ async function loadBriefSignalCandidates(
   return Array.from(seen.values());
 }
 
-/** Resolve project_id → display name for every referenced project in one query. */
-async function resolveProjectNames(
-  projectIds: number[],
-): Promise<Map<number, string>> {
-  const unique = Array.from(new Set(projectIds.filter((id): id is number => id != null)));
-  if (unique.length === 0) return new Map();
-  const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("projects")
-    .select("id,name")
-    .in("id", unique);
-  if (error) {
-    throw new Error(`Failed to resolve project names for brief: ${error.message}`);
-  }
-  const map = new Map<number, string>();
-  for (const row of (data ?? []) as Array<{ id: number; name: string | null }>) {
-    if (row.name) map.set(row.id, row.name);
-  }
-  return map;
-}
-
 function buildSourceCoverage(
   packet: CanonicalDailyBriefPacket,
 ): BrandonBriefSourceCoverage[] {
@@ -157,7 +137,8 @@ export async function buildCanonicalOperatingPacket(
   ]);
 
   const projectNames = await resolveProjectNames(
-    candidates.map((candidate) => candidate.project_id).filter((id): id is number => id != null),
+    createServiceClient(),
+    candidates.map((candidate) => candidate.project_id),
   );
 
   const { needsBrandon, waitingOnOthers, importantUpdates } =
