@@ -1,6 +1,7 @@
 import type { AssistantIntent } from "@/lib/ai/intent-router";
 import type { ResponseFormat } from "@/lib/ai/retrieval/types";
 import type { ClientProjectIntelligencePacket } from "./types";
+import { asRecord, CURRENT_COMPILER_VERSION } from "./utils";
 
 const FAST_PATH_INTENTS = new Set<AssistantIntent>([
   "target_briefing",
@@ -9,12 +10,6 @@ const FAST_PATH_INTENTS = new Set<AssistantIntent>([
   "decision_lookup",
   "task_followup",
 ]);
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
 
 function stringValue(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -43,7 +38,7 @@ export function projectPacketFastPathBlockReason(
       : null;
 
   if (packet.isStale) return "packet_is_stale";
-  if (packet.compilerVersion !== "project_intelligence_synthesis_v1") {
+  if (packet.compilerVersion !== CURRENT_COMPILER_VERSION) {
     return "compiler_version_not_project_intelligence_synthesis";
   }
   if (qualityGateStatus !== null && qualityGateStatus !== "passed") {
