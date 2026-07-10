@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 
-import { DELETE, GET } from "../route";
+import { DELETE, GET, POST } from "../route";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { notifyTeamsWebhook } from "@/lib/admin-feedback/teams-webhook";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
@@ -51,6 +53,12 @@ const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
 const createServiceClientMock = createServiceClient as jest.MockedFunction<
   typeof createServiceClient
 >;
+const createGitHubIssueMock = createGitHubIssue as jest.MockedFunction<
+  typeof createGitHubIssue
+>;
+const notifyTeamsWebhookMock = notifyTeamsWebhook as jest.MockedFunction<
+  typeof notifyTeamsWebhook
+>;
 
 type QueryResult = { data: unknown; error: null | { message: string } };
 type QueryCall = { op: string; args: unknown[] };
@@ -87,6 +95,14 @@ function createQuery(result: QueryResult, calls: QueryCall[]) {
     }),
     delete: jest.fn((...args: unknown[]) => {
       calls.push({ op: "delete", args });
+      return query;
+    }),
+    insert: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "insert", args });
+      return query;
+    }),
+    update: jest.fn((...args: unknown[]) => {
+      calls.push({ op: "update", args });
       return query;
     }),
     maybeSingle: jest.fn().mockResolvedValue(result),
@@ -219,6 +235,122 @@ describe("/api/admin/feedback DELETE", () => {
     expect(
       calls.admin_feedback_items.filter((call) => call.op === "delete"),
     ).toHaveLength(0);
+  });
+});
+
+function makePostServiceClient() {
+  const calls: Record<string, QueryCall[]> = {
+    admin_feedback_items: [],
+    user_profiles: [],
+  };
+
+  const client = {
+    from: jest.fn((table: string) => {
+      if (table === "admin_feedback_items") {
+        return createQuery(
+          {
+            data: {
+              id: "11111111-1111-4111-8111-111111111111",
+              title: "Bug: broken thing",
+              status: "open",
+              github_issue_number: null,
+              github_issue_url: null,
+              github_issue_state: null,
+            },
+            error: null,
+          },
+          calls.admin_feedback_items,
+        );
+      }
+
+      if (table === "user_profiles") {
+        return createQuery(
+          { data: { is_admin: true }, error: null },
+          calls.user_profiles,
+        );
+      }
+
+      throw new Error(`Unexpected table: ${table}`);
+    }),
+  };
+
+  return { client, calls };
+}
+
+function makePostRequest(overrides: Record<string, unknown> = {}) {
+  return new NextRequest("http://localhost/api/admin/feedback", {
+    method: "POST",
+    body: JSON.stringify({
+      comment: "The Save button is cut off on mobile.",
+      pageUrl: "http://localhost/876/budget",
+      pagePath: "/876/budget",
+      requestType: "bug",
+      severity: "medium",
+      target: { selector: "#save-btn" },
+      ...overrides,
+    }),
+  });
+}
+
+describe("/api/admin/feedback POST — quick-capture gate", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getApiRouteUserMock.mockResolvedValue({
+      id: "admin-user-id",
+      email: "admin@example.com",
+    } as never);
+    notifyTeamsWebhookMock.mockResolvedValue({ ok: true } as never);
+  });
+
+  it("saves without creating a GitHub issue or Teams ping by default (createIssue omitted)", async () => {
+    const { client } = makePostServiceClient();
+    createServiceClientMock.mockReturnValue(client as never);
+
+    const response = await POST(makePostRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.captured).toBe(true);
+    expect(body.githubIssue).toBeNull();
+    expect(body.githubWarning).toBeNull();
+    // The whole side-effect block must be skipped — no issue, no Teams webhook.
+    expect(createGitHubIssueMock).not.toHaveBeenCalled();
+    expect(notifyTeamsWebhookMock).not.toHaveBeenCalled();
+  });
+
+  it("does not create an issue when createIssue is explicitly false", async () => {
+    const { client } = makePostServiceClient();
+    createServiceClientMock.mockReturnValue(client as never);
+
+    const response = await POST(makePostRequest({ createIssue: false }));
+    const body = await response.json();
+
+    expect(body.captured).toBe(true);
+    expect(createGitHubIssueMock).not.toHaveBeenCalled();
+    expect(notifyTeamsWebhookMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a GitHub issue only when createIssue is true", async () => {
+    const { client } = makePostServiceClient();
+    createServiceClientMock.mockReturnValue(client as never);
+    createGitHubIssueMock.mockResolvedValue({
+      number: 42,
+      url: "https://github.com/acme/repo/issues/42",
+      state: "open",
+    } as never);
+
+    const response = await POST(makePostRequest({ createIssue: true }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.captured).toBe(false);
+    expect(createGitHubIssueMock).toHaveBeenCalledTimes(1);
+    expect(notifyTeamsWebhookMock).toHaveBeenCalledTimes(1);
+    expect(body.githubIssue).toEqual({
+      number: 42,
+      url: "https://github.com/acme/repo/issues/42",
+      state: "open",
+    });
   });
 });
 

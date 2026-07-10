@@ -54,6 +54,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   InputGroup,
   InputGroupAddon,
@@ -253,6 +254,10 @@ export function AdminFeedbackWidget() {
   >(null);
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Per-capture toggle. OFF (default) = just save the row for batch triage in
+  // the inbox; ON = also open a GitHub issue immediately. The default stays
+  // save-only so flagging many things quickly never fans out into issues.
+  const [createIssue, setCreateIssue] = useState(false);
   const [videoRecordingUrl, setVideoRecordingUrl] = useState<string | null>(
     null,
   );
@@ -760,6 +765,7 @@ export function AdminFeedbackWidget() {
     setDraftActive(false);
     setScreenshotDataUrl(null);
     setForm(getDefaultForm(pagePath));
+    setCreateIssue(false);
     discardRecording();
   };
 
@@ -853,6 +859,7 @@ export function AdminFeedbackWidget() {
 
       try {
         const payload = await apiFetch<{
+          captured?: boolean;
           githubIssue?: { url?: string };
           githubWarning?: { message?: string } | string | null;
         }>("/api/admin/feedback", {
@@ -860,6 +867,7 @@ export function AdminFeedbackWidget() {
           body: JSON.stringify({
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
+            createIssue,
             requestType: mapFeedbackTypeToRequestType(form.feedbackType),
             severity: form.feedbackType === "Bug" ? form.priority : "medium",
             pageUrl: window.location.href,
@@ -915,6 +923,10 @@ export function AdminFeedbackWidget() {
             description:
               warningDescription ||
               "Open Feedback Inbox and send it to GitHub after the integration is fixed.",
+          });
+        } else if (payload?.captured) {
+          toast.success("Saved to inbox.", {
+            description: "Batch-triage it later — no issue was created.",
           });
         } else {
           toast.success(getSubmissionSuccessLabel(form.feedbackType));
@@ -1195,13 +1207,27 @@ export function AdminFeedbackWidget() {
                         ? "Sending..."
                         : isUploadingVideo
                           ? "Uploading..."
-                          : "Send"}
+                          : createIssue
+                            ? "Send + issue"
+                            : "Save"}
                       {!isSubmitting && !isUploadingVideo && (
                         <ArrowUp className="h-4 w-4" />
                       )}
                     </Button>
                   </InputGroupAddon>
                 </InputGroup>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="feedback-create-issue" className="font-normal text-muted-foreground">
+                  Create GitHub issue now
+                </Label>
+                <Switch
+                  id="feedback-create-issue"
+                  checked={createIssue}
+                  onCheckedChange={setCreateIssue}
+                  aria-label="Create GitHub issue now"
+                />
               </div>
 
               {screenshotDataUrl && (

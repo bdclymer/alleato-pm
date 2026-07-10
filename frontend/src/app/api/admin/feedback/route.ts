@@ -56,6 +56,11 @@ const feedbackPayloadSchema = z.object({
   }),
   screenshotDataUrl: z.string().trim().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  // Quick-capture default is OFF: saving a feedback item just persists a row so
+  // many can be batched in the inbox without spawning a GitHub issue (and the
+  // autofix workflow it triggers) per capture. Set true to also open an issue
+  // immediately. Promotion of a saved item later goes through the PUT handler.
+  createIssue: z.boolean().optional().default(false),
 });
 
 type FeedbackInsert =
@@ -356,116 +361,129 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
 
   let githubIssue: { number: number; url: string; state: string } | null = null;
   let githubWarning: GitHubWarningPayload | null = null;
+  let teamsWarning: string | null = null;
 
-  try {
-    githubIssue = await createGitHubIssue({
+  // Quick-capture (createIssue = false) is the default: the row is saved as
+  // "open" and nothing else fires — no GitHub issue, no autofix workflow, no
+  // Teams ping — so a batch of captures can be triaged/promoted later from the
+  // feedback inbox. Only opt-in submissions create an issue on the spot.
+  if (payload.createIssue) {
+    try {
+      githubIssue = await createGitHubIssue({
+        title,
+        comment: payload.comment,
+        pageUrl: payload.pageUrl,
+        pagePath: payload.pagePath,
+        pageTitle: payload.pageTitle ?? null,
+        requestType: payload.requestType,
+        severity: payload.severity,
+        targetId: payload.target.id ?? null,
+        targetSelector: payload.target.selector,
+        targetTag: payload.target.tagName ?? null,
+        targetText: payload.target.text ?? null,
+        domPath: payload.target.domPath ?? null,
+        screenshotUrl,
+        projectId: payload.projectId ?? null,
+        metadata: payload.metadata ?? {},
+        toolContext,
+      });
+    } catch (error) {
+      githubWarning = classifyGitHubIssueFailure(error);
+      logger.warn({
+        msg: "[AdminFeedback] GitHub issue creation failed",
+        feedbackId: inserted.id,
+        warningCode: githubWarning.code,
+        warningMessage: githubWarning.message,
+        warningDetails: githubWarning.details,
+      });
+    }
+
+    if (!githubIssue && !githubWarning) {
+      githubWarning = {
+        code: "not_configured",
+        message:
+          "GitHub feedback integration is not configured in this environment.",
+      };
+      logger.warn({
+        msg: "[AdminFeedback] GitHub issue creation skipped",
+        feedbackId: inserted.id,
+        warningCode: githubWarning.code,
+        warningMessage: githubWarning.message,
+      });
+    }
+
+    if (githubIssue) {
+      await serviceSupabase
+        .from("admin_feedback_items")
+        .update({
+          github_issue_number: githubIssue.number,
+          github_issue_url: githubIssue.url,
+          github_issue_state: githubIssue.state,
+          status: "submitted",
+        })
+        .eq("id", inserted.id);
+    } else if (githubWarning) {
+      await serviceSupabase
+        .from("admin_feedback_items")
+        .update({ status: "github_failed" })
+        .eq("id", inserted.id);
+    }
+
+    const metadataRecord =
+      metadata && typeof metadata === "object" && !Array.isArray(metadata)
+        ? (metadata as Record<string, unknown>)
+        : {};
+    const submitterEmail =
+      typeof metadataRecord.submitterEmail === "string"
+        ? metadataRecord.submitterEmail
+        : null;
+    const submitterName =
+      typeof metadataRecord.submitterName === "string"
+        ? metadataRecord.submitterName
+        : null;
+    const videoRecordingUrl =
+      typeof metadataRecord.videoRecordingUrl === "string"
+        ? metadataRecord.videoRecordingUrl
+        : null;
+    const requestOrigin = new URL(request.url).origin;
+    const inboxBase =
+      process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ||
+      requestOrigin;
+
+    const teamsResult = await notifyTeamsWebhook({
+      requestId,
+      feedbackId: inserted.id,
       title,
       comment: payload.comment,
+      requestType: payload.requestType,
+      severity: payload.severity,
       pageUrl: payload.pageUrl,
       pagePath: payload.pagePath,
       pageTitle: payload.pageTitle ?? null,
-      requestType: payload.requestType,
-      severity: payload.severity,
-      targetId: payload.target.id ?? null,
-      targetSelector: payload.target.selector,
-      targetTag: payload.target.tagName ?? null,
-      targetText: payload.target.text ?? null,
-      domPath: payload.target.domPath ?? null,
       screenshotUrl,
-      projectId: payload.projectId ?? null,
-      metadata: payload.metadata ?? {},
-      toolContext,
+      videoRecordingUrl,
+      submitterEmail,
+      submitterName,
+      githubIssueUrl: githubIssue?.url ?? null,
+      inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
     });
-  } catch (error) {
-    githubWarning = classifyGitHubIssueFailure(error);
-    logger.warn({
-      msg: "[AdminFeedback] GitHub issue creation failed",
-      feedbackId: inserted.id,
-      warningCode: githubWarning.code,
-      warningMessage: githubWarning.message,
-      warningDetails: githubWarning.details,
-    });
+
+    teamsWarning =
+      teamsResult.ok || teamsResult.reason === "not_configured"
+        ? null
+        : (teamsResult.details ?? "Teams webhook delivery failed.");
   }
-
-  if (!githubIssue && !githubWarning) {
-    githubWarning = {
-      code: "not_configured",
-      message:
-        "GitHub feedback integration is not configured in this environment.",
-    };
-    logger.warn({
-      msg: "[AdminFeedback] GitHub issue creation skipped",
-      feedbackId: inserted.id,
-      warningCode: githubWarning.code,
-      warningMessage: githubWarning.message,
-    });
-  }
-
-  if (githubIssue) {
-    await serviceSupabase
-      .from("admin_feedback_items")
-      .update({
-        github_issue_number: githubIssue.number,
-        github_issue_url: githubIssue.url,
-        github_issue_state: githubIssue.state,
-        status: "submitted",
-      })
-      .eq("id", inserted.id);
-  } else if (githubWarning) {
-    await serviceSupabase
-      .from("admin_feedback_items")
-      .update({ status: "github_failed" })
-      .eq("id", inserted.id);
-  }
-
-  const metadataRecord =
-    metadata && typeof metadata === "object" && !Array.isArray(metadata)
-      ? (metadata as Record<string, unknown>)
-      : {};
-  const submitterEmail =
-    typeof metadataRecord.submitterEmail === "string"
-      ? metadataRecord.submitterEmail
-      : null;
-  const submitterName =
-    typeof metadataRecord.submitterName === "string"
-      ? metadataRecord.submitterName
-      : null;
-  const videoRecordingUrl =
-    typeof metadataRecord.videoRecordingUrl === "string"
-      ? metadataRecord.videoRecordingUrl
-      : null;
-  const requestOrigin = new URL(request.url).origin;
-  const inboxBase =
-    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") || requestOrigin;
-
-  const teamsResult = await notifyTeamsWebhook({
-    requestId,
-    feedbackId: inserted.id,
-    title,
-    comment: payload.comment,
-    requestType: payload.requestType,
-    severity: payload.severity,
-    pageUrl: payload.pageUrl,
-    pagePath: payload.pagePath,
-    pageTitle: payload.pageTitle ?? null,
-    screenshotUrl,
-    videoRecordingUrl,
-    submitterEmail,
-    submitterName,
-    githubIssueUrl: githubIssue?.url ?? null,
-    inboxUrl: `${inboxBase}/feedback-inbox#item-${inserted.id}`,
-  });
 
   return NextResponse.json({
     feedbackId: inserted.id,
     title,
     screenshotUrl,
+    // "captured" (not persisted as a status) tells the client this was a
+    // save-only quick capture so it can show the right confirmation.
+    captured: !payload.createIssue,
     githubIssue,
     githubWarning,
-    teamsWarning:
-      teamsResult.ok || teamsResult.reason === "not_configured"
-        ? null
-        : (teamsResult.details ?? "Teams webhook delivery failed."),
+    teamsWarning,
   });
 });
 
