@@ -353,7 +353,7 @@ export default function ProjectPhotosPage() {
       <Button
         size="icon"
         onClick={() => setUploadOpen(true)}
-        className="fixed bottom-6 right-4 z-40 size-14 rounded-full shadow-sm sm:hidden"
+        className="fixed right-4 bottom-[calc(3.5rem+1rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-sm sm:hidden"
         aria-label="Upload photo"
       >
         <Plus className="size-6" />

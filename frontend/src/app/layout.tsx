@@ -41,6 +41,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // viewport-fit=cover lets env(safe-area-inset-*) extend into the notch and
+  // home-indicator regions on iOS. The app already uses safe-area insets in a
+  // handful of sticky/fixed surfaces (form action bars, chat composer, the
+  // mobile bottom nav); without this they resolve to 0 and the insets are dead.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

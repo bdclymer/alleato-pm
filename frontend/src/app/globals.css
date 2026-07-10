@@ -2174,6 +2174,22 @@ velt-comment-dialog-internal velt-sidebar-button {
     box-shadow: var(--shadow-sm);
   }
 
+  /* On mobile the fixed bottom nav (h-14 = 3.5rem, md:hidden) occupies the
+     bottom edge — lift the floating launchers above it so they don't overlap
+     the tab bar. The AI panel is anchored to the launcher, so raise it by the
+     same amount or it would overlap the raised launcher's close button.
+     Desktop (>= md) has no bottom nav, so the offset is removed. */
+  @media (max-width: 767px) {
+    .feedback-launcher-position,
+    .global-ai-widget-launcher {
+      bottom: calc(1rem + 3.5rem + env(safe-area-inset-bottom));
+    }
+    .global-ai-widget-panel {
+      bottom: calc(88px + 3.5rem + env(safe-area-inset-bottom));
+      height: min(640px, calc(100dvh - 112px - 3.5rem - env(safe-area-inset-bottom)));
+    }
+  }
+
   .global-ai-widget-panel {
     position: fixed;
     left: 12px;

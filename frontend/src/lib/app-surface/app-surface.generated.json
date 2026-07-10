@@ -1894,6 +1894,86 @@
       "description": "**USE THIS FIRST for any STRUCTURED FACT about a specific project**: address, city, state, project_number, stage, project_manager, OneDrive folder link, budget, completion %, health_score, work_scope, delivery_method, team_members, stakeholders, ERP / Acumatica project id, dates. Do NOT use searchDocuments or semanticSearch for these — they are structured columns on the projects table and this tool returns them directly. ALSO returns recent contracts, schedule, RFIs, and meeting activity for deeper context. Accepts either projectId (preferred when known) or projectName (partial match — for example 'Goodwill Allisonville' resolves to the project named 'Goodwill Allisonville Road')."
     },
     {
+      "name": "searchTeamsMessages",
+      "description": null
+    },
+    {
+      "name": "searchExternalDocuments",
+      "description": null
+    },
+    {
+      "name": "getRecentEmails",
+      "description": null
+    },
+    {
+      "name": "searchEmails",
+      "description": null
+    },
+    {
+      "name": "searchMeetingsByTopic",
+      "description": null
+    },
+    {
+      "name": "getMeetingDetails",
+      "description": null
+    },
+    {
+      "name": "recallPastConversations",
+      "description": "Search past conversation memories to recall prior discussions with this user. Use when the user references previous conversations (\"like we talked about\", \"remember when\", \"last time\"), or when context from prior sessions would improve the response (recurring topics, established preferences, prior decisions)."
+    },
+    {
+      "name": "saveToKnowledgeBase",
+      "description": "Save knowledge, lessons learned, best practices, or institutional memory to the company knowledge base. Use this when the user says 'save this', 'remember this', 'I want to capture this', or 'add this to the knowledge base'. Admin saves are approved and searchable immediately; non-admin saves are captured as drafts for admin review before they become available through the AI assistant. Categories: lessons_learned, best_practice, process, policy, market_intel, general, strategy, org_update."
+    },
+    {
+      "name": "saveInsight",
+      "description": "Save a structured insight extracted from meetings or conversations. Use when the user highlights something important from a meeting or discussion that should be tracked — risks, decisions, cost impacts, design considerations, etc. Links to the source meeting when available."
+    },
+    {
+      "name": "searchMemories",
+      "description": "Search your memory of this user — their preferences, facts about projects, lessons learned, open commitments, and recent context from past sessions. Use this when the user references something from a previous conversation, or when you want to personalize a response based on what you know about them. Memory types: fact (project/people facts), preference (how they like info), lesson (patterns you've observed), commitment (tracked commitments), context (situational context from recent sessions)."
+    },
+    {
+      "name": "writeMemory",
+      "description": "Store a durable memory about this user for future sessions. Use this when you learn something worth remembering: a preference, a fact about their projects or team, a pattern you've noticed, a commitment that needs tracking, or important context. Do NOT use this for transient operational data — only things that improve future conversations. Memory types: fact (objective facts), preference (how they like things), lesson (patterns/insights), commitment (tracked commitment with owner + deadline), context (situational context, expires in 30 days)."
+    },
+    {
+      "name": "getPeopleAndRoles",
+      "description": "Get the project directory: who is on a project, their roles, companies, and contact information. Use when asked about team members, contacts, who works on a project, or project personnel."
+    },
+    {
+      "name": "getVendorPerformance",
+      "description": "Analyze vendor/subcontractor performance across a project or portfolio. Shows active vendors, their contract values, change order exposure, and billing status. Use when asked about vendor performance, subcontractor status, or trade partner metrics."
+    },
+    {
+      "name": "getRFIStatus",
+      "description": "Analyze RFI (Request for Information) status for a project. Shows overdue RFIs, response times, ball-in-court distribution, cost/schedule impacts, and status breakdown. Use when asked about RFIs, questions pending, or information requests."
+    },
+    {
+      "name": "getSubmittalStatus",
+      "description": "Analyze submittal status for a project. Shows overdue submittals, approval pipeline, ball-in-court distribution, lead times, and status breakdown. Use when asked about submittals, approvals, material submissions, or shop drawings."
+    },
+    {
+      "name": "getCrossProjectComparison",
+      "description": "Compare key metrics across multiple projects side-by-side: budget, schedule, RFI/submittal counts, change order exposure, and health status. Use when asked to compare projects or see which project has the most risk, biggest budget, etc."
+    },
+    {
+      "name": "getHistoricalTrends",
+      "description": "Analyze how a project's metrics have changed over time: RFI creation trends, submittal pipeline velocity, change order trends, and schedule progress. Use when asked about trends, velocity, trajectory, or how things have changed."
+    },
+    {
+      "name": "findProject",
+      "description": "Look up a project by name (partial match) or list all active projects. Use this when the user mentions a project by name and you need to resolve it to an ID, or when you're unsure which project they mean. Returns project ID, name, phase, and key stats."
+    },
+    {
+      "name": "semanticSearch",
+      "description": null
+    },
+    {
+      "name": "getCompanyKnowledge",
+      "description": "Retrieve company-level context: mission, vision, goals, strategy, OKRs, org structure, competitive landscape, policies, key clients, certifications, and free-form knowledge articles. Use this when the user asks about the company itself, its strategy, values, differentiators, history, or competitive positioning. Also use this to retrieve policy info or best practices."
+    },
+    {
       "name": "getScheduleAnalysis",
       "description": "Analyze the project schedule: overdue tasks, milestones at risk, critical path items, completion percentage, and task dependencies. Use when asked about schedule, timeline, delays, milestones, or task progress for a project."
     },
@@ -1944,6 +2024,102 @@
     {
       "name": "searchConstructionMarket",
       "description": "Search for construction industry market intelligence: labor costs, material prices (steel, concrete, lumber), regional market conditions, permit activity, construction technology trends, union rates, ENR data, or regulatory changes. Pre-scoped to construction so results are more relevant than a general search. Use for: 'What are current steel prices?', 'How is the Indianapolis construction market doing?', 'What AI tools are GCs using?', 'What's the labor market like?'"
+    },
+    {
+      "name": "createChangeOrder",
+      "description": null
+    },
+    {
+      "name": "createChangeEvent",
+      "description": null
+    },
+    {
+      "name": "createCommitment",
+      "description": null
+    },
+    {
+      "name": "createOutlookCalendarInvite",
+      "description": null
+    },
+    {
+      "name": "draftOutlookEmail",
+      "description": null
+    },
+    {
+      "name": "sendTeamsMessage",
+      "description": null
+    },
+    {
+      "name": "createProjectCompany",
+      "description": null
+    },
+    {
+      "name": "createProjectContact",
+      "description": null
+    },
+    {
+      "name": "createContact",
+      "description": "Create a contact in the global directory (public.people). Use when the user wants to 'add a contact', 'create a new contact', or 'add [person] to the directory' WITHOUT tying them to a specific project (use createProjectContact when a project is involved). This renders an interactive, prefilled contact form widget: fill in every field you already know (first/last name, email, phone, job title, company, department, notes) so the user only completes what's missing, then submits. Reuses an existing person by email and links the company by id or exact name. Always previews the form before writing."
+    },
+    {
+      "name": "updateProjectStatus",
+      "description": null
+    },
+    {
+      "name": "flagProjectRisk",
+      "description": null
+    },
+    {
+      "name": "createMeetingNote",
+      "description": null
+    },
+    {
+      "name": "logDailyReport",
+      "description": null
+    },
+    {
+      "name": "generateProjectSummary",
+      "description": null
+    },
+    {
+      "name": "createInitiativeCard",
+      "description": "Create an initiative card on the Command Center board. Use when the user says 'add this to the board', 'create an initiative for [idea]', 'track this idea', 'remember this feature request', 'add a card for [thing]', or discusses any idea, feature, bug, or task that should be tracked on the kanban board. Does NOT require confirmation — cards are easy to edit/delete."
+    },
+    {
+      "name": "submitFeedback",
+      "description": "Submit a bug report or feature request on behalf of the user — identical to submitting the feedback form in the app. Use when the user says 'report a bug', 'something is broken', 'submit a feature request', 'I have a suggestion', 'can you log this issue', or describes a problem or improvement idea they want tracked. Always show a preview and ask for confirmation before submitting."
+    },
+    {
+      "name": "addBoardItem",
+      "description": "Add a feature idea, initiative, or product improvement directly to the Roadmap kanban. Use when the user says 'add this to the board', 'put this on the roadmap', 'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track a product idea with a specific status column. Always show a preview and ask for confirmation before writing."
+    },
+    {
+      "name": "createRFI",
+      "description": null
+    },
+    {
+      "name": "updateRFIStatus",
+      "description": null
+    },
+    {
+      "name": "createSubmittal",
+      "description": null
+    },
+    {
+      "name": "createTask",
+      "description": null
+    },
+    {
+      "name": "createGeneratedTask",
+      "description": null
+    },
+    {
+      "name": "updateGeneratedTask",
+      "description": null
+    },
+    {
+      "name": "deleteGeneratedTask",
+      "description": null
     }
   ]
 }

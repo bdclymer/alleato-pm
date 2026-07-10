@@ -4,6 +4,7 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/nav/app-sidebar";
+import { MobileBottomNav } from "@/components/nav/mobile-bottom-nav";
 import { CollaborationProvider } from "@/components/collaboration/collaboration-provider";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -94,7 +95,15 @@ export default function MainLayout({
           <CreateProjectDevConfigProvider>
             <div className="flex min-h-0 flex-1 overflow-hidden">
               <div
-                className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out"
+                className={
+                  "flex min-h-0 min-w-0 flex-1 flex-col overflow-auto scrollbar-hide transition-[padding] duration-200 ease-out" +
+                  // Clear the fixed mobile bottom nav so page content and any
+                  // in-page sticky footers aren't hidden behind it. Nav is
+                  // md:hidden, so the padding is too.
+                  (isDrawingViewer
+                    ? ""
+                    : " pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0")
+                }
                 style={{ paddingRight: "var(--admin-feedback-sheet-offset, 0px)" }}
               >
                 {!isDrawingViewer && <SiteHeader key="site-header" />}
@@ -112,6 +121,7 @@ export default function MainLayout({
               </div>
             </div>
           </CreateProjectDevConfigProvider>
+          {!isDrawingViewer && <MobileBottomNav key="mobile-bottom-nav" />}
           <Overlays key="floating-overlays" />
         </SidebarInset>
         <PageCommentsOverlay />
