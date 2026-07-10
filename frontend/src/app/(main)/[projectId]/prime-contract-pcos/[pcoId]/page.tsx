@@ -52,6 +52,9 @@ import {
   InlineTableBody,
   InlineTableRow,
   InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
 } from "@/components/ds";
 import { PrimeContractPcoHeaderActions } from "./prime-contract-pco-header-actions";
 
@@ -667,16 +670,14 @@ export default function PrimeContractPcoDetailPage() {
             <DetailField label="Date Created">
               {formatDateTime(pco.created_at)}
             </DetailField>
-            <DetailField label="Revision">
-              <EditableDetailField
-                label="Revision"
-                type="number"
-                value={pco.revision != null ? String(pco.revision) : ""}
-                emptyPlaceholder="0"
-                disabled={!canEdit}
-                onSave={(value) => saveField("revision", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Revision"
+              type="number"
+              value={pco.revision != null ? String(pco.revision) : ""}
+              emptyPlaceholder="0"
+              disabled={!canEdit}
+              onSave={(value) => saveField("revision", value)}
+            />
             <DetailField label="Created By">
               {pco.created_by_name || pco.created_by || "--"}
             </DetailField>
@@ -715,149 +716,124 @@ export default function PrimeContractPcoDetailPage() {
                 "--"
               )}
             </DetailField>
-            <DetailField label="Title">
-              <EditableDetailField
-                label="Title"
-                value={pco.title ?? ""}
-                emptyPlaceholder="Set title"
-                disabled={!canEdit}
-                onSave={(value) => saveField("title", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Title"
+              value={pco.title ?? ""}
+              emptyPlaceholder="Set title"
+              disabled={!canEdit}
+              onSave={(value) => saveField("title", value)}
+            />
             <DetailField label="Linked PCO">
               {pco.promoted_to_co_id ? `#${pco.promoted_to_co_id}` : "None"}
             </DetailField>
-            <DetailField label="Status">
-              <EditableDetailField
-                label="Status"
-                type="select"
-                value={pco.status ?? ""}
-                display={<StatusBadge status={pco.status} />}
-                options={PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((statusOption) => ({
-                  value: statusOption.value,
-                  label: statusOption.label,
-                }))}
-                disabled={!canEdit}
-                onSave={(value) => saveField("status", value)}
-              />
-            </DetailField>
-            <DetailField label="PCO Signed">
-              <EditableDetailField
-                label="PCO Signed"
-                type="date"
-                value={pco.signed_co_received_date ?? ""}
-                display={formatDate(pco.signed_co_received_date)}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("signed_co_received_date", value)}
-              />
-            </DetailField>
-            <DetailField label="Change Reason">
-              <EditableDetailField
-                label="Change Reason"
-                type="select"
-                value={pco.change_reason ?? "__none__"}
-                display={pco.change_reason || "--"}
-                options={[{ value: "__none__", label: "None" }, ...CHANGE_REASONS]}
-                disabled={!canEdit}
-                onSave={(value) => saveField("change_reason", value)}
-              />
-            </DetailField>
-            <DetailField label="Location">
-              <EditableDetailField
-                label="Location"
-                value={pco.location ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("location", value)}
-              />
-            </DetailField>
-            <DetailField label="Private">
-              <EditableDetailField
-                label="Private"
-                type="boolean"
-                value={String(pco.is_private)}
-                display={pco.is_private ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("is_private", value)}
-              />
-            </DetailField>
-            <DetailField label="Field Change">
-              <EditableDetailField
-                label="Field Change"
-                type="boolean"
-                value={String(pco.field_change)}
-                display={pco.field_change ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("field_change", value)}
-              />
-            </DetailField>
-            <DetailField label="Executed">
-              <EditableDetailField
-                label="Executed"
-                type="boolean"
-                value={String(pco.executed)}
-                display={pco.executed ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("executed", value)}
-              />
-            </DetailField>
-            <DetailField label="Paid in Full">
-              <EditableDetailField
-                label="Paid in Full"
-                type="boolean"
-                value={String(pco.paid_in_full)}
-                display={pco.paid_in_full ? "Yes" : "No"}
-                disabled={!canEdit}
-                onSave={(value) => saveField("paid_in_full", value)}
-              />
-            </DetailField>
-            <DetailField label="Requested By">
-              <EditableDetailField
-                label="Requested By"
-                value={pco.request_received_from ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("request_received_from", value)}
-              />
-            </DetailField>
-            <DetailField label="Schedule Impact">
-              <EditableDetailField
-                label="Schedule Impact"
-                type="number"
-                value={pco.schedule_impact != null ? String(pco.schedule_impact) : ""}
-                display={
-                  pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"
-                }
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("schedule_impact", value)}
-              />
-            </DetailField>
-            <DetailField label="Reference">
-              <EditableDetailField
-                label="Reference"
-                value={pco.reference ?? ""}
-                emptyPlaceholder="Not set"
-                disabled={!canEdit}
-                onSave={(value) => saveField("reference", value)}
-              />
-            </DetailField>
-            <DetailField label="Description" span={2}>
-              <EditableDetailField
-                label="Description"
-                type="textarea"
-                value={pco.description ?? ""}
-                display={
-                  <span className="whitespace-pre-wrap">
-                    {pco.description || "--"}
-                  </span>
-                }
-                emptyPlaceholder="Add a description"
-                disabled={!canEdit}
-                onSave={(value) => saveField("description", value)}
-              />
-            </DetailField>
+            <EditableDetailField
+              label="Status"
+              type="select"
+              value={pco.status ?? ""}
+              display={<StatusBadge status={pco.status} />}
+              options={PRIME_CONTRACT_CHANGE_ORDER_STATUSES.map((statusOption) => ({
+                value: statusOption.value,
+                label: statusOption.label,
+              }))}
+              disabled={!canEdit}
+              onSave={(value) => saveField("status", value)}
+            />
+            <EditableDetailField
+              label="PCO Signed"
+              type="date"
+              value={pco.signed_co_received_date ?? ""}
+              display={formatDate(pco.signed_co_received_date)}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("signed_co_received_date", value)}
+            />
+            <EditableDetailField
+              label="Change Reason"
+              type="select"
+              value={pco.change_reason ?? "__none__"}
+              display={pco.change_reason || "--"}
+              options={[{ value: "__none__", label: "None" }, ...CHANGE_REASONS]}
+              disabled={!canEdit}
+              onSave={(value) => saveField("change_reason", value)}
+            />
+            <EditableDetailField
+              label="Location"
+              value={pco.location ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("location", value)}
+            />
+            <EditableDetailField
+              label="Private"
+              type="boolean"
+              value={String(pco.is_private)}
+              display={pco.is_private ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("is_private", value)}
+            />
+            <EditableDetailField
+              label="Field Change"
+              type="boolean"
+              value={String(pco.field_change)}
+              display={pco.field_change ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("field_change", value)}
+            />
+            <EditableDetailField
+              label="Executed"
+              type="boolean"
+              value={String(pco.executed)}
+              display={pco.executed ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("executed", value)}
+            />
+            <EditableDetailField
+              label="Paid in Full"
+              type="boolean"
+              value={String(pco.paid_in_full)}
+              display={pco.paid_in_full ? "Yes" : "No"}
+              disabled={!canEdit}
+              onSave={(value) => saveField("paid_in_full", value)}
+            />
+            <EditableDetailField
+              label="Requested By"
+              value={pco.request_received_from ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("request_received_from", value)}
+            />
+            <EditableDetailField
+              label="Schedule Impact"
+              type="number"
+              value={pco.schedule_impact != null ? String(pco.schedule_impact) : ""}
+              display={
+                pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"
+              }
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("schedule_impact", value)}
+            />
+            <EditableDetailField
+              label="Reference"
+              value={pco.reference ?? ""}
+              emptyPlaceholder="Not set"
+              disabled={!canEdit}
+              onSave={(value) => saveField("reference", value)}
+            />
+            <EditableDetailField
+              label="Description"
+              span={2}
+              type="textarea"
+              value={pco.description ?? ""}
+              display={
+                <span className="whitespace-pre-wrap">
+                  {pco.description || "--"}
+                </span>
+              }
+              emptyPlaceholder="Add a description"
+              disabled={!canEdit}
+              onSave={(value) => saveField("description", value)}
+            />
           </DetailFieldGrid>
         </section>
 
@@ -917,95 +893,63 @@ export default function PrimeContractPcoDetailPage() {
               description="This potential change order does not have any line items yet."
             />
           ) : (
-            <div className="line-items-scroll-shell relative rounded-lg">
-              <InlineTable variant="edit" tableClassName="min-w-[62rem] table-fixed">
-                <colgroup>
-                  <col className="w-176" />
-                  <col className="w-24" />
-                  <col className="w-24" />
-                  <col className="w-40" />
-                  <col className="w-40" />
-                </colgroup>
-                <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
-                  <InlineTableHeaderRow className="border-b border-border/60 hover:bg-transparent">
-                    <InlineTableHeaderCell
-                      colSpan={1}
-                      className="line-item-group-end border-b border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground"
-                    >
-                      Detail
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell
-                      colSpan={4}
-                      className="line-item-group-start border-b border-l border-border/60 px-2 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground"
-                    >
-                      Pricing
-                    </InlineTableHeaderCell>
-                  </InlineTableHeaderRow>
-                  <InlineTableHeaderRow className="border-b-0 hover:bg-transparent">
-                    <InlineTableHeaderCell className="w-176 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Description
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Qty
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-24 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      UOM
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Unit Cost
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      Amount
-                    </InlineTableHeaderCell>
-                  </InlineTableHeaderRow>
-                </InlineTableHeader>
-                <InlineTableBody>
-                  {lineItems.map((item) => (
-                    <InlineTableRow
-                      key={item.id}
-                      className="group border-b-0 bg-background transition-colors hover:bg-transparent"
-                    >
-                      <InlineTableCell
-                        className="w-176 px-1 py-1.5 align-top text-[13px]"
-                        title={item.description || undefined}
-                      >
-                        <span className="block whitespace-normal text-foreground">
-                          {item.description || "--"}
-                        </span>
-                        {item.change_event && (
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            CE: {item.change_event.number} - {item.change_event.title}
-                          </span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 align-top text-right text-[13px] tabular-nums">
-                        {item.quantity}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-24 px-2 py-1.5 align-top text-[13px] text-muted-foreground">
-                        {item.unit_of_measure || "--"}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-40 px-1 py-1.5 align-top text-right text-[13px] tabular-nums">
-                        {formatMoney(item.unit_cost || 0)}
-                      </InlineTableCell>
-                      <InlineTableCell className="w-40 px-1 py-1.5 align-top text-right text-[13px] font-semibold tabular-nums">
-                        {formatMoney(item.amount || 0)}
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  ))}
-                  <InlineTableRow className="bg-muted/35 hover:bg-muted/35">
-                    <InlineTableCell className="border-t border-border px-1.5 pb-3 pt-4 text-sm font-semibold text-foreground">
-                      Total
+            <InlineTable>
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell className="w-10">#</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-20">
+                    Qty
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-20">UOM</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-32">
+                    Unit Cost
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-32">
+                    Amount
+                  </InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {lineItems.map((item, index) => (
+                  <InlineTableRow key={item.id}>
+                    <InlineTableCell className="text-xs text-muted-foreground">
+                      {index + 1}
                     </InlineTableCell>
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
-                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground tabular-nums">
-                      {formatMoney(totalAmount)}
+                    <InlineTableCell>
+                      <span className="block text-foreground">
+                        {item.description || "--"}
+                      </span>
+                      {item.change_event && (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          CE: {item.change_event.number} - {item.change_event.title}
+                        </span>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right">
+                      {item.quantity}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-muted-foreground">
+                      {item.unit_of_measure || "--"}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right">
+                      {formatMoney(item.unit_cost || 0)}
+                    </InlineTableCell>
+                    <InlineTableCell numeric align="right" className="font-medium">
+                      {formatMoney(item.amount || 0)}
                     </InlineTableCell>
                   </InlineTableRow>
-                </InlineTableBody>
-              </InlineTable>
-            </div>
+                ))}
+              </InlineTableBody>
+              <InlineTableFooter>
+                <InlineTableFooterRow type="totals">
+                  <InlineTableFooterCell colSpan={5}>Total</InlineTableFooterCell>
+                  <InlineTableFooterCell numeric align="right">
+                    {formatMoney(totalAmount)}
+                  </InlineTableFooterCell>
+                </InlineTableFooterRow>
+              </InlineTableFooter>
+            </InlineTable>
           )}
         </section>
         )}
