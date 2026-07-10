@@ -243,11 +243,9 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
         <header className="mb2-masthead">
           <div className="mb2-eyebrow">Alleato Group · Executive Brief</div>
           <div className="mb2-title" role="heading" aria-level={1}>
-            The Morning Brief
+            July 10, 2026
           </div>
-          <div className="mb2-dateline">
-            <b>Friday, July 10, 2026</b> · Prepared for Brandon Clymer
-          </div>
+          <div className="mb2-dateline">Prepared for Brandon Clymer</div>
         </header>
 
         {/* YOUR CALLS TODAY */}
