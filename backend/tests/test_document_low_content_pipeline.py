@@ -270,3 +270,96 @@ def test_embedder_skips_teams_dm_conversation_docs_owned_by_graph_embedder(monke
         "skipReason": "owned_by_graph_embedder",
     }
     assert job_updates[-1]["kwargs"]["stage"] == "done"
+
+
+def test_embedder_preserves_rag_text_when_app_document_text_is_empty(monkeypatch):
+    metadata_id = "submittal-doc-1"
+    app = _Supabase(
+        {
+            "document_metadata": [
+                {
+                    "id": metadata_id,
+                    "title": "Equipment Submittal.pdf",
+                    "source": "upload",
+                    "source_system": "jobplanner",
+                    "type": "document",
+                    "category": "document",
+                    "document_type": "pdf",
+                    "project_id": 876,
+                    "status": "segmented",
+                    "content": None,
+                    "raw_text": None,
+                    "summary": None,
+                    "overview": None,
+                    "source_metadata": {},
+                }
+            ],
+            "meeting_segments": [
+                {
+                    "id": "segment-1",
+                    "metadata_id": metadata_id,
+                    "segment_index": 0,
+                    "title": "Equipment Schedule",
+                    "start_index": 0,
+                    "end_index": 1,
+                    "summary": "Equipment schedule excerpt",
+                    "decisions": [],
+                    "risks": [],
+                    "tasks": [],
+                }
+                ,
+                {
+                    "id": "segment-2",
+                    "metadata_id": metadata_id,
+                    "segment_index": 1,
+                    "title": "Approvals",
+                    "start_index": 2,
+                    "end_index": 2,
+                    "summary": "Approval requirements excerpt",
+                    "decisions": [],
+                    "risks": [],
+                    "tasks": [],
+                },
+            ],
+            "document_page_intelligence": [],
+            "fireflies_ingestion_jobs": [],
+        }
+    )
+    rag = _Supabase(
+        {
+            "rag_document_metadata": [],
+            "document_chunks": [],
+        }
+    )
+    job_updates = []
+    rag_row = {
+        "content": "Line 1\nLine 2",
+        "raw_text": "Line 1\nLine 2",
+        "summary": "RAG summary",
+        "overview": "RAG overview",
+    }
+
+    monkeypatch.setattr(embedder, "get_supabase_client", lambda: app)
+    monkeypatch.setattr(embedder, "get_rag_write_client", lambda: rag)
+    monkeypatch.setattr(embedder, "get_rag_read_client", lambda: rag)
+    monkeypatch.setattr(embedder, "fetch_optional_row", lambda *_args, **_kwargs: rag_row)
+    monkeypatch.setattr(
+        embedder,
+        "update_ingestion_job_state",
+        lambda *args, **kwargs: job_updates.append({"args": args, "kwargs": kwargs}),
+    )
+    monkeypatch.setattr(embedder.llm, "batch_embed", lambda texts: [[0.1, 0.2]] * len(texts))
+
+    result = embedder.run_embedder(metadata_id)
+
+    assert result["metadataId"] == metadata_id
+    assert result["chunkCount"] >= 1
+    assert app.tables["document_metadata"][0]["status"] == "embedded"
+    rag_metadata = rag.tables["rag_document_metadata"][0]
+    assert rag_metadata["content"] == "Line 1\nLine 2"
+    assert rag_metadata["raw_text"] == "Line 1\nLine 2"
+    assert rag_metadata["summary"] == "RAG summary"
+    assert rag_metadata["overview"] == "RAG overview"
+    assert rag_metadata["embedding_status"] == "embedded"
+    assert any(chunk["document_id"] == metadata_id for chunk in rag.tables["document_chunks"])
+    assert job_updates[-1]["kwargs"]["stage"] == "embedded"

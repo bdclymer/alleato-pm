@@ -308,6 +308,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         metadata_id,
     )
     content = rag_metadata.get("content") or rag_metadata.get("raw_text")
+    rag_content = rag_metadata.get("content")
+    rag_raw_text = rag_metadata.get("raw_text")
+    rag_summary = rag_metadata.get("summary")
+    rag_overview = rag_metadata.get("overview")
     meeting_summary = rag_metadata.get("summary") or rag_metadata.get("overview") or metadata.get("summary") or metadata.get("overview") or ""
     title = metadata.get("title") or "Untitled"
     project_id = metadata.get("project_id")
@@ -633,10 +637,10 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         "storage_path": metadata.get("file_path"),
         "source_web_url": metadata.get("source_web_url"),
         "url": metadata.get("url"),
-        "content": metadata.get("content"),
-        "raw_text": metadata.get("raw_text"),
-        "summary": metadata.get("summary"),
-        "overview": metadata.get("overview"),
+        "content": rag_content if rag_content is not None else metadata.get("content"),
+        "raw_text": rag_raw_text if rag_raw_text is not None else metadata.get("raw_text"),
+        "summary": rag_summary if rag_summary is not None else metadata.get("summary"),
+        "overview": rag_overview if rag_overview is not None else metadata.get("overview"),
         "parsing_status": metadata.get("status"),
         "embedding_status": "embedded",
         "source_metadata": metadata.get("source_metadata"),
