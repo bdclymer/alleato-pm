@@ -4,6 +4,7 @@ import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-ac
 import { PageShell } from "@/components/layout";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 
+import { loadRealBriefTasks } from "./brief-tasks";
 import { MorningBriefV2Client } from "./brief-v2-client";
 import "./brief-v2.css";
 
@@ -47,6 +48,10 @@ export default async function MorningBriefV2Page() {
     );
   }
 
+  // Real action items from the daily deep read (public.tasks). Falls back to the
+  // static snapshot inside the client when the DB is unreachable at build time.
+  const tasks = await loadRealBriefTasks();
+
   return (
     <PageShell
       variant="table"
@@ -56,7 +61,7 @@ export default async function MorningBriefV2Page() {
       contentClassName="p-0"
     >
       <div className={fontClassName}>
-        <MorningBriefV2Client />
+        <MorningBriefV2Client tasks={tasks} />
       </div>
     </PageShell>
   );

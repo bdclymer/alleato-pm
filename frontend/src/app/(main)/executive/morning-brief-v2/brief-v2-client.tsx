@@ -64,12 +64,15 @@ function SourceChips({ sources }: { sources: BriefSourceLink[] }) {
   );
 }
 
-export function MorningBriefV2Client() {
+export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefTask[] }) {
   const content = BRIEF_CONTENT;
+  // Prefer the real deep-read tasks; fall back to the static snapshot only when
+  // the DB returned nothing (e.g. unreachable at build time).
+  const seedTasks = realTasks.length > 0 ? realTasks : content.tasks;
 
   const [doneDecisions, setDoneDecisions] = React.useState<Set<string>>(new Set());
   const [tasks, setTasks] = React.useState<EditableTask[]>(
-    content.tasks.map((task) => ({ ...task, done: false })),
+    seedTasks.map((task) => ({ ...task, done: false })),
   );
   const [resolvedLog, setResolvedLog] = React.useState<ResolvedRow[]>([]);
   const [movingOpen, setMovingOpen] = React.useState(false);
