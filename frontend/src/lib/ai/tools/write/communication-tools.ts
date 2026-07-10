@@ -20,11 +20,11 @@ import {
 import { type ActionToolInternals, withWriteTrace } from "./action-tool-internals";
 
 const BRANDON_EMAIL_VOICE_PROFILE = {
-  path: "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-voice-profile.md",
+  path: "docs/architecture/memory/brandon-brand-voice/brandon-email-voice-profile.md",
   version: "2026-05-19",
   companionResources: [
-    "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-operating-profile.md",
-    "docs/archive/2026-06-22-docs-migration/ai-plan/brandon-email-drafting-playbook.md",
+    "docs/architecture/memory/brandon-brand-voice/brandon-operating-profile.md",
+    "docs/architecture/memory/brandon-brand-voice/brandon-email-drafting-playbook.md",
   ],
   summary:
     "For Brandon's Outlook drafts, write short, direct, action-oriented replies grounded in the current thread. Start with the ask or answer, preserve cost/scope/schedule facts, use plain construction/business language, and turn weak evidence into a direct confirmation question.",
