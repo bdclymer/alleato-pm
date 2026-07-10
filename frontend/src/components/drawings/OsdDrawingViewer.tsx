@@ -42,6 +42,11 @@ import {
 import { ErrorState } from "@/components/ds";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import {
+  useDrawingAnnotations,
+  useCreateDrawingAnnotation,
+  useDeleteDrawingAnnotation,
+} from "@/hooks/use-drawing-annotations";
 
 type PdfDocumentProxy = Awaited<ReturnType<typeof pdfjs.getDocument>["promise"]>;
 type PdfLoadingTask = ReturnType<typeof pdfjs.getDocument>;
@@ -81,7 +86,7 @@ interface ImagePoint {
   y: number;
 }
 
-interface Annotation {
+export interface Annotation {
   id: string;
   type: LocalAnnotationType;
   page: number;
@@ -187,6 +192,14 @@ export interface OsdDrawingViewerProps {
 
   /** Filter local (drawn) markup by type. Undefined = show all. */
   visibleAnnotationTypes?: LocalAnnotationType[];
+
+  /**
+   * When both are provided, drawn markup is persisted to the drawing_annotations
+   * table: existing markup loads on mount and new/erased shapes save in the
+   * background. Without them the viewer keeps markup in memory only (legacy).
+   */
+  drawingId?: string;
+  projectId?: string;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -207,6 +220,8 @@ export function OsdDrawingViewer({
   onAnnotationCommitted,
   htmlOverlays,
   visibleAnnotationTypes,
+  drawingId,
+  projectId,
 }: OsdDrawingViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<OpenSeadragon.Viewer | null>(null);
@@ -237,6 +252,80 @@ export function OsdDrawingViewer({
   const [localStrokeWidth, setLocalStrokeWidth] = useState(2);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
 
+  // ── Markup persistence (drawing_annotations) ────────────────────────────────
+  const persistEnabled = Boolean(projectId && drawingId);
+  const persistedQuery = useDrawingAnnotations(projectId ?? "", drawingId ?? "");
+  const createAnnotation = useCreateDrawingAnnotation(projectId ?? "", drawingId ?? "");
+  const deleteAnnotation = useDeleteDrawingAnnotation(projectId ?? "", drawingId ?? "");
+  const persistedData = persistedQuery.data;
+  const seededDrawingRef = useRef<string | null>(null);
+  // Client uid → server id once a create resolves. The client uid stays the
+  // annotation's stable id in state (so React keys and the shape-action "remove"
+  // closure never go stale); the server id is resolved from this map on delete.
+  const serverIdRef = useRef<Map<string, string>>(new Map());
+  // Client uids whose create POST is still in flight.
+  const pendingCreateRef = useRef<Set<string>>(new Set());
+  // Client uids erased before their create resolved (delete the row once saved).
+  const erasedPendingRef = useRef<Set<string>>(new Set());
+
+  // Seed the editing surface from persisted markup. On a new drawing, drop the
+  // stale id maps and clear immediately, then reseed once that drawing loads.
+  useEffect(() => {
+    if (!persistEnabled) return;
+    if (seededDrawingRef.current === drawingId) return;
+    serverIdRef.current.clear();
+    pendingCreateRef.current.clear();
+    erasedPendingRef.current.clear();
+    if (persistedData) {
+      seededDrawingRef.current = drawingId ?? null;
+      setAnnotations(persistedData);
+    } else {
+      setAnnotations([]);
+    }
+  }, [persistEnabled, persistedData, drawingId]);
+
+  const handleCommitAnnotation = useCallback(
+    (ann: Annotation) => {
+      setAnnotations((prev) => [...prev, ann]);
+      if (!persistEnabled) return;
+      pendingCreateRef.current.add(ann.id);
+      createAnnotation
+        .mutateAsync(ann)
+        .then((saved) => {
+          pendingCreateRef.current.delete(ann.id);
+          if (erasedPendingRef.current.delete(ann.id)) {
+            // Erased before the save resolved — remove the now-orphaned row so it
+            // does not reappear on reload.
+            deleteAnnotation.mutate(saved.id);
+            return;
+          }
+          serverIdRef.current.set(ann.id, saved.id);
+        })
+        .catch(() => {
+          // The hook toasts the failure; keep the shape on screen so the user
+          // does not silently lose their work.
+          pendingCreateRef.current.delete(ann.id);
+        });
+    },
+    [persistEnabled, createAnnotation, deleteAnnotation],
+  );
+
+  const handleEraseAnnotation = useCallback(
+    (id: string) => {
+      setAnnotations((prev) => prev.filter((a) => a.id !== id));
+      if (!persistEnabled) return;
+      if (pendingCreateRef.current.has(id)) {
+        // Create still in flight — defer deletion until the server id is known.
+        erasedPendingRef.current.add(id);
+        return;
+      }
+      const serverId = serverIdRef.current.get(id) ?? id;
+      serverIdRef.current.delete(id);
+      deleteAnnotation.mutate(serverId);
+    },
+    [persistEnabled, deleteAnnotation],
+  );
+
   const tool = controlledTool ?? localTool;
   const color = controlledColor ?? localColor;
   const strokeWidth = controlledStrokeWidth ?? localStrokeWidth;
@@ -254,7 +343,9 @@ export function OsdDrawingViewer({
         setPdf(doc);
         setNumPages(doc.numPages);
         setPageNumber(1);
-        setAnnotations([]);
+        // When persistence is on, the seed effect owns markup state (loading it
+        // from the server); clearing here would wipe the loaded markup.
+        if (!persistEnabled) setAnnotations([]);
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load PDF");
       }
@@ -760,7 +851,7 @@ export function OsdDrawingViewer({
               page={pageNumber}
               annotations={visibleAnnotationsOnPage}
               onCommit={(ann) => {
-                setAnnotations((prev) => [...prev, ann]);
+                handleCommitAnnotation(ann);
                 if (!onAnnotationCommitted || !LINKABLE_SHAPE_TYPES.has(ann.type)) return;
                 const anchor = getAnnotationAnchor(ann);
                 if (!anchor) return;
@@ -770,10 +861,10 @@ export function OsdDrawingViewer({
                   xPct: (anchor.x / imageSize.width) * 100,
                   yPct: (anchor.y / imageSize.height) * 100,
                   page: ann.page,
-                  remove: () => setAnnotations((prev) => prev.filter((a) => a.id !== ann.id)),
+                  remove: () => handleEraseAnnotation(ann.id),
                 });
               }}
-              onErase={(id) => setAnnotations((prev) => prev.filter((a) => a.id !== id))}
+              onErase={(id) => handleEraseAnnotation(id)}
               onCommentClick={onCommentClick}
             />
           )}

@@ -847,6 +847,7 @@ export default function DrawingViewerPage() {
             {proxyFileUrl && (
               <OsdDrawingViewerWithComments
                 drawingId={drawingId}
+                projectId={projectId}
                 fileUrl={proxyFileUrl}
                 showToolbar={false}
                 controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "cloud" | "arrow" | "text" | "eraser" | "comment" | "link"}

@@ -185,6 +185,7 @@ export function OsdDrawingViewerWithComments({
   return (
     <OsdDrawingViewer
       {...viewerProps}
+      drawingId={drawingId}
       controlledTool={controlledTool}
       onCommentClick={handleCommentClick}
       onAnnotationCommitted={handleAnnotationCommitted}

@@ -669,7 +669,6 @@ export function PunchItemFormFields({
           control={form.control}
           name="cost_impact"
           label="Cost Impact"
-          placeholder="0.00"
           allowNegative
         />
       </div>

@@ -12755,6 +12755,60 @@ export type Database = {
           },
         ]
       }
+      drawing_annotations: {
+        Row: {
+          annotation_type: string
+          created_at: string
+          created_by: string | null
+          data: Json
+          drawing_id: string
+          id: string
+          is_published: boolean
+          page: number
+          project_id: number
+          updated_at: string
+        }
+        Insert: {
+          annotation_type: string
+          created_at?: string
+          created_by?: string | null
+          data: Json
+          drawing_id: string
+          id?: string
+          is_published?: boolean
+          page?: number
+          project_id: number
+          updated_at?: string
+        }
+        Update: {
+          annotation_type?: string
+          created_at?: string
+          created_by?: string | null
+          data?: Json
+          drawing_id?: string
+          id?: string
+          is_published?: boolean
+          page?: number
+          project_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_annotations_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_annotations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drawing_markup_pins: {
         Row: {
           color: string | null
