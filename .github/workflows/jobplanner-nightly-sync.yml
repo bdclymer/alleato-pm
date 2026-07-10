@@ -1,0 +1,72 @@
+name: JobPlanner Nightly Sync
+
+# Pulls new NON-FINANCIAL, verified JobPlanner data into the app every night:
+# photos (incremental), RFIs, submittals, punch items — for every Current, non-archived,
+# JobPlanner-mapped project. Financial data (commitments, change orders, prime contracts,
+# invoices) is NEVER touched here; it stays manual and human-reviewed.
+#
+# Every project is verified field-by-field against JobPlanner after import; if anything
+# does not tie out, or an importer errors, the run fails (red) and opens/updates a
+# needs-megan issue. It never silently writes mismatched data.
+#
+# Runs ~03:00 ET (07:00 UTC). Also runnable on demand.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate secrets
+        env:
+          JOBPLANNER_API_KEY: ${{ secrets.JOBPLANNER_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          for v in JOBPLANNER_API_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY DATABASE_URL; do
+            if [[ -z "${!v}" ]]; then echo "Missing required secret: $v"; exit 1; fi
+          done
+
+      - name: Install runtime deps
+        # Standalone install of only what the sync needs at runtime — no pnpm workspace.
+        # Node's require walks up from frontend/package.json to this root install.
+        run: npm install @supabase/supabase-js pg dotenv --no-save --no-package-lock
+
+      - name: Run nightly JobPlanner sync
+        env:
+          JOBPLANNER_API_KEY: ${{ secrets.JOBPLANNER_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scripts/jobplanner/nightly-sync.mjs
+
+      - name: Alert on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create jobplanner-sync --color BFD4F2 --description "JobPlanner nightly sync" 2>/dev/null || true
+          TITLE="Nightly JobPlanner sync failed"
+          BODY="The nightly JobPlanner sync failed — an importer errored or a project's data did not tie out to JobPlanner. No mismatched data was trusted. See the run log for the exact project + entity: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null || true)
+          if [[ -n "$EXISTING" ]]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label needs-megan --label jobplanner-sync
+          fi

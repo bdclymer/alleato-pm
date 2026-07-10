@@ -33,7 +33,12 @@ const arg = (n) => { const h = process.argv.find((a) => a.startsWith(`--${n}=`))
 const JP = Number(arg("jp"));
 const APP = Number(arg("app"));
 const LIMIT = arg("limit") ? Number(arg("limit")) : Infinity;
-if (!Number.isInteger(JP) || !Number.isInteger(APP)) { console.error("Usage: --jp=<id> --app=<id> [--limit=N] [--apply]"); process.exit(1); }
+// --new-only: import only photos NEWER than the newest one already imported for this
+// project (for the nightly incremental sync — no backfill of the older tail). Bounded by
+// a safety cap so a single run can never balloon.
+const NEW_ONLY = process.argv.includes("--new-only");
+const NEW_ONLY_CAP = 500;
+if (!Number.isInteger(JP) || !Number.isInteger(APP)) { console.error("Usage: --jp=<id> --app=<id> [--limit=N | --new-only] [--apply]"); process.exit(1); }
 
 const JP_KEY = process.env.JOBPLANNER_API_KEY?.trim()?.replace(/^["']|["']$/g, "");
 const SUPABASE_URL = process.env.SUPABASE_URL?.trim() || process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
@@ -55,13 +60,22 @@ async function jpJson(u) {
 async function main() {
   const all = await jpJson(`/projects/${JP}/photos`);
   const photos = (Array.isArray(all) ? all : []).filter((p) => !p.isFolder && p.url && p.guid);
-  const slice = photos.slice(0, LIMIT === Infinity ? photos.length : LIMIT);
 
-  const { data: existingRows } = await sb.from("project_photos").select("jobplanner_photo_guid").eq("project_id", APP).not("jobplanner_photo_guid", "is", null);
+  const { data: existingRows } = await sb.from("project_photos").select("jobplanner_photo_guid, date_taken").eq("project_id", APP).not("jobplanner_photo_guid", "is", null);
   const have = new Set((existingRows ?? []).map((r) => r.jobplanner_photo_guid));
 
-  const todo = slice.filter((p) => !have.has(p.guid));
-  console.log(`JP ${JP} -> app ${APP}: ${photos.length} JP photos, taking first ${slice.length}, ${slice.length - todo.length} already imported, ${todo.length} to import.${APPLY ? "" : "  (DRY RUN)"}`);
+  let todo;
+  if (NEW_ONLY) {
+    // Only photos uploaded AFTER the newest one already imported for this project.
+    const newest = (existingRows ?? []).map((r) => r.date_taken).filter(Boolean).sort().pop();
+    todo = photos
+      .filter((p) => !have.has(p.guid) && (!newest || String(p.createdOn) > String(newest)))
+      .slice(0, NEW_ONLY_CAP);
+  } else {
+    const slice = photos.slice(0, LIMIT === Infinity ? photos.length : LIMIT);
+    todo = slice.filter((p) => !have.has(p.guid));
+  }
+  console.log(`JP ${JP} -> app ${APP}: ${photos.length} JP photos, ${have.size} already imported, ${todo.length} to import${NEW_ONLY ? " (new-only)" : LIMIT === Infinity ? "" : ` (limit ${LIMIT})`}.${APPLY ? "" : "  (DRY RUN)"}`);
   if (!APPLY) { for (const p of todo.slice(0, 5)) console.log(`  would import "${p.name}" (${(p.size / 1024).toFixed(0)}KB, ${String(p.createdOn).slice(0, 10)})`); if (todo.length > 5) console.log(`  … +${todo.length - 5} more`); return; }
 
   let ok = 0, failed = 0;

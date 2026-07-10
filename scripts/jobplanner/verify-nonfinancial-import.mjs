@@ -54,7 +54,9 @@ async function main() {
   for (const j of Array.isArray(jpRfis) ? jpRfis : []) {
     const a = aR.get(parseInt(String(j.number), 10));
     if (!a) { fails.push(`RFI #${j.number}: MISSING in app`); continue; }
-    if (norm(a.subject) !== norm(j.title)) fails.push(`RFI #${j.number} subject mismatch`);
+    // The importer substitutes `RFI <number>` when JobPlanner's title is empty — mirror it.
+    const expectedSubject = j.title || `RFI ${j.number}`;
+    if (norm(a.subject) !== norm(expectedSubject)) fails.push(`RFI #${j.number} subject: app "${a.subject}" vs expected "${expectedSubject}"`);
     const js = j.status === 2 ? "closed" : "open";
     if (a.status !== js) fails.push(`RFI #${j.number} status: app ${a.status} vs JP ${js}`);
     if (norm(a.question) !== norm(j.question)) fails.push(`RFI #${j.number} question mismatch`);
