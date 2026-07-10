@@ -1,9 +1,7 @@
 "use client";
 
-import * as React from "react";
 import type { ReactNode } from "react";
 import { ChevronRight, Eye, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,16 +18,18 @@ import type { TableColumn } from "./unified-table-page";
 /* ────────────────────────────────────────────────────────────────────────────
  * MobileCardList — renders table rows as touch-friendly cards on small screens.
  *
- * Displayed at the sm breakpoint (< 640px). Each row becomes a card with:
- *   - First column as the bold title (rendered as-authored — e.g. avatar + name)
- *   - 2-3 detail columns as label / value pairs
- *   - Row actions via a "..." menu (if provided)
- *   - Chevron indicator when the card is clickable
+ * Shown below the `sm` breakpoint (< 640px); the desktop <Table> takes over at
+ * ≥ sm. Each row becomes a card:
+ *   - First column → the identity block (rendered as-authored, e.g. avatar + name)
+ *   - Next 2-3 columns → a clean label / value metadata list
+ *   - Row actions via a "…" menu (if provided), else a chevron for clickable rows
  *
- * Cards animate in with a short, staggered slide-up on first mount. Because
- * keys are stable per row, only newly-added rows animate on re-render (existing
- * rows stay put during pagination/filtering), and the whole thing collapses to
- * a plain fade when the OS "reduce motion" setting is on.
+ * Motion: intentionally NONE on entrance. Cards render instantly at full
+ * opacity. An earlier version used a staggered fade/slide entrance (first via a
+ * JS animation loop, then via CSS) and BOTH stranded rows at opacity:0 when the
+ * animation was throttled — leaving most of the list invisible. Content must
+ * never depend on an animation completing to be seen. The only motion here is
+ * interaction-triggered (press / hover / focus), which can never hide a row.
  * ──────────────────────────────────────────────────────────────────────────── */
 
 interface MobileCardListProps<T> {
@@ -41,19 +41,14 @@ interface MobileCardListProps<T> {
   isFetching?: boolean;
   /** Custom row actions renderer (same as the desktop table) */
   rowActions?: (item: T) => ReactNode;
-  /** Default view handler — renders a simple "..." > View menu item when no custom rowActions */
+  /** Default view handler — renders a simple "…" > View menu item when no custom rowActions */
   onView?: (item: T) => void;
-  /** Default edit handler — renders a simple "..." > Edit menu item when no custom rowActions */
+  /** Default edit handler — renders a simple "…" > Edit menu item when no custom rowActions */
   onEdit?: (item: T) => void;
-  /** Default delete handler — renders a simple "..." > Delete menu when no custom rowActions */
+  /** Default delete handler — renders a simple "…" > Delete menu when no custom rowActions */
   onDelete?: (item: T) => void;
   hasRowActions: boolean;
 }
-
-// Cap the per-row entrance delay so a full page of rows still finishes its
-// reveal quickly instead of trickling in.
-const STAGGER_STEP = 0.028;
-const STAGGER_MAX = 0.24;
 
 export function MobileCardList<T>({
   items,
@@ -68,46 +63,34 @@ export function MobileCardList<T>({
   onDelete,
   hasRowActions,
 }: MobileCardListProps<T>) {
-  const prefersReducedMotion = useReducedMotion();
-
   return (
     <div
       className={cn(
         "sm:hidden [&_button]:min-h-11 [&_button]:min-w-11",
-        isFetching && "opacity-70",
+        isFetching && "opacity-70 transition-opacity",
       )}
     >
-      <div className="flex flex-col gap-2.5">
-        {items.map((item, index) => {
+      <div className="flex flex-col gap-3">
+        {items.map((item) => {
           const rowId = getRowId(item);
           const isActive = activeRowId === rowId;
           const isClickable = Boolean(onRowClick);
 
-          // First column → card title. Next 2-3 → detail rows.
+          // First column → identity block. Next 2-3 → metadata rows.
           const titleCol = columns[0];
           const detailCols = columns.slice(1, 4);
 
           return (
-            <motion.div
+            <div
               key={rowId}
-              initial={
-                prefersReducedMotion
-                  ? { opacity: 0 }
-                  : { opacity: 0, y: 10 }
-              }
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.32,
-                delay: Math.min(index * STAGGER_STEP, STAGGER_MAX),
-                ease: [0.22, 1, 0.36, 1],
-              }}
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               className={cn(
-                "rounded-2xl bg-card px-4 py-3.5 shadow-sm transition-colors",
+                "rounded-2xl bg-card p-4 shadow-sm",
+                "transition-[background-color,box-shadow,transform] duration-200",
                 isClickable &&
-                  "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background active:bg-muted/40",
-                isActive && "bg-primary/[0.05]",
+                  "cursor-pointer hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99] active:bg-muted/40",
+                isActive && "ring-2 ring-primary/60",
               )}
               onClick={isClickable ? () => onRowClick?.(item) : undefined}
               onKeyDown={
@@ -120,42 +103,15 @@ export function MobileCardList<T>({
                   : undefined
               }
             >
-              <div className="flex min-w-0 items-start gap-2">
-                {/* Main content area */}
-                <div className="min-w-0 flex-1">
-                  {/* Title row — rendered exactly as the column authored it
-                      (e.g. avatar + name). No layout overrides so avatar and
-                      label stay adjacent instead of being pushed apart. */}
-                  {titleCol && (
-                    <div className="min-w-0 text-[15px] font-semibold leading-tight text-foreground [&_p]:truncate">
-                      {titleCol.render(item)}
-                    </div>
-                  )}
-
-                  {/* Detail rows: label / value pairs */}
-                  {detailCols.length > 0 && (
-                    <div className="mt-3 grid min-w-0 grid-cols-1 gap-y-1.5">
-                      {detailCols.map((col) => (
-                        <div
-                          key={col.id}
-                          className="grid min-w-0 grid-cols-[7rem_1fr] items-baseline gap-3"
-                        >
-                          <span className="text-[11px] font-medium uppercase leading-tight tracking-wide text-muted-foreground">
-                            {col.label}
-                          </span>
-                          <span className="min-w-0 truncate text-sm text-foreground [&_*]:truncate">
-                            {col.render(item)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+              {/* Identity row: title (as authored) + actions/chevron */}
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="min-w-0 flex-1 text-[15px] font-semibold leading-tight text-foreground [&_p]:truncate">
+                  {titleCol?.render(item)}
                 </div>
 
-                {/* Row actions menu */}
-                {hasRowActions && (
+                {hasRowActions ? (
                   <div
-                    className="-mr-2 -mt-1.5 flex-shrink-0"
+                    className="-mr-1.5 shrink-0"
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => event.stopPropagation()}
                   >
@@ -167,7 +123,7 @@ export function MobileCardList<T>({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-muted-foreground"
+                            className="h-9 w-9 text-muted-foreground"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
@@ -202,14 +158,31 @@ export function MobileCardList<T>({
                       </DropdownMenu>
                     ) : null}
                   </div>
-                )}
-
-                {/* Chevron indicator for clickable cards (when no row actions) */}
-                {isClickable && !hasRowActions && (
-                  <ChevronRight className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground/50" />
-                )}
+                ) : isClickable ? (
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/40" />
+                ) : null}
               </div>
-            </motion.div>
+
+              {/* Metadata: label / value list, aligned like a spec sheet. Labels
+                  never wrap; long values truncate. */}
+              {detailCols.length > 0 && (
+                <div className="mt-3.5 space-y-2">
+                  {detailCols.map((col) => (
+                    <div
+                      key={col.id}
+                      className="flex min-w-0 items-baseline justify-between gap-4"
+                    >
+                      <span className="whitespace-nowrap text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {col.label}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-right text-sm text-foreground [&_*]:truncate">
+                        {col.render(item)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

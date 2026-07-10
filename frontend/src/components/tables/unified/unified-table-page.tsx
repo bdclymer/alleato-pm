@@ -2077,7 +2077,7 @@ export function UnifiedTablePage<T>({
       // it with this large <h1>.
       titleContent={
         header.variant === "compact" ? undefined : (
-          <h1 className="truncate text-3xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
+          <h1 className="truncate text-xl font-medium text-foreground/90 sm:text-3xl lg:text-[2rem]">
             {header.title}
           </h1>
         )
