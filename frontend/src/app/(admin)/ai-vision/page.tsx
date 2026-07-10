@@ -120,8 +120,8 @@ function SectionHead({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Content (sourced from AI-MASTER-PLAN, AI-VISION, AI-TOOLS-INVENTORY,
-// AI-OS-GAP-MATRIX, AI-OS-PHASE-1-PLAN, AGENT_ACTION_LAYER_CONTRACT).
+// Content: this page IS the canonical vision statement (the old ai-plan doc
+// tree was retired). The ranked build queue lives in docs/roadmap/AI-ROADMAP.md.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PILLARS: { icon: React.ComponentType<{ className?: string }>; title: string; body: string }[] = [
@@ -325,12 +325,8 @@ const LIVE_SURFACES: {
 ];
 
 const SOURCE_DOCS: string[] = [
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-MASTER-PLAN.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-VISION.md",
-  "docs/architecture/AI-TOOLS-INVENTORY.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-GAP-MATRIX.md",
-  "docs/archive/2026-06-22-docs-migration/ai-plan/AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md",
-  "AGENT_ACTION_LAYER_CONTRACT.md",
+  "docs/roadmap/AI-ROADMAP.md",
+  "docs/architecture/AI-RAG-ARCHITECTURE.md",
 ];
 
 export default async function AiVisionPage() {
@@ -624,7 +620,7 @@ export default async function AiVisionPage() {
         <div className="mb-3 flex items-center gap-2">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            This page is compiled from
+            Companion docs
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -638,8 +634,8 @@ export default async function AiVisionPage() {
           ))}
         </div>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          When the plan changes, update those source docs and refresh this page — it&apos;s meant to
-          be the one place you and the team look instead of hunting through scattered files.
+          This page is the canonical vision statement. The ranked build queue lives in
+          AI-ROADMAP.md — when the plan changes, update the roadmap and refresh this page.
         </p>
       </section>
     </PageShell>
