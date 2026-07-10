@@ -18,6 +18,20 @@ function nullableUuidField() {
   return z.preprocess(normalizeBlankToNull, z.string().uuid().optional().nullable());
 }
 
+// This helper validates optional numeric fields, coercing blank/typed input to a number or null.
+function nullableNumberField() {
+  return z.preprocess((value) => {
+    if (value === null || value === undefined) return null;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed === "") return null;
+      const parsed = Number(trimmed);
+      return Number.isNaN(parsed) ? trimmed : parsed;
+    }
+    return value;
+  }, z.number().optional().nullable());
+}
+
 // This helper validates optional date fields and rejects non-ISO values before the DB insert/update.
 function nullableDateField() {
   return z.preprocess(
@@ -42,6 +56,8 @@ const punchItemCommonFields = {
     normalizeBlankToNull,
     z.enum(["low", "medium", "high"]).optional().nullable(),
   ),
+  punch_item_manager_id: nullableUuidField(),
+  final_approver_id: nullableUuidField(),
   assignee_id: nullableUuidField(),
   assignee_company: nullableTextField(),
   ball_in_court: nullableTextField(),
@@ -51,6 +67,12 @@ const punchItemCommonFields = {
   type: nullableTextField(),
   reference: nullableTextField(),
   drawing_reference: nullableTextField(),
+  cost_code: nullableTextField(),
+  cost_impact: nullableNumberField(),
+  is_private: z.preprocess(
+    (value) => (value === "" || value === undefined ? undefined : value),
+    z.boolean().optional(),
+  ),
 } as const;
 
 export const createPunchItemSchema = z.object({

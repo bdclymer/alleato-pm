@@ -2,15 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Edit, X, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DetailField, DetailFieldGrid, EmptyState } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { apiFetch } from "@/lib/api-client";
 import {
-  PunchItemFormDialog,
+  flattenProjectTeamAssignees,
+  type ProjectTeamRole,
+} from "@/components/domain/punch-items/project-team-assignee-options";
+import {
+  PunchItemFormSheet,
   type PunchItemFormValues,
-} from "@/components/domain/punch-items/punch-item-form-dialog";
+} from "@/components/domain/punch-items/punch-item-form-sheet";
 import {
   PunchItemStatusBadge,
   PunchItemPriorityBadge,
@@ -89,6 +95,20 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const updateMutation = useUpdatePunchItem(projectId);
+
+  // Resolve person ids (manager / approver) to names for display.
+  const { data: projectTeam = [] } = useQuery({
+    queryKey: ["project-team-assignees", String(projectId)],
+    queryFn: async () => {
+      const res = await apiFetch<{ data: ProjectTeamRole[] }>(
+        `/api/projects/${projectId}/directory/roles`,
+      );
+      return flattenProjectTeamAssignees(res.data ?? []);
+    },
+    staleTime: 60_000,
+  });
+  const personName = (id: string | null | undefined): string | null =>
+    id ? (projectTeam.find((p) => p.id === id)?.full_name ?? null) : null;
 
   if (!item) {
     return (
@@ -176,6 +196,8 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
         <div>
           <SectionTitle>Assignment</SectionTitle>
           <DetailFieldGrid columns={2} className="sm:grid-cols-1">
+            <DetailField label="Punch Item Manager" value={personName(item.punch_item_manager_id)} />
+            <DetailField label="Final Approver" value={personName(item.final_approver_id)} />
             <DetailField label="Assignee Company" value={item.assignee_company} />
             <DetailField label="Ball in Court" value={item.ball_in_court} />
             <DetailField label="Due Date" value={formatDate(item.due_date)} />
@@ -198,6 +220,7 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
             {item.cost_impact != null && (
               <DetailField label="Cost Impact" value={item.cost_impact} currency />
             )}
+            <DetailField label="Private" value={item.is_private ? "Yes" : "No"} />
           </DetailFieldGrid>
         </div>
       </div>
@@ -213,8 +236,8 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
         </DetailFieldGrid>
       </div>
 
-      {/* Edit dialog */}
-      <PunchItemFormDialog
+      {/* Edit sheet */}
+      <PunchItemFormSheet
         open={editOpen}
         onOpenChange={setEditOpen}
         onSubmit={handleEditSubmit}

@@ -572,9 +572,9 @@ function PunchItemContent({
   const items = itemsRaw?.items ?? [];
   const createItem = useCreatePunchItem(projectIdNum);
 
-  // Same form contract as PunchItemFormDialog. Reusing PunchItemFormFields
+  // Same form contract as PunchItemFormSheet. Reusing PunchItemFormFields
   // keeps the field set + validation in lockstep with the canonical create
-  // dialog used by the punch list page.
+  // side panel used by the punch list page.
   const form = useForm<PunchItemFormValues>({
     resolver: zodResolver(punchItemFormSchema),
     defaultValues: buildPunchItemDefaults(),
