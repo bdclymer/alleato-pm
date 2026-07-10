@@ -108,6 +108,14 @@ export interface ProjectHomeV2Props {
   pendingSsovReviews?: Array<{ commitmentId: string; commitmentNumber: string; commitmentTitle: string; submittedAt: string | null }>;
   ownerInvoices?: OwnerInvoice[];
   linkDocuments?: ProjectDocument[];
+  /** Daily synopsis from project_current_state, refreshed by the executive deep read. */
+  synopsis?: {
+    summary: string | null;
+    fieldRead: string | null;
+    scheduleRead: string | null;
+    financialRead: string | null;
+    updatedAt: string | null;
+  } | null;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -254,6 +262,7 @@ export function ProjectHomeCommandCenterV2({
   pendingSsovReviews = [],
   ownerInvoices = [],
   linkDocuments = [],
+  synopsis = null,
 }: ProjectHomeV2Props) {
   const projectId = String(project.id);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -493,6 +502,35 @@ export function ProjectHomeCommandCenterV2({
           </div>
         </div>
       </div>
+
+      {/* ── SYNOPSIS (daily deep read) ───────────────────── */}
+      {synopsis?.summary && (
+        <section className="mb-8">
+          <SectionHeading title="Synopsis" />
+          <p className="max-w-prose text-sm leading-relaxed text-foreground">{synopsis.summary}</p>
+          {(synopsis.fieldRead || synopsis.scheduleRead || synopsis.financialRead) && (
+            <div className="mt-4 grid max-w-4xl gap-x-8 gap-y-3 sm:grid-cols-3">
+              {[
+                { l: "Field", v: synopsis.fieldRead },
+                { l: "Schedule", v: synopsis.scheduleRead },
+                { l: "Financial", v: synopsis.financialRead },
+              ]
+                .filter((r) => r.v)
+                .map((r) => (
+                  <div key={r.l}>
+                    <div className={cn(EYE, "mb-1")}>{r.l}</div>
+                    <p className="text-[13px] leading-relaxed text-muted-foreground">{r.v}</p>
+                  </div>
+                ))}
+            </div>
+          )}
+          {synopsis.updatedAt && (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Updated {formatShortDate(synopsis.updatedAt) ?? "recently"} · from the daily executive deep read
+            </p>
+          )}
+        </section>
+      )}
 
       {/* ── BODY: main + rail ────────────────────────────── */}
       <div className="flex flex-col gap-8 xl:flex-row">

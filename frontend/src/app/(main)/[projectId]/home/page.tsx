@@ -537,6 +537,22 @@ export default async function ProjectHomePage({
     ? []
     : linkDocumentsResult.data || [];
 
+  // Daily synopsis — the executive deep read refreshes this row every day.
+  const { data: currentState } = await supabase
+    .from("project_current_state")
+    .select("current_summary, field_read, schedule_read, financial_read, updated_at")
+    .eq("project_id", numericProjectId)
+    .maybeSingle();
+  const synopsis = currentState
+    ? {
+        summary: currentState.current_summary,
+        fieldRead: currentState.field_read,
+        scheduleRead: currentState.schedule_read,
+        financialRead: currentState.financial_read,
+        updatedAt: currentState.updated_at,
+      }
+    : null;
+
   return (
     <PageShell
       variant="dashboard"
@@ -560,6 +576,7 @@ export default async function ProjectHomePage({
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
         linkDocuments={linkDocuments}
+        synopsis={synopsis}
       />
     </PageShell>
   );
