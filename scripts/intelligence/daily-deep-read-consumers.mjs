@@ -573,21 +573,11 @@ function tasksFromPacket(packet, projectRows, people) {
     });
   };
 
-  // Owner decisions → Brandon's tasks.
-  for (const call of brief.callsToday || []) {
-    if (!call?.project || !call?.question) continue;
-    push({
-      title: call.question,
-      description: call.question,
-      ownerIsBrandon: true,
-      project: call.project,
-      sourceIdsRaw: call.sourceIds,
-      origin: "calls_today",
-      priority: "high",
-    });
-  }
-
-  // Action items → owner tasks (owner + due carried through the structured brief).
+  // Tasks come ONLY from actionItems — the trackable work. callsToday holds
+  // Brandon's open DECISIONS, which are surfaced in the brief's decisions
+  // section, not the task list; turning a decision ("Should you…?") into a task
+  // produces a non-actionable, question-phrased row. actionItems already split
+  // Brandon's own work (ownerIsBrandon) from delegated work.
   for (const project of brief.projects || []) {
     for (const item of project.actionItems || []) {
       if (!item?.text) continue;

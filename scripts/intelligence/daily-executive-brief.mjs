@@ -804,8 +804,10 @@ const BRIEF_V3_SYSTEM_PROMPT = [
   "Rules:",
   "- Order projects most urgent first. Projects with hasOwnerDecision=true are the priority and come first.",
   "- callsToday lists ONLY Brandon's own decisions — one per decision, phrased as the question, with NO status or context. Every callsToday.project MUST be a project whose hasOwnerDecision is true.",
-  "- Lead each project with actionItems. Set ownerIsBrandon=true for Brandon's own decisions/approvals; otherwise owner is the responsible person's name.",
-  "- Use a real due date only when one exists in the sources; otherwise set due=null and give an honest urgency phrase. NEVER invent a date.",
+  "- actionItems ARE the real, trackable tasks that come out of today. Each must be a single concrete piece of work a named person can start and finish — start every `text` with an imperative verb (Send, Confirm, Rebuild, Return, Obtain, Submit, Price, Schedule, Assign, Approve). NEVER an observation, status, restatement, or 'monitor/keep an eye on/stay aligned' filler. If it isn't a doable, checkable action, it is not an actionItem.",
+  "- COMBINE related work into ONE task. If two steps would be done together as a single piece of work, merge them into one actionItem (e.g. 'Obtain Uniqlo's written approval on the $35,100 panel and give them the drop-dead decision date' is ONE task, not two). Never emit two near-duplicate items for the same work. Keep only the tasks that actually matter — at most 3 per project; if there are more, keep the highest-leverage ones and drop the rest.",
+  "- actionItems hold the WORK; callsToday holds Brandon's open DECISIONS. Do not repeat a callsToday decision as an actionItem. Set ownerIsBrandon=true only when Brandon must personally DO the work (approve, sign, assign an owner) — not when he merely needs to decide. Otherwise owner is the responsible person's name.",
+  "- Every actionItem MUST be trackable, which means it MUST have a due date: set both `dueIso` (ISO date) and `due` (human date like 'July 14') on every one. Use a date stated in the sources when one exists. When none is stated, set a realistic TARGET from the urgency — near-term blockers within 2-3 days, routine follow-ups within about a week — and put a short honest note in `urgency` such as 'target — no hard deadline stated'. Never leave dueIso null, and never present an inferred target as a hard external commitment.",
   "- context is plain, complete sentences. Spell out abbreviations ('Uniqlo' not 'UQ', 'certificate of insurance' not 'COI'). Write dates as words ('July 14'). Quote other people verbatim when decision-grade; render Brandon's own directives as his calls, not quotes at him. Do NOT write a how-to-read line.",
   "- Citations: every fact carries its source alias. Put aliases (e.g. S12) in the relevant sourceIds arrays AND inline in context prose wrapped in square brackets like [S12]. NEVER alter, lengthen, shorten, merge, or invent an alias.",
   "- Always refer to a project by its name — never a numeric id, never 'Project <number>'. If a source is 'Unassigned', omit it or fold it into an unassigned note.",
@@ -840,28 +842,42 @@ async function draftExecutiveBrief(sources) {
     laneNotes[lane] = await summarizeLane(lane, grouped[lane]);
   }
 
-  const raw = await callModel(
-    [
-      { role: "system", content: BRIEF_V3_SYSTEM_PROMPT },
+  const userMessage = {
+    role: "user",
+    content: JSON.stringify(
       {
-        role: "user",
-        content: JSON.stringify(
-          {
-            businessDate,
-            sourceCounts: Object.fromEntries(Object.entries(grouped).map(([key, value]) => [key, value.length])),
-            laneNotes,
-          },
-          null,
-          2,
-        ),
+        businessDate,
+        sourceCounts: Object.fromEntries(Object.entries(grouped).map(([key, value]) => [key, value.length])),
+        laneNotes,
       },
-    ],
-    9000,
-  );
+      null,
+      2,
+    ),
+  };
 
-  const parsed = parseModelJson(raw);
-  if (!parsed || typeof parsed !== "object") {
-    throw new Error("Brief model did not return parseable JSON for the structured brief.");
+  // The structured brief is a single JSON generation with no schema enforcement,
+  // so an occasional non-JSON reply would otherwise fail the WHOLE brief (and
+  // every task/candidate/record downstream). Retry a few times with a corrective
+  // nudge before giving up — a transient bad reply must not sink the daily run.
+  let parsed = null;
+  for (let attempt = 1; attempt <= 3 && !parsed; attempt += 1) {
+    const messages = [
+      { role: "system", content: BRIEF_V3_SYSTEM_PROMPT },
+      userMessage,
+    ];
+    if (attempt > 1) {
+      messages.push({
+        role: "system",
+        content:
+          "Your previous reply was not valid JSON. Return ONLY the single JSON object described above — no prose, no explanation, no markdown code fences.",
+      });
+    }
+    const raw = await callModel(messages, 9000);
+    const candidate = parseModelJson(raw);
+    if (candidate && typeof candidate === "object") parsed = candidate;
+  }
+  if (!parsed) {
+    throw new Error("Brief model did not return parseable JSON for the structured brief after 3 attempts.");
   }
 
   const structured = {
