@@ -5,6 +5,25 @@
 
 ---
 
+## Master AI Roadmap created (2026-07-10)
+
+- **`docs/roadmap/AI-ROADMAP.md`** is now the single ranked map for all AI work — PR #900
+  (branch `claude/elito-ai-roadmap-ea3054`). Visual version published as a Claude artifact
+  (link in PR conversation). `.gitignore` now allowlists `docs/roadmap/`.
+- Built from a full audit of every AI surface's real maturity. Headline: **4 complete
+  systems default OFF** (`EXECUTIVE_DAILY_BRIEF_ENABLED`,
+  `MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED`, `AUTONOMOUS_TRIAGE_ENABLED`,
+  `AI_ASSISTANT_LEARNING_PROPOSALS_ENABLED`); AI Submittal Review is the most complete
+  non-chat AI feature (needs real-world validation, not building); AI estimating is the
+  only true quarter-scale build (crawl/walk/run split in the doc; takeoff = buy not build).
+- Structure: 4 horizons (activate → AI PM v1 → drafting → estimating/prediction),
+  L0–L4 maturity ladder + Definition of Done, effort ratings with reasons, one-initiative-
+  in-flight rule, status ledger (update it whenever an item's level changes).
+- Stale-plan findings: old `AI-MASTER-PLAN.md` tree is DELETED (memory was stale);
+  `/ai-vision` admin page is the phase framework of record; meetings AI phases 2–5 are
+  architecture-locked in `docs/superpowers/plans/2026-07-01-meetings-tool.md`.
+- Next action per roadmap: **H1 item 1 — flip `EXECUTIVE_DAILY_BRIEF_ENABLED` + verify.**
+
 ## AI Email Feedback panel redesign — "Confirm & Correct" (2026-07-08)
 
 - Replaced the confusing "AI Classification" verdict list on

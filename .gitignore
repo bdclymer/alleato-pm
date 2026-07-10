@@ -92,6 +92,7 @@ docs/architecture/generated/
 !docs/patterns/
 !docs/ops/
 !docs/reference/
+!docs/roadmap/
 
 # Playwright
 /playwright-report/
