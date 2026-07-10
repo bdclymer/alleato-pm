@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Download, Edit, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import { Download, Edit, Eye, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   ContentSectionStack,
@@ -12,6 +12,9 @@ import {
 import { ErrorState } from "@/components/ds/error-state";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { DetailActions } from "@/components/ds/DetailActions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Markdown } from "@/components/misc/markdown";
 import { AiFeedbackControl } from "@/components/ai/ai-feedback-control";
 import { Button } from "@/components/ui/button";
@@ -255,6 +258,9 @@ export function ProgressReportEditor({
   const [isSending, setIsSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [reportAudience, setReportAudience] = useState<"client" | "internal">("client");
+  const [reportLength, setReportLength] = useState<"detailed" | "brief">("detailed");
 
   useProjectTitle(draft?.title ?? "Progress Report");
 
@@ -519,10 +525,12 @@ export function ProgressReportEditor({
   );
 
   const weekRange = `${formatProgressReportDate(draft.week_start)} – ${formatProgressReportDate(draft.week_end)}`;
+  const viewQuery = `audience=${reportAudience}&length=${reportLength}`;
+  const previewSrc = `/api/projects/${projectId}/progress-reports/${reportId}/pdf?format=html&${viewQuery}`;
   const handleDownloadPdf = () => {
     void downloadPdf({
-      endpoint: `/api/projects/${projectId}/progress-reports/${reportId}/pdf`,
-      filename: draft.title || "progress-report",
+      endpoint: `/api/projects/${projectId}/progress-reports/${reportId}/pdf?${viewQuery}`,
+      filename: `${draft.title || "progress-report"} (${reportAudience}, ${reportLength})`,
       errorMessage: "Progress report PDF download failed. Try again.",
     });
   };
@@ -1000,20 +1008,66 @@ export function ProgressReportEditor({
           <p className="text-xs text-muted-foreground">{weekRange}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsEditing(true)}
-          >
+          <Button size="sm" onClick={() => setIsEditing(true)}>
             <Edit className="mr-1.5 h-4 w-4" />
-            Edit
+            Edit Progress Report
           </Button>
-          <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-            <Download className="mr-1.5 h-4 w-4" />
-            Download PDF
-          </Button>
+          <DetailActions
+            extraActions={[
+              {
+                label: "Preview Report",
+                icon: <Eye className="h-4 w-4" />,
+                onClick: () => setIsPreviewOpen(true),
+              },
+              {
+                label: "Download PDF",
+                icon: <Download className="h-4 w-4" />,
+                onClick: handleDownloadPdf,
+              },
+            ]}
+          />
         </div>
       </div>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent size="fullscreen" className="flex flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="flex-row flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
+            <DialogTitle className="text-sm font-medium">Report preview</DialogTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <ToggleGroup
+                type="single"
+                size="sm"
+                value={reportAudience}
+                onValueChange={(v) => v && setReportAudience(v as "client" | "internal")}
+              >
+                <ToggleGroupItem value="client">Client</ToggleGroupItem>
+                <ToggleGroupItem value="internal">Internal</ToggleGroupItem>
+              </ToggleGroup>
+              <ToggleGroup
+                type="single"
+                size="sm"
+                value={reportLength}
+                onValueChange={(v) => v && setReportLength(v as "detailed" | "brief")}
+              >
+                <ToggleGroupItem value="detailed">Detailed</ToggleGroupItem>
+                <ToggleGroupItem value="brief">Brief</ToggleGroupItem>
+              </ToggleGroup>
+              <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
+                <Download className="mr-1.5 h-4 w-4" />
+                Download this version
+              </Button>
+            </div>
+          </DialogHeader>
+          {isPreviewOpen && (
+            <iframe
+              key={viewQuery}
+              title="Progress report preview"
+              src={previewSrc}
+              className="min-h-0 flex-1 bg-background"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
         <div className="space-y-0">

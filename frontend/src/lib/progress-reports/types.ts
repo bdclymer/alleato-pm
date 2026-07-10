@@ -71,6 +71,8 @@ export interface ProgressReportRecord {
   past_week_highlights: string;
   upcoming_week_activities: string;
   open_items: string;
+  /** Internal-only notes (risks/contract strategy). Rendered only in the internal audience view. */
+  internal_notes: string | null;
   weather_days_lost: number;
   contacts: ProgressReportContact[];
   client_recipients: string[];

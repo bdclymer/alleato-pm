@@ -573,17 +573,30 @@ export async function createProgressReportDraft({
   // edited by a real user or promoted to ready/sent are never auto-overwritten.
   const { data: existing } = await db
     .from("project_progress_reports")
-    .select("id, status, updated_by")
+    .select("id, status, updated_by, source_snapshot")
     .eq("project_id", projectId)
     .eq("week_start", range.weekStart)
     .eq("week_end", range.weekEnd)
     .maybeSingle();
 
+  // The daily deep read is the source of truth for report content and refreshes
+  // this row every day (source_snapshot.source === "daily_deep_read"). The weekly
+  // meetings/emails builder must NOT clobber it — otherwise the two writers would
+  // flip-flop the content day to day. Leave deep-read-owned drafts alone.
+  const existingSource = (existing?.source_snapshot as { source?: string } | null)?.source;
+  const isDeepReadOwned = existingSource === "daily_deep_read";
+
   const shouldRefresh =
     !!existing?.id &&
     existing.status === "draft" &&
     existing.updated_by === PROGRESS_REPORT_CRON_USER_ID &&
-    userId === PROGRESS_REPORT_CRON_USER_ID;
+    userId === PROGRESS_REPORT_CRON_USER_ID &&
+    !isDeepReadOwned;
+
+  if (existing?.id && isDeepReadOwned && userId === PROGRESS_REPORT_CRON_USER_ID) {
+    // Deep read owns this week's report; the weekly cron defers to it.
+    return { reportId: existing.id as string, action: "skipped" as const };
+  }
 
   if (existing?.id && !shouldRefresh) {
     return { reportId: existing.id as string, action: "skipped" as const };

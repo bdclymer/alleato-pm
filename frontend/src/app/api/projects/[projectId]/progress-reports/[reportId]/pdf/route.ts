@@ -51,6 +51,10 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    const url = new URL(request.url);
+    const audience = url.searchParams.get("audience") === "internal" ? "internal" : "client";
+    const length = url.searchParams.get("length") === "brief" ? "brief" : "detailed";
+
     const layout = buildProgressReportPdfLayout({
       project: projectResult.data,
       report: {
@@ -58,7 +62,22 @@ export const GET = withApiGuardrails(
         contacts: resolveProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
       selectedPhotos: detail.selectedPhotos,
+      view: { audience, length },
     });
+
+    // Preview path: return the exact branded HTML the PDF is rendered from, so the
+    // in-app "Preview Report" shows a faithful render of the printed document
+    // without paying for a full PDF render. Same source of truth as the PDF.
+    if (url.searchParams.get("format") === "html") {
+      return new NextResponse(layout.html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "private, no-store",
+        },
+      });
+    }
+
     const pdfBuffer = await renderPdfFromHtml(layout.html, {
       footerOverlayPlan: layout.footerOverlayPlan,
     });
@@ -66,11 +85,9 @@ export const GET = withApiGuardrails(
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .slice(0, 40);
-    const filename = `${safeName || "project"}-progress-report-${detail.report.week_end}.pdf`;
+    const filename = `${safeName || "project"}-progress-report-${audience}-${length}-${detail.report.week_end}.pdf`;
     const disposition =
-      new URL(request.url).searchParams.get("disposition") === "inline"
-        ? "inline"
-        : "attachment";
+      url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

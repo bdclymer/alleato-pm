@@ -52,8 +52,33 @@ function renderRichInline(value: string): string {
     .replace(/\*\*([^*]+)\*/g, "<strong>$1</strong>");
 }
 
-function renderBulletSection(title: string, value: string) {
-  const lines = bulletLines(value);
+export type ProgressReportAudience = "client" | "internal";
+export type ProgressReportLength = "detailed" | "brief";
+export interface ProgressReportView {
+  audience: ProgressReportAudience;
+  length: ProgressReportLength;
+}
+export const DEFAULT_PROGRESS_REPORT_VIEW: ProgressReportView = {
+  audience: "client",
+  length: "detailed",
+};
+
+// Brief mode keeps each bullet to a single, scannable line — the condensed
+// register the report used before. Trim at a sentence boundary near the cap so
+// the line stays grammatical, then hard-cap as a fallback.
+const BRIEF_LINE_CHARS = 120;
+function briefLine(line: string): string {
+  const text = line.replace(/\*\*/g, "").trim();
+  if (text.length <= BRIEF_LINE_CHARS) return line;
+  const window = text.slice(0, BRIEF_LINE_CHARS);
+  const lastStop = Math.max(window.lastIndexOf(". "), window.lastIndexOf("; "));
+  if (lastStop > 60) return text.slice(0, lastStop + 1);
+  const lastSpace = window.lastIndexOf(" ");
+  return `${text.slice(0, lastSpace > 60 ? lastSpace : BRIEF_LINE_CHARS).trim()}…`;
+}
+
+function renderBulletSection(title: string, value: string, length: ProgressReportLength = "detailed") {
+  const lines = bulletLines(value).map((line) => (length === "brief" ? briefLine(line) : line));
   return `
     <section class="section">
       <h2>${esc(title)}</h2>
@@ -99,6 +124,7 @@ export function buildProgressReportHtml({
   project,
   report,
   selectedPhotos,
+  view = DEFAULT_PROGRESS_REPORT_VIEW,
 }: {
   project: {
     name: string | null;
@@ -107,7 +133,9 @@ export function buildProgressReportHtml({
   };
   report: ProgressReportRecord;
   selectedPhotos: ProgressReportPhotoSelection[];
+  view?: ProgressReportView;
 }): string {
+  const { audience, length } = view;
   const title = project.name ? `${project.name} Progress Report` : report.title;
   const addressLine = project.address;
   const weekRange = formatWeekRange(report.week_start, report.week_end);
@@ -262,9 +290,15 @@ export function buildProgressReportHtml({
       }
     </section>
 
-    ${renderBulletSection("1. Past Week’s Highlights", report.past_week_highlights)}
-    ${renderBulletSection("2. Upcoming Week’s Activities", report.upcoming_week_activities)}
-    ${renderBulletSection("3. Open Items", report.open_items)}
+    ${renderBulletSection("1. Past Week’s Highlights", report.past_week_highlights, length)}
+    ${renderBulletSection("2. Upcoming Week’s Activities", report.upcoming_week_activities, length)}
+    ${renderBulletSection("3. Open Items", report.open_items, length)}
+
+    ${
+      audience === "internal" && (report.internal_notes ?? "").trim()
+        ? renderBulletSection("Internal Notes (not shared with client)", report.internal_notes as string, length)
+        : ""
+    }
 
     <section class="section">
       <h2>4. Days Lost Due to Weather This Week</h2>
@@ -302,6 +336,7 @@ export function buildProgressReportPdfLayout({
   project,
   report,
   selectedPhotos,
+  view = DEFAULT_PROGRESS_REPORT_VIEW,
   generatedAt = new Date(),
 }: {
   project: {
@@ -311,6 +346,7 @@ export function buildProgressReportPdfLayout({
   };
   report: ProgressReportRecord;
   selectedPhotos: ProgressReportPhotoSelection[];
+  view?: ProgressReportView;
   generatedAt?: Date;
 }): {
   html: string;
@@ -321,7 +357,7 @@ export function buildProgressReportPdfLayout({
     : report.title;
 
   return {
-    html: buildProgressReportHtml({ project, report, selectedPhotos }),
+    html: buildProgressReportHtml({ project, report, selectedPhotos, view }),
     footerOverlayPlan: buildBrandedLastPageFooterOverlayPlan({
       documentTitle,
       generatedAtLabel: formatFooterGeneratedAt(generatedAt),

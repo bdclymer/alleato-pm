@@ -19,9 +19,17 @@ dotenv.config({ path: path.join(process.cwd(), "frontend/.env.local"), quiet: tr
 
 const COMPILER_VERSION = "daily_deep_read_consumers_v1";
 const DAILY_TARGET_SLUG = "daily-executive-brief";
+// Sentinel owner shared with the weekly cron (PROGRESS_REPORT_CRON_USER_ID in
+// frontend/src/lib/progress-reports/server.ts). Reports owned by this id are
+// system-generated drafts safe to refresh; a real user id means a human edited
+// it and we must never overwrite.
+const PROGRESS_REPORT_CRON_USER_ID = "00000000-0000-0000-0000-000000000001";
 const args = parseArgs(process.argv.slice(2));
 const packetIdArg = typeof args.packetId === "string" ? args.packetId : null;
 const shouldWrite = !args["no-write"] && !args["dry-run"];
+// Run only the progress-report step (skip candidates/tasks/current-state). Used
+// to (re)build reports on demand without re-running the whole consumer.
+const progressReportsOnly = Boolean(args["progress-reports-only"]);
 
 function parseArgs(argv) {
   const parsed = {};
@@ -909,9 +917,164 @@ async function writeProjectCurrentState(records) {
   });
 }
 
+// ── Weekly progress reports (cheap, no LLM) ──────────────────────────────────
+// The daily deep read already synthesized every project once. The client-facing
+// weekly progress report is just a reshape of that same per-project record — it
+// must NOT re-run its own expensive per-project generation. This assembles the
+// three report sections straight from the deep-read fields we already computed.
+
+function currentWeekRange(referenceDate = new Date()) {
+  // Mirror defaultWeeklyReportRange() in the app: trailing 7 days ending today.
+  const end = new Date(referenceDate);
+  end.setHours(0, 0, 0, 0);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 7);
+  return { weekStart: start.toISOString().slice(0, 10), weekEnd: end.toISOString().slice(0, 10) };
+}
+
+function bulletize(lines) {
+  return lines.map((line) => String(line || "").trim()).filter(Boolean).map((line) => `- ${line}`).join("\n");
+}
+
+function titlesOf(items) {
+  return (Array.isArray(items) ? items : []).map((item) => item?.title).filter(Boolean);
+}
+
+// Map one deep-read project record → the report sections, split by audience.
+// Shared/client-visible: highlights (what changed + field/schedule/financial),
+// upcoming (needs-attention), open items (decisions the client owes).
+// Internal-only ("the dirt"): our active risk assessment — never sent to the client.
+function assembleProgressSections(rich) {
+  const highlights = [
+    ...titlesOf(rich.whatChanged),
+    rich.fieldRead ? `**Field:** ${rich.fieldRead}` : null,
+    rich.scheduleRead ? `**Schedule:** ${rich.scheduleRead}` : null,
+    rich.financialRead ? `**Financial:** ${rich.financialRead}` : null,
+  ].filter(Boolean);
+  const upcoming = titlesOf(rich.needsAttention);
+  const open = titlesOf(rich.openDecisions);
+  const internal = titlesOf(rich.activeRisks); // internal-only risk read
+  if (!highlights.length && !upcoming.length && !open.length && !internal.length) return null;
+  return {
+    past_week_highlights: bulletize(highlights),
+    upcoming_week_activities: bulletize(upcoming),
+    open_items: open.length
+      ? bulletize(open)
+      : "- No open items requiring client action this week.",
+    internal_notes: internal.length ? bulletize(internal) : null,
+  };
+}
+
+function progressReportsFromPacket(packet, projectRows) {
+  const rich = richFromRecords(packet, projectRows);
+  const summaries = summariesFromBrief(packet, projectRows);
+  const reports = [];
+  for (const [projectId, richFields] of rich) {
+    const sections = assembleProgressSections(richFields);
+    if (!sections) continue;
+    const projectName =
+      summaries.get(projectId)?.name ??
+      projectRows.find((row) => row.id === projectId)?.name ??
+      "Project";
+    reports.push({ projectId, projectName, ...sections });
+  }
+  return reports;
+}
+
+async function writeProgressReports(reports, packet) {
+  if (!reports.length) return { created: 0, refreshed: 0, skipped: 0 };
+  const { weekStart, weekEnd } = currentWeekRange();
+  const sourceSnapshot = JSON.stringify({
+    source: "daily_deep_read",
+    packetId: packet.id,
+    businessDate: packet.packet_json?.businessDate ?? null,
+    generatedAt: new Date().toISOString(),
+  });
+  return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
+    let created = 0;
+    let refreshed = 0;
+    let skipped = 0;
+    for (const report of reports) {
+      const { rows } = await client.query(
+        `select id, status, updated_by, source_snapshot
+           from public.project_progress_reports
+          where project_id = $1 and week_start = $2 and week_end = $3
+          limit 1`,
+        [report.projectId, weekStart, weekEnd],
+      );
+      const existing = rows[0];
+      if (existing) {
+        const isSystemOwned =
+          existing.updated_by === PROGRESS_REPORT_CRON_USER_ID ||
+          existing.source_snapshot?.source === "daily_deep_read";
+        // Never overwrite a finalized report or one a human has edited.
+        if (existing.status !== "draft" || !isSystemOwned) {
+          skipped += 1;
+          continue;
+        }
+        await client.query(
+          `update public.project_progress_reports
+              set past_week_highlights = $2,
+                  upcoming_week_activities = $3,
+                  open_items = $4,
+                  internal_notes = $5,
+                  source_snapshot = $6::jsonb,
+                  updated_by = $7,
+                  updated_at = now()
+            where id = $1`,
+          [
+            existing.id,
+            report.past_week_highlights,
+            report.upcoming_week_activities,
+            report.open_items,
+            report.internal_notes,
+            sourceSnapshot,
+            PROGRESS_REPORT_CRON_USER_ID,
+          ],
+        );
+        refreshed += 1;
+        continue;
+      }
+      await client.query(
+        `insert into public.project_progress_reports
+           (project_id, title, report_type, status, week_start, week_end,
+            past_week_highlights, upcoming_week_activities, open_items, internal_notes,
+            source_snapshot, created_by, updated_by)
+         values ($1,$2,'weekly','draft',$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$10)`,
+        [
+          report.projectId,
+          `${report.projectName} Weekly Progress Report`,
+          weekStart,
+          weekEnd,
+          report.past_week_highlights,
+          report.upcoming_week_activities,
+          report.open_items,
+          report.internal_notes,
+          sourceSnapshot,
+          PROGRESS_REPORT_CRON_USER_ID,
+        ],
+      );
+      created += 1;
+    }
+    return { created, refreshed, skipped, weekStart, weekEnd };
+  });
+}
+
 async function main() {
   const packet = await loadDailyDeepReadPacket();
   const projectRows = await loadProjectRows();
+
+  // Fast path: only (re)build the weekly progress reports from the packet.
+  if (progressReportsOnly) {
+    const reports = progressReportsFromPacket(packet, projectRows);
+    const result = shouldWrite
+      ? await writeProgressReports(reports, packet)
+      : { created: 0, refreshed: 0, skipped: 0 };
+    const out = { ok: true, packetId: packet.id, progressReportsOnly: true, shouldWrite, reportsInPacket: reports.length, ...result };
+    console.log(JSON.stringify(out, null, 2));
+    return;
+  }
+
   const people = await loadPeople();
   const candidates = candidatesFromPacket(packet, projectRows);
   if (!candidates.length) {
@@ -953,6 +1116,16 @@ async function main() {
     ? await writeTasks(taskRecords, packet)
     : { deleted: 0, inserted: 0 };
 
+  // Weekly progress reports refresh from this same packet — no extra LLM cost.
+  const progressReports = progressReportsFromPacket(packet, projectRows);
+  await fs.writeFile(
+    path.join(evidenceDir, "progress-reports-preview.json"),
+    JSON.stringify({ packetId: packet.id, shouldWrite, reports: progressReports }, null, 2),
+  );
+  const progressReportResult = shouldWrite
+    ? await writeProgressReports(progressReports, packet)
+    : { created: 0, refreshed: 0, skipped: 0 };
+
   const summary = {
     ok: true,
     packetId: packet.id,
@@ -970,6 +1143,10 @@ async function main() {
       team: taskRecords.filter((task) => task.category === "team").length,
       ...taskWriteResult,
     },
+    progressReports: {
+      reportsInPacket: progressReports.length,
+      ...progressReportResult,
+    },
     readBack: readBackRows,
     evidenceDir,
   };
@@ -979,7 +1156,7 @@ async function main() {
 
 // Pure extractors exported for unit testing (no DB). The CLI entry point below
 // only runs when this file is executed directly, not when imported.
-export { candidatesFromPacket, projectCurrentStateFromPacket, tasksFromPacket };
+export { candidatesFromPacket, projectCurrentStateFromPacket, tasksFromPacket, progressReportsFromPacket, assembleProgressSections };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main().catch((error) => {

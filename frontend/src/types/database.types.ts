@@ -25793,6 +25793,7 @@ export type Database = {
           height: number | null
           id: number
           is_private: boolean | null
+          jobplanner_photo_guid: string | null
           location: string | null
           project_id: number
           starred: boolean | null
@@ -25817,6 +25818,7 @@ export type Database = {
           height?: number | null
           id?: never
           is_private?: boolean | null
+          jobplanner_photo_guid?: string | null
           location?: string | null
           project_id: number
           starred?: boolean | null
@@ -25841,6 +25843,7 @@ export type Database = {
           height?: number | null
           id?: never
           is_private?: boolean | null
+          jobplanner_photo_guid?: string | null
           location?: string | null
           project_id?: number
           starred?: boolean | null
@@ -26084,6 +26087,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          internal_notes: string | null
           open_items: string
           past_week_highlights: string
           project_id: number
@@ -26107,6 +26111,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          internal_notes?: string | null
           open_items?: string
           past_week_highlights?: string
           project_id: number
@@ -26130,6 +26135,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          internal_notes?: string | null
           open_items?: string
           past_week_highlights?: string
           project_id?: number
