@@ -79,7 +79,6 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
     seedTasks.map((task) => ({ ...task, done: false })),
   );
   const [resolvedLog, setResolvedLog] = React.useState<ResolvedRow[]>([]);
-  const [movingOpen, setMovingOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<Draft | null>(null);
   const [toast, setToast] = React.useState<{ msg: string; undo?: () => void } | null>(null);
 
@@ -249,7 +248,7 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
         </header>
 
         {/* YOUR CALLS TODAY */}
-        <div className="mb2-seclabel">Your calls today</div>
+        <div className="mb2-seclabel">Today&apos;s focus</div>
         <ol className="mb2-calls">
           {content.decisions.map((decision) => {
             const done = doneDecisions.has(decision.id);
@@ -289,7 +288,7 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
                 <li className={`mb2-pt ${point.call ? "call" : ""}`} key={index}>
                   {point.call ? (
                     <>
-                      <b>Your call:</b> {point.t.replace(/^Your call:\s*/, "")}
+                      <b>Decision:</b> {point.t.replace(/^Your call:\s*/, "")}
                     </>
                   ) : (
                     point.t
@@ -299,32 +298,6 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
             </ul>
           </section>
         ))}
-
-        {/* ALSO MOVING */}
-        <div className="mb2-moving">
-          <MBButton className="mb2-moving__toggle" onClick={() => setMovingOpen((open) => !open)}>
-            <span role="heading" aria-level={2}>
-              Also moving — nothing needed from you
-            </span>{" "}
-            <span className="mb2-moving__tw">{content.moving.length} on track</span>
-            <span aria-hidden>{movingOpen ? "▾" : "▸"}</span>
-          </MBButton>
-          {movingOpen
-            ? content.moving.map((item) => (
-                <div className="mb2-mv" key={item.id}>
-                  <b>{item.name}</b>
-                  {item.resolved ? <span className="mb2-mv__resolved">Resolved</span> : null}
-                  <span className="mb2-mv__txt">{item.text}</span>
-                  <a className="mb2-chip" href={item.source.href} target="_blank" rel="noopener noreferrer">
-                    <span className="g" aria-hidden>
-                      ✉
-                    </span>{" "}
-                    {item.source.label}
-                  </a>
-                </div>
-              ))
-            : null}
-        </div>
 
         {/* LOOSE ENDS */}
         <div className="mb2-seclabel">Loose ends — yours to chase</div>
