@@ -44,6 +44,11 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const APPLY = process.argv.includes("--apply");
 const BATCH = process.argv.includes("--batch");
+// RECONCILE_ONLY: apply only the numbering-migration actions (ADOPT / CREATE / REACTIVATE)
+// and SKIP every REBUILD_SOV of a JP-numbered row that already exists in the app. Those rows
+// already tie to JP and carry live billed_to_date / invoices; rebuilding their SOV would wipe
+// billing for no reconciliation benefit. Use for the numbering-scheme reconciliation pass.
+const RECONCILE_ONLY = process.argv.includes("--reconcile-only");
 const argValue = (name, fb) => { const h = process.argv.find((a) => a.startsWith(`--${name}=`)); return h ? h.slice(name.length + 3) : fb; };
 const OUT_DIR = path.join(repoRoot, "docs/ops/evidence/2026-07-08-jobplanner-commitment-adopt");
 
@@ -149,20 +154,23 @@ async function planProject(sb, app, jpProjectId, refs) {
       else if (totalMatches.length >= 1) { action = "CREATE"; note = `total match but vendor mismatch (${totalMatches.length})`; }
       else { action = "CREATE"; note = "no twin"; }
     }
-    plan.push({ number, kind: kind(jp), title: jp.title || null, jpTotal, jpSovLines: resolved.length, integrityOk, unresolvedCodes, vendorName, vendorCompanyId, action, note, targetId: target?.id ?? null, targetNumber: target?.contract_number ?? null, targetInvoices: target?.invoices ?? 0, targetPayments: target?.payments ?? 0, resolvedLines: resolved });
+    plan.push({ number, kind: kind(jp), title: jp.title || null, jpTotal, jpSovLines: resolved.length, integrityOk, unresolvedCodes, vendorName, vendorCompanyId, action, note, targetId: target?.id ?? null, targetNumber: target?.contract_number ?? null, targetSovSum: target?.sovSum ?? null, targetInvoices: target?.invoices ?? 0, targetPayments: target?.payments ?? 0, resolvedLines: resolved });
   });
 
   const acuOnly = acuPool.filter((c) => !consumed.has(c.id)).map((c) => ({ id: c.id, table: c.table, contract_number: c.contract_number, title: c.title, sovSum: c.sovSum, invoices: c.invoices, payments: c.payments, testData: isTestData(c.contract_number) }));
   return { commitments: commitments.length, plan, acuOnly };
 }
 
-async function applyProject(sb, app, refs, planResult) {
+async function applyProject(sb, app, refs, planResult, reconcileOnly = false) {
   const { costCodeTitleById } = refs;
-  const applied = { rebuilt: 0, adopted: 0, created: 0, sovLines: 0, budgetCodes: 0 };
+  const applied = { rebuilt: 0, adopted: 0, created: 0, sovLines: 0, budgetCodes: 0, skippedRebuild: 0 };
   const fails = planResult.plan.filter((p) => !p.integrityOk).map((p) => p.number);
   if (fails.length) throw new Error(`integrity fail: ${fails.join(", ")}`);
 
   for (const c of planResult.plan) {
+    // Reconcile-only: never touch a JP-numbered row that already exists in the app.
+    // Its SOV already ties to JP and carries live billed_to_date/invoices — leave it.
+    if (reconcileOnly && c.action === "REBUILD_SOV") { applied.skippedRebuild++; continue; }
     const isSub = c.kind === "subcontract";
     const table = isSub ? "subcontracts" : "purchase_orders";
     const sovTable = isSub ? "subcontract_sov_items" : "purchase_order_sov_items";
@@ -253,9 +261,11 @@ async function main() {
   const JP = Number(argValue("jp", NaN)), APP = Number(argValue("app", NaN));
   if (!Number.isInteger(JP) || !Number.isInteger(APP)) { console.error("Need --jp= --app= (or --batch)"); process.exit(1); }
   const r = await planProject(sb, APP, JP, refs);
-  const summary = { mode: APPLY ? "APPLY" : "DRY RUN", jp: JP, app: APP, commitments: r.commitments, rebuild: r.plan.filter((p) => p.action === "REBUILD_SOV").length, reactivate: r.plan.filter((p) => p.action === "REACTIVATE").length, adopt: r.plan.filter((p) => p.action === "ADOPT").length, adoptWithBilling: r.plan.filter((p) => p.action === "ADOPT" && (p.targetInvoices > 0 || p.targetPayments > 0)).map((p) => `${p.number}<-${p.targetNumber} (${p.targetInvoices}inv/${p.targetPayments}pay)`), create: r.plan.filter((p) => p.action === "CREATE").length, acuOnly: r.acuOnly.map((a) => `${a.contract_number}${a.testData ? " [TEST]" : ""}${a.invoices ? ` (${a.invoices}inv)` : ""}`), integrityFail: r.plan.filter((p) => !p.integrityOk).map((p) => p.number) };
+  const rebuildRows = r.plan.filter((p) => p.action === "REBUILD_SOV");
+  const rebuildMismatch = rebuildRows.filter((p) => p.targetSovSum != null && Math.abs(p.targetSovSum - p.jpTotal) >= 0.5).map((p) => `${p.number} app$${p.targetSovSum} vs JP$${p.jpTotal} (Δ${(p.targetSovSum - p.jpTotal).toFixed(2)})`);
+  const summary = { mode: APPLY ? (RECONCILE_ONLY ? "APPLY (reconcile-only)" : "APPLY") : "DRY RUN", jp: JP, app: APP, commitments: r.commitments, rebuild: rebuildRows.length, rebuildSkippedInReconcileOnly: RECONCILE_ONLY ? rebuildRows.length : 0, rebuildTotalMismatch: rebuildMismatch, reactivate: r.plan.filter((p) => p.action === "REACTIVATE").length, adopt: r.plan.filter((p) => p.action === "ADOPT").length, adoptWithBilling: r.plan.filter((p) => p.action === "ADOPT" && (p.targetInvoices > 0 || p.targetPayments > 0)).map((p) => `${p.number}<-${p.targetNumber} (${p.targetInvoices}inv/${p.targetPayments}pay)`), create: r.plan.filter((p) => p.action === "CREATE").length, acuOnly: r.acuOnly.map((a) => `${a.contract_number}${a.testData ? " [TEST]" : ""}${a.invoices ? ` (${a.invoices}inv)` : ""}`), integrityFail: r.plan.filter((p) => !p.integrityOk).map((p) => p.number) };
   let applied = null;
-  if (APPLY) applied = await applyProject(sb, APP, refs, r);
+  if (APPLY) applied = await applyProject(sb, APP, refs, r, RECONCILE_ONLY);
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUT_DIR, `plan-${JP}-${APP}.json`), JSON.stringify({ summary, applied, plan: r.plan, acuOnly: r.acuOnly }, null, 2) + "\n");
   console.log(JSON.stringify({ ...summary, applied }, null, 2));
