@@ -122,6 +122,22 @@ export type DailyBriefModel = {
   resolvedSeed: BriefResolvedVM[];
 };
 
+/** A real task created by the daily deep read — the operating record shared by
+ *  /tasks and /daily-brief. When these are supplied, the brief's action lists
+ *  are driven by them instead of re-derived from the review-gated candidates. */
+export type DailyBriefTaskInput = {
+  id: string;
+  title: string;
+  /** "brandon" → Brandon's own list; "team" → delegated work. */
+  category: "brandon" | "team";
+  assigneeName: string | null;
+  projectName: string | null;
+  projectId: number | null;
+  priority: string | null;
+  /** Owner-facing due label already formatted (e.g. "Due Jul 14"), or null. */
+  due: string | null;
+};
+
 export type BuildBriefModelInput = {
   packet: BrandonDailyUpdatePacket;
   operatingBrief: ExecutiveOperatingBrief;
@@ -133,7 +149,38 @@ export type BuildBriefModelInput = {
   resolvedSeed?: BriefResolvedVM[];
   /** The owner the brief is prepared for — used to split "your" vs "team" work. */
   preparedFor?: string;
+  /** Real deep-read tasks. When present, they own the action lists. */
+  tasks?: DailyBriefTaskInput[];
 };
+
+/** Map a deep-read task row to the brief's action view model. */
+function deepReadTaskToActionVM(task: DailyBriefTaskInput): BriefActionVM {
+  return {
+    key: `deepread-task:${task.id}`,
+    title: cleanProse(task.title) || task.title,
+    summary: "",
+    owner: task.assigneeName,
+    status: null,
+    tone: task.priority === "high" ? "amber" : "info",
+    project: task.projectName,
+    projectId: task.projectId,
+    recommendedAction: null,
+    sources:
+      task.projectId != null
+        ? [
+            {
+              label: truncate(task.projectName || `Project ${task.projectId}`, 44),
+              href: `/${task.projectId}`,
+              external: false,
+              kind: "Project",
+            },
+          ]
+        : [],
+    sourceDocId: null,
+    carried: false,
+    due: task.due,
+  };
+}
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -379,6 +426,18 @@ export function buildBriefModel(input: BuildBriefModelInput): DailyBriefModel {
 
   const coverage = coverageCounts(packet);
 
+  // When the deep read has created real tasks, they own the action lists — one
+  // operating record shared with /tasks — instead of the review-gated derivation
+  // above (kept as the fallback for packets processed before this pipeline).
+  const deepReadTasks = input.tasks ?? [];
+  const useDeepReadTasks = deepReadTasks.length > 0;
+  const deepReadYour = deepReadTasks
+    .filter((task) => task.category === "brandon")
+    .map(deepReadTaskToActionVM);
+  const deepReadTeam = deepReadTasks
+    .filter((task) => task.category === "team")
+    .map(deepReadTaskToActionVM);
+
   return {
     masthead: {
       eyebrow: "Alleato Group · The Morning Brief",
@@ -397,8 +456,8 @@ export function buildBriefModel(input: BuildBriefModelInput): DailyBriefModel {
     decisions,
     projects,
     alsoMoving,
-    yourActions: yourActions.slice(0, 12),
-    teamActions: teamActions.slice(0, 20),
+    yourActions: (useDeepReadTasks ? deepReadYour : yourActions).slice(0, 12),
+    teamActions: (useDeepReadTasks ? deepReadTeam : teamActions).slice(0, 20),
     resolvedKeys: Array.from(resolvedKeys),
     resolvedSeed,
   };

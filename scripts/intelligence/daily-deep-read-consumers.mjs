@@ -297,6 +297,47 @@ async function loadProjectRows() {
   });
 }
 
+// People directory for resolving action-item owners → assignee_person_id on the
+// real tasks the deep read creates. Owner labels in the structured brief
+// ("Parker Hollingsworth", "Brandon") are matched to people rows; an unmatched
+// owner keeps its label as assignee_name with a null person id.
+async function loadPeople() {
+  return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
+    const { rows } = await client.query(
+      "select id, first_name, last_name, email from public.people where status is distinct from 'inactive'",
+    );
+    return rows.map((row) => {
+      const first = String(row.first_name || "").trim();
+      const last = String(row.last_name || "").trim();
+      return {
+        id: row.id,
+        email: row.email || null,
+        fullName: `${first} ${last}`.trim(),
+        normalizedFull: normalizeForMatch(`${first} ${last}`),
+        normalizedFirst: normalizeForMatch(first),
+      };
+    });
+  });
+}
+
+function resolvePersonByName(name, people) {
+  const normalized = normalizeForMatch(String(name || ""));
+  if (!normalized) return null;
+  const full = people.find((person) => person.normalizedFull && person.normalizedFull === normalized);
+  if (full) return full;
+  const contained = people.find(
+    (person) =>
+      person.normalizedFull &&
+      (normalized.includes(person.normalizedFull) || person.normalizedFull.includes(normalized)),
+  );
+  if (contained) return contained;
+  const firstMatches = people.filter(
+    (person) => person.normalizedFirst && person.normalizedFirst === normalized,
+  );
+  if (firstMatches.length === 1) return firstMatches[0];
+  return null;
+}
+
 function projectIdForText(text, projectRows) {
   const normalized = normalizeForMatch(text);
   if (normalized.includes("superior beverage")) {
@@ -465,6 +506,165 @@ function assertNoPlaceholderProse(candidates) {
         offenders.join("\n"),
     );
   }
+}
+
+// The deep read already reads the full transcript/email/Teams corpus for the
+// day — so it is the right place to CREATE the real tasks, not only the
+// review-gated candidates. Owner decisions (brief.callsToday) become Brandon's
+// tasks; each project's actionItems become the owner's tasks with due carried
+// through. These are written directly to public.tasks (source_system
+// 'daily_deep_read'), idempotent per business date, so /tasks and /daily-brief
+// read one operating record instead of diverging pipelines.
+const BRANDON_OWNER_LABEL = "Brandon Clymer";
+
+function safeDateIso(value) {
+  if (typeof value !== "string") return null;
+  const match = value.match(/^\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : null;
+}
+
+function tasksFromPacket(packet, projectRows, people) {
+  const brief = packet.packet_json?.brief;
+  const sourceSet = packet.packet_json?.sourceSet || {};
+  const businessDate =
+    packet.packet_json?.businessDate || packet.covered_start_at?.toISOString?.()?.slice(0, 10);
+  if (!brief || typeof brief !== "object") return [];
+  const tasks = [];
+  const seen = new Set();
+
+  const push = ({ title, description, ownerLabel, ownerIsBrandon, project, dueIso, sourceIdsRaw, origin, priority }) => {
+    const cleanTitle = String(title || "").trim();
+    if (!cleanTitle) return;
+    const dedupeKey = normalizeForMatch(`${project || ""} ${cleanTitle}`);
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    const category = ownerIsBrandon ? "brandon" : "team";
+    const resolvedOwnerLabel = ownerIsBrandon ? BRANDON_OWNER_LABEL : ownerLabel || null;
+    const person = resolvedOwnerLabel ? resolvePersonByName(resolvedOwnerLabel, people) : null;
+    const sourceIds = canonicalizeSourceIds(sourceIdsRaw || [], sourceSet);
+    const sourceProjectId = projectIdForSourceIds(sourceIds, sourceSet);
+    const textProjectId = projectIdForText(`${project || ""}\n${cleanTitle}`, projectRows);
+    const dueDate = safeDateIso(dueIso);
+    tasks.push({
+      title: cleanTitle,
+      description: String(description || cleanTitle).trim(),
+      project_id: sourceProjectId || textProjectId || null,
+      assignee_person_id: person?.id ?? null,
+      assignee_name: person?.fullName || resolvedOwnerLabel || null,
+      assignee_email: person?.email ?? null,
+      priority: priority || (dueDate ? "high" : "medium"),
+      due_date: dueDate,
+      category,
+      extraction_metadata: {
+        business_date: businessDate,
+        category,
+        daily_packet_id: packet.id,
+        daily_packet_generated_at: packet.generated_at,
+        source_ids: sourceIds,
+        origin,
+        consumer_compiler_version: COMPILER_VERSION,
+        owner_label: resolvedOwnerLabel,
+        project_assignment_method: sourceProjectId
+          ? "source_set_single_project"
+          : textProjectId
+            ? "project_name_or_number_match"
+            : "unassigned",
+      },
+    });
+  };
+
+  // Owner decisions → Brandon's tasks.
+  for (const call of brief.callsToday || []) {
+    if (!call?.project || !call?.question) continue;
+    push({
+      title: call.question,
+      description: call.question,
+      ownerIsBrandon: true,
+      project: call.project,
+      sourceIdsRaw: call.sourceIds,
+      origin: "calls_today",
+      priority: "high",
+    });
+  }
+
+  // Action items → owner tasks (owner + due carried through the structured brief).
+  for (const project of brief.projects || []) {
+    for (const item of project.actionItems || []) {
+      if (!item?.text) continue;
+      push({
+        title: item.text,
+        description: item.text,
+        ownerLabel: item.owner || null,
+        ownerIsBrandon: Boolean(item.ownerIsBrandon),
+        project: project.name,
+        dueIso: item.dueIso || null,
+        sourceIdsRaw: item.sourceIds,
+        origin: "action_item",
+      });
+    }
+  }
+
+  return tasks;
+}
+
+async function writeTasks(tasks, packet) {
+  const businessDate =
+    packet.packet_json?.businessDate || packet.covered_start_at?.toISOString?.()?.slice(0, 10);
+  if (!businessDate) {
+    throw new Error("Refusing to write tasks: packet has no business date for the idempotency key.");
+  }
+  return withPg(getAppDatabaseUrl(), { includeSslMode: false }, async (client) => {
+    await client.query("begin");
+    try {
+      // Idempotent per business date: replace this day's deep-read tasks so a
+      // re-run updates rather than duplicates. Only touches rows this pipeline
+      // owns (source_system 'daily_deep_read').
+      const deleted = await client.query(
+        `
+          delete from public.tasks
+          where source_system = 'daily_deep_read'
+            and extraction_metadata->>'business_date' = $1
+        `,
+        [businessDate],
+      );
+      let inserted = 0;
+      for (const task of tasks) {
+        await client.query(
+          `
+            insert into public.tasks (
+              title, description, project_id, project_ids,
+              assignee_person_id, assignee_name, assignee_email,
+              status, priority, due_date,
+              source_system, extraction_source, assigned_by, metadata_id, extraction_metadata
+            )
+            values (
+              $1, $2, $3,
+              case when $3::bigint is null then null else array[$3::bigint] end,
+              $4, $5, $6, 'open', $7, $8,
+              'daily_deep_read', 'daily_deep_read', 'Daily Deep Read', null, $9::jsonb
+            )
+          `,
+          [
+            task.title,
+            task.description,
+            task.project_id,
+            task.assignee_person_id,
+            task.assignee_name,
+            task.assignee_email,
+            task.priority,
+            task.due_date,
+            JSON.stringify(task.extraction_metadata),
+          ],
+        );
+        inserted += 1;
+      }
+      await client.query("commit");
+      return { deleted: deleted.rowCount, inserted };
+    } catch (error) {
+      await client.query("rollback");
+      throw error;
+    }
+  });
 }
 
 async function writeCandidates(candidates, packet) {
@@ -722,6 +922,7 @@ async function writeProjectCurrentState(records) {
 async function main() {
   const packet = await loadDailyDeepReadPacket();
   const projectRows = await loadProjectRows();
+  const people = await loadPeople();
   const candidates = candidatesFromPacket(packet, projectRows);
   if (!candidates.length) {
     throw new Error(`No candidates parsed from Daily Deep Read packet ${packet.id}.`);
@@ -751,6 +952,17 @@ async function main() {
     ? await writeProjectCurrentState(projectStateRecords)
     : { updated: 0, unmatchedRowMissing: 0 };
 
+  // The deep read creates the real tasks — one operating record read by both
+  // /tasks and /daily-brief.
+  const taskRecords = tasksFromPacket(packet, projectRows, people);
+  await fs.writeFile(
+    path.join(evidenceDir, "tasks-preview.json"),
+    JSON.stringify({ packetId: packet.id, shouldWrite, tasks: taskRecords }, null, 2),
+  );
+  const taskWriteResult = shouldWrite
+    ? await writeTasks(taskRecords, packet)
+    : { deleted: 0, inserted: 0 };
+
   const summary = {
     ok: true,
     packetId: packet.id,
@@ -762,6 +974,12 @@ async function main() {
       projectsInPacket: projectStateRecords.length,
       ...projectStateResult,
     },
+    tasks: {
+      count: taskRecords.length,
+      brandon: taskRecords.filter((task) => task.category === "brandon").length,
+      team: taskRecords.filter((task) => task.category === "team").length,
+      ...taskWriteResult,
+    },
     readBack: readBackRows,
     evidenceDir,
   };
@@ -771,7 +989,7 @@ async function main() {
 
 // Pure extractors exported for unit testing (no DB). The CLI entry point below
 // only runs when this file is executed directly, not when imported.
-export { candidatesFromPacket, projectCurrentStateFromPacket };
+export { candidatesFromPacket, projectCurrentStateFromPacket, tasksFromPacket };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   main().catch((error) => {

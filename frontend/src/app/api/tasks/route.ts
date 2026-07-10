@@ -226,10 +226,13 @@ export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
   }
 
   const taskClient = scope === "all" ? serviceClient : supabase;
+  // Legacy tasks are document-linked (metadata_id not null). Manual tasks and
+  // tasks the daily deep read creates are legitimately metadata_id-null, so
+  // include them by source_system instead of filtering them out.
   let query = taskClient
     .from("tasks")
     .select(TASK_SELECT)
-    .not("metadata_id", "is", null)
+    .or("metadata_id.not.is.null,source_system.in.(manual,daily_deep_read)")
     .order("created_at", { ascending: false })
     .limit(1000);
 

@@ -12,7 +12,11 @@ import {
 } from "@/lib/executive/brandon-daily-update";
 import { DailyBriefView } from "./daily-brief-view";
 import { itemKey } from "./brief-format";
-import { buildBriefModel, type BriefResolvedVM } from "./brief-model";
+import {
+  buildBriefModel,
+  type BriefResolvedVM,
+  type DailyBriefTaskInput,
+} from "./brief-model";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -106,6 +110,77 @@ async function loadResolvedToday(
   }
 }
 
+/** Format a task due date into the brief's owner-facing pill label. */
+function formatDueLabel(due: string | null | undefined): string | null {
+  if (!due) return null;
+  const label = new Date(`${due}T00:00:00-04:00`);
+  if (Number.isNaN(label.getTime())) return null;
+  const short = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "America/New_York",
+  }).format(label);
+  return due < easternDateKey(new Date()) ? `OVERDUE · ${short}` : `Due ${short}`;
+}
+
+/**
+ * The real tasks the daily deep read created for its most recent run. These are
+ * the shared operating record (also shown on /tasks); when present they drive
+ * the brief's "your"/"team" action lists instead of the review-gated candidates.
+ * Fails soft — a query error yields an empty list and the brief falls back.
+ */
+async function loadDeepReadTasks(): Promise<DailyBriefTaskInput[]> {
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("id, title, priority, due_date, assignee_name, project_id, status, extraction_metadata")
+      .eq("source_system", "daily_deep_read")
+      .neq("status", "completed");
+    if (error || !data?.length) return [];
+
+    const rows = data as Array<Record<string, unknown>>;
+    const businessDateOf = (row: Record<string, unknown>) =>
+      String((row.extraction_metadata as { business_date?: string } | null)?.business_date ?? "");
+    // Only the most recent deep-read run drives the brief's action lists.
+    const latest = rows.map(businessDateOf).filter(Boolean).sort().pop() ?? "";
+    const current = rows.filter((row) => businessDateOf(row) === latest);
+
+    const projectIds = Array.from(
+      new Set(current.map((row) => row.project_id).filter((id): id is number => id != null)),
+    );
+    const projectNames = new Map<number, string>();
+    if (projectIds.length) {
+      const { data: projects } = await supabase
+        .from("projects")
+        .select("id, name")
+        .in("id", projectIds);
+      for (const project of projects ?? []) {
+        projectNames.set(Number(project.id), String(project.name ?? ""));
+      }
+    }
+
+    return current
+      .map((row) => {
+        const meta = (row.extraction_metadata ?? {}) as { category?: string };
+        const projectId = row.project_id != null ? Number(row.project_id) : null;
+        return {
+          id: String(row.id),
+          title: String(row.title ?? ""),
+          category: meta.category === "brandon" ? "brandon" : "team",
+          assigneeName: (row.assignee_name as string | null) ?? null,
+          projectName: projectId != null ? projectNames.get(projectId) ?? null : null,
+          projectId,
+          priority: (row.priority as string | null) ?? null,
+          due: formatDueLabel(row.due_date as string | null),
+        } satisfies DailyBriefTaskInput;
+      })
+      .filter((task) => task.title.trim().length > 0);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Standalone Daily Executive Brief — an editorial, source-backed morning read
  * for the owner. Bound to the canonical executive-brief packet
@@ -148,9 +223,10 @@ export default async function DailyBriefPage() {
       ].map((item) => itemKey(item)),
     );
 
-    const [carriedKeys, resolved] = await Promise.all([
+    const [carriedKeys, resolved, deepReadTasks] = await Promise.all([
       loadCarriedKeys(todayKey, todayOpenKeys),
       loadResolvedToday(todayKey),
+      loadDeepReadTasks(),
     ]);
 
     const model = buildBriefModel({
@@ -160,6 +236,7 @@ export default async function DailyBriefPage() {
       resolvedKeys: resolved.keys,
       resolvedSeed: resolved.seed,
       preparedFor: "Brandon",
+      tasks: deepReadTasks,
     });
 
     return (
