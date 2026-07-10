@@ -1,5 +1,6 @@
 import {
   streamText,
+  generateText,
   stepCountIs,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -1993,15 +1994,20 @@ type DirectSemanticResult = {
   metadata?: Record<string, unknown>;
 };
 
-function buildDirectSourceLookupAnswer(params: {
-  message: string;
-  semanticVectorResults: unknown;
-}): string | null {
-  const wrapper = asRecord(params.semanticVectorResults);
+type DirectSourceLookupExcerpt = {
+  label: string;
+  date: string;
+  content: string;
+};
+
+function extractDirectSourceLookupExcerpts(
+  semanticVectorResults: unknown,
+): DirectSourceLookupExcerpt[] {
+  const wrapper = asRecord(semanticVectorResults);
   const rawResults = Array.isArray(wrapper.results)
     ? (wrapper.results as DirectSemanticResult[])
     : [];
-  const results = rawResults
+  return rawResults
     .map((result) => {
       const content =
         typeof result.content === "string" ? result.content.trim() : "";
@@ -2010,47 +2016,77 @@ function buildDirectSourceLookupAnswer(params: {
     .filter((result): result is DirectSemanticResult & { content: string } =>
       Boolean(result),
     )
-    .slice(0, 6);
-  if (results.length === 0) return null;
+    .slice(0, 6)
+    .map((result, index) => {
+      const title =
+        (typeof result.metadata?.title === "string" && result.metadata.title) ||
+        (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
+        (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
+        result.sourceTable ||
+        `Source ${index + 1}`;
+      const date = result.createdAt
+        ? new Date(result.createdAt).toISOString().slice(0, 10)
+        : "unknown date";
+      const label = String(title).includes("Teams")
+        ? String(title)
+        : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
+      return {
+        label,
+        date,
+        content: result.content.replace(/\s+/g, " ").slice(0, 700),
+      };
+    });
+}
 
-  const lines = [
-    "I treated this as a source lookup, not a project status report.",
-    "",
-    "Here is the strongest source context I found:",
-    "",
-  ];
-
-  for (const [index, result] of results.entries()) {
-    const title =
-      (typeof result.metadata?.title === "string" && result.metadata.title) ||
-      (typeof result.metadata?.subject === "string" && result.metadata.subject) ||
-      (typeof result.metadata?.meeting_title === "string" && result.metadata.meeting_title) ||
-      result.sourceTable ||
-      `Source ${index + 1}`;
-    const date = result.createdAt
-      ? new Date(result.createdAt).toISOString().slice(0, 10)
-      : "unknown date";
-    const score =
-      typeof result.finalScore === "number"
-        ? result.finalScore
-        : typeof result.similarity === "number"
-          ? result.similarity
-          : null;
-    const sourceLabel = String(title).includes("Teams")
-      ? String(title)
-      : `${String(title)}${String(result.sourceTable ?? "").includes("teams") ? " (Teams)" : ""}`;
-    const content = result.content.replace(/\s+/g, " ").slice(0, 700);
-    lines.push(
-      `${index + 1}. ${sourceLabel} (${date}${score != null ? `, score ${score.toFixed(2)}` : ""})`,
-      `   ${content}`,
-      "",
-    );
-  }
-
-  lines.push(
-    "If you need a wider pull, ask for the exact mailbox, Teams channel, person, and time window and I will keep it source-scoped.",
+// Turns retrieved excerpts into an actual answer instead of a raw templated
+// dump (numbered list of titles + relevance scores + internal source IDs).
+// A dump is never the right response for a chat assistant — even a genuine
+// "pull up the source" ask deserves a synthesized, conversational answer
+// that says whether the evidence actually answers the question (dated
+// excerpts from weeks ago do NOT answer a "today" question, and a raw dump
+// used to present them as if they did). Traced from `/ai` session
+// `11a3d842-7ab3-405d-9a18-90aa5f71d0c5`. See AI-RAG-ARCHITECTURE.md.
+async function synthesizeDirectSourceLookupAnswer(params: {
+  message: string;
+  semanticVectorResults: unknown;
+  synthesisModel: string;
+}): Promise<string | null> {
+  const excerpts = extractDirectSourceLookupExcerpts(
+    params.semanticVectorResults,
   );
-  return lines.join("\n").trim();
+  if (excerpts.length === 0) return null;
+
+  const excerptBlock = excerpts
+    .map(
+      (excerpt, index) =>
+        `[${index + 1}] ${excerpt.label} — ${excerpt.date}\n${excerpt.content}`,
+    )
+    .join("\n\n");
+
+  try {
+    const { text } = await generateText({
+      model: getLanguageModel(params.synthesisModel),
+      system: [
+        "You are Alleato's project intelligence assistant, answering a source-lookup question using ONLY the excerpts below.",
+        "Write a direct, conversational answer — like a sharp operator briefing someone, never a search engine listing results.",
+        "Never mention relevance scores, internal record IDs, or raw table/source names (e.g. do not say '19:meeting_Z' or 'score 0.57').",
+        "Refer to sources naturally by date and topic (e.g. 'a Teams thread from May 11' or 'an email about the McCray change order').",
+        "If the excerpts don't actually answer what was asked — e.g. the user asked about 'today' but every excerpt is from weeks earlier — say that plainly and summarize what the evidence actually shows instead of pretending it's current.",
+        "If nothing in the excerpts is relevant, say so plainly rather than listing weak matches.",
+        "Keep it tight: a few sentences to a short paragraph, not a bulleted dump of every excerpt.",
+      ].join("\n"),
+      prompt: `User's question: ${params.message}\n\nRetrieved excerpts:\n\n${excerptBlock}`,
+    });
+    return text.trim() || null;
+  } catch (error) {
+    console.error("[handler-v2] synthesizeDirectSourceLookupAnswer failed", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    // Fail toward an honest, still-conversational fallback — never the old
+    // raw dump — so a model outage degrades gracefully instead of reverting
+    // to score/ID clutter.
+    return "I found some source material that might be relevant, but couldn't put together a clean answer from it just now. Try asking again, or narrow it to a specific mailbox, Teams channel, person, or time window.";
+  }
 }
 
 async function loadLatestExecutiveBriefingMetadata(): Promise<{
@@ -5310,9 +5346,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       }
 
       if (plan.intent === "source_lookup" && retrievalCtx.semanticVectorResults) {
-        const content = buildDirectSourceLookupAnswer({
+        const content = await synthesizeDirectSourceLookupAnswer({
           message: lastUserContent,
           semanticVectorResults: retrievalCtx.semanticVectorResults,
+          synthesisModel,
         });
         if (content) {
           const plannerTrace = {

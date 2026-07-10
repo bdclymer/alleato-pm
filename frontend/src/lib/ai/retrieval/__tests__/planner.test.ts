@@ -191,6 +191,9 @@ describe("planRetrieval", () => {
     "Give me a portfolio health overview across all projects",
     "Find important insights from today's meetings.",
     "Are any clients upset or showing relationship risk? Use recent meetings, email, and Teams evidence.",
+    "Has there been anything important that's happened today over email or in teams or email or meeting transcripts?",
+    "Anything important happen this week?",
+    "What happened today?",
   ])(
     "delegates broad operator question to executive Deep Agents workflow: %s",
     (message) => {
