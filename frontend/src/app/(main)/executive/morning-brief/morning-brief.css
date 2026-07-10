@@ -310,6 +310,19 @@
 .mb-issue__marker.red {
   background: var(--mb-red);
 }
+.mb-badge--carried {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.25rem;
+  border-radius: 2px;
+  padding: 0.125rem 0.25rem;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: color-mix(in srgb, var(--mb-orange) 15%, transparent);
+  color: var(--mb-carried);
+}
 .mb-issue__text {
   flex: 1;
   min-width: 0;

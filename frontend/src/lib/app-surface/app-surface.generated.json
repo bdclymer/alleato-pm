@@ -1178,8 +1178,8 @@
     },
     {
       "url": "/executive/morning-brief",
-      "title": "Executive briefing",
-      "description": "The Morning Brief is limited to users with executive briefing access."
+      "title": null,
+      "description": "Redirects to the Daily Executive Brief — owner-facing morning read with decisions, per-project status, and action items"
     },
     {
       "url": "/feedback-inbox",

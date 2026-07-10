@@ -401,5 +401,12 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "@opentelemetry/sdk-trace-base": "^2.7.1",
+      "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
+      "@opentelemetry/sdk-node": "^0.208.0"
+    }
   }
 }

@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { IBM_Plex_Mono, Lato, Montserrat, Oswald } from "next/font/google";
+
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
+import { PageShell } from "@/components/layout";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
+import {
+  listDailyExecutiveBriefPackets,
+  loadCurrentDailyExecutiveBriefPacket,
+} from "@/lib/daily-briefs/canonical-packets";
+import {
+  loadMorningBriefRailTasks,
+  type RailData,
+} from "@/lib/daily-briefs/morning-brief-tasks";
 import { createServiceClient } from "@/lib/supabase/service";
-import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
-import { buildCanonicalOperatingPacket } from "@/lib/executive/canonical-operating-packet";
-import { listDailyExecutiveBriefPackets } from "@/lib/daily-briefs/canonical-packets";
+
+import { MorningBriefClient } from "../(main)/executive/morning-brief/morning-brief-client";
 import {
-  DEFAULT_EXECUTIVE_WINDOW_DAYS,
-  hydrateExecutiveOperatingBrief,
-} from "@/lib/executive/brandon-daily-update";
-import { DailyBriefView } from "./daily-brief-view";
-import { itemKey } from "./brief-format";
-import {
-  buildBriefModel,
-  type BriefResolvedVM,
-  type DailyBriefTaskInput,
-} from "./brief-model";
+  briefV3IssueKey,
+  buildMorningBriefModel,
+  type MBResolvedSeed,
+} from "../(main)/executive/morning-brief/morning-brief-view-model";
+import "../(main)/executive/morning-brief/morning-brief.css";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,6 +31,34 @@ export const metadata: Metadata = {
   description:
     "Owner-facing daily executive brief — decisions, per-project status, and action items, each traced to its source.",
 };
+
+const displayFont = Oswald({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mb-display",
+  display: "swap",
+});
+const headFont = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-mb-head",
+  display: "swap",
+});
+const bodyFont = Lato({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-mb-body",
+  display: "swap",
+});
+const monoFont = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mb-mono",
+  display: "swap",
+});
+
+const fontClassName = `${displayFont.variable} ${headFont.variable} ${bodyFont.variable} ${monoFont.variable}`;
 
 function easternDateKey(value: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -39,42 +72,43 @@ function easternDateKey(value: Date) {
 }
 
 /**
- * Item keys that were open yesterday AND are still open today — surfaced as a
- * quiet "Carried" marker so nothing pending silently drops off the radar. Both
- * days are routed through the SAME canonical mapper, so their item keys are
- * computed identically and can be matched.
+ * Keys of BriefV3 action items that appeared in yesterday's brief AND are still
+ * open today. Used to render a quiet "Carried" badge so nothing pending silently
+ * drops off the radar. Both days are keyed through the same `briefV3IssueKey`
+ * so the sets can be intersected directly.
  */
-async function loadCarriedKeys(
+async function loadCarriedIssueKeys(
   todayKey: string,
-  todayOpenKeys: Set<string>,
+  todayIssueKeys: Set<string>,
 ): Promise<Set<string>> {
-  const packets = await listDailyExecutiveBriefPackets(60);
-  const prior = packets.find(
-    (packet) => packet.businessDate && packet.businessDate < todayKey,
-  );
-  if (!prior) return new Set();
+  try {
+    const packets = await listDailyExecutiveBriefPackets(5);
+    const prior = packets.find(
+      (packet) => packet.businessDate && packet.businessDate < todayKey,
+    );
+    const priorBrief = prior?.brief;
+    if (!priorBrief) return new Set();
 
-  const yesterday = await buildCanonicalOperatingPacket(prior);
-  const carried = new Set<string>();
-  for (const item of [
-    ...yesterday.sections.needsBrandon,
-    ...yesterday.sections.waitingOnOthers,
-  ]) {
-    const key = itemKey(item);
-    if (todayOpenKeys.has(key)) carried.add(key);
+    const carried = new Set<string>();
+    for (const project of priorBrief.projects) {
+      for (const item of project.actionItems) {
+        const key = briefV3IssueKey(item.text, project.name);
+        if (todayIssueKeys.has(key)) carried.add(key);
+      }
+    }
+    return carried;
+  } catch (error) {
+    console.error("[daily-brief] could not load carried issue keys — badges disabled", error);
+    return new Set();
   }
-  return carried;
 }
 
 /**
  * Items resolved earlier today via the feedback loop (signal = "completed",
- * surface = "daily-brief"). This makes "Resolved today" persist across reloads
- * within the day. Fails soft — a query error just yields an empty set so the
- * brief still renders.
+ * surface = "daily-brief"). Persists across reloads within the day. Fails soft
+ * — a query error yields an empty seed so the brief still renders.
  */
-async function loadResolvedToday(
-  todayKey: string,
-): Promise<{ keys: Set<string>; seed: BriefResolvedVM[] }> {
+async function loadResolvedToday(todayKey: string): Promise<MBResolvedSeed[]> {
   try {
     const supabase = createServiceClient();
     const startIso = new Date(`${todayKey}T00:00:00-04:00`).toISOString();
@@ -85,119 +119,48 @@ async function loadResolvedToday(
       .eq("signal", "completed")
       .gte("created_at", startIso)
       .order("created_at", { ascending: false });
-    if (error || !data) return { keys: new Set(), seed: [] };
+    if (error || !data) {
+      if (error) console.error("[daily-brief] loadResolvedToday query failed", error);
+      return [];
+    }
 
-    const keys = new Set<string>();
-    const seed: BriefResolvedVM[] = [];
+    const seen = new Set<string>();
+    const seed: MBResolvedSeed[] = [];
     for (const row of data as Array<Record<string, unknown>>) {
       const key = String(row.subject_id ?? "");
-      if (!key || keys.has(key)) continue;
-      keys.add(key);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
       const snapshot = (row.after_snapshot ?? {}) as {
         title?: string | null;
         project?: string | null;
       };
       seed.push({
-        key,
-        title: snapshot.title ?? "Resolved item",
-        project: snapshot.project ?? null,
-        summary: "",
+        id: key,
+        project: snapshot.project ?? "",
+        text: snapshot.title ?? "Resolved item",
       });
     }
-    return { keys, seed };
-  } catch {
-    return { keys: new Set(), seed: [] };
-  }
-}
-
-/** Format a task due date into the brief's owner-facing pill label. */
-function formatDueLabel(due: string | null | undefined): string | null {
-  if (!due) return null;
-  const label = new Date(`${due}T00:00:00-04:00`);
-  if (Number.isNaN(label.getTime())) return null;
-  const short = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "America/New_York",
-  }).format(label);
-  return due < easternDateKey(new Date()) ? `OVERDUE · ${short}` : `Due ${short}`;
-}
-
-/**
- * The real tasks the daily deep read created for its most recent run. These are
- * the shared operating record (also shown on /tasks); when present they drive
- * the brief's "your"/"team" action lists instead of the review-gated candidates.
- * Fails soft — a query error yields an empty list and the brief falls back.
- */
-async function loadDeepReadTasks(): Promise<DailyBriefTaskInput[]> {
-  try {
-    const supabase = createServiceClient();
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("id, title, priority, due_date, assignee_name, project_id, status, extraction_metadata")
-      .eq("source_system", "daily_deep_read")
-      .neq("status", "completed");
-    if (error || !data?.length) return [];
-
-    const rows = data as Array<Record<string, unknown>>;
-    const businessDateOf = (row: Record<string, unknown>) =>
-      String((row.extraction_metadata as { business_date?: string } | null)?.business_date ?? "");
-    // Only the most recent deep-read run drives the brief's action lists.
-    const latest = rows.map(businessDateOf).filter(Boolean).sort().pop() ?? "";
-    const current = rows.filter((row) => businessDateOf(row) === latest);
-
-    const projectIds = Array.from(
-      new Set(current.map((row) => row.project_id).filter((id): id is number => id != null)),
-    );
-    const projectNames = new Map<number, string>();
-    if (projectIds.length) {
-      const { data: projects } = await supabase
-        .from("projects")
-        .select("id, name")
-        .in("id", projectIds);
-      for (const project of projects ?? []) {
-        projectNames.set(Number(project.id), String(project.name ?? ""));
-      }
-    }
-
-    return current
-      .map((row) => {
-        const meta = (row.extraction_metadata ?? {}) as { category?: string };
-        const projectId = row.project_id != null ? Number(row.project_id) : null;
-        return {
-          id: String(row.id),
-          title: String(row.title ?? ""),
-          category: meta.category === "brandon" ? "brandon" : "team",
-          assigneeName: (row.assignee_name as string | null) ?? null,
-          projectName: projectId != null ? projectNames.get(projectId) ?? null : null,
-          projectId,
-          priority: (row.priority as string | null) ?? null,
-          due: formatDueLabel(row.due_date as string | null),
-        } satisfies DailyBriefTaskInput;
-      })
-      .filter((task) => task.title.trim().length > 0);
-  } catch {
+    return seed;
+  } catch (err) {
+    console.error("[daily-brief] loadResolvedToday unexpected failure", err);
     return [];
   }
 }
 
 /**
  * Standalone Daily Executive Brief — an editorial, source-backed morning read
- * for the owner. Bound to the canonical executive-brief packet
- * (`intelligence_packets`, target `daily-executive-brief`), the same deep-read
- * data that powers /executive. Rendered as real interactive React: every item
- * can be resolved, rated for the AI loop, or turned into a task, and each claim
- * links to its real source.
+ * for the owner. Reads the canonical BriefV3 packet, adds carryover from
+ * yesterday's brief, hydrates "Resolved today" from `ai_feedback_events`, and
+ * hands the shaped model to the interactive Morning Brief client (the two-
+ * column layout with a real task rail).
  *
  * Gated by the `view_executive_briefing` capability — it exposes owner-level
  * decisions, financial and schedule risk, and per-project detail.
  */
 export default async function DailyBriefPage() {
-  const canViewExecutiveBriefing = await canCurrentUserAccessAppCapability(
-    "view_executive_briefing",
-  );
+  const canView = await canCurrentUserAccessAppCapability("view_executive_briefing");
 
-  if (!canViewExecutiveBriefing) {
+  if (!canView) {
     return (
       <AppCapabilityAccessDenied
         title="Daily Executive Brief"
@@ -208,41 +171,43 @@ export default async function DailyBriefPage() {
 
   try {
     const todayKey = easternDateKey(new Date());
+    const packet = await loadCurrentDailyExecutiveBriefPacket();
 
-    const dashboard = await getExecutiveBriefingDashboard({
-      windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
-    });
-    const packet = dashboard.draft.packet;
-    const operatingBrief = hydrateExecutiveOperatingBrief(packet);
+    const todayIssueKeys = new Set<string>();
+    for (const project of packet.brief?.projects ?? []) {
+      for (const item of project.actionItems) {
+        todayIssueKeys.add(briefV3IssueKey(item.text, project.name));
+      }
+    }
 
-    const todayOpenKeys = new Set(
-      [
-        ...packet.sections.needsBrandon,
-        ...packet.sections.waitingOnOthers,
-        ...packet.sections.importantUpdates,
-      ].map((item) => itemKey(item)),
-    );
-
-    const [carriedKeys, resolved, deepReadTasks] = await Promise.all([
-      loadCarriedKeys(todayKey, todayOpenKeys),
+    const [carriedIssueKeys, resolvedSeed] = await Promise.all([
+      loadCarriedIssueKeys(todayKey, todayIssueKeys),
       loadResolvedToday(todayKey),
-      loadDeepReadTasks(),
     ]);
 
-    const model = buildBriefModel({
-      packet,
-      operatingBrief,
-      carriedKeys,
-      resolvedKeys: resolved.keys,
-      resolvedSeed: resolved.seed,
-      preparedFor: "Brandon",
-      tasks: deepReadTasks,
-    });
+    const model = buildMorningBriefModel(packet, { carriedIssueKeys, resolvedSeed });
+    let rail: RailData;
+    try {
+      rail = await loadMorningBriefRailTasks(model.businessDate);
+    } catch (railError) {
+      console.error("[daily-brief] failed to load rail tasks — degrading to empty rail", railError);
+      rail = { your: [], team: [], brandonPersonId: null };
+    }
 
     return (
-      <div className="min-h-screen bg-background">
-        <DailyBriefView model={model} />
-      </div>
+      <PageShell
+        variant="table"
+        title="Daily Executive Brief"
+        showHeader={false}
+        containerPaddingClassName="p-0"
+        contentClassName="p-0"
+      >
+        <div className={fontClassName}>
+          <div className="morning-brief">
+            <MorningBriefClient model={model} rail={rail} />
+          </div>
+        </div>
+      </PageShell>
     );
   } catch (error) {
     console.error("[daily-brief] failed to build brief", error);

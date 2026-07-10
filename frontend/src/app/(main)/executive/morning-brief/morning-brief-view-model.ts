@@ -55,6 +55,8 @@ export interface MBIssue {
   sources: string[];
   /** True when this bullet came from an owner (Brandon) decision. */
   ownerIsBrandon: boolean;
+  /** True when this item was in yesterday's brief and is still open today. */
+  carried: boolean;
 }
 
 export interface MBProject {
@@ -266,7 +268,16 @@ function projectKicker(project: BriefV3Project): string {
   return "Decision on the horizon";
 }
 
-function buildIssues(project: BriefV3Project): MBIssue[] {
+/**
+ * Stable normalized key for a BriefV3 action item, scoped by project. Used to
+ * detect carryover from yesterday's brief. Keep in sync with the loader in the
+ * daily-brief page — both sides must compute keys identically.
+ */
+export function briefV3IssueKey(text: string, project: string): string {
+  return `${project.trim().toLowerCase()}::${text.trim().toLowerCase().slice(0, 100)}`;
+}
+
+function buildIssues(project: BriefV3Project, carriedSet: Set<string>): MBIssue[] {
   return project.actionItems.map((item, index) => {
     const ownerLabel = item.ownerIsBrandon ? null : item.owner;
     const suffix = item.due
@@ -278,6 +289,7 @@ function buildIssues(project: BriefV3Project): MBIssue[] {
     const runs: MBRun[] = [];
     if (ownerLabel) runs.push({ text: `${ownerLabel}: `, bold: true });
     runs.push(...parseInline(`${item.text}${suffix}`));
+    const key = briefV3IssueKey(item.text, project.name);
     return {
       id: `${project.name}-${index}`,
       marker: markerFor(item.ownerIsBrandon, item.urgency, item.due, item.text),
@@ -285,6 +297,7 @@ function buildIssues(project: BriefV3Project): MBIssue[] {
       plain: plainText(item.text),
       sources: item.sourceIds.filter(Boolean),
       ownerIsBrandon: item.ownerIsBrandon,
+      carried: carriedSet.has(key),
     };
   });
 }
@@ -355,11 +368,23 @@ const EMPTY_MODEL: Omit<MorningBriefModel, "weekday" | "dateLabel" | "businessDa
   empty: true,
 };
 
+export interface BuildMorningBriefOptions {
+  /** Keys of items that were in yesterday's brief AND are still open today. */
+  carriedIssueKeys?: Set<string>;
+  /**
+   * Externally sourced "resolved today" seed (e.g. from ai_feedback_events).
+   * When provided, overrides the packet-derived resolvedToday projects.
+   */
+  resolvedSeed?: MBResolvedSeed[];
+}
+
 export function buildMorningBriefModel(
   packet: CanonicalDailyBriefPacket,
+  opts?: BuildMorningBriefOptions,
 ): MorningBriefModel {
   const { weekday, dateLabel } = formatBusinessDate(packet.businessDate);
   const generatedLabel = formatGenerated(packet.generatedAt);
+  const carriedSet = opts?.carriedIssueKeys ?? new Set<string>();
 
   const brief = packet.brief;
   if (!brief) {
@@ -369,6 +394,7 @@ export function buildMorningBriefModel(
       dateLabel,
       businessDate: packet.businessDate,
       generatedLabel,
+      resolvedSeed: opts?.resolvedSeed ?? [],
     };
   }
 
@@ -398,7 +424,7 @@ export function buildMorningBriefModel(
     kicker: projectKicker(project),
     summary: plainText(firstSentence(project.context)),
     context: parseInline(project.context),
-    issues: buildIssues(project),
+    issues: buildIssues(project, carriedSet),
   }));
 
   const onTrack: MBOnTrackProject[] = collapsed.map((project) => ({
@@ -415,7 +441,7 @@ export function buildMorningBriefModel(
     sources: looseEnd.sourceIds.filter(Boolean),
   }));
 
-  const resolvedSeed: MBResolvedSeed[] = ordered
+  const packetResolvedSeed: MBResolvedSeed[] = ordered
     .filter((project) => project.resolvedToday)
     .map((project) => ({
       id: `seed-${slug(project.name)}`,
@@ -423,6 +449,15 @@ export function buildMorningBriefModel(
       text:
         plainText(firstSentence(project.context)) || `${project.name} resolved today.`,
     }));
+
+  const externalSeed = opts?.resolvedSeed ?? [];
+  const mergedSeed = [...packetResolvedSeed, ...externalSeed];
+  const seenIds = new Set<string>();
+  const resolvedSeed = mergedSeed.filter((item) => {
+    if (seenIds.has(item.id)) return false;
+    seenIds.add(item.id);
+    return true;
+  });
 
   return {
     weekday,

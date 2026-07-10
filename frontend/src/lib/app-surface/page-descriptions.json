@@ -185,6 +185,7 @@
     "/testing/runs/[runId]": "Test run dashboard with split-pane case list, result details, videos, and GitHub issue filing",
     "/testing/runs/[runId]/case/[caseNumber]": "Redirect to parent test run page for consistent case navigation",
     "/tools": "Catalog of all Procore tools grouped by category with status badges and external links",
-    "/user-management": "Manage app users, project access, and permission templates with granular capability controls"
+    "/user-management": "Manage app users, project access, and permission templates with granular capability controls",
+    "/executive/morning-brief": "Redirects to the Daily Executive Brief — owner-facing morning read with decisions, per-project status, and action items"
   }
 }

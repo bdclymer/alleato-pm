@@ -143,6 +143,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     accessPolicy: "userManagement",
   },
   {
+    name: "Daily Brief",
+    path: "daily-brief",
+    requiresProject: false,
+    icon: Sparkles,
+    description: "Owner-facing daily executive brief",
+  },
+  {
     name: "Meetings",
     path: "meetings",
     requiresProject: false,
@@ -447,7 +454,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
   },
   {
     label: "Work",
-    toolNames: ["Meetings", "Tasks", "Documentation"],
+    toolNames: ["Daily Brief", "Meetings", "Tasks", "Documentation"],
   },
   {
     label: "Financial",

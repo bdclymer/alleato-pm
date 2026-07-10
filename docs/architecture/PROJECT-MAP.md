@@ -252,7 +252,7 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/executive/capabilities` | Authentication required. | frontend/src/app/(main)/executive/capabilities/page.tsx |
 | `/executive/daily-deep-read-review` | This review queue is limited to users with executive briefing access. | frontend/src/app/(main)/executive/daily-deep-read-review/page.tsx |
 | `/executive/intelligence-brief` | This executive briefing is limited to users with executive briefing access. | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
-| `/executive/morning-brief` | The Morning Brief is limited to users with executive briefing access. | frontend/src/app/(main)/executive/morning-brief/page.tsx |
+| `/executive/morning-brief` | Redirects to the Daily Executive Brief — owner-facing morning read with decisions, per-project status, and action items | frontend/src/app/(main)/executive/morning-brief/page.tsx |
 | `/feedback-inbox` | Review feedback, assign tools, and sync issues to GitHub. | frontend/src/app/(admin)/feedback-inbox/page.tsx |
 | `/files` | Global file browser and manager | frontend/src/app/(tables)/files/page.tsx |
 | `/financial-insights` | Run a portfolio scan to detect budget discrepancies and financial red flags across your projects. | frontend/src/app/(main)/financial-insights/page.tsx |

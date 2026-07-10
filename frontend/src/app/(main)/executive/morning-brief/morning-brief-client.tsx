@@ -433,7 +433,9 @@ export function MorningBriefClient({
         title: menu.text.slice(0, 240),
         project: menu.project,
       }),
-    }).catch(() => {});
+    }).catch((err) => {
+      console.error("[daily-brief] resolve feedback persist failed", err);
+    });
   };
 
   const issueCreateTask = () => {
@@ -669,6 +671,11 @@ export function MorningBriefClient({
                         <li className="mb-issue" key={issue.id}>
                           <span className={`mb-issue__marker ${issue.marker}`} />
                           <div className="mb-issue__text">
+                            {issue.carried ? (
+                              <span className="mb-badge--carried" title="This item was in yesterday's brief">
+                                Carried
+                              </span>
+                            ) : null}
                             <Runs runs={issue.runs} sources={model.sources} />
                             {issue.sources.map((alias) => (
                               <SourceChip key={alias} alias={alias} sources={model.sources} />
