@@ -1036,18 +1036,14 @@ class AcumaticaFinancialSyncService:
         if not cost_type_id:
             return None
 
-        existing = (
-            self.supabase.table("project_budget_codes")
-            .select("id")
-            .eq("project_id", project_id)
-            .eq("cost_code_id", normalized_cost_code_id)
-            .eq("cost_type_id", cost_type_id)
-            .eq("is_active", True)
-            .limit(1)
-            .execute()
+        # The unique key is (project_id, sub_job_key, cost_code_id, cost_type_id)
+        # — is_active is NOT part of it, so an INACTIVE typed row can already
+        # exist and collide with an insert. Match WITHOUT the is_active filter,
+        # and reactivate an inactive hit (the SOV trigger requires is_active).
+        project_budget_code_id = self._find_or_reactivate_typed_budget_code(
+            project_id, normalized_cost_code_id, cost_type_id
         )
-        if existing.data:
-            project_budget_code_id = existing.data[0]["id"]
+        if project_budget_code_id:
             self.commitment_sov_budget_code_map[cache_key] = project_budget_code_id
             return project_budget_code_id
 
@@ -1067,19 +1063,37 @@ class AcumaticaFinancialSyncService:
         if cost_code_meta.data and cost_code_meta.data[0].get("title"):
             cost_code_description = cost_code_meta.data[0]["title"]
 
-        inserted = (
-            self.supabase.table("project_budget_codes")
-            .insert(
-                {
-                    "project_id": project_id,
-                    "cost_code_id": normalized_cost_code_id,
-                    "cost_type_id": cost_type_id,
-                    "description": cost_code_description,
-                    "is_active": True,
-                }
+        try:
+            inserted = (
+                self.supabase.table("project_budget_codes")
+                .insert(
+                    {
+                        "project_id": project_id,
+                        "cost_code_id": normalized_cost_code_id,
+                        "cost_type_id": cost_type_id,
+                        "description": cost_code_description,
+                        "is_active": True,
+                    }
+                )
+                .execute()
             )
-            .execute()
-        )
+        except Exception as insert_exc:
+            # Lost a race (or an inactive row slipped in) — fall back to
+            # find-or-reactivate rather than aborting the line.
+            logger.warning(
+                "[AcumaticaSync] Typed budget-code insert for project=%s cost_code=%s "
+                "failed (%s); reconciling via reactivate/refetch",
+                project_id,
+                normalized_cost_code_id,
+                insert_exc,
+            )
+            project_budget_code_id = self._find_or_reactivate_typed_budget_code(
+                project_id, normalized_cost_code_id, cost_type_id
+            )
+            if project_budget_code_id:
+                self.commitment_sov_budget_code_map[cache_key] = project_budget_code_id
+            return project_budget_code_id
+
         project_budget_code_id = None
         if getattr(inserted, "data", None):
             inserted_row = inserted.data[0] if isinstance(inserted.data, list) else inserted.data
@@ -1088,24 +1102,51 @@ class AcumaticaFinancialSyncService:
             )
 
         if not project_budget_code_id:
-            # Insert may have hit the unique constraint from a concurrent path —
-            # refetch the typed row.
-            refetch = (
-                self.supabase.table("project_budget_codes")
-                .select("id")
-                .eq("project_id", project_id)
-                .eq("cost_code_id", normalized_cost_code_id)
-                .eq("cost_type_id", cost_type_id)
-                .eq("is_active", True)
-                .limit(1)
-                .execute()
+            project_budget_code_id = self._find_or_reactivate_typed_budget_code(
+                project_id, normalized_cost_code_id, cost_type_id
             )
-            if not refetch.data:
+            if not project_budget_code_id:
                 return None
-            project_budget_code_id = refetch.data[0]["id"]
 
         self.commitment_sov_budget_code_map[cache_key] = project_budget_code_id
         return project_budget_code_id
+
+    def _find_or_reactivate_typed_budget_code(
+        self, project_id: int, cost_code_id: str, cost_type_id: str
+    ) -> Optional[str]:
+        """Return the id of the typed project_budget_code for this (project,
+        cost_code, cost_type), reactivating it if it exists but is inactive.
+
+        Matches on the full unique key EXCEPT is_active so it finds the exact
+        row an insert would collide with. The SOV trigger requires the backing
+        code to be active, so an inactive hit is reactivated in place instead of
+        being duplicated (which would violate uq_project_budget_code)."""
+        found = (
+            self.supabase.table("project_budget_codes")
+            .select("id,is_active")
+            .eq("project_id", project_id)
+            .eq("cost_code_id", cost_code_id)
+            .eq("cost_type_id", cost_type_id)
+            .order("is_active", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if not found.data:
+            return None
+        row = found.data[0]
+        pbc_id = row["id"]
+        if not row.get("is_active"):
+            self.supabase.table("project_budget_codes").update(
+                {"is_active": True}
+            ).eq("id", pbc_id).execute()
+            logger.warning(
+                "[AcumaticaSync] Reactivated inactive Subcontract budget code %s "
+                "(project=%s cost_code=%s) so it can back a commitment SOV row",
+                pbc_id,
+                project_id,
+                cost_code_id,
+            )
+        return pbc_id
 
     def _max_cursor(self, records: List[Dict[str, Any]]) -> Optional[str]:
         values = [
