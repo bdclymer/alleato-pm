@@ -4,24 +4,18 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { isPast } from "date-fns";
-import { ArrowRight, ExternalLink, FileText, Link2, Pencil, Sparkles, Users, Video } from "lucide-react";
+import { ArrowRight, File as FileIcon, Pencil, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
-  buildBudgetDivisionSummaries,
   ProjectSetupSheet,
   ReadinessIndicator,
   SidebarTeamSection,
 } from "./project-command-center";
-import {
-  getProjectHomeLinkHref,
-  getProjectHomeLinkKind,
-  getProjectHomeLinks,
-  type ProjectHomeLinkDocument,
-} from "./project-home-links";
+import type { ProjectHomeLinkDocument } from "./project-home-links";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
@@ -54,6 +48,18 @@ type DailyLog = Pick<
   "id" | "log_date" | "general_notes" | "status" | "weather_conditions"
 >;
 type ProjectDocument = ProjectHomeLinkDocument;
+type ProjectPhoto = Pick<
+  Database["public"]["Tables"]["project_photos"]["Row"],
+  "id" | "title" | "file_url" | "file_name" | "created_at" | "date_taken"
+>;
+type ProgressReport = Pick<
+  Database["public"]["Tables"]["project_progress_reports"]["Row"],
+  "id" | "title" | "status" | "week_start" | "week_end" | "sent_at"
+>;
+type Submittal = Pick<
+  Database["public"]["Tables"]["submittals"]["Row"],
+  "id" | "submittal_number" | "title" | "status" | "final_due_date" | "created_at"
+>;
 
 interface ChangeOrder {
   id: string | number;
@@ -116,6 +122,8 @@ export interface ProjectHomeV2Props {
     financialRead: string | null;
     updatedAt: string | null;
   } | null;
+  progressReports?: ProgressReport[];
+  submittals?: Submittal[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -164,16 +172,6 @@ function oneSentence(value: string | null | undefined, fallback: string): string
   return stop > 0 ? text.slice(0, stop + 1) : text;
 }
 
-function initials(value: string | null | undefined): string {
-  if (!value) return "—";
-  return value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 function pctOf(value: number, total: number): number {
   if (!total) return 0;
   return Math.round((value / total) * 100);
@@ -211,16 +209,6 @@ function HealthRing({ score, size = 52 }: { score: number; size?: number }) {
   );
 }
 
-function ProgressBar({ value, max, tone = "primary", h = 6 }: { value: number; max: number; tone?: "primary" | "success" | "destructive" | "warning"; h?: number }) {
-  const p = Math.min(100, Math.max(0, max ? Math.round((value / max) * 100) : 0));
-  const fill = { primary: "bg-primary", success: "bg-success", destructive: "bg-destructive", warning: "bg-warning" }[tone];
-  return (
-    <div className="flex-1 overflow-hidden rounded-full bg-muted" style={{ height: h }}>
-      <div className={cn("h-full rounded-full transition-[width] duration-700", fill)} style={{ width: `${p}%` }} />
-    </div>
-  );
-}
-
 const EYE = "text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground";
 
 function SectionHeading({ title, count, action }: { title: string; count?: number; action?: React.ReactNode }) {
@@ -253,7 +241,6 @@ export function ProjectHomeCommandCenterV2({
   changeOrders,
   rfis,
   contracts,
-  contractLineItems,
   budget,
   budgetGrandTotals,
   schedule,
@@ -261,18 +248,19 @@ export function ProjectHomeCommandCenterV2({
   homeAlerts,
   pendingSsovReviews = [],
   ownerInvoices = [],
-  linkDocuments = [],
   synopsis = null,
+  progressReports = [],
+  submittals = [],
 }: ProjectHomeV2Props) {
   const projectId = String(project.id);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
-  const [showAllBudget, setShowAllBudget] = React.useState(false);
 
   // Lazily fetch meetings + daily logs via the existing tab-data endpoint.
   const [meetings, setMeetings] = React.useState<Meeting[]>([]);
   const [dailyLogs, setDailyLogs] = React.useState<DailyLog[]>([]);
   const [documents, setDocuments] = React.useState<ProjectDocument[]>([]);
+  const [photos, setPhotos] = React.useState<ProjectPhoto[]>([]);
   const [commsLoading, setCommsLoading] = React.useState(true);
   React.useEffect(() => {
     let cancelled = false;
@@ -281,11 +269,13 @@ export function ProjectHomeCommandCenterV2({
       apiFetch<{ kind: "meetings"; data: Meeting[] }>(`/api/projects/${projectId}/home/tab-data?kind=meetings`),
       apiFetch<{ kind: "daily-logs"; data: DailyLog[] }>(`/api/projects/${projectId}/home/tab-data?kind=daily-logs`),
       apiFetch<ProjectDocument[]>(`/api/projects/${projectId}/documents`),
+      apiFetch<ProjectPhoto[]>(`/api/projects/${projectId}/photos`),
     ]).then((results) => {
       if (cancelled) return;
       if (results[0].status === "fulfilled") setMeetings(results[0].value.data ?? []);
       if (results[1].status === "fulfilled") setDailyLogs(results[1].value.data ?? []);
       if (results[2].status === "fulfilled") setDocuments(results[2].value ?? []);
+      if (results[3].status === "fulfilled") setPhotos(results[3].value ?? []);
       setCommsLoading(false);
     });
     return () => {
@@ -306,14 +296,6 @@ export function ProjectHomeCommandCenterV2({
   const billedToDate = ownerInvoices.reduce((sum, i) => sum + (Number(i.gross_amount) || 0), 0);
   const paidToDate = ownerInvoices.reduce((sum, i) => sum + (Number(i.paid_amount) || 0), 0);
 
-  const budgetDivisions = React.useMemo(
-    () => buildBudgetDivisionSummaries({ budget: budget ?? [], contractLineItems: contractLineItems ?? [] }),
-    [budget, contractLineItems],
-  );
-  const sortedDivisions = React.useMemo(
-    () => [...budgetDivisions].sort((a, b) => b.budget - a.budget),
-    [budgetDivisions],
-  );
 
   /* ── Project facts ─────────────────────────────────────── */
   const meta = project as unknown as Record<string, unknown>;
@@ -321,22 +303,7 @@ export function ProjectHomeCommandCenterV2({
   const completionDate = (meta["est completion"] as string) ?? (meta["completion_date"] as string) ?? null;
   const completionPct = Math.max(0, Math.min(100, Number(project.completion_percentage) || 0));
   const healthScore = project.health_score != null ? Number(project.health_score) : null;
-  const phase = project.phase || project.stage || null;
   const jobNumber = (meta["job number"] as string) ?? project.project_number ?? null;
-
-  const pm = React.useMemo(() => {
-    const members = team ?? [];
-    const role = (m: ProjectTeamMember) => (m.role ?? "").toLowerCase();
-    return (
-      // Prefer the actual PM over an Assistant PM (both contain "project manager").
-      members.find((m) => role(m) === "project manager") ??
-      members.find((m) => role(m).includes("project manager") && !role(m).includes("assistant")) ??
-      members.find((m) => role(m).includes("manager") && !role(m).includes("assistant")) ??
-      members.find((m) => role(m).includes("project manager")) ??
-      members[0] ??
-      null
-    );
-  }, [team]);
 
   /* ── Timeline ──────────────────────────────────────────── */
   const timeline = React.useMemo(() => {
@@ -469,9 +436,9 @@ export function ProjectHomeCommandCenterV2({
     () => [...documents].sort((a, b) => getDateMs(b.created_at) - getDateMs(a.created_at)).slice(0, 6),
     [documents],
   );
-  const projectLinks = React.useMemo(
-    () => getProjectHomeLinks(linkDocuments.length > 0 ? linkDocuments : documents).slice(0, 5),
-    [documents, linkDocuments],
+  const recentPhotos = React.useMemo(
+    () => [...photos].sort((a, b) => getDateMs(b.date_taken ?? b.created_at) - getDateMs(a.date_taken ?? a.created_at)).slice(0, 4),
+    [photos],
   );
 
   return (
@@ -503,37 +470,8 @@ export function ProjectHomeCommandCenterV2({
         </div>
       </div>
 
-      {/* ── SYNOPSIS (daily deep read) ───────────────────── */}
-      {synopsis?.summary && (
-        <section className="mb-8">
-          <SectionHeading title="Synopsis" />
-          <p className="max-w-prose text-sm leading-relaxed text-foreground">{synopsis.summary}</p>
-          {(synopsis.fieldRead || synopsis.scheduleRead || synopsis.financialRead) && (
-            <div className="mt-4 grid max-w-4xl gap-x-8 gap-y-3 sm:grid-cols-3">
-              {[
-                { l: "Field", v: synopsis.fieldRead },
-                { l: "Schedule", v: synopsis.scheduleRead },
-                { l: "Financial", v: synopsis.financialRead },
-              ]
-                .filter((r) => r.v)
-                .map((r) => (
-                  <div key={r.l}>
-                    <div className={cn(EYE, "mb-1")}>{r.l}</div>
-                    <p className="text-[13px] leading-relaxed text-muted-foreground">{r.v}</p>
-                  </div>
-                ))}
-            </div>
-          )}
-          {synopsis.updatedAt && (
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Updated {formatShortDate(synopsis.updatedAt) ?? "recently"} · from the daily executive deep read
-            </p>
-          )}
-        </section>
-      )}
-
       {/* ── BODY: main + rail ────────────────────────────── */}
-      <div className="flex flex-col gap-8 xl:flex-row">
+      <div className="flex flex-col gap-10 xl:flex-row xl:gap-16">
         <div className="min-w-0 flex-1 space-y-9">
           {/* Financials */}
           {revisedBudget > 0 && (
@@ -590,6 +528,35 @@ export function ProjectHomeCommandCenterV2({
                   </div>
                 )}
               </div>
+            </section>
+          )}
+
+          {/* Synopsis (daily deep read) */}
+          {synopsis?.summary && (
+            <section>
+              <SectionHeading title="Synopsis" />
+              <p className="text-sm leading-relaxed text-foreground">{synopsis.summary}</p>
+              {(synopsis.fieldRead || synopsis.scheduleRead || synopsis.financialRead) && (
+                <div className="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-3">
+                  {[
+                    { l: "Field", v: synopsis.fieldRead },
+                    { l: "Schedule", v: synopsis.scheduleRead },
+                    { l: "Financial", v: synopsis.financialRead },
+                  ]
+                    .filter((r) => r.v)
+                    .map((r) => (
+                      <div key={r.l}>
+                        <div className={cn(EYE, "mb-1")}>{r.l}</div>
+                        <p className="text-[13px] leading-relaxed text-muted-foreground">{r.v}</p>
+                      </div>
+                    ))}
+                </div>
+              )}
+              {synopsis.updatedAt && (
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Updated {formatShortDate(synopsis.updatedAt) ?? "recently"} · from the daily executive deep read
+                </p>
+              )}
             </section>
           )}
 
@@ -705,60 +672,63 @@ export function ProjectHomeCommandCenterV2({
             </section>
           )}
 
-          {/* Budget by cost code */}
-          {sortedDivisions.length > 0 && (
+          {/* Progress reports + submittals */}
+          {(progressReports.length > 0 || submittals.length > 0) && (
             <section>
-              <SectionHeading
-                title="Budget by Division"
-                action={
-                  sortedDivisions.length > 6 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAllBudget((v) => !v)}
-                      className="h-auto px-0 py-0 text-xs text-muted-foreground hover:bg-transparent hover:text-primary"
-                    >
-                      {showAllBudget ? "Show less" : "Show all"} →
-                    </Button>
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div>
+                  <SectionHeading
+                    title="Weekly Progress Reports"
+                    count={progressReports.length || undefined}
+                    action={<ViewAllLink href={`/${projectId}/progress-reports`} />}
+                  />
+                  {progressReports.length > 0 ? (
+                    <div className="divide-y divide-border/60">
+                      {progressReports.map((r) => (
+                        <Link
+                          key={r.id}
+                          href={`/${projectId}/progress-reports/${r.id}`}
+                          prefetch={false}
+                          className="group flex items-center justify-between gap-3 py-3 transition-colors"
+                        >
+                          <span className="min-w-0 truncate text-[13px] font-medium text-foreground transition-colors group-hover:text-primary">
+                            {r.title || `Week of ${formatShortDate(r.week_start) ?? "—"}`}
+                          </span>
+                          <span className="shrink-0 text-[11px] capitalize text-muted-foreground">{r.status ?? "draft"}</span>
+                        </Link>
+                      ))}
+                    </div>
                   ) : (
-                    <ViewAllLink href={`/${projectId}/budget`} label="View budget" />
-                  )
-                }
-              />
-              <div className="overflow-hidden rounded-lg border border-border bg-muted/20">
-                <table className="w-full border-collapse text-[13px]">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className={cn("px-4 py-2.5 text-left", EYE)}>Division</th>
-                      <th className={cn("px-4 py-2.5 text-right", EYE)}>Budget</th>
-                      <th className={cn("px-4 py-2.5 text-right", EYE)}>Committed</th>
-                      <th className={cn("px-4 py-2.5 text-right", EYE)}>Variance</th>
-                      <th className={cn("w-28 px-4 py-2.5", EYE)} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(showAllBudget ? sortedDivisions : sortedDivisions.slice(0, 6)).map((d) => {
-                      const v = d.budget - d.committed;
-                      return (
-                        <tr key={d.id} className="border-b border-border/60 last:border-0">
-                          <td className="px-4 py-2.5 font-medium text-foreground">{d.label}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{fmtCompact(d.budget)}</td>
-                          <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">{fmtCompact(d.committed)}</td>
-                          <td className={cn("px-4 py-2.5 text-right font-medium tabular-nums", v >= 0 ? "text-success" : "text-destructive")}>
-                            {v >= 0 ? "+" : ""}
-                            {fmtCompact(v)}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <div className="flex">
-                              <ProgressBar value={d.committed} max={d.budget || 1} tone={v >= 0 ? "success" : "destructive"} h={4} />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                    <p className="py-4 text-sm text-muted-foreground">No progress reports yet.</p>
+                  )}
+                </div>
+
+                <div>
+                  <SectionHeading
+                    title="Submittals"
+                    count={submittals.length || undefined}
+                    action={<ViewAllLink href={`/${projectId}/submittals`} />}
+                  />
+                  {submittals.length > 0 ? (
+                    <div className="divide-y divide-border/60">
+                      {submittals.map((s) => (
+                        <Link
+                          key={s.id}
+                          href={`/${projectId}/submittals/${s.id}`}
+                          prefetch={false}
+                          className="group flex items-center justify-between gap-3 py-3 transition-colors"
+                        >
+                          <span className="min-w-0 truncate text-[13px] text-foreground transition-colors group-hover:text-primary">
+                            <span className="font-medium">{s.submittal_number}</span> {s.title}
+                          </span>
+                          <span className="shrink-0 text-[11px] capitalize text-muted-foreground">{s.status ?? "—"}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-4 text-sm text-muted-foreground">No submittals yet.</p>
+                  )}
+                </div>
               </div>
             </section>
           )}
@@ -801,37 +771,6 @@ export function ProjectHomeCommandCenterV2({
             </section>
           )}
 
-          {/* Daily log */}
-          {(commsLoading || recentDailyLogs.length > 0) && (
-            <section>
-              <SectionHeading title="Daily Log" action={<ViewAllLink href={`/${projectId}/daily-log`} />} />
-              {commsLoading ? (
-                <div className="py-4 text-sm text-muted-foreground">Loading daily reports…</div>
-              ) : (
-                <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-3">
-                  {recentDailyLogs.map((lg) => (
-                    <Link
-                      key={lg.id}
-                      href={`/${projectId}/daily-log`}
-                      prefetch={false}
-                      className="bg-card p-4 transition-colors hover:bg-muted/40"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-[13px] font-medium text-foreground">{formatShortDate(lg.log_date) ?? `Log ${lg.id}`}</span>
-                        {typeof lg.weather_conditions === "string" && lg.weather_conditions ? (
-                          <span className="text-[11px] text-muted-foreground">{lg.weather_conditions}</span>
-                        ) : null}
-                      </div>
-                      <p className="line-clamp-3 text-xs leading-5 text-muted-foreground">
-                        {oneSentence(lg.general_notes, "No daily report notes captured yet.")}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
           {/* Documents */}
           {(commsLoading || recentDocuments.length > 0) && (
             <section>
@@ -854,7 +793,7 @@ export function ProjectHomeCommandCenterV2({
                       className="group grid gap-2 py-3.5 transition-colors sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-center"
                     >
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <FileIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                         <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">{title}</p>
                       </div>
                       <span className="text-xs tabular-nums text-muted-foreground sm:justify-self-end">
@@ -868,92 +807,71 @@ export function ProjectHomeCommandCenterV2({
             </section>
           )}
 
-          {/* Links */}
-          {projectLinks.length > 0 && (
+          {/* Daily reports + photo gallery */}
+          {(commsLoading || recentDailyLogs.length > 0 || recentPhotos.length > 0) && (
             <section>
-              <SectionHeading
-                title="Links"
-                count={projectLinks.length}
-                action={<ViewAllLink href={`/${projectId}/documents`} label="Manage links" />}
-              />
-              <div className="divide-y divide-border/60">
-                {projectLinks.map((doc) => {
-                  const title = doc.title || doc.file_name || "Untitled link";
-                  const href = getProjectHomeLinkHref(doc);
-                  const kind = getProjectHomeLinkKind(doc);
-                  const Icon = kind === "video" ? Video : Link2;
-
-                  return (
-                    <a
-                      key={doc.id}
-                      href={href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="group grid gap-2 py-3.5 transition-colors sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-center"
-                    >
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                            {title}
-                          </p>
-                          {doc.description ? (
-                            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{doc.description}</p>
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div>
+                  <SectionHeading title="Daily Reports" action={<ViewAllLink href={`/${projectId}/daily-log`} />} />
+                  {commsLoading ? (
+                    <div className="py-4 text-sm text-muted-foreground">Loading daily reports…</div>
+                  ) : recentDailyLogs.length > 0 ? (
+                    <div className="divide-y divide-border/60">
+                      {recentDailyLogs.map((lg) => (
+                        <Link
+                          key={lg.id}
+                          href={`/${projectId}/daily-log`}
+                          prefetch={false}
+                          className="group flex items-baseline justify-between gap-3 py-3 transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <span className="text-[13px] font-medium text-foreground transition-colors group-hover:text-primary">
+                              {formatShortDate(lg.log_date) ?? `Log ${lg.id}`}
+                            </span>
+                            <p className="mt-0.5 line-clamp-1 text-xs leading-5 text-muted-foreground">
+                              {oneSentence(lg.general_notes, "No daily report notes captured yet.")}
+                            </p>
+                          </div>
+                          {typeof lg.weather_conditions === "string" && lg.weather_conditions ? (
+                            <span className="shrink-0 text-[11px] text-muted-foreground">{lg.weather_conditions}</span>
                           ) : null}
-                        </div>
-                      </div>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground transition-colors group-hover:text-primary sm:justify-self-end">
-                        Open <ExternalLink className="h-3 w-3" />
-                      </span>
-                    </a>
-                  );
-                })}
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-4 text-sm text-muted-foreground">No daily reports yet.</p>
+                  )}
+                </div>
+
+                <div>
+                  <SectionHeading title="Photos" action={<ViewAllLink href={`/${projectId}/photos`} />} />
+                  {commsLoading ? (
+                    <div className="py-4 text-sm text-muted-foreground">Loading photos…</div>
+                  ) : recentPhotos.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {recentPhotos.map((photo) => (
+                        <a
+                          key={photo.id}
+                          href={`/${projectId}/photos`}
+                          className="group block aspect-square overflow-hidden rounded-lg bg-muted"
+                        >
+                          <img
+                            src={photo.file_url}
+                            alt={photo.title || photo.file_name || "Project photo"}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="py-4 text-sm text-muted-foreground">No photos yet.</p>
+                  )}
+                </div>
               </div>
             </section>
           )}
 
-          {/* Snapshot */}
-          <div className="grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-lg border border-border md:grid-cols-4 md:divide-y-0">
-            <div className="p-4">
-              <div className={EYE}>Phase</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">{phase ?? "—"}</div>
-              {project.type ? <div className="mt-0.5 text-[11px] text-muted-foreground">{project.type}</div> : null}
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Completion</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">{completionPct}%</div>
-              <div className="mt-2 flex">
-                <ProgressBar value={completionPct} max={100} />
-              </div>
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Est. Completion</div>
-              <div className="mt-1 text-[15px] font-semibold text-foreground">
-                {formatShortDate(completionDate) ?? "—"}
-              </div>
-              {timeline && (
-                <div className="mt-0.5 text-[11px] text-muted-foreground">{timeline.remainingDays} days remaining</div>
-              )}
-            </div>
-            <div className="p-4">
-              <div className={EYE}>Project Manager</div>
-              {pm ? (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                    {initials(pm.full_name)}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium text-foreground">{pm.full_name}</div>
-                    {pm.company_name ? (
-                      <div className="truncate text-[11px] text-muted-foreground">{pm.company_name}</div>
-                    ) : null}
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-1 text-[13px] text-muted-foreground/50">Unassigned</div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* ── RIGHT RAIL ──────────────────────────────────── */}

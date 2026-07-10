@@ -234,6 +234,8 @@ export default async function ProjectHomePage({
     subcontractTotalsResult,
     purchaseOrderTotalsResult,
     linkDocumentsResult,
+    progressReportsResult,
+    submittalsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -399,6 +401,23 @@ export default async function ProjectHomePage({
       .or("source_web_url.ilike.http%,file_url.ilike.http%")
       .order("created_at", { ascending: false })
       .limit(20),
+
+    // Fetch recent weekly progress reports
+    supabase
+      .from("project_progress_reports")
+      .select("id, title, status, week_start, week_end, sent_at")
+      .eq("project_id", numericProjectId)
+      .order("week_end", { ascending: false })
+      .limit(5),
+
+    // Fetch recent submittals
+    supabase
+      .from("submittals")
+      .select("id, submittal_number, title, status, final_due_date, created_at")
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -536,6 +555,8 @@ export default async function ProjectHomePage({
   const linkDocuments: ProjectHomeLinkDocument[] = linkDocumentsResult.error
     ? []
     : linkDocumentsResult.data || [];
+  const progressReports = progressReportsResult.data || [];
+  const submittals = submittalsResult.data || [];
 
   // Daily synopsis — the executive deep read refreshes this row every day.
   const { data: currentState } = await supabase
@@ -577,6 +598,8 @@ export default async function ProjectHomePage({
         ownerInvoices={ownerInvoices}
         linkDocuments={linkDocuments}
         synopsis={synopsis}
+        progressReports={progressReports}
+        submittals={submittals}
       />
     </PageShell>
   );
