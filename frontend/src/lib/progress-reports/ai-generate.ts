@@ -324,10 +324,13 @@ export async function generateProgressReportSections({
   projectId,
   weekStart,
   weekEnd,
+  systemPromptOverride,
 }: {
   projectId: number;
   weekStart: string;
   weekEnd: string;
+  /** Bake-off / experimentation hook: replace the base system prompt. */
+  systemPromptOverride?: string;
 }): Promise<AiGeneratedSections> {
   const db = createServiceClient();
 
@@ -523,7 +526,8 @@ export async function generateProgressReportSections({
   // Inject any learnings from prior human feedback on this surface so the model
   // avoids previously-flagged mistakes. Scoped strictly to `progress_report`
   // (plus this project) — failures here must not block generation.
-  let systemPrompt = PROGRESS_REPORT_SYSTEM_PROMPT;
+  const basePrompt = systemPromptOverride ?? PROGRESS_REPORT_SYSTEM_PROMPT;
+  let systemPrompt = basePrompt;
   try {
     const learnings = await getSurfaceScopedLearnings({
       surface: "progress_report",
@@ -531,7 +535,7 @@ export async function generateProgressReportSections({
       limit: 3,
     });
     const { block } = buildAgentLearningContextBlock(learnings);
-    if (block) systemPrompt = `${PROGRESS_REPORT_SYSTEM_PROMPT}\n\n${block}`;
+    if (block) systemPrompt = `${basePrompt}\n\n${block}`;
   } catch {
     // keep the base prompt
   }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Download, Edit, Eye, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import { Download, Edit, Eye, ExternalLink, Loader2, Mail, Plus, RefreshCw, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   ContentSectionStack,
@@ -258,6 +258,7 @@ export function ProgressReportEditor({
   const [isSending, setIsSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [reportAudience, setReportAudience] = useState<"client" | "internal">("client");
   const [reportLength, setReportLength] = useState<"detailed" | "brief">("detailed");
@@ -407,6 +408,36 @@ export function ProgressReportEditor({
     });
   }
 
+  async function handleRefreshFromDeepRead() {
+    if (!draft) return;
+    setIsRefreshing(true);
+    try {
+      const result = await apiFetch<AiGeneratedSections>(
+        `/api/projects/${projectId}/progress-reports/${reportId}/refresh-from-deep-read`,
+        { method: "POST" },
+      );
+      if (result) {
+        setDraft((current) =>
+          current
+            ? {
+                ...current,
+                past_week_highlights: result.past_week_highlights,
+                upcoming_week_activities: result.upcoming_week_activities,
+                open_items: result.open_items,
+              }
+            : current,
+        );
+        toast.success("Pulled the latest daily deep read — review and save when ready");
+      }
+    } catch (error) {
+      toast.error("Refresh failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   async function handleAiGenerate() {
     if (!draft) return;
     setIsGenerating(true);
@@ -553,16 +584,29 @@ export function ProgressReportEditor({
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              variant="outline"
+              onClick={() => void handleRefreshFromDeepRead()}
+              disabled={isRefreshing || isGenerating || updateMutation.isPending}
+            >
+              {isRefreshing ? (
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-1.5 h-4 w-4" />
+              )}
+              {isRefreshing ? "Refreshing…" : "Refresh from deep read"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => void handleAiGenerate()}
-              disabled={isGenerating || updateMutation.isPending}
+              disabled={isGenerating || isRefreshing || updateMutation.isPending}
+              title="Premium: re-write the sections with AI (gpt-5.5). Slower and costs more; use only if you want a different narrative than the deep read."
             >
               {isGenerating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="mr-1.5 h-4 w-4" />
               )}
-              {isGenerating ? "Generating…" : "AI Generate"}
+              {isGenerating ? "Rewriting…" : "AI rewrite"}
             </Button>
             <Button
               size="sm"
