@@ -66,9 +66,13 @@ function SourceChips({ sources }: { sources: BriefSourceLink[] }) {
 
 export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefTask[] }) {
   const content = BRIEF_CONTENT;
-  // Prefer the real deep-read tasks; fall back to the static snapshot only when
-  // the DB returned nothing (e.g. unreachable at build time).
-  const seedTasks = realTasks.length > 0 ? realTasks : content.tasks;
+  // The deep read only produces team-assigned tasks, so keep Brandon's own items
+  // from the static snapshot and append the real (deduped) team tasks. Falls back
+  // to the full static snapshot when the DB returned nothing.
+  const seedTasks =
+    realTasks.length > 0
+      ? [...content.tasks.filter((task) => task.group === "you"), ...realTasks]
+      : content.tasks;
 
   const [doneDecisions, setDoneDecisions] = React.useState<Set<string>>(new Set());
   const [tasks, setTasks] = React.useState<EditableTask[]>(
@@ -237,16 +241,12 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
     <div className="mb2">
       <div className="mb2-wrap">
         <header className="mb2-masthead">
-          <div className="mb2-eyebrow">Alleato Group · The Morning Brief</div>
+          <div className="mb2-eyebrow">Alleato Group · Executive Brief</div>
           <div className="mb2-title" role="heading" aria-level={1}>
-            {content.weekday}, {content.dateLabel}
+            The Morning Brief
           </div>
-          <div className="mb2-coverage">
-            {content.coverage.map((item) => (
-              <span key={item.label}>
-                <b>{item.n}</b> {item.label}
-              </span>
-            ))}
+          <div className="mb2-dateline">
+            <b>Friday, July 10, 2026</b> · Prepared for Brandon Clymer
           </div>
         </header>
 
