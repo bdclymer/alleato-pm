@@ -86,7 +86,7 @@ export function MobileCardList<T>({
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               className={cn(
-                "rounded-2xl bg-card p-4 shadow-sm",
+                "rounded-2xl bg-card px-4 py-4 shadow-sm",
                 "transition-[background-color,box-shadow,transform] duration-200",
                 isClickable &&
                   "cursor-pointer hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99] active:bg-muted/40",
@@ -163,19 +163,22 @@ export function MobileCardList<T>({
                 ) : null}
               </div>
 
-              {/* Metadata: label / value list, aligned like a spec sheet. Labels
-                  never wrap; long values truncate. */}
+              {/* Metadata: quiet label on the left, the value carries the
+                  weight on the right. Labels recede (low contrast, no shouting
+                  uppercase) so the values read as the content and the block
+                  stops looking like a shrunken table. Labels never wrap; long
+                  values truncate. */}
               {detailCols.length > 0 && (
-                <div className="mt-3.5 space-y-2">
+                <div className="mt-3.5 space-y-2.5">
                   {detailCols.map((col) => (
                     <div
                       key={col.id}
                       className="flex min-w-0 items-baseline justify-between gap-4"
                     >
-                      <span className="whitespace-nowrap text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <span className="shrink-0 whitespace-nowrap text-xs font-normal text-muted-foreground">
                         {col.label}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-right text-sm text-foreground [&_*]:truncate">
+                      <span className="min-w-0 flex-1 truncate text-right text-sm font-medium text-foreground [&_*]:truncate">
                         {col.render(item)}
                       </span>
                     </div>

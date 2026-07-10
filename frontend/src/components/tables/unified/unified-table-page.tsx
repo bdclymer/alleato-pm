@@ -2101,9 +2101,22 @@ export function UnifiedTablePage<T>({
           // Toolbar lives on the tabs row at all widths — no duplicate in the header.
           headerActionsSlot
         ) : headerActionsSlot ? (
-          <div className="flex items-center gap-2">
-            {headerActionsSlot}
-            {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
+          // On phones (< md) the toolbar collapses to a single settings sheet
+          // trigger. Normalize it and the primary action to the SAME 44px round
+          // button so they read as one proportional set instead of a heavy
+          // filled square next to a bare glyph. The secondary gets a soft tonal
+          // fill; the primary keeps its accent. Icons are pinned to one size and
+          // any button label is collapsed (`text-[0]`) so both are icon-only.
+          <div className="flex items-center gap-2 max-md:gap-2">
+            {/* `:has(svg)` scopes the round-icon treatment to icon-bearing
+                buttons only, so a text-only header action degrades to its normal
+                label instead of collapsing to an empty circle. */}
+            <div className="contents max-md:[&_button:has(svg)]:h-11 max-md:[&_button:has(svg)]:w-11 max-md:[&_button:has(svg)]:justify-center max-md:[&_button:has(svg)]:gap-0 max-md:[&_button:has(svg)]:rounded-full max-md:[&_button:has(svg)]:bg-muted max-md:[&_button:has(svg)]:p-0 max-md:[&_button:has(svg)]:text-[0px] max-md:[&_button:has(svg)]:text-muted-foreground max-md:[&_button:has(svg)]:shadow-none max-md:[&_button:has(svg):hover]:bg-muted/70 max-md:[&_svg]:h-5 max-md:[&_svg]:w-5">
+              {renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)}
+            </div>
+            <div className="contents max-md:[&_button:has(svg)]:h-11 max-md:[&_button:has(svg)]:w-11 max-md:[&_button:has(svg)]:justify-center max-md:[&_button:has(svg)]:gap-0 max-md:[&_button:has(svg)]:rounded-full max-md:[&_button:has(svg)]:p-0 max-md:[&_button:has(svg)]:text-[0px] max-md:[&_svg]:h-5 max-md:[&_svg]:w-5">
+              {headerActionsSlot}
+            </div>
           </div>
         ) : (
           renderTableToolbar(TABLE_HEADER_MOBILE_TOOLBAR_CLASSNAME)
