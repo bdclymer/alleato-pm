@@ -149,6 +149,43 @@ describe("intent router", () => {
     }
   });
 
+  it("routes outbound Teams send prompts to the teams message action path before source lookup", () => {
+    const prompts = [
+      "Send a Teams message on my behalf, from Alleato AI, to Brandon Clymer. Use EXACTLY this message text, verbatim.",
+      "Send a Teams message to Brandon saying the meeting moved to 3pm",
+      "Can you message Ronnie on Teams and ask about the joist delivery?",
+      "Please send a Teams message to AJ that the budget review moved",
+    ];
+
+    for (const prompt of prompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).toBe("teams_message_action");
+      expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+    }
+  });
+
+  it("routes leading send-an-email prompts to the email action path", () => {
+    const intent = classifyAssistantIntent(
+      "Send an email to Brandon about the schedule change",
+    );
+    expect(intent).toBe("email_action");
+  });
+
+  it("keeps retrieval phrasings that merely mention send/message on retrieval paths", () => {
+    const retrievalPrompts = [
+      "Send me the important emails from today",
+      "Did we send the updated schedule email to the client?",
+      "Show me the message Ronnie posted in teams about the joists",
+      "What did the message Ronnie sent in teams yesterday say?",
+    ];
+
+    for (const prompt of retrievalPrompts) {
+      const intent = classifyAssistantIntent(prompt);
+      expect(intent).not.toBe("teams_message_action");
+      expect(intent).not.toBe("email_action");
+    }
+  });
+
   it("routes inbox read prompts to source lookup", () => {
     const prompts = [
       "Can you tell me my last five emails?",

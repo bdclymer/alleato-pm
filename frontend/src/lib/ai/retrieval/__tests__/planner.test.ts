@@ -429,3 +429,32 @@ describe("attachments + transactional asks must not status-dump", () => {
     expect(plan.responseFormat).toBe("briefing_template");
   });
 });
+
+describe("outbound send requests must reach the send tools, not retrieval", () => {
+  // Regression for the 2026-07-10 production miss: "Send a Teams message on my
+  // behalf, from Alleato AI, to Brandon Clymer …" was classified source_lookup
+  // and answered with semantic-search hits; sendTeamsMessage was never reached.
+  it.each([
+    "Send a Teams message on my behalf, from Alleato AI, to Brandon Clymer. Use EXACTLY this message text, verbatim.",
+    "Send a Teams message to Brandon saying the meeting moved to 3pm",
+    "Can you message Ronnie on Teams and ask about the joist delivery?",
+    "Send an email to Brandon about the schedule change",
+    "Please send a Teams message to AJ that the budget review moved",
+  ])("outbound send routes to conversational with no retrieval hijack: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.reason).toBe("outbound_message_send_request");
+    expect(plan.responseFormat).toBe("conversational");
+    expect(plan.sources.semanticVectorSearch).toBeUndefined();
+  });
+
+  it.each([
+    "Send me the important emails from today",
+    "Did we send the updated schedule email to the client?",
+    "Show me the message Ronnie posted in teams about the joists",
+    "Has there been anything important that's happened today over email or in teams or meeting transcripts?",
+    "Dig through the teams messages and emails and figure out where the resignation started",
+  ])("retrieval phrasings that mention send/message stay on retrieval: %s", (message) => {
+    const plan = planRetrieval({ message, messages: [userMsg(message)] });
+    expect(plan.reason).not.toBe("outbound_message_send_request");
+  });
+});

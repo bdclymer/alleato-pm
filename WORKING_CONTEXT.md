@@ -5,6 +5,24 @@
 
 ---
 
+## AI assistant trace audit + outbound-send routing fix (2026-07-10)
+
+- Audited the last ~25 `/ai` conversations (chat_history + Langfuse traces) after Megan
+  reported the assistant felt low-value. Verdict: **the deep-read routing is healthy
+  post-PR #921** (merged 19:00 UTC) — the two garbage "anything important today?" answers
+  from earlier that day (May results, score 0.57) were pre-fix. Verified live twice in
+  production: broad catch-up → `latest_status` + `backendDeepAgentExecutiveBriefing` with
+  today-dated content; "tell me more" drill-down → `decision_lookup` with honest
+  can't-confirm caveats.
+- **Real remaining bug found + fixed: outbound send requests were hijacked into
+  source-lookup RAG** — "Send a Teams message on my behalf … to Brandon Clymer" (session
+  `8e5919ad`) got semantic-search excerpts; `sendTeamsMessage` was never reached. Fix =
+  new `teams_message_action` intent + `isOutboundSendRequest` planner guard — **PR #928
+  (open, needs review/merge)**.
+- Filed: #925 (every deep-read answer lacks source citations — quality scorer flags 100%
+  of latest-status-intent traces), #926 (leaked "I treated this as a source lookup"
+  narration in handler-v2:5463).
+
 ## Master AI Roadmap created (2026-07-10)
 
 - **`docs/roadmap/AI-ROADMAP.md`** is now the single ranked map for all AI work — PR #900

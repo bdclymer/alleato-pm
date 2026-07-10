@@ -39,6 +39,27 @@ function isTransactionalCreateRequest(message: string): boolean {
   return TRANSACTIONAL_CREATE_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+// Outbound send requests ("send a Teams message to Brandon", "send an email to
+// the client on my behalf") must reach the model's send/draft tools. They
+// mention channel words (teams, email, message) that the cross-source and
+// source-lookup detectors below treat as retrieval corpora — without this
+// guard a verbatim "Send a Teams message on my behalf" request was answered
+// with semantic-search results instead of a send (production miss 2026-07-10).
+// "send me/us ..." is a request to RECEIVE information and stays on retrieval.
+// Send verbs only count when they lead the request (allowing a polite prefix):
+// mid-sentence or interrogative "send" ("did we send the schedule email?") is
+// retrieval, not an action. "…on my behalf" marks a send even mid-sentence.
+const OUTBOUND_SEND_PATTERNS = [
+  /^(?:please\s+|can you\s+(?:please\s+)?|could you\s+(?:please\s+)?|would you\s+(?:please\s+)?|go ahead and\s+)?(?:send|shoot|fire off|post)\b(?!\s+(?:me|us)\b)[\s\S]{0,80}\b(?:message|chat|dm|email|e-mail|note|reply|invite)\b/i,
+  /\b(?:send|shoot|fire off|post)\b(?!\s+(?:me|us)\b).{0,50}\b(?:message|email|e-mail|chat|dm)\b.{0,60}\bon my behalf\b/i,
+  /^(?:please\s+|can you\s+(?:please\s+)?|could you\s+(?:please\s+)?|would you\s+(?:please\s+)?|go ahead and\s+)?(?:dm|ping|message)\s+\w+.{0,30}\b(?:on|in|via|over)\s+teams\b/i,
+];
+
+function isOutboundSendRequest(message: string): boolean {
+  const text = message.trim();
+  return OUTBOUND_SEND_PATTERNS.some((pattern) => pattern.test(text));
+}
+
 const FOLLOWUP_PHRASES = [
   /\b(source|cite|citation|evidence)\b/i,
   /\b(why|how come|why did)\b/i,
@@ -275,6 +296,20 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       reason: selectedProjectId
         ? "project_context_change_event_write_request"
         : "change_event_write_request",
+    };
+  }
+
+  // Outbound sends win over every retrieval path below: the channel words they
+  // contain ("teams", "email", "message") are exactly what the cross-source and
+  // source-lookup detectors key on, so evaluating retrieval first hijacks the
+  // action into a semantic search and the send tool is never reached.
+  if (isOutboundSendRequest(message)) {
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {},
+      selectedProjectId,
+      reason: "outbound_message_send_request",
     };
   }
 

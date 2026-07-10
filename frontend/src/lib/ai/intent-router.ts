@@ -9,6 +9,7 @@ export type AssistantIntent =
   | "task_write"
   | "change_event_write"
   | "email_action"
+  | "teams_message_action"
   | "calendar_action"
   | "external_research"
   | "source_lookup"
@@ -46,9 +47,44 @@ const CALENDAR_ACTION_PATTERNS = [
   /\b(create|send)\b.{0,40}\b(invite|invitation)\b/i,
 ];
 
+// Send verbs only count as an ACTION when they lead the request (allowing a
+// polite prefix). Mid-sentence or interrogative "send" is usually retrieval
+// ("did we send the schedule email?", "the message Ronnie sent in teams"),
+// and "send me/us ..." is a request to RECEIVE information — both must stay
+// on the retrieval paths.
+const IMPERATIVE_PREFIX =
+  "^(?:please\\s+|can you\\s+(?:please\\s+)?|could you\\s+(?:please\\s+)?|would you\\s+(?:please\\s+)?|go ahead and\\s+)?";
+
 const EMAIL_ACTION_PATTERNS = [
   /\b(draft|write|prepare|compose)\b.{0,50}\b(email|e-mail|reply|response|outlook message|message)\b/i,
   /\b(email|e-mail|reply|respond)\b.{0,50}\b(draft|write|prepare|compose|back)\b/i,
+  new RegExp(
+    `${IMPERATIVE_PREFIX}send\\b(?!\\s+(?:me|us)\\b).{0,50}\\b(?:email|e-mail|reply|response|outlook message)\\b`,
+    "i",
+  ),
+];
+
+// Outbound Teams sends must be classified before email_action and before any
+// retrieval classification — "send a Teams message to Brandon" contains the
+// corpus word "teams" and the evidence noun "message", which the source-lookup
+// patterns below would otherwise steal into transcript search (production miss
+// 2026-07-10: a verbatim "Send a Teams message on my behalf" request was
+// answered with semantic-search hits instead of reaching sendTeamsMessage).
+const TEAMS_MESSAGE_ACTION_PATTERNS = [
+  new RegExp(
+    `${IMPERATIVE_PREFIX}(?:send|post|shoot|fire off)\\b(?!\\s+(?:me|us)\\b).{0,60}\\bteams\\b.{0,30}\\b(?:message|chat|dm|note)\\b`,
+    "i",
+  ),
+  new RegExp(
+    `${IMPERATIVE_PREFIX}(?:send|post|shoot|fire off)\\b(?!\\s+(?:me|us)\\b).{0,40}\\b(?:message|chat|dm|note)\\b.{0,60}\\b(?:on|in|via|over)\\s+teams\\b`,
+    "i",
+  ),
+  new RegExp(
+    `${IMPERATIVE_PREFIX}(?:dm|ping|message)\\s+\\w+.{0,30}\\b(?:on|in|via|over)\\s+teams\\b`,
+    "i",
+  ),
+  // "…on my behalf" marks an outbound send even mid-sentence.
+  /\bteams\b.{0,30}\b(message|chat|dm)\b.{0,80}\bon my behalf\b/i,
 ];
 
 const CHANGE_EVENT_WRITE_PATTERNS = [
@@ -186,6 +222,14 @@ export function classifyAssistantIntent(
   // of calling createGeneratedTask.
   if (TASK_WRITE_PATTERNS.some((pattern) => pattern.test(text))) {
     return "task_write";
+  }
+
+  // Checked before calendar_action: "send a Teams message … the meeting moved"
+  // is a message send whose CONTENT mentions a meeting, and the calendar
+  // patterns ("send … meeting") would otherwise steal it. Genuine calendar asks
+  // ("create a Teams invite") don't match the message/chat/dm nouns here.
+  if (TEAMS_MESSAGE_ACTION_PATTERNS.some((pattern) => pattern.test(text))) {
+    return "teams_message_action";
   }
 
   if (CALENDAR_ACTION_PATTERNS.some((pattern) => pattern.test(text))) {
