@@ -1226,6 +1226,14 @@ export function BudgetTable({
       cell: ({ row }) => {
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
+        // Divisions / rollup rows do not carry a forecast (feedback #560).
+        // Forecast to Complete is a leaf-level cost projection you enter per
+        // line item, so parent rows render blank rather than an aggregated
+        // value the user cannot act on. Matches Procore, where only detail
+        // rows show a forecast.
+        if (hasChildren) {
+          return <div className="text-right" data-testid="forecast-blank" />;
+        }
         return (
           <EditableCurrencyCell
             value={row.getValue("forecastToComplete")}
