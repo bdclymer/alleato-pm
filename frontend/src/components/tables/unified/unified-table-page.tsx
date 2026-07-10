@@ -1032,6 +1032,15 @@ export function UnifiedTablePage<T>({
     {},
   );
   const tableScrollRef = React.useRef<HTMLDivElement>(null);
+  // Horizontal-scroll affordance: when a table is wider than the viewport, a
+  // partially-visible trailing column must read as "scroll for more" — not as a
+  // random/broken clip. We fade the leading/trailing edges whenever there is more
+  // content to scroll to in that direction. Fixed here once so every table page
+  // inherits it (design-audit DA-001).
+  const [tableScrollEdges, setTableScrollEdges] = React.useState<{
+    left: boolean;
+    right: boolean;
+  }>({ left: false, right: false });
   const rowRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
   const resizeStateRef = React.useRef<{
     columnId: string;
@@ -1825,6 +1834,44 @@ export function UnifiedTablePage<T>({
     return () => window.cancelAnimationFrame(raf);
   }, [showTable, shouldRenderTableView, table.autoFocusOnLoad]);
 
+  // Track horizontal-scroll position so the edge fades signal "more columns →"
+  // (design-audit DA-001). Recomputes on scroll, viewport resize, and whenever the
+  // rendered table changes width (column show/hide/resize, data load).
+  React.useEffect(() => {
+    const el = tableScrollRef.current;
+    if (!el) {
+      setTableScrollEdges({ left: false, right: false });
+      return;
+    }
+
+    const update = () => {
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+      const overflows = maxScroll > 1;
+      setTableScrollEdges({
+        left: overflows && el.scrollLeft > 1,
+        right: overflows && el.scrollLeft < maxScroll - 1,
+      });
+    };
+
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(update);
+      observer.observe(el);
+      const innerTable = el.querySelector("table");
+      if (innerTable) observer.observe(innerTable);
+    }
+
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      observer?.disconnect();
+    };
+  }, [showTable, shouldRenderTableView, paginatedItems, visibleColumns]);
+
   const handleTableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     table.onTableKeyDown?.(event, paginatedItems);
     if (event.defaultPrevented || paginatedItems.length === 0) return;
@@ -2175,7 +2222,27 @@ export function UnifiedTablePage<T>({
 
       {/* Desktop table view */}
       {showTable && shouldRenderTableView && (
-        <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
+        <div
+          className={cn(
+            "relative hidden sm:block",
+            data.isFetching && "opacity-70",
+          )}
+        >
+          {/* Edge fades — signal that the table scrolls horizontally so a
+              partially-visible trailing column reads as "more →", not a broken
+              clip (design-audit DA-001). */}
+          {tableScrollEdges.left ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 z-20 w-8 bg-gradient-to-r from-background to-transparent"
+            />
+          ) : null}
+          {tableScrollEdges.right ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 right-0 z-20 w-10 bg-gradient-to-l from-background to-transparent"
+            />
+          ) : null}
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
@@ -3198,7 +3265,10 @@ export function UnifiedTablePage<T>({
       {portaledToolbar}
       <PageContainer
         maxWidth={containerMaxWidth}
-        padding={containerPadding}
+        // Split view is edge-to-edge like the emails feedback page — no left/right
+        // gutter so the list + detail panel own the full content width (design-audit
+        // DA-002). Other views keep the standard container padding.
+        padding={canRenderSplitView ? false : containerPadding}
         className={cn(
           "pb-12",
           canRenderSplitView && TABLE_SPLIT_VIEW_PAGE_CONTAINER_CLASSNAME,

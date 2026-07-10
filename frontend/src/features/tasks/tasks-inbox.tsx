@@ -1610,18 +1610,7 @@ function TaskDetail({
               <SelectContent>
                 {TASK_PRIORITY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    <span className="inline-flex items-center gap-2">
-                      {option.value !== "__none__" &&
-                        PRIORITY_META[option.value] && (
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full",
-                              PRIORITY_META[option.value].dot,
-                            )}
-                          />
-                        )}
-                      {option.label}
-                    </span>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1705,25 +1694,24 @@ function TaskDetail({
           <DetailPropertyItem icon={Clock} aria-label="Task created date">
             {createdLabel}
           </DetailPropertyItem>
-
-          {task.id && isAiGeneratedTask(task) && (
-            <DetailPropertyItem
-              icon={CheckSquare2}
-              contentClassName="overflow-visible"
-              aria-label="Task training feedback"
-            >
-              <TaskFeedbackButtons
-                projectId={taskProjectId}
-                taskId={task.id}
-                taskSnapshot={taskFeedbackSnapshot}
-                compact
-                onRemove={() => {
-                  if (task.id) onDelete(task.id);
-                }}
-              />
-            </DetailPropertyItem>
-          )}
         </DetailPropertyBar>
+
+        {task.id && isAiGeneratedTask(task) && (
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground/70">
+              Good task?
+            </span>
+            <TaskFeedbackButtons
+              projectId={taskProjectId}
+              taskId={task.id}
+              taskSnapshot={taskFeedbackSnapshot}
+              compact
+              onRemove={() => {
+                if (task.id) onDelete(task.id);
+              }}
+            />
+          </div>
+        )}
 
         {task.source_context && (
           <section className="mt-5 min-w-0 space-y-3">
