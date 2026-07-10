@@ -151,6 +151,25 @@ async function main() {
   const ccoById = new Map(jpCcos.map((c) => [c.id, c]));
   const pccoById = new Map(jpPccos.map((p) => [p.id, p]));
 
+  // The list endpoints return change-order HEADERS without line items. A JP change order
+  // has its OWN line items — including lines added directly on the CO (no change-request
+  // line behind them) and CO-level amounts — which is the authoritative source for
+  // pco_line_items. Only the detail endpoint returns them, so hydrate every header here.
+  async function attachCoLines(headers, seg) {
+    await Promise.all(
+      (headers ?? []).map(async (h) => {
+        try {
+          const detail = await jpGet(`${API_V2}/${seg}/${h.id}`);
+          h.lineItems = Array.isArray(detail?.lineItems) ? detail.lineItems : [];
+        } catch {
+          h.lineItems = [];
+        }
+      }),
+    );
+  }
+  await attachCoLines(jpPccos, "primecontractchangeorders");
+  await attachCoLines(jpCcos, "commitmentchangeorders");
+
   // ---- App reference maps for cost-code -> budget-code resolution ----
   const { data: ctRows } = await sb.from("cost_code_types").select("id, code");
   const costTypeIdByCode = new Map((ctRows ?? []).map((r) => [r.code, r.id]));
@@ -333,6 +352,10 @@ async function main() {
     // one PCO header per JP CCO / PCCO the CR lines reference, return app id
     const primePcoIdByJp = new Map();
     const commitPcoIdByJp = new Map();
+    // JP change-request line item id -> app change_event_line_item.id (for linking CO lines
+    // back to their originating CE line), and app PCO id -> owning change_event.id.
+    const celiIdByCrLineId = new Map();
+    const ceIdByPcoAppId = new Map();
 
     async function ensurePrimePco(pcco) {
       if (primePcoIdByJp.has(pcco.id)) return primePcoIdByJp.get(pcco.id);
@@ -341,7 +364,10 @@ async function main() {
       const row = {
         project_id: APP_PROJECT_ID, prime_contract_id: primeId,
         pco_number: pcco.number, title: pcco.description || pcco.number, description: pcco.description ?? null,
-        total_amount: centsToDollars(pcco.totalAmount ?? pcco.amount), status: pcoStatus(pcco.statusId),
+        // `amount` is the CO subtotal that ties to the sum of the CO line items' `amount`
+        // (JP's line grid). `totalAmount` adds CO-level markup, which the app has no field
+        // for; the PCO line sync recomputes this from the actual lines to stay consistent.
+        total_amount: centsToDollars(pcco.amount ?? pcco.totalAmount), status: pcoStatus(pcco.statusId),
         executed: pcco.statusId === 8, promoted_to_co_id: pccoTwinByNumber.get(pcco.number) ?? null,
         change_reason: pcco.changeReason ?? null,
       };
@@ -356,7 +382,7 @@ async function main() {
       const row = {
         project_id: APP_PROJECT_ID, commitment_id: commit.id, commitment_type: commit.type,
         pco_number: cco.number, title: cco.description || cco.number, description: cco.description ?? null,
-        total_amount: centsToDollars(cco.totalAmount ?? cco.amount), status: pcoStatus(cco.statusId),
+        total_amount: centsToDollars(cco.amount ?? cco.totalAmount), status: pcoStatus(cco.statusId),
         executed: cco.statusId === 8, promoted_to_co_id: ccoTwinByNumber.get(cco.number) ?? null,
         change_reason: cco.changeReason ?? null, contract_company: cco.contractedContact?.companyName ?? null,
       };
@@ -432,20 +458,20 @@ async function main() {
           celiId = id; if (created) writes.ceLines++;
         }
 
-        // A JP line can fork to BOTH a prime PCO and a commitment PCO — emit one
-        // pco_line_item + CE↔PCO link per side (keyed by jobplanner_id + pco_type).
+        // Record CR-line -> celi so the PCO line sync (below) can link each change-order
+        // line back to its originating change-event line.
+        celiIdByCrLineId.set(String(li.id), celiId);
+
+        // Ensure the PCO header(s) this line forks to and one CE↔PCO link per side.
+        // pco_line_items are NOT built from the CR fork here — a JP change order has its
+        // OWN line items (incl. lines added directly on the CO, and CO-level amounts), so
+        // they are synced from the change order after all CEs exist (see below).
         const forks = [];
         if (pcco) forks.push({ type: "prime", pcoId: await ensurePrimePco(pcco) });
         if (cco) forks.push({ type: "commitment", pcoId: await ensureCommitPco(cco) });
         for (const f of forks) {
           if (!f.pcoId) continue;
-          const { created: plCreated } = await upsertByMatch("pco_line_items", { jobplanner_id: li.id, pco_type: f.type }, {
-            pco_id: f.pcoId, change_event_id: ceId, change_event_line_item_id: celiId,
-            budget_code_id: null, amount: centsToDollars(li.amount),
-            unit_cost: li.unitPrice != null ? centsToDollars(li.unitPrice) : null,
-            quantity: li.quantity ?? null, description: li.description ?? null, sort_order: sort,
-          }, cr.number);
-          if (plCreated) writes.pcoLines++;
+          if (!ceIdByPcoAppId.has(f.pcoId)) ceIdByPcoAppId.set(f.pcoId, ceId);
           // one CE↔PCO link per (change_event, pco)
           const { data: existLink } = await sb.from("change_event_pco_links")
             .select("id").eq("change_event_id", ceId).eq("pco_id", f.pcoId).maybeSingle();
@@ -459,6 +485,64 @@ async function main() {
         sort++;
       }
     }
+
+    // ---- PCO line items: rebuild from each change order's OWN line items ----
+    // JobPlanner's change-order line grid is authoritative: it includes lines added
+    // directly on the CO (e.g. contingency draws, no change-request line behind them) and
+    // CO-level amounts. We replace any existing pco_line_items for each touched PCO with
+    // the CO's actual lines, linking each back to its originating CE line via
+    // changeRequestLineItemId when present, and resolving its budget code from its own
+    // cost code. pco_line_items.budget_code_id follows budget_lines.id by convention.
+    const { data: blRows } = await sb
+      .from("budget_lines")
+      .select("id, cost_code_id, cost_type_id")
+      .eq("project_id", APP_PROJECT_ID);
+    const budgetLineByKey = new Map((blRows ?? []).map((r) => [`${r.cost_code_id}|${r.cost_type_id}`, r.id]));
+    const resolveBudgetLine = (jpCostCodeId, jpCostTypeId) => {
+      const jpCode = jpCodeById.get(jpCostCodeId);
+      const dashed = jpCode ? dashCostCode(jpCode.code) : null;
+      const typeCode = jpTypeCodeById.get(jpCostTypeId);
+      const costTypeId = typeCode ? costTypeIdByCode.get(typeCode) : null;
+      if (!dashed || !costTypeId) return null;
+      return budgetLineByKey.get(`${dashed}|${costTypeId}`) ?? null;
+    };
+
+    async function syncPcoLines(jpIdToAppId, headerById, pco_type) {
+      const table = pco_type === "prime" ? "prime_contract_pcos" : "commitment_pcos";
+      for (const [jpId, appPcoId] of jpIdToAppId) {
+        if (!appPcoId) continue;
+        const header = headerById.get(jpId);
+        const coLines = Array.isArray(header?.lineItems) ? header.lineItems : [];
+        const ceId = ceIdByPcoAppId.get(appPcoId) ?? null;
+        // Replace this PCO's lines wholesale (idempotent re-sync).
+        const { error: delErr } = await sb.from("pco_line_items").delete().eq("pco_id", appPcoId);
+        if (delErr) throw new Error(`pco_line_items delete ${header?.number}: ${delErr.message}`);
+        let sort = 0;
+        let total = 0;
+        for (const line of coLines) {
+          const celiId =
+            line.changeRequestLineItemId != null
+              ? celiIdByCrLineId.get(String(line.changeRequestLineItemId)) ?? null
+              : null;
+          const amount = centsToDollars(line.amount);
+          total += Number(amount) || 0;
+          const { error } = await sb.from("pco_line_items").insert({
+            pco_id: appPcoId, pco_type, change_event_id: ceId, change_event_line_item_id: celiId,
+            budget_code_id: resolveBudgetLine(line.costCodeId, line.costTypeId),
+            amount, unit_cost: line.unitPrice != null ? centsToDollars(line.unitPrice) : null,
+            quantity: line.quantity ?? null, description: line.description ?? null,
+            sort_order: line.sortOrder ?? sort, jobplanner_id: line.id,
+          });
+          if (error) throw new Error(`pco_line_items insert ${header?.number} L${line.id}: ${error.message}`);
+          writes.pcoLines++; sort++;
+        }
+        // Keep the PCO header total consistent with the lines we just wrote (JP subtotal).
+        const { error: upErr } = await sb.from(table).update({ total_amount: Number(total.toFixed(2)) }).eq("id", appPcoId);
+        if (upErr) throw new Error(`${table} total ${header?.number}: ${upErr.message}`);
+      }
+    }
+    await syncPcoLines(primePcoIdByJp, pccoById, "prime");
+    await syncPcoLines(commitPcoIdByJp, ccoById, "commitment");
   }
 
   const counts = {
