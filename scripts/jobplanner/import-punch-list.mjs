@@ -56,9 +56,17 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
-// --- Job Planner mapping for this import ---
-const JP_PROJECT_ID = 5092; // "25-125 Goodwill Noblesville"
-const APP_PROJECT_ID = 25125; // PM app projects.id (INTEGER) for Goodwill Noblesville
+// --- Job Planner mapping (per-project via CLI args) ---
+const argValue = (name) => {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : undefined;
+};
+const JP_PROJECT_ID = Number(argValue("jp"));
+const APP_PROJECT_ID = Number(argValue("app"));
+if (!Number.isInteger(JP_PROJECT_ID) || !Number.isInteger(APP_PROJECT_ID)) {
+  console.error("Usage: node scripts/jobplanner/import-punch-list.mjs --jp=<jobplannerProjectId> --app=<appProjectId> [--dry-run]");
+  process.exit(1);
+}
 
 const API_V1 = "https://api.jobplanner.com";
 // Cloudflare blocks default script user-agents (err 1010); send a browser UA.

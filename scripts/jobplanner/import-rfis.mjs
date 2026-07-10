@@ -52,9 +52,17 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
-// --- Job Planner mapping for this import ---
-const JP_PROJECT_ID = 5092; // "25-125 Goodwill Noblesville"
-const APP_PROJECT_ID = 25125; // PM app projects.id (INTEGER) for Goodwill Noblesville
+// --- Job Planner mapping (per-project via CLI args) ---
+const argValue = (name) => {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : undefined;
+};
+const JP_PROJECT_ID = Number(argValue("jp"));
+const APP_PROJECT_ID = Number(argValue("app"));
+if (!Number.isInteger(JP_PROJECT_ID) || !Number.isInteger(APP_PROJECT_ID)) {
+  console.error("Usage: node scripts/jobplanner/import-rfis.mjs --jp=<jobplannerProjectId> --app=<appProjectId> [--dry-run]");
+  process.exit(1);
+}
 
 const API_V1 = "https://api.jobplanner.com";
 // Cloudflare blocks default script user-agents (err 1010); send a browser UA.
@@ -177,12 +185,13 @@ async function main() {
     auth: { persistSession: false },
   });
 
-  // Existing JP-sourced RFIs for this project -> idempotency map.
+  // ALL existing RFIs for this project -> two idempotency maps. `rfis.number` is an INTEGER
+  // with a UNIQUE (project_id, number) index, so an existing row on the same number (even a
+  // hand-entered/test row) must be ADOPTED, not inserted, or the insert collides.
   const { data: existing, error: readErr } = await supabase
     .from("rfis")
-    .select("id, source_metadata")
-    .eq("project_id", APP_PROJECT_ID)
-    .eq("source_system", "jobplanner");
+    .select("id, number, source_metadata")
+    .eq("project_id", APP_PROJECT_ID);
   if (readErr) {
     throw new Error(`Failed to read existing RFIs: ${readErr.message}`);
   }
@@ -191,6 +200,7 @@ async function main() {
       .map((r) => [r.source_metadata?.jobplanner_rfi_id, r.id])
       .filter(([k]) => k != null),
   );
+  const byNumber = new Map((existing ?? []).map((r) => [r.number, r.id]));
 
   let inserted = 0;
   let updated = 0;
@@ -202,7 +212,8 @@ async function main() {
     answersTotal += row.source_metadata.answers.length;
     attachmentsTotal += row.source_metadata.attachments.length;
 
-    const existingId = byJpId.get(row.source_metadata.jobplanner_rfi_id);
+    // Match by JobPlanner id (re-run), else by RFI number (adopt a pre-existing row).
+    const existingId = byJpId.get(row.source_metadata.jobplanner_rfi_id) ?? byNumber.get(row.number);
     const label = `#${row.source_metadata.jobplanner_number} "${row.subject.slice(0, 40)}" [${row.status}] answers=${row.source_metadata.answers.length} att=${row.source_metadata.attachments.length}`;
 
     if (DRY_RUN) {
