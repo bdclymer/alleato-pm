@@ -597,6 +597,31 @@ export default function PrimeContractPcoDetailPage() {
       contentClassName="space-y-8"
     >
       <div className="space-y-4 border-b border-border pb-6">
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="space-y-2">
+            <StatusBadge status={pco.status} />
+            {pco.prime_contract && (
+              <Text tone="muted" size="sm">
+                Related Contract:{" "}
+                <Link
+                  href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
+                  className="underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  {pco.prime_contract.contract_number} - {pco.prime_contract.title}
+                </Link>
+              </Text>
+            )}
+          </div>
+          <div className="ml-auto text-right">
+            <Text size="sm" tone="muted">
+              Total Amount
+            </Text>
+            <Text className="text-xl font-semibold tabular-nums">
+              {formatMoney(pco.calculated_amount || totalAmount)}
+            </Text>
+          </div>
+        </div>
+
         <PageTabs
           variant="inline"
           tabs={[
@@ -628,31 +653,6 @@ export default function PrimeContractPcoDetailPage() {
           ]}
           onTabClick={(href) => setActiveTab(href as PcoTab)}
         />
-
-        <div className="flex flex-wrap items-start gap-4">
-        <div className="space-y-2">
-          <StatusBadge status={pco.status} />
-          {pco.prime_contract && (
-            <Text tone="muted" size="sm">
-              Related Contract:{" "}
-              <Link
-                href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
-                className="underline underline-offset-4 transition-colors hover:text-foreground"
-              >
-                {pco.prime_contract.contract_number} - {pco.prime_contract.title}
-              </Link>
-            </Text>
-          )}
-        </div>
-        <div className="ml-auto text-right">
-          <Text size="sm" tone="muted">
-            Total Amount
-          </Text>
-          <Text className="text-xl font-semibold tabular-nums">
-            {formatMoney(pco.calculated_amount || totalAmount)}
-          </Text>
-        </div>
-      </div>
       </div>
 
       <ContentSectionStack className="pt-1">
