@@ -58,6 +58,12 @@ import { preserveActionToolTraceOutput } from "@/lib/ai/action-tool-trace";
 import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
+import {
+  microsoftAssistantBackendUrl,
+  microsoftAssistantAdminApiKey,
+  defaultMicrosoftMailbox,
+  microsoftAssistantTimeoutMs,
+} from "@/lib/ai/microsoft-backend-config";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type {
@@ -152,43 +158,6 @@ const AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS = Number(
 const AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS = Number(
   process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
 );
-
-function microsoftAssistantBackendUrl(): string {
-  const value = (
-    (process.env.NODE_ENV === "development"
-      ? process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
-      : process.env.BACKEND_URL || process.env.PYTHON_BACKEND_URL || "")
-  )
-    .replace(/\/+$/, "")
-    .trim();
-  try {
-    new URL(value);
-  } catch {
-    throw new Error(
-      "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL before using the Microsoft Executive Assistant.",
-    );
-  }
-  return value;
-}
-
-function microsoftAssistantAdminApiKey(): string {
-  const value = process.env.ADMIN_API_KEY?.trim();
-  if (!value) {
-    throw new Error(
-      "ADMIN_API_KEY is required to call the backend Microsoft Executive Assistant.",
-    );
-  }
-  return value;
-}
-
-function defaultMicrosoftMailbox(): string | undefined {
-  return (
-    process.env.AI_ASSISTANT_DEFAULT_OUTLOOK_MAILBOX?.trim() ||
-    process.env.OUTLOOK_OPERATOR_MAILBOX?.trim() ||
-    process.env.MICROSOFT_SYNC_USERS?.split(",")[0]?.trim() ||
-    undefined
-  );
-}
 
 function isMicrosoftSpecialistDelegationPlan(reason: string): boolean {
   return reason.startsWith("microsoft_specialist_delegation_");
@@ -1007,11 +976,6 @@ function buildLiveToolTrace(
     error,
     timestamp: asString(trace.timestamp) ?? new Date().toISOString(),
   };
-}
-
-function microsoftAssistantTimeoutMs(): number {
-  const parsed = Number(process.env.AI_ASSISTANT_MICROSOFT_BRIDGE_TIMEOUT_MS);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
 }
 
 async function fetchMicrosoftExecutiveAssistant(params: {

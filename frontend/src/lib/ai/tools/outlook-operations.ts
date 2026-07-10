@@ -4,7 +4,7 @@ import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 import { listOutlookCalendarEvents } from "@/lib/microsoft-graph/calendar-events";
 import { createToolContext, type ToolContext } from "./tool-context";
 
-type AnyRow = Record<string, unknown>;
+import { type AnyRow } from "./types";
 type OutlookOperationsStatus = "healthy" | "degraded";
 
 export type CreateOutlookOperationsToolsOptions = {

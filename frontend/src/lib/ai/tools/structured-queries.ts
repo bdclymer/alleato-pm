@@ -4,7 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace } from "./tool-utils";
 
-type AnyRow = Record<string, unknown>;
+import { type AnyRow } from "./types";
 
 // Module-level constant — avoids re-allocating on every tool invocation.
 const STOPWORDS = new Set([
