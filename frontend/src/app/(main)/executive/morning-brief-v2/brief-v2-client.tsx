@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MBButton } from "../morning-brief/mb-button";
 import {
   BRIEF_CONTENT,
+  type BriefContent,
   type BriefSourceLink,
   type BriefTask,
 } from "./brief-content";
@@ -64,8 +65,15 @@ function SourceChips({ sources }: { sources: BriefSourceLink[] }) {
   );
 }
 
-export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefTask[] }) {
-  const content = BRIEF_CONTENT;
+export function MorningBriefV2Client({
+  tasks: realTasks = [],
+  content: contentProp,
+}: {
+  tasks?: BriefTask[];
+  /** Packet-derived content; falls back to the static snapshot when absent. */
+  content?: BriefContent;
+}) {
+  const content = contentProp ?? BRIEF_CONTENT;
   // The deep read only produces team-assigned tasks, so keep Brandon's own items
   // from the static snapshot and append the real (deduped) team tasks. Falls back
   // to the full static snapshot when the DB returned nothing.
@@ -247,33 +255,41 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
           <div className="mb2-dateline">Prepared for Brandon Clymer</div>
         </header>
 
-        {/* YOUR CALLS TODAY */}
-        <div className="mb2-seclabel">Today&apos;s focus</div>
-        <ol className="mb2-calls">
-          {content.decisions.map((decision) => {
-            const done = doneDecisions.has(decision.id);
-            const plain = decision.text.map((segment) => segment.t).join("");
-            return (
-              <li className={`mb2-call ${done ? "done" : ""}`} key={decision.id}>
-                <MBButton
-                  className="mb2-call__spacer"
-                  aria-label={done ? "Reopen decision" : "Mark decision resolved"}
-                  onClick={() => toggleDecision(decision.id, decision.project, plain)}
-                  style={{ position: "absolute", left: 0, top: 6, width: 28, height: 28 }}
-                />
-                <div className="mb2-call__body">
-                  <span className="mb2-call__proj">{decision.project}</span> —{" "}
-                  {decision.text.map((segment, index) =>
-                    segment.b ? <b key={index}>{segment.t}</b> : <span key={index}>{segment.t}</span>,
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        {/* TODAY'S FOCUS — only when there are decisions to make */}
+        {content.decisions.length > 0 ? (
+          <>
+            <div className="mb2-seclabel">Today&apos;s focus</div>
+            <ol className="mb2-calls">
+              {content.decisions.map((decision) => {
+                const done = doneDecisions.has(decision.id);
+                const plain = decision.text.map((segment) => segment.t).join("");
+                return (
+                  <li className={`mb2-call ${done ? "done" : ""}`} key={decision.id}>
+                    <MBButton
+                      className="mb2-call__spacer"
+                      aria-label={done ? "Reopen decision" : "Mark decision resolved"}
+                      onClick={() => toggleDecision(decision.id, decision.project, plain)}
+                      style={{ position: "absolute", left: 0, top: 6, width: 28, height: 28 }}
+                    />
+                    <div className="mb2-call__body">
+                      <span className="mb2-call__proj">{decision.project}</span> —{" "}
+                      {decision.text.map((segment, index) =>
+                        segment.b ? <b key={index}>{segment.t}</b> : <span key={index}>{segment.t}</span>,
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </>
+        ) : null}
 
         {/* PROJECTS */}
-        <div className="mb2-seclabel">Projects that need attention</div>
+        {content.attentionProjects.length > 0 ? (
+          <div className="mb2-seclabel">
+            {content.decisions.length > 0 ? "Projects that need attention" : "Project status"}
+          </div>
+        ) : null}
         {content.attentionProjects.map((project) => (
           <section className="mb2-project" key={project.id}>
             <div className="mb2-project__head">
@@ -299,8 +315,10 @@ export function MorningBriefV2Client({ tasks: realTasks = [] }: { tasks?: BriefT
           </section>
         ))}
 
-        {/* LOOSE ENDS */}
-        <div className="mb2-seclabel">Loose ends — yours to chase</div>
+        {/* LOOSE ENDS — only when present */}
+        {content.looseEnds.length > 0 ? (
+          <div className="mb2-seclabel">Loose ends — yours to chase</div>
+        ) : null}
         <ul className="mb2-loose">
           {content.looseEnds.map((item) => {
             const dashIndex = item.text.indexOf(" — ");

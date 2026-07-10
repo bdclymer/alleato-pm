@@ -3,9 +3,11 @@ import { Lato, Oswald } from "next/font/google";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { PageShell } from "@/components/layout";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
+import { loadCurrentDailyExecutiveBriefPacket } from "@/lib/daily-briefs/canonical-packets";
 
 import { loadRealBriefTasks } from "./brief-tasks";
 import { MorningBriefV2Client } from "./brief-v2-client";
+import { buildMb2ContentFromPacket } from "./packet-content";
 import "./brief-v2.css";
 
 export const dynamic = "force-dynamic";
@@ -48,9 +50,14 @@ export default async function MorningBriefV2Page() {
     );
   }
 
-  // Real action items from the daily deep read (public.tasks). Falls back to the
-  // static snapshot inside the client when the DB is unreachable at build time.
-  const tasks = await loadRealBriefTasks();
+  // Data-driven: build the design's content from the live brief packet so any
+  // newly generated brief renders here automatically. Falls back to the static
+  // snapshot inside the client when the packet has no structured brief.
+  const [tasks, packet] = await Promise.all([
+    loadRealBriefTasks(),
+    loadCurrentDailyExecutiveBriefPacket().catch(() => null),
+  ]);
+  const content = packet ? buildMb2ContentFromPacket(packet) ?? undefined : undefined;
 
   return (
     <PageShell
@@ -61,7 +68,7 @@ export default async function MorningBriefV2Page() {
       contentClassName="p-0"
     >
       <div className={fontClassName}>
-        <MorningBriefV2Client tasks={tasks} />
+        <MorningBriefV2Client tasks={tasks} content={content} />
       </div>
     </PageShell>
   );
