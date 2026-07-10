@@ -30,30 +30,30 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Validate secrets
         env:
           JOBPLANNER_API_KEY: ${{ secrets.JOBPLANNER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          for v in JOBPLANNER_API_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY DATABASE_URL; do
+          for v in JOBPLANNER_API_KEY SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY; do
             if [[ -z "${!v}" ]]; then echo "Missing required secret: $v"; exit 1; fi
           done
 
       - name: Install runtime deps
         # Standalone install of only what the sync needs at runtime — no pnpm workspace.
-        # Node's require walks up from frontend/package.json to this root install.
-        run: npm install @supabase/supabase-js pg dotenv --no-save --no-package-lock
+        # Node's require walks up from frontend/package.json to this root install. Uses the
+        # Supabase REST client (HTTPS/IPv4) throughout — no raw pg/IPv6 DB connection, which
+        # GitHub Actions runners can't reach.
+        run: npm install @supabase/supabase-js dotenv --no-save --no-package-lock
 
       - name: Run nightly JobPlanner sync
         env:
           JOBPLANNER_API_KEY: ${{ secrets.JOBPLANNER_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: node scripts/jobplanner/nightly-sync.mjs
 
       - name: Alert on failure

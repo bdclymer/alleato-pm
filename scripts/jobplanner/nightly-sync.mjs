@@ -35,7 +35,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const require = createRequire(path.join(repoRoot, "frontend", "package.json"));
 try { require("dotenv").config({ path: path.join(repoRoot, ".env"), quiet: true }); } catch {}
 try { require("dotenv").config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true }); } catch {}
-const { Client } = require("pg");
+const { createClient } = require("@supabase/supabase-js");
 
 const DRY = process.argv.includes("--dry-run");
 // Projects that are phase=Current in the app but are NOT actually active (per Megan).
@@ -46,16 +46,24 @@ async function selectProjects() {
     .split("\n").slice(1).filter(Boolean);
   const pairs = csv.map((l) => { const x = l.split(","); return { name: x[1], jp: Number(x[3]), app: Number(x[4]) }; })
     .filter((r) => Number.isInteger(r.jp) && Number.isInteger(r.app));
-  const c = new Client({ connectionString: process.env.DATABASE_URL.replace(/[?&]sslmode=[^&]*/, ""), ssl: { rejectUnauthorized: false } });
-  await c.connect();
-  const cur = await c.query(`SELECT id FROM projects WHERE lower(coalesce(phase,''))='current' AND coalesce(archived,false)=false`);
+  // Use the Supabase REST client (HTTPS/IPv4) — NOT a raw pg connection. GitHub Actions
+  // runners have no IPv6, and the direct DB host resolves to IPv6 (ENETUNREACH on :5432).
+  const sb = createClient(
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    { auth: { persistSession: false } },
+  );
+  const { data: projRows, error: pErr } = await sb.from("projects").select("id, phase, archived");
+  if (pErr) throw new Error(`projects read: ${pErr.message}`);
+  const currentIds = new Set(
+    (projRows ?? []).filter((r) => String(r.phase || "").toLowerCase() === "current" && !r.archived).map((r) => Number(r.id)),
+  );
   // Projects that already have a JobPlanner photo baseline — only THESE get the nightly
   // incremental photo pull. Onboarding a new project's photos stays a manual decision
   // (that's where the per-project volume cap lives), so the cron never backfills GBs.
-  const withPhotos = await c.query(`SELECT DISTINCT project_id FROM project_photos WHERE jobplanner_photo_guid IS NOT NULL`);
-  await c.end();
-  const currentIds = new Set(cur.rows.map((r) => Number(r.id)));
-  const photoBaseline = new Set(withPhotos.rows.map((r) => Number(r.project_id)));
+  const { data: photoRows, error: phErr } = await sb.from("project_photos").select("project_id").not("jobplanner_photo_guid", "is", null);
+  if (phErr) throw new Error(`project_photos read: ${phErr.message}`);
+  const photoBaseline = new Set((photoRows ?? []).map((r) => Number(r.project_id)));
   return pairs
     .filter((p) => currentIds.has(p.app) && !EXCLUDE_APP_IDS.has(p.app))
     .map((p) => ({ ...p, syncPhotos: photoBaseline.has(p.app) }));
