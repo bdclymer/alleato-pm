@@ -89,6 +89,37 @@ router owns this drift check; the Python side already has the equivalent
 
 ---
 
+## Identity resolution
+
+**Identity resolution** — the operation "given the authenticated user, what are their id
+shapes?". Owned by `frontend/src/lib/auth/identity.ts`: `resolvePersonId(user)` and
+`resolveIdentity(user) → { authUserId, profileId, personId }`. Two distinct ids identify a
+user, and stamping the wrong one into a write column — which RLS then silently hides — is a
+recurring bug class:
+- **`authUserId`** — Supabase `auth.users.id`. Equal to **`user_profiles.id`** by
+  construction (routes read the profile via `.eq("id", authUserId)`), so
+  `profileId === authUserId`.
+- **`personId`** — `people.id`, a SEPARATE id bridged from the auth uid via
+  `users_auth.auth_user_id → person_id`. Required by `people`-FK write columns.
+
+The bridge walk (users_auth → `people.auth_user_id` → `people.email` → auto-provision) has
+ONE home, `resolvePersonId`. Before it, the walk was a private copy in `auth-guard.ts` plus
+~6 inline hand-rolled forward walks (in `api/commitments`, `api/auth/admin-check`,
+`api/projects` ×2, and two `directory/people/.../notifications` routes) that skip the
+fallback chain and so behave differently for un-backfilled accounts. Those forks should
+adopt `resolvePersonId`.
+
+**Write id-shape contract** — which id a "who did this" column wants is a per-`{table,
+column}` fact, NOT per-column-name (`submitted_by` / `reviewed_by` / `assigned_by` each
+mean BOTH shapes across different tables). Only 15 such columns carry a real FK; the rest
+are unconstrained free text holding the auth uid. The 6 FK→`people.id` columns
+(`subcontractor_sov_submissions.submitted_by`/`reviewed_by`, `project_role_members.
+assigned_by`, `project_vendors.added_by`, `project_report_suggestions.reviewed_by`,
+`user_schedule_notifications.resource_tasks_assigned_to_id`) are the danger set — one
+careless `added_by: user.id` is a silent RLS-hidden row. Full map:
+`docs/patterns/identity-id-shape-contract.md`. As of 2026-07-10 there are ZERO live
+mismatches, but the safety is incidental (nulls / user-supplied ids), not enforced.
+
 ## Project intelligence / content retrieval
 
 **Project content source** — the operation "get me the `document_metadata` content for
