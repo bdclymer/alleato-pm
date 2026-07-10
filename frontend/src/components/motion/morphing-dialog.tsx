@@ -89,13 +89,14 @@ export type MorphingDialogTriggerProps = {
   className?: string;
   style?: React.CSSProperties;
   triggerRef?: React.RefObject<HTMLButtonElement>;
-};
+} & Omit<React.ComponentPropsWithoutRef<"button">, "onDrag" | "onDragStart" | "onDragEnd" | "onAnimationStart" | "style" | "children">;
 
 function MorphingDialogTrigger({
   children,
   className,
   style,
   triggerRef,
+  ...props
 }: MorphingDialogTriggerProps) {
   const { setIsOpen, isOpen, uniqueId } = useMorphingDialog();
 
@@ -117,6 +118,7 @@ function MorphingDialogTrigger({
     <motion.button
       ref={triggerRef}
       layoutId={`dialog-${uniqueId}`}
+      {...props}
       className={cn("relative cursor-pointer", className)}
       onClick={handleClick}
       onKeyDown={handleKeyDown}

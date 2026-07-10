@@ -65,6 +65,9 @@ module.exports = {
       // here would create nested shells.
       '(admin)/training-docs/page.tsx',
       '(admin)/training-map/page.tsx',
+      // Thin delegation page: renders ProductBoardClient, which owns its own
+      // PageShell (title + view/filter actions live on the header row there).
+      '(admin)/product-board/page.tsx',
       // Restored transcript detail: delegates to MeetingDetailContent, which
       // owns its own full page shell (same shape as the (tables)/ global page).
       '[projectId]/meetings/[meetingId]/page.tsx',

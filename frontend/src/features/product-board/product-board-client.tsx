@@ -17,22 +17,18 @@ import { EmptyState } from "@/components/ds";
 import { ErrorState } from "@/components/ds/error-state";
 import { Button } from "@/components/ui/button";
 import { Lightbulb, LayoutGrid, Table2 } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { useUnifiedTableState } from "@/components/tables/unified";
 import { cn } from "@/lib/utils";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
-import { AddBoardItemButton } from "./add-board-item-dialog";
 import { useProductBoard, type BoardItem } from "./use-product-board";
 import { BoardColumn } from "./board-column";
-import { BoardCard, BoardCardOverlay } from "./board-card";
+import { BoardCardOverlay } from "./board-card";
 import { BoardFilterBar, type BoardFilters } from "./board-filter-bar";
 import { loadCardViewSettings, saveCardViewSettings, type CardViewSettings } from "./card-view-settings";
 import { BoardUnifiedTable } from "./board-unified-table";
-import {
-  BOARD_CAPTURE_TOPICS,
-  type BoardCaptureTopicKey,
-  matchesBoardCaptureTopics,
-} from "./topics";
+import { matchesBoardCaptureTopics } from "./topics";
 import {
   matchesBoardItemType,
   matchesBoardTextMetadata,
@@ -173,98 +169,43 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     }
   }
 
-  const inFlight = useMemo(
-    () => items.filter((i) => i.board_status === "planned" || i.board_status === "in_progress").length,
-    [items],
-  );
-  const shipped = useMemo(
-    () => items.filter((i) => i.board_status === "shipped").length,
-    [items],
-  );
-
-  const viewToggle = (
-    <div className="inline-flex shrink-0 items-center rounded-md bg-muted p-0.5">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => {
-          viewState.setCurrentView("board");
-          viewState.setSearchParams({ view: "board" });
-        }}
-        className={cn(
-          "h-6 gap-1.5 px-2 text-[11px] font-medium",
-          viewMode === "board"
-            ? "bg-background text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <LayoutGrid className="h-3 w-3" />
-        Board
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => {
-          viewState.setCurrentView("table");
-          viewState.setSearchParams({ view: "table" });
-        }}
-        className={cn(
-          "h-6 gap-1.5 px-2 text-[11px] font-medium",
-          viewMode === "table"
-            ? "bg-background text-foreground shadow-xs"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <Table2 className="h-3 w-3" />
-        Table
-      </Button>
-    </div>
-  );
-
-  const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <AddBoardItemButton />
-      {viewToggle}
-      <span className="hidden text-[11px] text-muted-foreground/60 sm:inline-flex items-center gap-3 pl-2">
-        <span><span className="font-medium text-foreground/80 tabular-nums">{inFlight}</span> in motion</span>
-        <span className="text-muted-foreground/30" aria-hidden>·</span>
-        <span><span className="font-medium text-foreground/80 tabular-nums">{shipped}</span> shipped</span>
-      </span>
-      <div className="flex-1" />
-      <div className="flex flex-wrap items-center gap-1.5">
-        {Object.entries(BOARD_CAPTURE_TOPICS).map(([topicKey, topic]) => {
-          const key = topicKey as BoardCaptureTopicKey;
-          const active = filters.topics?.includes(key) ?? false;
-          return (
-            <Button
-              key={key}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setFilters((current) => {
-                  const currentTopics = current.topics ?? [];
-                  const nextTopics = active
-                    ? currentTopics.filter((item) => item !== key)
-                    : [...currentTopics, key];
-                  return {
-                    ...current,
-                    topics: nextTopics.length ? nextTopics : undefined,
-                  };
-                })
-              }
-              className={cn(
-                "h-8 rounded-full px-3 text-xs font-medium",
-                active
-                  ? "bg-muted text-foreground ring-1 ring-border"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <span className={cn("mr-1.5 h-1.5 w-1.5 rounded-full", topic.color)} />
-              {topic.label}
-            </Button>
-          );
-        })}
+  const headerActions = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="inline-flex shrink-0 items-center rounded-md bg-muted p-0.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            viewState.setCurrentView("board");
+            viewState.setSearchParams({ view: "board" });
+          }}
+          className={cn(
+            "h-6 gap-1.5 px-2 text-[11px] font-medium",
+            viewMode === "board"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <LayoutGrid className="h-3 w-3" />
+          Board
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            viewState.setCurrentView("table");
+            viewState.setSearchParams({ view: "table" });
+          }}
+          className={cn(
+            "h-6 gap-1.5 px-2 text-[11px] font-medium",
+            viewMode === "table"
+              ? "bg-background text-foreground shadow-xs"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Table2 className="h-3 w-3" />
+          Table
+        </Button>
       </div>
       <ExpandableSearch
         value={filters.search ?? ""}
@@ -281,56 +222,40 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     </div>
   );
 
-  // Table view — UnifiedTablePage handles its own loading/error/empty states
-  if (viewMode === "table") {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <BoardUnifiedTable
-          items={filteredItems}
-          isLoading={isLoading}
-          error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
-          isFiltered={activeFilters}
-        />
-      </div>
-    );
-  }
+  let body: React.ReactNode;
 
-  // Board view early returns
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <div className="overflow-x-auto pb-6">
-          <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
-            {BOARD_STATUSES.map((status) => (
-              <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
-            ))}
-          </div>
+  if (viewMode === "table") {
+    // Table view — UnifiedTablePage handles its own loading/error/empty states
+    body = (
+      <BoardUnifiedTable
+        items={filteredItems}
+        isLoading={isLoading}
+        error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
+        isFiltered={activeFilters}
+      />
+    );
+  } else if (isLoading) {
+    body = (
+      <div className="overflow-x-auto pb-6">
+        <div className="grid w-max min-w-max grid-flow-col auto-cols-[minmax(15rem,17rem)] gap-2.5">
+          {BOARD_STATUSES.map((status) => (
+            <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
+          ))}
         </div>
       </div>
     );
-  }
-
-  if (error) return <ErrorState title="Couldn't load the board" description={error.message} />;
-
-  if (filteredItems.length === 0) {
-    return (
-      <div className="flex flex-col gap-4">
-        {toolbar}
-        <EmptyState
-          icon={<Lightbulb />}
-          title={activeFilters ? "No items match the current filters" : "No feature requests yet"}
-          description={activeFilters ? "Try clearing or adjusting the tool, category, type, or topic filters." : "Submit ideas via the feedback button — they'll appear here automatically."}
-        />
-      </div>
+  } else if (error) {
+    body = <ErrorState title="Couldn't load the board" description={error.message} />;
+  } else if (filteredItems.length === 0) {
+    body = (
+      <EmptyState
+        icon={<Lightbulb />}
+        title={activeFilters ? "No items match the current filters" : "No feature requests yet"}
+        description={activeFilters ? "Try clearing or adjusting the tool, category, or type filters." : "Submit ideas via the feedback button — they'll appear here automatically."}
+      />
     );
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {toolbar}
-
+  } else {
+    body = (
       <DndContext
         sensors={sensors}
         collisionDetection={rectIntersection}
@@ -361,6 +286,18 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
           {activeItem ? <BoardCardOverlay item={activeItem} /> : null}
         </DragOverlay>
       </DndContext>
-    </div>
+    );
+  }
+
+  return (
+    <PageShell
+      variant="dashboard"
+      title="Roadmap"
+      actions={headerActions}
+      contentClassName="space-y-4 pt-2"
+      containerPaddingClassName="px-4 sm:pl-6 sm:pr-0 lg:pl-8 lg:pr-0 pt-2 pb-4"
+    >
+      <div className="min-w-0">{body}</div>
+    </PageShell>
   );
 }

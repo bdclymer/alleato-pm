@@ -22,11 +22,10 @@ import { BOARD_CAPTURE_TOPICS, getBoardCaptureTopics } from "./topics";
 
 type BoardItemWithMeta = BoardItem;
 
-const severityConfig = {
-  high: { dot: "bg-destructive" },
-  medium: { dot: "bg-amber-500" },
-  low: { dot: "bg-muted-foreground/40" },
-};
+// Priority is surfaced only when it carries urgency: high priority reads as a
+// red-on-light-red pill (consistent with the other muted tag chips). Medium/low
+// are the norm and render nothing — no orange dots (orange is the AI/brain
+// accent color and would just blend in rather than differentiate).
 
 function DueDateChip({ dateStr }: { dateStr: string }) {
   const date = new Date(dateStr);
@@ -110,12 +109,12 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
   const topics = getBoardCaptureTopics(item);
   const links = meta.links ?? [];
   const dueDate = meta.due_date;
-  const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
+  const isHighPriority = item.severity === "high";
   const primaryLink = getLinearIssueLink(meta) ?? links[0];
 
   const hasFooter =
     (settings.showDueDate && dueDate) ||
-    (settings.showSeverity && severity) ||
+    (settings.showSeverity && isHighPriority) ||
     (settings.showCommentCount && item.comment_count > 0) ||
     (settings.showAssignee && item.assignee);
 
@@ -195,12 +194,13 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
                     {settings.showDueDate && dueDate && <DueDateChip dateStr={dueDate} />}
-                    {settings.showSeverity && severity && (
+                    {settings.showSeverity && isHighPriority && (
                       <span
-                        className={cn("h-1.5 w-1.5 rounded-full", severity.dot)}
-                        title={`Priority: ${item.severity}`}
-                        aria-label={`Priority ${item.severity}`}
-                      />
+                        className="inline-flex items-center rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive"
+                        title="High priority"
+                      >
+                        High
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">

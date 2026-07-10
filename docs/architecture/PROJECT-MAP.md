@@ -1118,38 +1118,9 @@ _301/338 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (107)
+## AI Tools (63)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
-
-### `action-tools.ts` (24)
-
-| Tool | Description |
-|------|-------------|
-| `addBoardItem` | Add a feature idea, initiative, or product improvement directly to the Roadmap kanban. Use when the user says 'add this to the board', 'put this on the roadmap', 'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track a product idea with a specific status column. Always show a preview and ask for confirmation before writing. |
-| `createChangeEvent` | — |
-| `createChangeOrder` | — |
-| `createCommitment` | — |
-| `createContact` | Create a contact in the global directory (public.people). Use when the user wants to 'add a contact', 'create a new contact', or 'add [person] to the directory' WITHOUT tying them to a specific project (use createProjectContact when a project is involved). This renders an interactive, prefilled contact form widget: fill in every field you already know (first/last name, email, phone, job title, company, department, notes) so the user only completes what's missing, then submits. Reuses an existing person by email and links the company by id or exact name. Always previews the form before writing. |
-| `createGeneratedTask` | — |
-| `createInitiativeCard` | Create an initiative card on the Command Center board. Use when the user says 'add this to the board', 'create an initiative for [idea]', 'track this idea', 'remember this feature request', 'add a card for [thing]', or discusses any idea, feature, bug, or task that should be tracked on the kanban board. Does NOT require confirmation — cards are easy to edit/delete. |
-| `createMeetingNote` | — |
-| `createOutlookCalendarInvite` | — |
-| `createProjectCompany` | — |
-| `createProjectContact` | — |
-| `createRFI` | — |
-| `createSubmittal` | — |
-| `createTask` | — |
-| `deleteGeneratedTask` | — |
-| `draftOutlookEmail` | — |
-| `flagProjectRisk` | — |
-| `generateProjectSummary` | — |
-| `logDailyReport` | — |
-| `sendTeamsMessage` | — |
-| `submitFeedback` | Submit a bug report or feature request on behalf of the user — identical to submitting the feedback form in the app. Use when the user says 'report a bug', 'something is broken', 'submit a feature request', 'I have a suggestion', 'can you log this issue', or describes a problem or improvement idea they want tracked. Always show a preview and ask for confirmation before submitting. |
-| `updateGeneratedTask` | — |
-| `updateProjectStatus` | — |
-| `updateRFIStatus` | — |
 
 ### `acumatica.ts` (9)
 
@@ -1217,31 +1188,6 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `createMarketingIntelligenceItem` | Persist a source-backed marketing opportunity or signal for reuse. Use this when a source candidate should become part of marketing memory. |
 | `findMarketingSourceCandidates` | Find source-backed marketing inputs from documents, project summaries, AI insights, and recent operational records. Use before making claims about project wins, owner praise, leadership notes, recent events, or content opportunities. |
 | `getMarketingCalendar` | Retrieve persisted marketing calendar items, draft assets, source citations, and review states for the marketing review page. |
-
-### `operational.ts` (20)
-
-| Tool | Description |
-|------|-------------|
-| `findProject` | Look up a project by name (partial match) or list all active projects. Use this when the user mentions a project by name and you need to resolve it to an ID, or when you're unsure which project they mean. Returns project ID, name, phase, and key stats. |
-| `getCompanyKnowledge` | Retrieve company-level context: mission, vision, goals, strategy, OKRs, org structure, competitive landscape, policies, key clients, certifications, and free-form knowledge articles. Use this when the user asks about the company itself, its strategy, values, differentiators, history, or competitive positioning. Also use this to retrieve policy info or best practices. |
-| `getCrossProjectComparison` | Compare key metrics across multiple projects side-by-side: budget, schedule, RFI/submittal counts, change order exposure, and health status. Use when asked to compare projects or see which project has the most risk, biggest budget, etc. |
-| `getHistoricalTrends` | Analyze how a project's metrics have changed over time: RFI creation trends, submittal pipeline velocity, change order trends, and schedule progress. Use when asked about trends, velocity, trajectory, or how things have changed. |
-| `getMeetingDetails` | — |
-| `getPeopleAndRoles` | Get the project directory: who is on a project, their roles, companies, and contact information. Use when asked about team members, contacts, who works on a project, or project personnel. |
-| `getRecentEmails` | — |
-| `getRFIStatus` | Analyze RFI (Request for Information) status for a project. Shows overdue RFIs, response times, ball-in-court distribution, cost/schedule impacts, and status breakdown. Use when asked about RFIs, questions pending, or information requests. |
-| `getSubmittalStatus` | Analyze submittal status for a project. Shows overdue submittals, approval pipeline, ball-in-court distribution, lead times, and status breakdown. Use when asked about submittals, approvals, material submissions, or shop drawings. |
-| `getVendorPerformance` | Analyze vendor/subcontractor performance across a project or portfolio. Shows active vendors, their contract values, change order exposure, and billing status. Use when asked about vendor performance, subcontractor status, or trade partner metrics. |
-| `recallPastConversations` | Search past conversation memories to recall prior discussions with this user. Use when the user references previous conversations ("like we talked about", "remember when", "last time"), or when context from prior sessions would improve the response (recurring topics, established preferences, prior decisions). |
-| `saveInsight` | Save a structured insight extracted from meetings or conversations. Use when the user highlights something important from a meeting or discussion that should be tracked — risks, decisions, cost impacts, design considerations, etc. Links to the source meeting when available. |
-| `saveToKnowledgeBase` | Save knowledge, lessons learned, best practices, or institutional memory to the company knowledge base. Use this when the user says 'save this', 'remember this', 'I want to capture this', or 'add this to the knowledge base'. Admin saves are approved and searchable immediately; non-admin saves are captured as drafts for admin review before they become available through the AI assistant. Categories: lessons_learned, best_practice, process, policy, market_intel, general, strategy, org_update. |
-| `searchEmails` | — |
-| `searchExternalDocuments` | — |
-| `searchMeetingsByTopic` | — |
-| `searchMemories` | Search your memory of this user — their preferences, facts about projects, lessons learned, open commitments, and recent context from past sessions. Use this when the user references something from a previous conversation, or when you want to personalize a response based on what you know about them. Memory types: fact (project/people facts), preference (how they like info), lesson (patterns you've observed), commitment (tracked commitments), context (situational context from recent sessions). |
-| `searchTeamsMessages` | — |
-| `semanticSearch` | — |
-| `writeMemory` | Store a durable memory about this user for future sessions. Use this when you learn something worth remembering: a preference, a fact about their projects or team, a pattern you've noticed, a commitment that needs tracking, or important context. Do NOT use this for transient operational data — only things that improve future conversations. Memory types: fact (objective facts), preference (how they like things), lesson (patterns/insights), commitment (tracked commitment with owner + deadline), context (situational context, expires in 30 days). |
 
 ### `outlook-operations.ts` (2)
 

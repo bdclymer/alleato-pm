@@ -749,29 +749,32 @@ function SourceContextBlock({ value }: { value: string }) {
 
 const STATUS_SELECT_CLASSES: Record<DisplayStatus, string> = {
   done: "text-emerald-700 dark:text-emerald-400",
-  open: "text-amber-700 dark:text-amber-400",
+  // "Open" is the neutral default state — keep it quiet (no orange, which is the
+  // AI/brain accent color and would blend in rather than differentiate).
+  open: "text-muted-foreground",
   in_progress: "text-blue-700 dark:text-blue-400",
 };
 
+// High priority is the only urgent signal — red text on a light-red background,
+// matching the product board. Medium/low stay muted and consistent with the
+// other neutral tags. No orange (reserved for the AI/brain accent).
 const PRIORITY_META: Record<
   string,
   { dot: string; badge: string; label: string }
 > = {
   high: {
-    dot: "bg-red-400",
-    badge:
-      "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400",
+    dot: "bg-destructive",
+    badge: "bg-destructive/10 text-destructive",
     label: "High priority",
   },
   medium: {
-    dot: "bg-amber-400",
-    badge:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400",
+    dot: "bg-muted-foreground/50",
+    badge: "bg-muted text-foreground",
     label: "Medium priority",
   },
   low: {
-    dot: "bg-slate-300",
-    badge: "border-border bg-muted text-muted-foreground",
+    dot: "bg-muted-foreground/30",
+    badge: "bg-muted text-muted-foreground",
     label: "Low priority",
   },
 };
