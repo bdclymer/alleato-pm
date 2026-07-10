@@ -148,9 +148,10 @@ function formatFeedbackDate(value: string | null | undefined): string | null {
 
 const STATUS_CHIP_CLASS: Record<DecisionStatus, string> = {
   confirmed: "bg-status-success/10 text-status-success",
-  // Corrected uses the warm brand accent so a reviewer's edit reads as the one
-  // decision that changed against the calmer confirmed/review rows.
-  corrected: "bg-primary/10 text-primary",
+  // Corrected reads in plain foreground — NOT the brand orange, which is the
+  // "AI/brain" accent used across this surface and so wouldn't differentiate a
+  // reviewer's edit at all. This chip only renders for a genuine correction.
+  corrected: "bg-foreground/10 text-foreground",
   unreviewed: "bg-muted text-muted-foreground",
 };
 
@@ -197,7 +198,7 @@ function OptionChips<T extends string>({
             className={cn(
               "h-auto rounded-lg px-3 py-1.5 text-xs font-medium shadow-none",
               selected
-                ? "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                ? "border-foreground bg-foreground/10 text-foreground hover:bg-foreground/10 hover:text-foreground"
                 : "border-border bg-background text-muted-foreground",
             )}
           >
@@ -253,12 +254,7 @@ function DecisionRow({
           </div>
           {/* Value line — a correction keeps the AI's original struck through. */}
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "text-[13.5px] font-semibold",
-                corrected ? "text-primary" : "text-foreground",
-              )}
-            >
+            <span className="text-[13.5px] font-semibold text-foreground">
               {value}
             </span>
             {showStrikethrough ? (
@@ -268,14 +264,17 @@ function DecisionRow({
             ) : null}
           </div>
         </div>
-        <StatusChip status={status} />
+        {/* The status tag only appears for a genuine correction — an unchanged
+            row would otherwise show a "Review" chip on every field, which is
+            pure noise since every field defaults to review. */}
+        {corrected ? <StatusChip status={status} /> : null}
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={onToggleEdit}
           aria-expanded={isEditing}
-          className="h-auto shrink-0 px-0 py-0 text-[12px] font-semibold text-primary hover:bg-transparent hover:text-primary hover:underline"
+          className="h-auto shrink-0 px-0 py-0 text-[12px] font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground hover:underline"
         >
           {isEditing ? "Close" : "Change"}
         </Button>
@@ -711,7 +710,7 @@ export function AiReviewPanel({
       {/* Header */}
       <div className="flex flex-col gap-0.5 border-b border-border/70 px-5 py-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
           <span className="text-[15px] font-semibold text-foreground">
             AI Review
           </span>
@@ -917,7 +916,7 @@ export function AiReviewPanel({
                     className={cn(
                       "h-auto rounded-lg px-1.5 py-2 text-[11.5px] font-semibold shadow-none",
                       active
-                        ? "border-primary bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                        ? "border-foreground bg-foreground/10 text-foreground hover:bg-foreground/10 hover:text-foreground"
                         : "border-border bg-background text-muted-foreground",
                     )}
                   >
@@ -964,9 +963,11 @@ export function AiReviewPanel({
           <>
             <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => void handleSaveAll()}
               disabled={isSaving}
-              className="h-auto w-full gap-2 rounded-xl py-3.5 text-sm font-bold"
+              className="gap-2"
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
