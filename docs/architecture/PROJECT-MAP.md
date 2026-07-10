@@ -522,16 +522,16 @@ _302/340 have a description (from the page's `PageShell` or the curated `fronten
 | `/api/companies/[companyId]/bid-history` | GET | frontend/src/app/api/companies/[companyId]/bid-history/route.ts |
 | `/api/company/logo` | POST | frontend/src/app/api/company/logo/route.ts |
 | `/api/contacts` | GET, POST | frontend/src/app/api/contacts/route.ts |
-| `/api/cron/attribution-rules` | POST | frontend/src/app/api/cron/attribution-rules/route.ts |
-| `/api/cron/autonomous-triage` | POST | frontend/src/app/api/cron/autonomous-triage/route.ts |
-| `/api/cron/check-feedback-github-health` | POST | frontend/src/app/api/cron/check-feedback-github-health/route.ts |
+| `/api/cron/attribution-rules` | GET, POST | frontend/src/app/api/cron/attribution-rules/route.ts |
+| `/api/cron/autonomous-triage` | GET, POST | frontend/src/app/api/cron/autonomous-triage/route.ts |
+| `/api/cron/check-feedback-github-health` | GET, POST | frontend/src/app/api/cron/check-feedback-github-health/route.ts |
 | `/api/cron/daily-deep-read-promote-accepted` | GET, POST | frontend/src/app/api/cron/daily-deep-read-promote-accepted/route.ts |
-| `/api/cron/daily-flags` | POST | frontend/src/app/api/cron/daily-flags/route.ts |
-| `/api/cron/decay-memories` | POST | frontend/src/app/api/cron/decay-memories/route.ts |
+| `/api/cron/daily-flags` | GET, POST | frontend/src/app/api/cron/daily-flags/route.ts |
+| `/api/cron/decay-memories` | GET, POST | frontend/src/app/api/cron/decay-memories/route.ts |
 | `/api/cron/executive-daily-brief` | GET, POST | frontend/src/app/api/cron/executive-daily-brief/route.ts |
-| `/api/cron/progress-reports` | POST | frontend/src/app/api/cron/progress-reports/route.ts |
+| `/api/cron/progress-reports` | GET, POST | frontend/src/app/api/cron/progress-reports/route.ts |
 | `/api/cron/rfi-email-replies` | GET | frontend/src/app/api/cron/rfi-email-replies/route.ts |
-| `/api/cron/sync-feedback-pr-status` | POST | frontend/src/app/api/cron/sync-feedback-pr-status/route.ts |
+| `/api/cron/sync-feedback-pr-status` | GET, POST | frontend/src/app/api/cron/sync-feedback-pr-status/route.ts |
 | `/api/database-tables-catalog/[schemaName]/[tableName]` | PATCH | frontend/src/app/api/database-tables-catalog/[schemaName]/[tableName]/route.ts |
 | `/api/dev-panel/annotations` | GET | frontend/src/app/api/dev-panel/annotations/route.ts |
 | `/api/dev-panel/comments/[feature]` | GET, POST | frontend/src/app/api/dev-panel/comments/[feature]/route.ts |

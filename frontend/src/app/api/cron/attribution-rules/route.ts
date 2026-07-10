@@ -61,3 +61,6 @@ export const POST = withApiGuardrails(WHERE, async ({ request, requestId }) => {
     runAt: new Date().toISOString(),
   });
 });
+
+// Vercel cron invocations are HTTP GET (vercel.com/docs/cron-jobs); auth still requires CRON_SECRET.
+export const GET = POST;

@@ -104,6 +104,16 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Cron route method guard ──────────────────────────────────────
+# Vercel triggers cron jobs with HTTP GET. A cron route that only exports
+# POST 405s on every scheduled run — silently (the request never reaches app
+# telemetry). Every path in frontend/vercel.json "crons" must export GET.
+node scripts/audits/check-cron-route-methods.mjs
+if [ $? -ne 0 ]; then
+  echo "Registered cron route missing GET export. Add 'export const GET = POST;'."
+  exit 1
+fi
+
 # ── Build crash guards ───────────────────────────────────────────
 # Prevent the two patterns that have caused production build failures:
 #   1. Server pages calling createServiceClient() without force-dynamic
