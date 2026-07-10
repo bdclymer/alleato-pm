@@ -4,7 +4,7 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 from urllib.parse import quote
 
 import httpx
@@ -112,6 +112,42 @@ def _int(value: Any) -> Optional[int]:
     if parsed is None:
         return None
     return int(parsed)
+
+
+# Tolerance (per line) for the direct-cost reconciliation guardrail. unit_cost is
+# stored numeric(15,2); for multi-quantity lines a grossed-up unit cost can round
+# by up to half a cent, so the header total may differ from the recomputed
+# sum(quantity * unit_cost) by up to ~a cent per line. Anything larger is a real bug.
+_DIRECT_COST_RECON_TOLERANCE_PER_LINE = 0.01
+
+
+def _ap_bill_detail_amounts(detail: Dict[str, Any]) -> Tuple[float, float, float]:
+    """Return ``(quantity, unit_cost, line_total)`` for an AP-bill detail line.
+
+    The stored values MUST be GROSS (before retainage). In Acumatica,
+    ``ExtendedCost`` is the gross extended line value, whereas ``Amount`` is
+    net-of-retainage. Retainage is never baked into cost values — it is applied
+    at invoicing (see the subcontract SOV projection). Because
+    ``direct_cost_line_items.line_total`` is a generated column
+    (``quantity * unit_cost``), ``unit_cost`` must be derived from the gross
+    ``line_total`` so that the generated line total reconciles to the gross
+    ``direct_costs.total_amount`` header AND feeds gross Job-to-Date to the
+    budget (both budget rollups sum ``direct_cost_line_items.line_total`` per
+    budget code). ``detail.UnitCost`` is net-of-retainage and must NOT be trusted
+    here — the raw net value is preserved verbatim in ``acumatica_ap_bill_lines``.
+    """
+    quantity = _num(detail.get("Qty")) or 1.0
+    line_total = _num(detail.get("ExtendedCost"))
+    if line_total is None:
+        line_total = _num(detail.get("Amount"))
+    if line_total is None:
+        # No extended value at all — fall back to the (net) unit cost so the row
+        # is not silently zeroed. This path only fires when ExtendedCost/Amount
+        # are both absent, which is not a retained-line scenario.
+        line_total = (_num(detail.get("UnitCost")) or 0.0) * quantity
+    line_total = line_total or 0.0
+    unit_cost = (line_total / quantity) if quantity else 0.0
+    return quantity, unit_cost, line_total
 
 
 def _now_iso() -> str:
@@ -345,6 +381,12 @@ class AcumaticaFinancialSyncService:
         self.project_map: Dict[str, Dict[str, Any]] = {}
         self.vendor_map: Dict[str, Dict[str, Any]] = {}
         self.project_cost_code_map: Dict[tuple[int, str], str] = {}
+        # Commitment SOV rows must be backed by a *typed* (Subcontract) project
+        # budget code — a DB trigger rejects untyped codes. Cache the resolved
+        # typed code per (project_id, normalized_cost_code) separately from the
+        # untyped AP-bill map above so the two paths never cross-contaminate.
+        self.commitment_sov_budget_code_map: Dict[tuple[int, str], str] = {}
+        self._subcontract_cost_type_id_cache: Optional[str] = None
         self.cost_codes: Dict[str, str] = {}
 
     def sync_all(self) -> Dict[str, Any]:
@@ -924,7 +966,15 @@ class AcumaticaFinancialSyncService:
         if not normalized_cost_code:
             return None
 
-        project_budget_code_id = self._ensure_project_cost_code(project_id, normalized_cost_code)
+        # Commitment SOV rows MUST be backed by a typed (Subcontract) budget
+        # code. The generic _ensure_project_cost_code deliberately creates/
+        # matches *untyped* codes (cost_type_id IS NULL), which the
+        # validate_commitment_sov_project_budget_code trigger rejects with
+        # 23514 — aborting the whole commitments_projection entity. Resolve to
+        # the Subcontract-typed code instead.
+        project_budget_code_id = self._ensure_commitment_sov_budget_code(
+            project_id, normalized_cost_code
+        )
         if not project_budget_code_id:
             return None
 
@@ -932,6 +982,130 @@ class AcumaticaFinancialSyncService:
             "budget_code": normalized_cost_code,
             "project_budget_code_id": project_budget_code_id,
         }
+
+    # Subcontract cost type — the canonical type for commitment SOV budget
+    # codes (cost_code_types.code = 'S'). Overwhelmingly the type already used
+    # by typed SOV codes in production.
+    _SUBCONTRACT_COST_TYPE_CODE = "S"
+
+    def _subcontract_cost_type_id(self) -> Optional[str]:
+        """UUID of the Subcontract cost type, cached. None (loud) if missing."""
+        if self._subcontract_cost_type_id_cache is not None:
+            return self._subcontract_cost_type_id_cache
+
+        resp = (
+            self.supabase.table("cost_code_types")
+            .select("id")
+            .eq("code", self._SUBCONTRACT_COST_TYPE_CODE)
+            .limit(1)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            logger.error(
+                "[AcumaticaSync] No cost_code_types row with code=%s — commitment "
+                "SOV budget codes cannot be typed; SOV lines will be skipped",
+                self._SUBCONTRACT_COST_TYPE_CODE,
+            )
+            return None
+        self._subcontract_cost_type_id_cache = rows[0]["id"]
+        return self._subcontract_cost_type_id_cache
+
+    def _ensure_commitment_sov_budget_code(
+        self, project_id: int, cost_code_id: str
+    ) -> Optional[str]:
+        """Resolve (or create) the Subcontract-*typed* project_budget_code that
+        can legally back a commitment SOV row.
+
+        Unlike _ensure_project_cost_code (which matches/creates untyped codes),
+        this always targets cost_type_id = Subcontract, satisfying the
+        validate_commitment_sov_project_budget_code trigger. Returns None when
+        the cost code is unknown to the master list or the Subcontract cost type
+        is missing — the caller then skips + logs the line rather than aborting.
+        """
+        normalized_cost_code_id = _normalize_cost_code(cost_code_id)
+        if not normalized_cost_code_id:
+            return None
+
+        cache_key = (project_id, normalized_cost_code_id)
+        cached = self.commitment_sov_budget_code_map.get(cache_key)
+        if cached:
+            return cached
+
+        cost_type_id = self._subcontract_cost_type_id()
+        if not cost_type_id:
+            return None
+
+        existing = (
+            self.supabase.table("project_budget_codes")
+            .select("id")
+            .eq("project_id", project_id)
+            .eq("cost_code_id", normalized_cost_code_id)
+            .eq("cost_type_id", cost_type_id)
+            .eq("is_active", True)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            project_budget_code_id = existing.data[0]["id"]
+            self.commitment_sov_budget_code_map[cache_key] = project_budget_code_id
+            return project_budget_code_id
+
+        # Only mint a new budget code for cost codes that exist in the master
+        # list — mirrors _ensure_project_cost_code's guard.
+        if normalized_cost_code_id not in self.cost_codes:
+            return None
+
+        cost_code_description = normalized_cost_code_id
+        cost_code_meta = (
+            self.supabase.table("cost_codes")
+            .select("title")
+            .eq("id", normalized_cost_code_id)
+            .limit(1)
+            .execute()
+        )
+        if cost_code_meta.data and cost_code_meta.data[0].get("title"):
+            cost_code_description = cost_code_meta.data[0]["title"]
+
+        inserted = (
+            self.supabase.table("project_budget_codes")
+            .insert(
+                {
+                    "project_id": project_id,
+                    "cost_code_id": normalized_cost_code_id,
+                    "cost_type_id": cost_type_id,
+                    "description": cost_code_description,
+                    "is_active": True,
+                }
+            )
+            .execute()
+        )
+        project_budget_code_id = None
+        if getattr(inserted, "data", None):
+            inserted_row = inserted.data[0] if isinstance(inserted.data, list) else inserted.data
+            project_budget_code_id = (
+                inserted_row.get("id") if isinstance(inserted_row, dict) else None
+            )
+
+        if not project_budget_code_id:
+            # Insert may have hit the unique constraint from a concurrent path —
+            # refetch the typed row.
+            refetch = (
+                self.supabase.table("project_budget_codes")
+                .select("id")
+                .eq("project_id", project_id)
+                .eq("cost_code_id", normalized_cost_code_id)
+                .eq("cost_type_id", cost_type_id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+            )
+            if not refetch.data:
+                return None
+            project_budget_code_id = refetch.data[0]["id"]
+
+        self.commitment_sov_budget_code_map[cache_key] = project_budget_code_id
+        return project_budget_code_id
 
     def _max_cursor(self, records: List[Dict[str, Any]]) -> Optional[str]:
         values = [
@@ -1159,13 +1333,10 @@ class AcumaticaFinancialSyncService:
                 budget_code_id = self._ensure_project_cost_code(project_row["id"], cost_code)
                 if not budget_code_id:
                     continue
-                quantity = _num(detail.get("Qty")) or 1.0
-                unit_cost = _num(detail.get("UnitCost"))
-                line_total = _num(detail.get("ExtendedCost")) or _num(detail.get("Amount"))
-                if unit_cost is None and line_total is not None and quantity:
-                    unit_cost = line_total / quantity
-                unit_cost = unit_cost or 0.0
-                line_total = line_total if line_total is not None else quantity * unit_cost
+                # GROSS derivation: unit_cost is grossed up from ExtendedCost so
+                # the generated line_total column reconciles to the gross header
+                # and to budget JTD. See _ap_bill_detail_amounts for the why.
+                quantity, unit_cost, line_total = _ap_bill_detail_amounts(detail)
 
                 mapped_line_items.append(
                     {
@@ -1184,6 +1355,40 @@ class AcumaticaFinancialSyncService:
                 continue
 
             total_amount = sum(item["_line_total"] or 0 for item in mapped_line_items)
+
+            # Guardrail (never ship silent failures): the header total must equal
+            # the sum of the stored line totals. direct_cost_line_items.line_total
+            # is GENERATED as round(quantity,2) * round(unit_cost,2), so replay
+            # that exact rounding here and assert it reconciles to the header
+            # within a per-line penny tolerance. A larger gap means gross/net
+            # semantics drifted (e.g. someone reverted unit_cost to the net
+            # detail.UnitCost) and would silently understate budget JTD.
+            stored_line_sum = sum(
+                round(round(item["quantity"], 2) * round(item["unit_cost"], 2), 2)
+                for item in mapped_line_items
+            )
+            # Compare in integer cents so float representation cannot flap the
+            # comparison at the tolerance boundary (e.g. 99.99 vs 100.00).
+            diff_cents = round(abs(round(total_amount, 2) - stored_line_sum) * 100)
+            tolerance_cents = round(
+                _DIRECT_COST_RECON_TOLERANCE_PER_LINE * 100
+            ) * len(mapped_line_items)
+            if diff_cents > tolerance_cents:
+                logger.error(
+                    "[AcumaticaSync] direct_cost reconciliation FAILED for %s: "
+                    "header total_amount=%.2f but sum(line_total)=%.2f "
+                    "(diff=%.2f, tolerance=%.2f, lines=%d). Refusing to project "
+                    "a non-reconciling bill — check gross-vs-net line semantics.",
+                    external_key,
+                    round(total_amount, 2),
+                    stored_line_sum,
+                    round(total_amount, 2) - stored_line_sum,
+                    tolerance_cents / 100,
+                    len(mapped_line_items),
+                )
+                result.skipped += 1
+                continue
+
             document_key = external_key
             projected_rows.append(
                 {
@@ -2123,6 +2328,12 @@ class AcumaticaFinancialSyncService:
         result.upserted = sc["upserted"] + po["upserted"]
         result.skipped = sc["skipped"] + po["skipped"]
         result.errors = sc["errors"] + po["errors"]
+        # Surface the untyped-budget-code guardrail warnings on the entity so
+        # they land in acumatica_sync_state.last_error instead of being buried
+        # in sub-result dicts. These heal to zero after a repointing run.
+        propagated = list(sc.get("warnings") or []) + list(po.get("warnings") or [])
+        if propagated:
+            result.warnings = propagated
         result.cursor = last_cursor  # projection is stateless — no cursor needed
         return result
 
@@ -2338,6 +2549,58 @@ class AcumaticaFinancialSyncService:
         result.upserted = len(rows)
         return result
 
+    def _preflight_untyped_commitment_sov_budget_codes(self) -> List[str]:
+        """Guardrail: surface project_budget_codes with NULL cost_type_id that
+        currently back commitment SOV lines.
+
+        Such codes are rejected by the validate_commitment_sov_project_budget_code
+        trigger (ERRCODE 23514) and, before this guardrail, silently aborted the
+        entire commitments_projection entity on the first bad row. We log them
+        loudly and return warning strings so they surface in the entity result
+        instead of being invisible. After the resolver fix + a sync run these
+        should heal to zero (SOV lines get repointed to the Subcontract-typed
+        code); any residual means an unknown cost code needs manual attention.
+        """
+        warnings: List[str] = []
+        # PostgREST embedded select with an inner join on the parent budget code,
+        # filtered to NULL cost_type_id — one query per SOV table.
+        for table in ("subcontract_sov_items", "purchase_order_sov_items"):
+            try:
+                rows = (
+                    self.supabase.table(table)
+                    .select(
+                        "project_budget_code_id,"
+                        "project_budget_codes!inner(id,project_id,cost_code_id,cost_type_id)"
+                    )
+                    .not_.is_("project_budget_code_id", "null")
+                    .is_("project_budget_codes.cost_type_id", "null")
+                    .execute()
+                ).data or []
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.warning(
+                    "[AcumaticaSync] Pre-flight untyped-SOV check failed for %s: %s",
+                    table,
+                    exc,
+                )
+                continue
+
+            seen: Dict[str, int] = {}
+            for r in rows:
+                pbc = r.get("project_budget_codes") or {}
+                pbc_id = pbc.get("id") or r.get("project_budget_code_id")
+                if pbc_id:
+                    seen[pbc_id] = seen.get(pbc_id, 0) + 1
+            if seen:
+                msg = (
+                    f"{len(seen)} untyped project_budget_code(s) back {sum(seen.values())} "
+                    f"{table} line(s) (cost_type_id IS NULL) — these violate the commitment "
+                    f"SOV trigger. Codes: {', '.join(sorted(seen))}"
+                )
+                warnings.append(msg)
+                logger.warning("[AcumaticaSync] PRE-FLIGHT GUARDRAIL: %s", msg)
+
+        return warnings
+
     def project_commitments(self) -> Dict[str, Any]:
         """
         One-shot or scheduled: project acumatica_subcontracts + acumatica_purchase_orders
@@ -2365,6 +2628,13 @@ class AcumaticaFinancialSyncService:
 
         if not acumatica_rows:
             return result
+
+        # Guardrail: loudly surface any untyped budget codes already backing
+        # commitment SOV lines before we touch them (covers both SOV tables so
+        # it runs once for the whole projection).
+        preflight_warnings = self._preflight_untyped_commitment_sov_budget_codes()
+        if preflight_warnings:
+            result.warnings = list(preflight_warnings)
 
         synced_at = _now_iso()
         sc_rows: List[Dict[str, Any]] = []
@@ -2474,10 +2744,39 @@ class AcumaticaFinancialSyncService:
                 )
 
             if sov_items:
+                # Resilience: a single row rejected by the commitment-SOV trigger
+                # (e.g. an untyped budget code) must NOT abort the entire
+                # entity. Try the chunk; on failure fall back to per-row upserts
+                # so only the genuinely bad rows are skipped + logged.
                 for chunk in _chunked(sov_items, size=100):
-                    self.supabase.table("subcontract_sov_items").upsert(
-                        list(chunk), on_conflict="subcontract_id,line_number"
-                    ).execute()
+                    try:
+                        self.supabase.table("subcontract_sov_items").upsert(
+                            list(chunk), on_conflict="subcontract_id,line_number"
+                        ).execute()
+                    except Exception as chunk_exc:
+                        logger.warning(
+                            "[AcumaticaSync] subcontract_sov_items chunk upsert failed "
+                            "for %s (%s); retrying per row",
+                            row["external_key"],
+                            chunk_exc,
+                        )
+                        for item in chunk:
+                            try:
+                                self.supabase.table("subcontract_sov_items").upsert(
+                                    [item], on_conflict="subcontract_id,line_number"
+                                ).execute()
+                            except Exception as row_exc:
+                                result.skipped += 1
+                                result.errors += 1
+                                logger.error(
+                                    "[AcumaticaSync] Skipping subcontract SOV row %s line=%s "
+                                    "budget_code=%s pbc=%s: %s",
+                                    row["external_key"],
+                                    item.get("line_number"),
+                                    item.get("budget_code"),
+                                    item.get("project_budget_code_id"),
+                                    row_exc,
+                                )
                 # Guardrail: the SOV must reconcile to the Acumatica subcontract
                 # total. Surface drift instead of silently shipping wrong money.
                 sov_sum = round(sum(item["amount"] for item in sov_items), 2)
@@ -2617,8 +2916,37 @@ class AcumaticaFinancialSyncService:
                 self.supabase.table("purchase_order_sov_items").delete().eq(
                     "purchase_order_id", po_id
                 ).not_.is_("acumatica_line_nbr", "null").execute()
+                # Resilience: one row rejected by the commitment-SOV trigger must
+                # not abort the whole entity. Fall back to per-row inserts.
                 for chunk in _chunked(sov_items, size=100):
-                    self.supabase.table("purchase_order_sov_items").insert(list(chunk)).execute()
+                    try:
+                        self.supabase.table("purchase_order_sov_items").insert(
+                            list(chunk)
+                        ).execute()
+                    except Exception as chunk_exc:
+                        logger.warning(
+                            "[AcumaticaSync] purchase_order_sov_items chunk insert failed "
+                            "for %s (%s); retrying per row",
+                            row["external_key"],
+                            chunk_exc,
+                        )
+                        for item in chunk:
+                            try:
+                                self.supabase.table("purchase_order_sov_items").insert(
+                                    [item]
+                                ).execute()
+                            except Exception as row_exc:
+                                result.skipped += 1
+                                result.errors += 1
+                                logger.error(
+                                    "[AcumaticaSync] Skipping purchase order SOV row %s line=%s "
+                                    "budget_code=%s pbc=%s: %s",
+                                    row["external_key"],
+                                    item.get("line_number"),
+                                    item.get("budget_code"),
+                                    item.get("project_budget_code_id"),
+                                    row_exc,
+                                )
 
         return result
 
