@@ -6,6 +6,7 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 import { deriveBrandonEmailAssistantDecision } from "@/lib/email-assistant/brandon-triage";
+import { dedupeOutlookIntakeByMessageId } from "@/lib/emails/dedupe-outlook-intake";
 import {
   applyInboxRules,
   type InboxRule,
@@ -43,8 +44,10 @@ interface IntakeRow {
   received_at: string | null;
   has_attachments: boolean | null;
   graph_message_id: string | null;
+  internet_message_id: string | null;
   mailbox_user_id: string | null;
   conversation_id: string | null;
+  project_email_id: number | null;
   created_at: string | null;
 }
 
@@ -186,7 +189,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
   let query = intake
     .from("outlook_email_intake")
     .select(
-      "id,project_id,subject,body,body_html,body_text,from_name,from_email,to_list,cc_list,received_at,has_attachments,graph_message_id,mailbox_user_id,conversation_id,created_at",
+      "id,project_id,subject,body,body_html,body_text,from_name,from_email,to_list,cc_list,received_at,has_attachments,graph_message_id,internet_message_id,mailbox_user_id,conversation_id,project_email_id,created_at",
     )
     .order("received_at", { ascending: false, nullsFirst: false })
     .limit(MAX_EMAILS);
@@ -313,7 +316,20 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
     }
   }
 
-  const emails = rows
+  // A message sent to several Alleato people is stored once per mailbox (one
+  // intake row each, distinct graph_message_id). For the cross-project inbox
+  // that fans out into the same email appearing 2–3×. Collapse by
+  // internet_message_id — but NOT in mailbox-review mode, where each mailbox's
+  // own copy is exactly what the reviewer is triaging.
+  const { representatives, memberIdsByRepresentativeId } = mailboxUserId
+    ? { representatives: rows, memberIdsByRepresentativeId: null }
+    : dedupeOutlookIntakeByMessageId(rows);
+  const hasRealAttachments = (row: IntakeRow): boolean => {
+    const memberIds = memberIdsByRepresentativeId?.get(row.id) ?? [row.id];
+    return memberIds.some((id) => emailsWithRealAttachments.has(id));
+  };
+
+  const emails = representatives
     .filter((r) => (status ? "Received" === status : true))
     .map((r) => {
       const latestReview = latestReviewByEmailId.get(r.id) ?? null;
@@ -325,7 +341,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
         toList: r.to_list,
         ccList: r.cc_list,
         mailboxUserId: r.mailbox_user_id,
-        hasAttachments: emailsWithRealAttachments.has(r.id),
+        hasAttachments: hasRealAttachments(r),
         receivedAt: r.received_at,
       });
       const reviewMetadata = isRecord(latestReview?.source_metadata)
@@ -378,7 +394,7 @@ export const GET = withApiGuardrails("emails#GET", async ({ request }) => {
         received_at: r.received_at,
         is_private: null,
         is_starred: null,
-        has_attachments: emailsWithRealAttachments.has(r.id),
+        has_attachments: hasRealAttachments(r),
         related_tool: null,
         related_id: null,
         distribution_group: null,
