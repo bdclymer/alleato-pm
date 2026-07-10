@@ -356,6 +356,12 @@ async function main() {
     // back to their originating CE line), and app PCO id -> owning change_event.id.
     const celiIdByCrLineId = new Map();
     const ceIdByPcoAppId = new Map();
+    // CR cost lines that reference a commitment (subcontract) but have NO materialized JP
+    // commitment change order (ccoId null) -> grouped per (change event, commitment) so a
+    // commitment PCO can be SYNTHESIZED from them. Key: `${ceId}|${commitmentNumber}`.
+    const synthCommitGroups = new Map();
+    // (ceId|commitment_id) already covered by a materialized JP CCO -> don't also synthesize.
+    const materializedCommitKeys = new Set();
 
     async function ensurePrimePco(pcco) {
       if (primePcoIdByJp.has(pcco.id)) return primePcoIdByJp.get(pcco.id);
@@ -435,7 +441,10 @@ async function main() {
       for (const li of lines) {
         const cco = li.ccoId ? ccoById.get(li.ccoId) : null;
         const pcco = li.pccoId ? pccoById.get(li.pccoId) : null;
-        const commitInfo = cco ? commitmentByNumber.get(String(cco.commitmentNumber)) : null;
+        // Commitment linkage comes from the line's own commitmentNumber (the subcontract) —
+        // it is set even when JobPlanner has NOT materialized a commitment change order
+        // record (ccoId null, e.g. Playmakers). `cco` is only the materialized-CCO case.
+        const commitInfo = li.commitmentNumber ? commitmentByNumber.get(String(li.commitmentNumber)) : null;
 
         const fields = {
           change_event_id: ceId, description: li.description ?? null, sort_order: sort,
@@ -462,6 +471,18 @@ async function main() {
         // line back to its originating change-event line.
         celiIdByCrLineId.set(String(li.id), celiId);
 
+        // Commitment cost lines with NO materialized JP change order (ccoId null): group by
+        // (change event, commitment) to synthesize a commitment PCO after the loop.
+        if (!li.ccoId && commitInfo) {
+          const key = `${ceId}|${li.commitmentNumber}`;
+          let g = synthCommitGroups.get(key);
+          if (!g) {
+            g = { ceId, cr, commitmentNumber: String(li.commitmentNumber), commitInfo, lines: [] };
+            synthCommitGroups.set(key, g);
+          }
+          g.lines.push({ li, celiId });
+        }
+
         // Ensure the PCO header(s) this line forks to and one CE↔PCO link per side.
         // pco_line_items are NOT built from the CR fork here — a JP change order has its
         // OWN line items (incl. lines added directly on the CO, and CO-level amounts), so
@@ -469,6 +490,7 @@ async function main() {
         const forks = [];
         if (pcco) forks.push({ type: "prime", pcoId: await ensurePrimePco(pcco) });
         if (cco) forks.push({ type: "commitment", pcoId: await ensureCommitPco(cco) });
+        if (cco && commitInfo) materializedCommitKeys.add(`${ceId}|${commitInfo.id}`);
         for (const f of forks) {
           if (!f.pcoId) continue;
           if (!ceIdByPcoAppId.has(f.pcoId)) ceIdByPcoAppId.set(f.pcoId, ceId);
@@ -543,6 +565,56 @@ async function main() {
     }
     await syncPcoLines(primePcoIdByJp, pccoById, "prime");
     await syncPcoLines(commitPcoIdByJp, ccoById, "commitment");
+
+    // ---- Synthesized commitment PCOs (JobPlanner has NO materialized change order) ----
+    // A change request's cost lines can be assigned to a commitment (subcontract) without a
+    // materialized JP commitment change order (ccoId null). JobPlanner shows these in the
+    // change request SOV's "Commitment" column; the app models them as one commitment PCO
+    // per (change event, commitment). Create/rebuild those here from the grouped cost lines.
+    for (const g of synthCommitGroups.values()) {
+      // If a real JP CCO already covers this commitment for this CE, don't duplicate it.
+      if (materializedCommitKeys.has(`${g.ceId}|${g.commitInfo.id}`)) continue;
+      const commitTail = String(g.commitmentNumber).split("-").pop(); // e.g. "0002"
+      const pcoNumber = `${g.cr.number}-${commitTail}`; // deterministic, e.g. "CR-9299-0030-0002"
+      const total = g.lines.reduce((a, { li }) => a + (Number(centsToDollars(li.amount)) || 0), 0);
+      const { id: pcoId, created } = await upsertByMatch(
+        "commitment_pcos",
+        { project_id: APP_PROJECT_ID, pco_number: pcoNumber },
+        {
+          commitment_id: g.commitInfo.id, commitment_type: g.commitInfo.type,
+          title: g.cr.title || g.cr.number, description: g.cr.description ?? null,
+          total_amount: Number(total.toFixed(2)), status: pcoStatus(g.cr.statusId),
+          change_reason: g.cr.changeReason ?? null,
+        },
+        pcoNumber,
+      );
+      if (created) writes.commitPcos++;
+      // Rebuild the synthesized PCO's lines from the CR cost lines (idempotent).
+      const { error: delErr } = await sb.from("pco_line_items").delete().eq("pco_id", pcoId);
+      if (delErr) throw new Error(`pco_line_items delete ${pcoNumber}: ${delErr.message}`);
+      let sort = 0;
+      for (const { li, celiId } of g.lines) {
+        const { error } = await sb.from("pco_line_items").insert({
+          pco_id: pcoId, pco_type: "commitment", change_event_id: g.ceId, change_event_line_item_id: celiId,
+          budget_code_id: resolveBudgetLine(li.costCodeId, li.costTypeId),
+          amount: centsToDollars(li.amount),
+          unit_cost: li.unitPrice != null ? centsToDollars(li.unitPrice) : null,
+          quantity: li.quantity ?? null, description: li.description ?? null,
+          sort_order: sort, jobplanner_id: li.id,
+        });
+        if (error) throw new Error(`pco_line_items insert ${pcoNumber} L${li.id}: ${error.message}`);
+        writes.pcoLines++; sort++;
+      }
+      // Link the change event to the synthesized commitment PCO.
+      const { data: existLink } = await sb.from("change_event_pco_links")
+        .select("id").eq("change_event_id", g.ceId).eq("pco_id", pcoId).maybeSingle();
+      if (!existLink) {
+        const { error: lkErr } = await sb.from("change_event_pco_links")
+          .insert({ change_event_id: g.ceId, pco_id: pcoId, pco_type: "commitment" });
+        if (lkErr) throw new Error(`change_event_pco_links ${pcoNumber}: ${lkErr.message}`);
+        writes.ceLinks++;
+      }
+    }
   }
 
   const counts = {
